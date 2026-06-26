@@ -122,11 +122,6 @@ flowchart LR
 
 ## Deploy
 
-> The top-level [main.bicep](main.bicep) is a scaffold that currently emits a
-> deployment name output; module composition under [modules/](modules) is being
-> wired in. The commands below follow the standard catalog workflow and apply
-> once orchestration is complete.
-
 ```powershell
 az group create --name rg-techlabs-avs --location eastus
 
