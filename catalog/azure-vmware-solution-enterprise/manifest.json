@@ -1,0 +1,14 @@
+{
+  "name": "azure-vmware-solution-enterprise",
+  "title": "Azure VMware Solution Enterprise",
+  "summary": "Enterprise-ready Azure VMware Solution landing zone scaffold.",
+  "version": "0.1.0",
+  "category": "Infrastructure",
+  "owner": "platform-team",
+  "tags": [
+    "azure",
+    "avs",
+    "vmware",
+    "bicep"
+  ]
+}
