@@ -20,6 +20,9 @@ param avdSubnetPrefix string = '10.40.1.0/24'
 @description('Subnet prefix reserved for private endpoints.')
 param privateEndpointSubnetPrefix string = '10.40.2.0/24'
 
+@description('Optional NSG resource ID to associate with the session-hosts subnet. Leave empty to skip.')
+param sessionHostsNsgId string = ''
+
 module vnet '../../../../modules/virtual-network/main.bicep' = {
   name: 'vnet'
   params: {
@@ -27,6 +30,7 @@ module vnet '../../../../modules/virtual-network/main.bicep' = {
     location: location
     tags: tags
     addressPrefixes: vnetAddressPrefixes
+    defaultNsgId: sessionHostsNsgId
     subnets: [
       {
         name: 'session-hosts'
@@ -36,6 +40,7 @@ module vnet '../../../../modules/virtual-network/main.bicep' = {
         name: 'private-endpoints'
         prefix: privateEndpointSubnetPrefix
         privateEndpointPolicies: true
+        associateNsg: false
       }
     ]
   }

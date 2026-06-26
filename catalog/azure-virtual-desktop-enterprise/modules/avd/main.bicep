@@ -22,6 +22,12 @@ param enableScalingPlan bool = true
 @description('Time zone used by the scaling schedule.')
 param scalingTimeZone string = 'Eastern Standard Time'
 
+@description('Base time used to compute the host pool registration token expiry. Defaults to deployment time.')
+param baseTime string = utcNow()
+
+@description('Optional Log Analytics workspace resource ID for host pool and workspace diagnostics. Leave empty to skip.')
+param logAnalyticsWorkspaceId string = ''
+
 resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2024-04-03' = {
   name: '${namePrefix}-hp'
   location: metadataLocation
@@ -33,6 +39,10 @@ resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2024-04-03' = {
     maxSessionLimit: maxSessionLimit
     startVMOnConnect: startVmOnConnect
     validationEnvironment: false
+    registrationInfo: {
+      expirationTime: dateTimeAdd(baseTime, 'P14D')
+      registrationTokenOperation: 'Update'
+    }
   }
 }
 
@@ -115,9 +125,41 @@ resource scalingPlan 'Microsoft.DesktopVirtualization/scalingPlans@2024-04-03' =
   }
 }
 
+resource hostPoolDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (!empty(logAnalyticsWorkspaceId)) {
+  scope: hostPool
+  name: 'avd-hostpool-diagnostics'
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    logs: [
+      {
+        categoryGroup: 'allLogs'
+        enabled: true
+      }
+    ]
+  }
+}
+
+resource workspaceDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (!empty(logAnalyticsWorkspaceId)) {
+  scope: workspace
+  name: 'avd-workspace-diagnostics'
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    logs: [
+      {
+        categoryGroup: 'allLogs'
+        enabled: true
+      }
+    ]
+  }
+}
+
 output hostPoolId string = hostPool.id
 output hostPoolName string = hostPool.name
 output applicationGroupId string = appGroup.id
 output applicationGroupName string = appGroup.name
 output workspaceId string = workspace.id
 output workspaceName string = workspace.name
+
+@description('Host pool registration token used to join session hosts. Valid for 14 days from deployment.')
+@secure()
+output hostPoolRegistrationToken string = hostPool.properties.registrationInfo.token

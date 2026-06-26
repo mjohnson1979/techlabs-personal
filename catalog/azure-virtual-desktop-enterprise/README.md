@@ -63,6 +63,20 @@ Top-level orchestration ([main.bicep](main.bicep)):
 | `fslogixProfileShareName` | `profiles` | Azure Files share name for FSLogix profile containers |
 | `retentionInDays` | `30` | Log Analytics retention (30–730) |
 
+Optional deployment (off by default unless noted):
+
+| Name | Default | Description |
+| --- | --- | --- |
+| `deployStoragePrivateEndpoint` | `true` | Deploy a private endpoint + `privatelink.file` private DNS zone for the FSLogix storage account |
+| `deploySessionHosts` | `false` | Deploy session host VMs and register them with the host pool |
+| `sessionHostCount` | `2` | Number of session host VMs to deploy (1–50) |
+| `sessionHostVmSize` | `Standard_D4s_v5` | VM size for session hosts |
+| `sessionHostAdminUsername` | `avdadmin` | Local administrator username on session hosts |
+| `sessionHostAdminPassword` | _(empty)_ | `@secure()` local administrator password (required when `deploySessionHosts` is true) |
+| `assignDesktopUserAccess` | `false` | Assign the Desktop Virtualization User role on the application group |
+| `desktopUserPrincipalId` | _(empty)_ | Object ID of the user/group/service principal to grant desktop access |
+| `desktopUserPrincipalType` | `Group` | Principal type for the access assignment (`User`, `Group`, or `ServicePrincipal`) |
+
 > The FSLogix storage account name is derived automatically from `namePrefix`
 > and a per-resource-group hash to satisfy the global, lowercase, 3–24 character
 > naming rules for storage accounts.
@@ -135,6 +149,43 @@ flowchart LR
   classDef obs fill:#f1f3f5,stroke:#868e96,color:#000
 ```
 
+## Optional: deploy a working desktop end to end
+
+By default the template provisions the AVD control plane, profile storage,
+networking, security, and monitoring. To stand up an actually usable pooled
+desktop in one deployment, opt in to session hosts and user access:
+
+```powershell
+az deployment group create `
+  --resource-group rg-techlabs-avd `
+  --template-file ./main.bicep `
+  --parameters ./parameters/dev.bicepparam `
+  --parameters deploySessionHosts=true sessionHostCount=2 `
+               sessionHostAdminPassword='<strong-password>' `
+               assignDesktopUserAccess=true `
+               desktopUserPrincipalId='<group-object-id>' `
+               desktopUserPrincipalType='Group'
+```
+
+With these enabled the deployment also: creates Entra-joined session host VMs
+(Trusted Launch), installs the AVD agent and registers each host to the pool
+using a freshly generated registration token, and grants the named principal the
+**Desktop Virtualization User** role on the desktop application group.
+
+### Still configure yourself
+
+This remains a scaffold for the parts that depend on your tenant and image
+strategy. Even with session hosts enabled, you must:
+
+- Configure **FSLogix identity-based auth** on the storage account (Microsoft
+  Entra Kerberos or AD DS), set the share/NTFS permissions, and apply the
+  FSLogix profile registry settings on the hosts — profiles will not roam until
+  this is done.
+- Decide on **image management** (the default is the Windows 11 multi-session
+  gallery image; swap in your own image/Compute Gallery as needed).
+- Treat the **AVD agent DSC package URL** as version-pinned — refresh it over
+  time as Microsoft publishes new agent builds.
+
 ## Deploy
 
 ```powershell
@@ -154,9 +205,9 @@ az deployment group create `
 ```
 
 > This template provisions the AVD control plane, profile storage, networking,
-> security, and monitoring scaffolding. Session host VMs are added separately
-> (image, domain/Entra join, and host-pool registration) to fit your identity
-> and image-management approach.
+> security, and monitoring scaffolding. Set `deploySessionHosts=true` (and
+> related parameters) to also create and register session host VMs in the same
+> deployment — see [Optional: deploy a working desktop end to end](#optional-deploy-a-working-desktop-end-to-end).
 
 ## Estimate cost
 
