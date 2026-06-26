@@ -91,7 +91,7 @@ CREATE INDEX IF NOT EXISTS idx_events_user ON events(user_oid);
 
 
 def init_db() -> sqlite3.Connection:
-    """Open (once) and initialise the database, seeding admins from env."""
+    """Open (once) and initialise the database."""
     global _CONN
     with _LOCK:
         if _CONN is not None:
@@ -105,7 +105,6 @@ def init_db() -> sqlite3.Connection:
         conn.executescript(SCHEMA)
         conn.commit()
         _CONN = conn
-    _seed_admins()
     return _CONN
 
 
@@ -115,37 +114,14 @@ def _conn() -> sqlite3.Connection:
     return _CONN
 
 
-def seed_admin_upns() -> list[str]:
-    raw = os.environ.get("GALLERY_ADMINS", "").strip()
-    return [u.strip().lower() for u in raw.split(",") if u.strip()]
-
-
-def _seed_admins() -> None:
-    """Promote any env-listed UPNs to admin, pre-creating placeholder rows.
-
-    Placeholder rows carry an empty oid (key = 'upn:<upn>') until the user first
-    signs in, at which point upsert_user() reconciles them to the real oid.
-    """
-    now = time.time()
+def has_admin() -> bool:
+    """True if at least one admin exists (real or placeholder)."""
     with _LOCK:
-        conn = _CONN
-        if conn is None:
-            return
-        for upn in seed_admin_upns():
-            row = conn.execute(
-                "SELECT oid FROM users WHERE lower(upn) = ?", (upn,)
-            ).fetchone()
-            if row is None:
-                conn.execute(
-                    "INSERT INTO users(oid, upn, name, role, created_at, last_seen)"
-                    " VALUES(?,?,?,?,?,?)",
-                    (f"upn:{upn}", upn, "", "admin", now, now),
-                )
-            else:
-                conn.execute(
-                    "UPDATE users SET role='admin' WHERE lower(upn) = ?", (upn,)
-                )
-        conn.commit()
+        conn = _conn()
+        row = conn.execute(
+            "SELECT 1 FROM users WHERE role = 'admin' LIMIT 1"
+        ).fetchone()
+    return row is not None
 
 
 # --------------------------------------------------------------------------- #
@@ -154,8 +130,10 @@ def _seed_admins() -> None:
 def upsert_user(oid: str, upn: str, name: str) -> str:
     """Record a sign-in and return the user's role.
 
-    Reconciles any admin placeholder row (keyed by ``upn:<upn>``) created by the
-    env seed into a real row keyed by the user's oid, preserving the admin role.
+    Reconciles any admin placeholder row (keyed by ``upn:<upn>``, created when an
+    admin pre-assigns a role to someone who hasn't signed in yet) into a real row
+    keyed by the user's oid. Bootstrap: the very first person to ever sign in,
+    when no admin exists yet, becomes the admin.
     """
     now = time.time()
     upn_l = (upn or "").strip().lower()
@@ -173,6 +151,12 @@ def upsert_user(oid: str, upn: str, name: str) -> str:
         if placeholder is not None:
             role = placeholder["role"] or role
             conn.execute("DELETE FROM users WHERE oid = ?", (f"upn:{upn_l}",))
+        if role != "admin":
+            admins = conn.execute(
+                "SELECT 1 FROM users WHERE role = 'admin' LIMIT 1"
+            ).fetchone()
+            if admins is None:
+                role = "admin"
         if existing is None:
             conn.execute(
                 "INSERT INTO users(oid, upn, name, role, created_at, last_seen)"

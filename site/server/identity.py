@@ -7,8 +7,8 @@ Identity comes from one of two trusted sources, mirroring app.py:
   * App Service Authentication ("Easy Auth") headers, when hosted behind it.
   * The in-memory OAuth session keyed by the HttpOnly cookie (self-hosted mode).
 
-Roles ('admin' | 'guest') are persisted in SQLite and seeded from the
-``GALLERY_ADMINS`` env var (see db.py).
+Roles ('admin' | 'guest') are persisted in SQLite (see db.py). The first person
+to ever sign in is bootstrapped as the admin; thereafter admins manage roles.
 """
 
 from __future__ import annotations
