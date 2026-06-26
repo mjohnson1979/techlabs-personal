@@ -1,0 +1,119 @@
+name: Deploy use case
+
+# The gallery backend dispatches this workflow (or you can run it manually from
+# the Actions tab — the "Run workflow" button is the GitHub-side deploy button).
+# It authenticates to Azure with OIDC federated credentials (no stored secret),
+# creates a per-deployment resource group, deploys the use case's Bicep, then
+# calls back to the gallery with the result.
+
+on:
+  workflow_dispatch:
+    inputs:
+      use_case:
+        description: "Catalog path, e.g. web-app or landing-zone/ai"
+        required: true
+        type: string
+      environment:
+        description: "Parameter set to deploy"
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - prod
+      resource_group:
+        description: "Target resource group (created if missing)"
+        required: true
+        type: string
+      location:
+        description: "Azure region for the resource group"
+        required: false
+        default: eastus
+        type: string
+      subscription_id:
+        description: "Target subscription ID (defaults to repo secret)"
+        required: false
+        type: string
+      deployment_id:
+        description: "Gallery deployment id (for status callback)"
+        required: false
+        type: string
+      callback_url:
+        description: "Gallery callback URL (status updates)"
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-${{ inputs.resource_group }}
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          tmpl="catalog/${{ inputs.use_case }}/main.bicep"
+          prm="catalog/${{ inputs.use_case }}/parameters/${{ inputs.environment }}.bicepparam"
+          if [ ! -f "$tmpl" ]; then echo "::error::template not found: $tmpl"; exit 1; fi
+          if [ ! -f "$prm" ]; then echo "::error::parameters not found: $prm"; exit 1; fi
+          echo "TEMPLATE=$tmpl" >> "$GITHUB_ENV"
+          echo "PARAMS=$prm" >> "$GITHUB_ENV"
+          echo "RUN_URL=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "$GITHUB_ENV"
+          sub="${{ inputs.subscription_id }}"
+          if [ -z "$sub" ]; then sub="${{ secrets.AZURE_SUBSCRIPTION_ID }}"; fi
+          echo "SUBSCRIPTION=$sub" >> "$GITHUB_ENV"
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.SUBSCRIPTION }}
+
+      - name: Create resource group
+        run: |
+          set -euo pipefail
+          az account set --subscription "$SUBSCRIPTION"
+          az group create \
+            --name "${{ inputs.resource_group }}" \
+            --location "${{ inputs.location }}" \
+            --tags techlabs-deployment="${{ inputs.deployment_id }}" \
+                   techlabs-usecase="${{ inputs.use_case }}" \
+                   techlabs-managed=true
+
+      - name: Deploy Bicep
+        id: deploy
+        run: |
+          set -euo pipefail
+          az deployment group create \
+            --resource-group "${{ inputs.resource_group }}" \
+            --template-file "$TEMPLATE" \
+            --parameters "$PARAMS" \
+            --name "techlabs-${{ inputs.deployment_id }}"
+
+      - name: Report success
+        if: success() && inputs.callback_url != ''
+        run: |
+          curl -fsS -X POST "${{ inputs.callback_url }}" \
+            -H "Content-Type: application/json" \
+            -H "X-Techlabs-Callback-Token: ${{ secrets.GALLERY_CALLBACK_TOKEN }}" \
+            -d "{\"status\":\"active\",\"runUrl\":\"$RUN_URL\",\"detail\":\"deployment succeeded\"}" \
+            || echo "::warning::status callback failed"
+
+      - name: Report failure
+        if: failure() && inputs.callback_url != ''
+        run: |
+          curl -fsS -X POST "${{ inputs.callback_url }}" \
+            -H "Content-Type: application/json" \
+            -H "X-Techlabs-Callback-Token: ${{ secrets.GALLERY_CALLBACK_TOKEN }}" \
+            -d "{\"status\":\"failed\",\"runUrl\":\"$RUN_URL\",\"detail\":\"deployment failed — see run logs\"}" \
+            || echo "::warning::status callback failed"

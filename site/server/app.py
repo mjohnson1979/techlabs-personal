@@ -15,12 +15,17 @@ Then browse http://localhost:8000/ and sign in.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import os
 from pathlib import Path
 
 from fastapi import FastAPI, Cookie, Request, Response
 from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 
+import db
+from api import build_api_router
+from scheduler import run_scheduler
 from entra_auth import (
     COOKIE_NAME,
     EntraClient,
@@ -73,7 +78,28 @@ EXPECTED_TENANT_ID = "" if TENANT_ID.lower() in _PLACEHOLDER_TENANTS else TENANT
 PUBLIC_PREFIXES = ("/api/auth/entra/",)
 PUBLIC_PATHS = {"/favicon.ico", "/healthz"}
 
-app = FastAPI(title="Techlabs Gallery (Entra-secured)", docs_url=None, redoc_url=None)
+
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialise the database and run the cleanup scheduler for the app's life."""
+    db.init_db()
+    stop = asyncio.Event()
+    task = asyncio.create_task(run_scheduler(stop))
+    try:
+        yield
+    finally:
+        stop.set()
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+
+
+app = FastAPI(
+    title="Techlabs Gallery (Entra-secured)",
+    docs_url=None,
+    redoc_url=None,
+    lifespan=lifespan,
+)
 app.state.session_store = SessionStore()
 app.state.entra_client = (
     EntraClient(tenant_id=TENANT_ID, client_id=CLIENT_ID)
@@ -87,6 +113,9 @@ app.state.entra_device = {}
 # session cookie entirely (it trusts the platform identity headers instead), so
 # the only *effective* way in remains App Service Authentication.
 app.include_router(build_router(secure_cookie=HTTPS_ENABLED or EASY_AUTH_ENABLED))
+# Control-plane API: identity, telemetry, deployments, admin. These routes do
+# their own identity + role checks (they don't pass through the static gate).
+app.include_router(build_api_router())
 
 
 

@@ -38,6 +38,12 @@
                 <div id="user-card-upn" class="user-card-upn"></div>
               </div>
             </div>
+            <button id="menu-deployments" class="menu-item" type="button" role="menuitem">
+              My deployments
+            </button>
+            <button id="nav-admin" class="menu-item" type="button" role="menuitem" hidden>
+              Admin
+            </button>
             <button id="signout-button" class="signout-button" type="button" role="menuitem">
               Sign out
             </button>
@@ -90,6 +96,14 @@
     </div>
   </div>
 
+  <div id="panel" class="modal" hidden>
+    <div class="modal-backdrop" data-panel-close></div>
+    <div class="modal-panel modal-panel-wide" role="dialog" aria-modal="true">
+      <button class="modal-close" data-panel-close aria-label="Close">&times;</button>
+      <div id="panel-body"></div>
+    </div>
+  </div>
+
   <footer class="site-footer">
     <div class="wrap">
       <p>SME&amp;C Techlabs — Azure use case catalog. Cost figures are illustrative retail
@@ -97,8 +111,12 @@
     </div>
   </footer>
 
+  <script src="assets/api.js"></script>
+  <script src="assets/panel.js"></script>
   <script src="assets/app.js"></script>
   <script src="assets/user-menu.js"></script>
+  <script src="assets/account.js"></script>
+  <script src="assets/admin.js"></script>
 </body>
 
 </html>

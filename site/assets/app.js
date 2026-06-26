@@ -3,7 +3,27 @@
   "use strict";
 
   const REPO = "https://github.com/mcaps-microsoft/TechLabs";
-  const state = { items: [], q: "", category: new Set(), industry: new Set(), compliance: new Set() };
+  const state = { items: [], q: "", category: new Set(), industry: new Set(), compliance: new Set(), me: null };
+
+  const ACTIONS_URL = REPO + "/actions";
+
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  // Format a Date as a value for <input type="datetime-local"> (local time).
+  function localDatetimeValue(d) {
+    return (
+      d.getFullYear() +
+      "-" +
+      pad2(d.getMonth() + 1) +
+      "-" +
+      pad2(d.getDate()) +
+      "T" +
+      pad2(d.getHours()) +
+      ":" +
+      pad2(d.getMinutes())
+    );
+  }
 
   const $ = (sel) => document.querySelector(sel);
   const el = (tag, props = {}, children = []) => {
@@ -142,7 +162,95 @@
     return wrap;
   }
 
+  function deployBlock(it) {
+    const me = state.me;
+    const maxHours = me && me.maxLifetimeHours ? me.maxLifetimeHours : 48;
+    const now = new Date();
+    const defaultEnd = new Date(now.getTime() + Math.min(48, maxHours) * 3600 * 1000);
+    const maxEnd = new Date(now.getTime() + maxHours * 3600 * 1000);
+
+    const envSelect = el("select", { class: "deploy-input", id: "deploy-env" }, [
+      el("option", { value: "dev", text: "dev" }),
+    ]);
+    if (it.hasProd) envSelect.appendChild(el("option", { value: "prod", text: "prod" }));
+
+    const endInput = el("input", {
+      type: "datetime-local",
+      class: "deploy-input",
+      id: "deploy-end",
+      value: localDatetimeValue(defaultEnd),
+      min: localDatetimeValue(new Date(now.getTime() + 15 * 60 * 1000)),
+    });
+    if (me && !me.isAdmin) endInput.setAttribute("max", localDatetimeValue(maxEnd));
+
+    const status = el("div", { class: "deploy-status", role: "status" });
+    const btn = el("button", { class: "deploy-btn", type: "button", text: "Deploy to my subscription" });
+
+    const lifeNote = me && me.isAdmin
+      ? "As an admin you can set any end time. Resources are auto-deleted at the end time."
+      : `Pick when this should be torn down (max ${maxHours}h). Resources are auto-deleted at the end time.`;
+
+    if (!me) {
+      status.textContent = "Sign in to deploy from the gallery.";
+      btn.disabled = true;
+    }
+
+    btn.addEventListener("click", () => {
+      status.classList.remove("err", "ok");
+      const endVal = endInput.value;
+      if (!endVal) {
+        status.textContent = "Pick an end time first.";
+        status.classList.add("err");
+        return;
+      }
+      const payload = {
+        useCase: it.path,
+        environment: envSelect.value,
+        endAt: new Date(endVal).toISOString(),
+      };
+      btn.disabled = true;
+      status.textContent = "Requesting deployment…";
+      window.TechlabsApi.createDeployment(payload)
+        .then((dep) => {
+          status.classList.add("ok");
+          status.innerHTML = "";
+          status.appendChild(
+            el("span", { text: `Queued (${dep.status}). Resource group ${dep.resourceGroup}. ` })
+          );
+          status.appendChild(
+            el("a", { href: dep.ghRunUrl || ACTIONS_URL, target: "_blank", rel: "noopener", text: "Track in GitHub Actions →" })
+          );
+        })
+        .catch((err) => {
+          status.classList.add("err");
+          status.textContent = err && err.message ? err.message : "Deployment request failed.";
+          btn.disabled = false;
+        });
+    });
+
+    const form = el("div", { class: "deploy-form" }, [
+      el("label", { class: "deploy-label", text: "Environment" }),
+      envSelect,
+      el("label", { class: "deploy-label", text: "End time (auto-cleanup)" }),
+      endInput,
+      el("p", { class: "deploy-note", text: lifeNote }),
+      btn,
+      status,
+    ]);
+
+    const manual = el("details", { class: "deploy-manual" }, [
+      el("summary", { text: "Or deploy manually with the Azure CLI" }),
+      el("div", {
+        class: "code",
+        text: `az group create --name rg-techlabs --location eastus\naz deployment group create \`\n  --resource-group rg-techlabs \`\n  --template-file ${it.template} \`\n  --parameters catalog/${it.path}/parameters/dev.bicepparam`,
+      }),
+    ]);
+
+    return el("div", { class: "modal-section" }, [el("h3", { text: "Deploy" }), form, manual]);
+  }
+
   function openModal(it) {
+    if (window.TechlabsApi) window.TechlabsApi.recordEvent("view", it.path);
     const body = $("#modal-body");
     body.innerHTML = "";
     body.appendChild(el("span", { class: "card-cat", text: it.category || "Other" }));
@@ -162,15 +270,7 @@
     if (pillars)
       body.appendChild(el("div", { class: "modal-section" }, [el("h3", { text: "Well-Architected" }), pillars]));
 
-    body.appendChild(
-      el("div", { class: "modal-section" }, [
-        el("h3", { text: "Deploy" }),
-        el("div", {
-          class: "code",
-          text: `az group create --name rg-techlabs --location eastus\naz deployment group create \`\n  --resource-group rg-techlabs \`\n  --template-file ${it.template} \`\n  --parameters catalog/${it.path}/parameters/dev.bicepparam`,
-        }),
-      ])
-    );
+    body.appendChild(deployBlock(it));
 
     const cost = costBlock(it);
     if (cost) body.appendChild(cost);
@@ -218,6 +318,24 @@
     wireModal();
     render();
   }
+
+  function loadIdentity() {
+    if (!window.TechlabsApi) return;
+    window.TechlabsApi.me()
+      .then((me) => {
+        state.me = me;
+        if (me && me.isAdmin) {
+          const link = document.getElementById("nav-admin");
+          if (link) link.hidden = false;
+        }
+        document.dispatchEvent(new CustomEvent("techlabs:me", { detail: me }));
+      })
+      .catch(() => {
+        state.me = null;
+      });
+  }
+
+  loadIdentity();
 
   fetch("catalog.json")
     .then((r) => {
