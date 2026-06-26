@@ -1,0 +1,77 @@
+{
+  "name": "container-app",
+  "displayName": "Container App (serverless containers)",
+  "category": "Containers",
+  "description": "Azure Container Apps running a container image with HTTP autoscaling. Dev scales to zero; prod keeps a warm, zone-redundant baseline.",
+  "what": "Azure Container Apps running any container image behind external HTTPS ingress, with HTTP concurrency autoscaling, a managed identity, and logs streamed to Log Analytics. Dev scales to zero; prod runs a warm, zone-redundant baseline.",
+  "why": "When you already have a containerized app, Container Apps gives you serverless scale (including scale-to-zero) and revision-based rollouts without operating Kubernetes. You pay per second of actual usage, which suits spiky or intermittent workloads.",
+  "potentialUseCases": [
+    "Microservices or event-driven workers that scale with load",
+    "A containerized API or background processor with bursty traffic",
+    "Cost-sensitive dev/test apps that should idle at near-zero cost",
+    "Migrating a Docker Compose app to managed, autoscaling hosting"
+  ],
+  "industries": ["Cross-industry"],
+  "compliance": ["Baseline"],
+  "wellArchitected": {
+    "reliability": [
+      "Zone-redundant Container Apps environment (prod)",
+      "Warm baseline replicas in prod avoid cold-start failures",
+      "Managed environment handles rolling revisions and health probes"
+    ],
+    "security": [
+      "System-assigned managed identity for downstream access",
+      "External ingress is HTTPS-only (allowInsecure false)",
+      "No secrets in the image - use Container Apps secrets / Key Vault"
+    ],
+    "costOptimization": [
+      "Scale-to-zero in dev (minReplicas 0) - pay only when serving traffic",
+      "Per-second vCPU and memory billing",
+      "Right-size cpu/memory per replica to the workload"
+    ],
+    "operationalExcellence": [
+      "Container logs streamed to Log Analytics",
+      "Revision-based deployments for safe rollouts",
+      "IaC with dev/prod parameter files"
+    ],
+    "performanceEfficiency": [
+      "HTTP concurrency-based autoscaling",
+      "Independent per-replica resource sizing",
+      "Scales out to maxReplicas under load"
+    ]
+  },
+  "cost": {
+    "currency": "USD",
+    "region": "eastus",
+    "profile": "prod",
+    "components": [
+      {
+        "name": "Container Apps vCPU (active)",
+        "billing": "usage",
+        "serviceName": "Azure Container Apps",
+        "meterNameContains": "vCPU Active Usage",
+        "unitOfMeasure": "1 Second",
+        "quantityPerMonth": 5256000,
+        "notes": "2 warm replicas x 1 vCPU x 730h x 3600s. Active rate (resource-allocated)."
+      },
+      {
+        "name": "Container Apps memory (active)",
+        "billing": "usage",
+        "serviceName": "Azure Container Apps",
+        "meterNameContains": "Memory Active Usage",
+        "unitOfMeasure": "1 GiB Second",
+        "quantityPerMonth": 10512000,
+        "notes": "2 warm replicas x 2 GiB x 730h x 3600s."
+      },
+      {
+        "name": "Log Analytics analytics logs ingestion",
+        "billing": "usage",
+        "serviceName": "Azure Monitor",
+        "meterNameContains": "Analytics Logs Data Ingestion",
+        "unitOfMeasure": "1 GB",
+        "quantityPerMonth": 5,
+        "notes": "Assumes ~5 GB/month container logs."
+      }
+    ]
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "name": "multiregion-web",
+  "displayName": "Active-Active Multi-Region Web",
+  "category": "Web & API",
+  "description": "Azure Front Door Premium + WAF routing to App Service backends in two regions, backed by multi-region Cosmos DB with automatic failover.",
+  "what": "A global Front Door profile with a managed WAF fronts two regional App Service deployments. Front Door health-probes both origins and load-balances across them; each web app accepts traffic only from Front Door (service tag + x-azure-fdid header). Cosmos DB replicates across both regions with automatic failover, optionally with multi-region writes.",
+  "why": "Business-critical web workloads need to survive a regional outage and serve users with low latency worldwide. This template delivers an active-active footprint with a single global anycast entry point, automated failover, and origin lockdown - the standard mission-critical web pattern.",
+  "potentialUseCases": [
+    "Mission-critical customer portal with an availability SLO",
+    "Global e-commerce storefront needing low latency per geography",
+    "Regulated workload requiring regional resilience and DR",
+    "Public API needing global WAF and DDoS protection"
+  ],
+  "industries": [
+    "Banking",
+    "Capital Markets",
+    "Insurance",
+    "Retailers",
+    "Consumer Goods",
+    "Media & Entertainment",
+    "Gaming",
+    "Transport & Travel",
+    "Telecommunications",
+    "Central, Federal and Regional Government",
+    "Health Provider"
+  ],
+  "compliance": [
+    "Baseline",
+    "PCI-DSS",
+    "SOC 2",
+    "GDPR",
+    "HIPAA"
+  ],
+  "wellArchitected": {
+    "reliability": [
+      "Active-active App Service in two regions behind Front Door",
+      "Cosmos DB multi-region with automatic failover",
+      "Health-probe-driven origin failover",
+      "Zone-redundant plans within each region (prod)"
+    ],
+    "security": [
+      "Front Door managed WAF (DRS 2.1) in Prevention mode",
+      "Origins locked to Front Door via service tag + x-azure-fdid header",
+      "HTTPS-only end to end with HTTP-to-HTTPS redirect",
+      "Cosmos local auth disabled"
+    ],
+    "costOptimization": [
+      "Standard Front Door and single-instance P0v3 in dev",
+      "Single-write Cosmos in dev; multi-write only in prod"
+    ],
+    "operationalExcellence": [
+      "Shared Application Insights / Log Analytics across regions",
+      "Region surfaced to the app via configuration for observability"
+    ],
+    "performanceEfficiency": [
+      "Anycast edge routing sends users to the nearest healthy origin",
+      "Front Door caching and connection offload at the edge"
+    ]
+  },
+  "cost": {
+    "currency": "USD",
+    "region": "eastus",
+    "profile": "Prod profile: Premium Front Door, P1v3 x3 in two regions, multi-region Cosmos.",
+    "components": [
+      {
+        "name": "Front Door Premium base",
+        "billing": "fixed",
+        "serviceName": "Azure Front Door Service",
+        "skuNameContains": "Premium",
+        "meterNameContains": "Premium Base",
+        "unitOfMeasure": "1/Month",
+        "quantityPerMonth": 1,
+        "notes": "Monthly Premium profile base fee."
+      },
+      {
+        "name": "App Service Plan primary (P1v3 x3)",
+        "billing": "fixed",
+        "serviceName": "Azure App Service",
+        "armSkuName": "P1v3",
+        "meterNameContains": "P1 v3",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 2190,
+        "notes": "Three instances in the primary region."
+      },
+      {
+        "name": "App Service Plan secondary (P1v3 x3)",
+        "billing": "fixed",
+        "serviceName": "Azure App Service",
+        "armSkuName": "P1v3",
+        "meterNameContains": "P1 v3",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 2190,
+        "notes": "Three instances in the secondary region."
+      },
+      {
+        "name": "Cosmos DB multi-region (provisioned RU)",
+        "billing": "usage",
+        "serviceName": "Azure Cosmos DB",
+        "meterNameContains": "100 RU/s",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 14600,
+        "notes": "~1000 RU/s replicated across two regions (2 x 730h x 10 units)."
+      }
+    ]
+  }
+}

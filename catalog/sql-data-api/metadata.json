@@ -1,0 +1,79 @@
+{
+  "name": "sql-data-api",
+  "displayName": "SQL Data API (App Service + Azure SQL)",
+  "category": "Web & API",
+  "description": "A .NET API on App Service backed by Azure SQL Database, using passwordless managed-identity auth and Entra-only SQL administration. Dev runs serverless SQL; prod runs zone-redundant compute and database.",
+  "what": "A .NET API on App Service backed by Azure SQL Database. The app authenticates to SQL passwordlessly via its managed identity, and the SQL server uses Microsoft Entra-only authentication. Dev uses serverless auto-pause SQL; prod uses zone-redundant compute and database.",
+  "why": "Most business apps are a stateless API in front of a relational database. Doing it passwordlessly (managed identity + Entra-only SQL) removes the most common security failure - leaked connection strings - while the dev/prod split keeps lab costs low and production resilient.",
+  "potentialUseCases": [
+    "A CRUD/business API over relational data (orders, customers, inventory)",
+    "Modernizing a legacy app's data tier to managed Azure SQL",
+    "Demonstrating passwordless, Entra-only database access patterns",
+    "A reporting or back-office API that needs transactional consistency"
+  ],
+  "industries": ["Cross-industry"],
+  "compliance": ["Baseline"],
+  "wellArchitected": {
+    "reliability": [
+      "Zone-redundant App Service plan and zone-redundant SQL database in prod",
+      "Azure SQL automated backups with point-in-time restore",
+      "Health checks evict unhealthy app instances"
+    ],
+    "security": [
+      "Microsoft Entra-only authentication on the SQL server (no SQL logins)",
+      "Passwordless app-to-SQL connection via managed identity",
+      "HTTPS-only, TLS 1.2 minimum on both tiers"
+    ],
+    "costOptimization": [
+      "Serverless SQL (auto-pause) in dev",
+      "Provisioned vCore in prod sized to steady load",
+      "Scale app capacity to demand; consider reservations for prod"
+    ],
+    "operationalExcellence": [
+      "Telemetry in Application Insights + Log Analytics",
+      "IaC with dev/prod parameter files",
+      "Entra admin managed as a group object id"
+    ],
+    "performanceEfficiency": [
+      "vCore-based SQL scaling",
+      "Premium v3 app compute in prod",
+      "Connection pooling via managed identity tokens"
+    ]
+  },
+  "cost": {
+    "currency": "USD",
+    "region": "eastus",
+    "profile": "prod",
+    "components": [
+      {
+        "name": "App Service plan (P1v3 Linux) x3",
+        "billing": "fixed",
+        "serviceName": "Azure App Service",
+        "armSkuName": "P1v3",
+        "productNameContains": "Linux",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 2190,
+        "notes": "3 instances x 730 hours."
+      },
+      {
+        "name": "Azure SQL Database (GP Gen5 2 vCore)",
+        "billing": "fixed",
+        "serviceName": "SQL Database",
+        "productNameContains": "Single Database General Purpose - Compute Gen5",
+        "meterNameContains": "vCore",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 1460,
+        "notes": "2 vCores x 730 hours. Meter matching is approximate - verify against your bill."
+      },
+      {
+        "name": "Application Insights ingestion",
+        "billing": "usage",
+        "serviceName": "Azure Monitor",
+        "meterNameContains": "Data Ingestion",
+        "unitOfMeasure": "1 GB",
+        "quantityPerMonth": 10,
+        "notes": "Assumes ~10 GB/month telemetry."
+      }
+    ]
+  }
+}

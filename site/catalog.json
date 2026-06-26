@@ -1,0 +1,1047 @@
+﻿{
+    "name":  "SME\u0026C Techlabs",
+    "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
+    "generated":  "2026-06-26T15:05:53Z",
+    "count":  17,
+    "items":  [
+                  {
+                      "name":  "ai-chat",
+                      "displayName":  "AI Chat (Azure OpenAI + App Service + Cosmos DB)",
+                      "category":  "AI / GenAI",
+                      "description":  "A chat API on App Service that calls an Azure OpenAI gpt-4o-mini deployment and persists conversations in serverless Cosmos DB. All access is keyless via managed identity.",
+                      "what":  "A chat API on App Service that calls an Azure OpenAI gpt-4o-mini deployment and stores conversation history in serverless Cosmos DB. Access to both OpenAI and Cosmos is keyless via the app\u0027s managed identity (local auth disabled). Dev is cheap; prod is zone-redundant with higher model throughput.",
+                      "why":  "Conversational AI is the most requested GenAI pattern. This wires the three pieces every chatbot needs - a model endpoint, a stateless app tier, and durable conversation storage - with keyless security and pay-per-use billing that matches spiky chat traffic.",
+                      "potentialUseCases":  [
+                                                "A customer-support or internal helpdesk chatbot",
+                                                "A product/document Q\u0026A assistant (extend with retrieval from the AI landing zone)",
+                                                "A copilot embedded in an existing web app",
+                                                "A GenAI prototype you harden to production with the prod profile"
+                                            ],
+                      "industries":  [
+                                         "Cross-industry"
+                                     ],
+                      "compliance":  [
+                                         "Baseline"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Zone-redundant App Service plan in prod",
+                                                                  "Cosmos DB serverless with Session consistency and automatic failover priority",
+                                                                  "Stateless app tier - conversation state lives in Cosmos"
+                                                              ],
+                                              "security":  [
+                                                               "Keyless access: managed identity to Azure OpenAI and Cosmos (local auth disabled)",
+                                                               "TLS 1.2 minimum across all tiers, HTTPS-only app",
+                                                               "Custom subdomain on the OpenAI account for Entra token auth"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Cosmos serverless - pay per request unit, ideal for spiky chat load",
+                                                                       "Pay-as-you-go token billing on the model deployment",
+                                                                       "Dev uses Basic app plan and low TPM capacity"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Telemetry in Application Insights + Log Analytics",
+                                                                            "Model name/version and TPM capacity are parameters",
+                                                                            "IaC with dev/prod parameter files"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Provisioned TPM capacity tuned per environment",
+                                                                            "Cosmos serverless scales throughput automatically",
+                                                                            "Premium v3 app compute in prod"
+                                                                        ]
+                                          },
+                      "path":  "ai-chat",
+                      "readme":  "catalog/ai-chat/README.md",
+                      "template":  "catalog/ai-chat/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  5,
+                      "costProfile":  "prod"
+                  },
+                  {
+                      "name":  "aks-secure-baseline",
+                      "displayName":  "AKS Secure Baseline",
+                      "category":  "Containers",
+                      "description":  "Private AKS cluster with Azure CNI overlay + Cilium, Azure RBAC, workload identity, a Premium registry with AcrPull, and Container Insights.",
+                      "what":  "A private AKS cluster running Azure CNI overlay with the Cilium dataplane and network policy, local accounts disabled, Entra/Azure-RBAC authentication, OIDC + workload identity, the Key Vault secrets provider, and Container Insights. A system-assigned kubelet identity is granted AcrPull on a Premium Azure Container Registry.",
+                      "why":  "Hand-rolled Kubernetes security drifts quickly. This codifies the Microsoft AKS secure-baseline guidance â€” private API server, no local accounts, managed identity image pulls, and workload identity â€” so every cluster starts compliant.",
+                      "potentialUseCases":  [
+                                                "Standardized landing zone for microservices platforms",
+                                                "Regulated container workloads needing a private API server",
+                                                "Multi-team cluster with Azure RBAC namespace isolation",
+                                                "Workload-identity-based access to Key Vault, SQL, and storage"
+                                            ],
+                      "industries":  [
+                                         "IT Services \u0026 Business Advisory",
+                                         "At scale SW, data \u0026 platforms",
+                                         "Banking",
+                                         "Capital Markets",
+                                         "Insurance",
+                                         "Telecommunications",
+                                         "Media \u0026 Entertainment",
+                                         "Retailers",
+                                         "Automotive",
+                                         "Discrete Manufacturing"
+                                     ],
+                      "compliance":  [
+                                         "Baseline",
+                                         "PCI-DSS",
+                                         "SOC 2",
+                                         "HITRUST",
+                                         "CMMC"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "System node pool spread across availability zones (prod)",
+                                                                  "Standard tier control plane with uptime SLA in prod",
+                                                                  "Cluster autoscaler absorbs load spikes"
+                                                              ],
+                                              "security":  [
+                                                               "Private API server with no public endpoint",
+                                                               "Local accounts disabled; Entra + Azure RBAC only",
+                                                               "Workload identity (OIDC) instead of long-lived secrets",
+                                                               "Image pulls via managed identity AcrPull, no registry credentials",
+                                                               "Cilium network policy enforces pod-to-pod segmentation"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Free control plane tier and single small node in dev",
+                                                                       "Autoscaler scales the node pool to demand",
+                                                                       "AzureLinux nodes reduce per-node overhead"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Container Insights streams to Log Analytics",
+                                                                            "Key Vault secrets provider with rotation enabled",
+                                                                            "Managed cluster upgrades with surge settings"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Cilium eBPF dataplane for high-throughput networking",
+                                                                            "Overlay networking conserves VNet address space"
+                                                                        ]
+                                          },
+                      "path":  "aks-secure-baseline",
+                      "readme":  "catalog/aks-secure-baseline/README.md",
+                      "template":  "catalog/aks-secure-baseline/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  4,
+                      "costProfile":  "Prod profile: Standard tier control plane, 3x D4s_v5 nodes, Premium ACR."
+                  },
+                  {
+                      "name":  "api-management-gateway",
+                      "displayName":  "API Gateway Landing Zone",
+                      "category":  "Web \u0026 API",
+                      "description":  "VNet-integrated API Management fronting a private App Service backend, with a rate-limited product, App Insights logging, and a published API.",
+                      "what":  "An API Management service deployed in External VNet mode with a hardened subnet NSG, fronting a private App Service backend reachable only through the gateway over the VNet. A published product applies a rate-limit policy, subscriptions gate access, and gateway telemetry flows to Application Insights.",
+                      "why":  "Enterprises expose dozens of backend services and need one governed, observable, throttled entry point rather than bespoke per-app gateways. This establishes the API platform with VNet isolation, policy, and metering as first-class concerns.",
+                      "potentialUseCases":  [
+                                                "Central API platform for internal and partner APIs",
+                                                "Monetized or quota-limited public API program",
+                                                "Facade and versioning layer in front of legacy services",
+                                                "Policy enforcement (auth, rate limit, transformation) at the edge"
+                                            ],
+                      "industries":  [
+                                         "IT Services \u0026 Business Advisory",
+                                         "Other Professional Services",
+                                         "Banking",
+                                         "Insurance",
+                                         "Capital Markets",
+                                         "Telecommunications",
+                                         "Retailers",
+                                         "Transport \u0026 Travel",
+                                         "Central, Federal and Regional Government",
+                                         "At scale SW, data \u0026 platforms"
+                                     ],
+                      "compliance":  [
+                                         "Baseline",
+                                         "PCI-DSS",
+                                         "SOC 2",
+                                         "GDPR"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Premium APIM with multiple scale units in prod",
+                                                                  "Zone-redundant backend plan in prod"
+                                                              ],
+                                              "security":  [
+                                                               "Backend App Service has public access disabled; only APIM reaches it",
+                                                               "APIM injected into a VNet with a least-privilege NSG",
+                                                               "Subscription-gated products with approval required",
+                                                               "HTTPS-only protocols"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Developer SKU and P0v3 backend in dev",
+                                                                       "Capacity scaled per environment"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Gateway telemetry to Application Insights and Log Analytics",
+                                                                            "Policy and product defined as code"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Rate-limit policy protects backends from overload",
+                                                                            "APIM caching and scale units tune throughput"
+                                                                        ]
+                                          },
+                      "path":  "api-management-gateway",
+                      "readme":  "catalog/api-management-gateway/README.md",
+                      "template":  "catalog/api-management-gateway/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  2,
+                      "costProfile":  "Prod profile: Premium APIM x2 units, P1v3 x3 backend."
+                  },
+                  {
+                      "name":  "avd-hostpool",
+                      "displayName":  "Azure Virtual Desktop Landing Zone",
+                      "category":  "End-User Compute",
+                      "description":  "A pooled host pool, desktop application group, workspace, and autoscaling plan with diagnostics - the control plane for secure, cost-managed remote desktops.",
+                      "what":  "The Azure Virtual Desktop control plane: a pooled host pool (breadth-first load balancing, start-VM-on-connect, hardened RDP properties that block clipboard/printer/drive redirection), a Desktop application group, a workspace exposing it to users, and an optional autoscaling plan that ramps capacity up for business hours and stops idle hosts off-peak. Host pool diagnostics flow to Log Analytics.",
+                      "why":  "Organizations need secure, centrally governed remote desktops for contractors, BYOD, regulated data access, and burst workforces - without shipping data to endpoints. This establishes the AVD control plane and autoscaling so session hosts can be joined into a governed, observable, cost-managed pool.",
+                      "potentialUseCases":  [
+                                                "Secure remote access for contractors and third parties",
+                                                "Regulated data access where data must stay in Azure",
+                                                "Seasonal or burst workforce desktop provisioning",
+                                                "BYOD / unmanaged-device access to corporate apps"
+                                            ],
+                      "industries":  [
+                                         "Banking",
+                                         "Capital Markets",
+                                         "Insurance",
+                                         "Health Provider",
+                                         "Health Payor",
+                                         "Central, Federal and Regional Government",
+                                         "Defense",
+                                         "Higher Education",
+                                         "Other Professional Services",
+                                         "IT Services \u0026 Business Advisory",
+                                         "Retailers",
+                                         "Process Manufacturing"
+                                     ],
+                      "compliance":  [
+                                         "Baseline",
+                                         "HIPAA",
+                                         "HITRUST",
+                                         "FedRAMP",
+                                         "SOC 2",
+                                         "GDPR",
+                                         "CMMC"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Pooled host pool with breadth-first load balancing across hosts",
+                                                                  "Workspace + app group decoupled from session host lifecycle"
+                                                              ],
+                                              "security":  [
+                                                               "Hardened RDP properties block clipboard, printer, and drive redirection",
+                                                               "Data stays in Azure; endpoints receive pixels only",
+                                                               "Host pool audit logs to Log Analytics"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Autoscaling plan ramps hosts for business hours and stops idle hosts off-peak",
+                                                                       "Start-VM-on-connect avoids paying for unused hosts",
+                                                                       "Scaling plan disabled in dev to keep costs minimal"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Host pool diagnostics and connection logs centralized in Log Analytics",
+                                                                            "Control plane defined as code and versioned"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Session limit tuned per host to balance density and experience",
+                                                                            "Breadth-first balancing spreads load during peak"
+                                                                        ]
+                                          },
+                      "path":  "avd-hostpool",
+                      "readme":  "catalog/avd-hostpool/README.md",
+                      "template":  "catalog/avd-hostpool/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  2,
+                      "costProfile":  "AVD control plane is free; cost is driven by the session host VMs you join (priced separately). Prod profile assumes an autoscaling pool of session hosts."
+                  },
+                  {
+                      "name":  "container-app",
+                      "displayName":  "Container App (serverless containers)",
+                      "category":  "Containers",
+                      "description":  "Azure Container Apps running a container image with HTTP autoscaling. Dev scales to zero; prod keeps a warm, zone-redundant baseline.",
+                      "what":  "Azure Container Apps running any container image behind external HTTPS ingress, with HTTP concurrency autoscaling, a managed identity, and logs streamed to Log Analytics. Dev scales to zero; prod runs a warm, zone-redundant baseline.",
+                      "why":  "When you already have a containerized app, Container Apps gives you serverless scale (including scale-to-zero) and revision-based rollouts without operating Kubernetes. You pay per second of actual usage, which suits spiky or intermittent workloads.",
+                      "potentialUseCases":  [
+                                                "Microservices or event-driven workers that scale with load",
+                                                "A containerized API or background processor with bursty traffic",
+                                                "Cost-sensitive dev/test apps that should idle at near-zero cost",
+                                                "Migrating a Docker Compose app to managed, autoscaling hosting"
+                                            ],
+                      "industries":  [
+                                         "Cross-industry"
+                                     ],
+                      "compliance":  [
+                                         "Baseline"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Zone-redundant Container Apps environment (prod)",
+                                                                  "Warm baseline replicas in prod avoid cold-start failures",
+                                                                  "Managed environment handles rolling revisions and health probes"
+                                                              ],
+                                              "security":  [
+                                                               "System-assigned managed identity for downstream access",
+                                                               "External ingress is HTTPS-only (allowInsecure false)",
+                                                               "No secrets in the image - use Container Apps secrets / Key Vault"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Scale-to-zero in dev (minReplicas 0) - pay only when serving traffic",
+                                                                       "Per-second vCPU and memory billing",
+                                                                       "Right-size cpu/memory per replica to the workload"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Container logs streamed to Log Analytics",
+                                                                            "Revision-based deployments for safe rollouts",
+                                                                            "IaC with dev/prod parameter files"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "HTTP concurrency-based autoscaling",
+                                                                            "Independent per-replica resource sizing",
+                                                                            "Scales out to maxReplicas under load"
+                                                                        ]
+                                          },
+                      "path":  "container-app",
+                      "readme":  "catalog/container-app/README.md",
+                      "template":  "catalog/container-app/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  3,
+                      "costProfile":  "prod"
+                  },
+                  {
+                      "name":  "data-lakehouse",
+                      "displayName":  "Medallion Data Lakehouse",
+                      "category":  "Data \u0026 Analytics",
+                      "description":  "ADLS Gen2 bronze/silver/gold zones, Data Factory with a managed VNet, a secure Databricks workspace, and Key Vault.",
+                      "what":  "An ADLS Gen2 account (hierarchical namespace, shared-key access disabled) with bronze, silver, and gold containers; an Azure Data Factory with a managed virtual network and AutoResolve integration runtime for private ingestion and orchestration; a premium Databricks workspace with secure cluster connectivity (no public IP) for transformation; and a Key Vault for secrets. Data Factory holds a managed identity with Blob Data Contributor on the lake.",
+                      "why":  "Analytics platforms standardize on the medallion pattern to progressively refine data from raw to curated. This template lays down the storage zones, a private orchestration plane, and a governed compute engine so data teams start from a secure, well-structured foundation instead of ad-hoc storage and notebooks.",
+                      "potentialUseCases":  [
+                                                "Enterprise data platform feeding BI and ML",
+                                                "Batch + incremental ingestion from operational systems into a lake",
+                                                "Regulatory reporting datasets curated through gold tables",
+                                                "Feature engineering and model training on Databricks"
+                                            ],
+                      "industries":  [
+                                         "Banking",
+                                         "Capital Markets",
+                                         "Insurance",
+                                         "Health Payor",
+                                         "Health Pharma",
+                                         "Retailers",
+                                         "Consumer Goods",
+                                         "Power \u0026 Utilities",
+                                         "Oil \u0026 Gas",
+                                         "Telecommunications",
+                                         "At scale SW, data \u0026 platforms",
+                                         "Public Finance"
+                                     ],
+                      "compliance":  [
+                                         "Baseline",
+                                         "SOC 2",
+                                         "GDPR",
+                                         "HIPAA",
+                                         "HITRUST",
+                                         "PCI-DSS"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "ZRS lake storage in prod",
+                                                                  "Managed integration runtime auto-resolves region and scale"
+                                                              ],
+                                              "security":  [
+                                                               "Shared-key access disabled; Data Factory uses managed identity",
+                                                               "ADF managed VNet keeps ingestion off the public data plane",
+                                                               "Databricks secure cluster connectivity (no public IP) in prod",
+                                                               "Secrets centralized in Key Vault"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Standard Databricks tier and single-LRS lake in dev",
+                                                                       "Serverless / job clusters scale Databricks compute to workload"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Data Factory diagnostics streamed to Log Analytics",
+                                                                            "Zoned containers make lineage and lifecycle policies explicit"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Hierarchical namespace optimizes analytics file operations",
+                                                                            "Databricks Photon / job clusters tune compute to the stage"
+                                                                        ]
+                                          },
+                      "path":  "data-lakehouse",
+                      "readme":  "catalog/data-lakehouse/README.md",
+                      "template":  "catalog/data-lakehouse/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  4,
+                      "costProfile":  "Prod profile: ZRS lake, premium Databricks, managed-VNet Data Factory."
+                  },
+                  {
+                      "name":  "enterprise-rag",
+                      "displayName":  "Enterprise RAG Platform",
+                      "category":  "AI / GenAI",
+                      "description":  "Keyless retrieval-augmented generation: Azure OpenAI chat + embeddings, AI Search, Cosmos chat history, a blob document store, an orchestrator app, and API Management.",
+                      "what":  "An end-to-end RAG stack. Azure OpenAI hosts a chat and an embedding deployment; Azure AI Search provides hybrid + semantic retrieval with integrated vectorization; documents land in blob storage; chat history persists in serverless Cosmos DB; a Python App Service orchestrates the pattern; and API Management fronts it with subscription keys and policy. Every hop uses managed identity and RBAC - local auth is disabled everywhere.",
+                      "why":  "Teams want grounded, governed generative answers over their own content without standing up keys, secrets, or bespoke glue. This wires the canonical RAG components together with least-privilege identity and a managed API facade so it is auditable and rate-limited from day one.",
+                      "potentialUseCases":  [
+                                                "Internal knowledge assistant grounded in policy and product docs",
+                                                "Customer support copilot over a manual / KB corpus",
+                                                "Contract and claims Q\u0026A with citations",
+                                                "Developer portal for governed access to a shared LLM via APIM"
+                                            ],
+                      "industries":  [
+                                         "IT Services \u0026 Business Advisory",
+                                         "Other Professional Services",
+                                         "Banking",
+                                         "Insurance",
+                                         "Capital Markets",
+                                         "Health Provider",
+                                         "Health Pharma",
+                                         "Higher Education",
+                                         "Telecommunications",
+                                         "Central, Federal and Regional Government"
+                                     ],
+                      "compliance":  [
+                                         "Baseline",
+                                         "SOC 2",
+                                         "GDPR",
+                                         "HIPAA",
+                                         "HITRUST"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Zone-redundant App Service and ZRS storage in prod",
+                                                                  "Cosmos automatic failover enabled in prod",
+                                                                  "Search replicas scaled for query availability"
+                                                              ],
+                                              "security":  [
+                                                               "Local auth disabled on OpenAI, Search, and Cosmos",
+                                                               "Least-privilege RBAC: app and search identities get only the roles they need",
+                                                               "API Management enforces subscription keys and policy",
+                                                               "Cosmos data-plane access via SQL RBAC, no keys"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Serverless Cosmos bills per request",
+                                                                       "Basic Search + P0v3 + Developer APIM in dev",
+                                                                       "Token capacity sized per environment"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Application Insights + Log Analytics across the stack",
+                                                                            "Single template captures the whole RAG topology"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Semantic + vector hybrid retrieval improves answer quality",
+                                                                            "Embedding and chat deployments scaled independently"
+                                                                        ]
+                                          },
+                      "path":  "enterprise-rag",
+                      "readme":  "catalog/enterprise-rag/README.md",
+                      "template":  "catalog/enterprise-rag/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  6,
+                      "costProfile":  "Prod profile: gpt-4o-mini @60K TPM, Standard Search x3, P1v3 x3, Premium APIM."
+                  },
+                  {
+                      "name":  "event-streaming-analytics",
+                      "displayName":  "Real-Time Event Streaming \u0026 Analytics",
+                      "category":  "Data \u0026 Analytics",
+                      "description":  "Event Hubs ingestion, a Stream Analytics job shaping events to a curated lake, a Functions hot-path consumer, and Cosmos DB serving - all keyless.",
+                      "what":  "Devices and apps publish to an Event Hubs namespace. A Stream Analytics job reads one consumer group, applies a windowed transformation, and lands curated Parquet in an ADLS-style container. An isolated-worker Functions app reads a second consumer group for the low-latency hot path and writes to a serverless Cosmos DB serving store. Event Hubs, Stream Analytics, and Functions all authenticate with managed identity (local auth disabled).",
+                      "why":  "Telemetry, clickstream, and IoT scenarios need both a cheap durable cold path and a low-latency hot path off the same ingestion stream. This separates concerns with managed services so there are no Kafka clusters or polling jobs to operate, and no SAS keys to rotate.",
+                      "potentialUseCases":  [
+                                                "IoT / fleet telemetry ingestion and curation",
+                                                "Clickstream and product analytics pipeline",
+                                                "Fraud / anomaly hot path with a durable replay log",
+                                                "Operational metrics fan-out to a serving store and a lake"
+                                            ],
+                      "industries":  [
+                                         "Automotive",
+                                         "Discrete Manufacturing",
+                                         "Process Manufacturing",
+                                         "Power \u0026 Utilities",
+                                         "Oil \u0026 Gas",
+                                         "Mining",
+                                         "Water \u0026 Sewage",
+                                         "Transport \u0026 Travel",
+                                         "Cities, Transportation \u0026 Infrastructure",
+                                         "Retailers",
+                                         "Telecommunications",
+                                         "Gaming"
+                                     ],
+                      "compliance":  [
+                                         "Baseline",
+                                         "SOC 2",
+                                         "GDPR"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Zone-redundant Event Hubs, storage, and Cosmos in prod",
+                                                                  "Two consumer groups isolate hot and cold consumers",
+                                                                  "Configurable message retention enables replay"
+                                                              ],
+                                              "security":  [
+                                                               "Local auth disabled on Event Hubs; all consumers use managed identity",
+                                                               "Identity-based Functions host storage (no connection strings)",
+                                                               "Cosmos data-plane access via SQL RBAC"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Standard Event Hubs auto-inflate and Y1 consumption Functions in dev",
+                                                                       "Serverless Cosmos bills per request",
+                                                                       "Streaming units sized per environment"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Application Insights + Log Analytics on the Functions app",
+                                                                            "Declarative Stream Analytics query and bindings in IaC"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Partitioned event hub scales consumer parallelism",
+                                                                            "Elastic Premium Functions scale out for the hot path"
+                                                                        ]
+                                          },
+                      "path":  "event-streaming-analytics",
+                      "readme":  "catalog/event-streaming-analytics/README.md",
+                      "template":  "catalog/event-streaming-analytics/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  5,
+                      "costProfile":  "Prod profile: Premium Event Hubs, 6 SU Stream Analytics, EP1 Functions."
+                  },
+                  {
+                      "name":  "hub-spoke-network",
+                      "displayName":  "Hub-and-Spoke Network (Firewall + Bastion)",
+                      "category":  "Networking",
+                      "description":  "Enterprise hub-and-spoke topology with Azure Firewall, Bastion, forced tunneling, and a peered workload spoke.",
+                      "what":  "A hub virtual network hosting a zone-redundant Azure Firewall (with firewall policy), Azure Bastion, and a gateway subnet, peered to a workload spoke whose default route (0.0.0.0/0) is forced through the firewall. Diagnostics flow to Log Analytics.",
+                      "why":  "Centralized egress inspection, no public IPs on workloads, and a single audited path to the internet are baseline requirements for regulated landing zones. This is the connectivity substrate every other workload peers into.",
+                      "potentialUseCases":  [
+                                                "Connectivity subscription for an Azure landing zone",
+                                                "Forced-tunnel egress inspection for regulated workloads (PCI, HIPAA, IRAP)",
+                                                "Secure jump-box access to private VMs via Bastion without public IPs",
+                                                "Central firewall policy shared across multiple spokes"
+                                            ],
+                      "industries":  [
+                                         "Banking",
+                                         "Capital Markets",
+                                         "Insurance",
+                                         "Health Payor",
+                                         "Health Provider",
+                                         "Central, Federal and Regional Government",
+                                         "Defense",
+                                         "Power \u0026 Utilities",
+                                         "Oil \u0026 Gas",
+                                         "Telecommunications"
+                                     ],
+                      "compliance":  [
+                                         "Baseline",
+                                         "PCI-DSS",
+                                         "HIPAA",
+                                         "HITRUST",
+                                         "FedRAMP",
+                                         "IRAP"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Azure Firewall and public IPs deployed across availability zones",
+                                                                  "Spoke peering survives independent workload redeploys"
+                                                              ],
+                                              "security":  [
+                                                               "All spoke egress forced through Azure Firewall for inspection",
+                                                               "NSG denies inbound internet to the workload subnet",
+                                                               "Bastion removes the need for public IPs on workloads",
+                                                               "Premium firewall tier (prod) enables TLS inspection and IDPS"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Bastion is optional and disabled in dev",
+                                                                       "Standard firewall tier in dev, Premium only in prod"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Firewall logs and metrics streamed to Log Analytics",
+                                                                            "Firewall rules centralized in a reusable firewall policy"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Zone-redundant firewall scales automatically with throughput",
+                                                                            "Spoke subnets sized with CIDR functions to avoid overlap"
+                                                                        ]
+                                          },
+                      "path":  "hub-spoke-network",
+                      "readme":  "catalog/hub-spoke-network/README.md",
+                      "template":  "catalog/hub-spoke-network/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  4,
+                      "costProfile":  "Resilient hub with Premium firewall and Bastion (prod profile)."
+                  },
+                  {
+                      "name":  "integration-workflow",
+                      "displayName":  "Enterprise Integration (Logic Apps Standard)",
+                      "category":  "Integration",
+                      "description":  "iPaaS on Logic Apps Standard with a Service Bus messaging backbone, keyless connectors via managed identity, and App Insights monitoring.",
+                      "what":  "A Logic Apps Standard plan hosting stateful and stateless workflows, paired with a Service Bus namespace (inbound/outbound queues with dead-lettering). The Logic App authenticates to Service Bus with its managed identity (local auth disabled), and workflow telemetry flows to Application Insights.",
+                      "why":  "Integration teams stitch SaaS, on-prem, and Azure systems together and need a managed, versionable workflow runtime with durable messaging - without standing up BizTalk or bespoke middleware. Logic Apps Standard plus Service Bus delivers that with identity-based, audited connectivity.",
+                      "potentialUseCases":  [
+                                                "B2B / EDI message processing and routing",
+                                                "SaaS-to-line-of-business system synchronization",
+                                                "Order, invoice, or claim orchestration across systems",
+                                                "Event-driven enterprise application integration (EAI)"
+                                            ],
+                      "industries":  [
+                                         "Other Professional Services",
+                                         "IT Services \u0026 Business Advisory",
+                                         "Banking",
+                                         "Insurance",
+                                         "Health Payor",
+                                         "Health Provider",
+                                         "Retailers",
+                                         "Consumer Goods",
+                                         "Process Manufacturing",
+                                         "Discrete Manufacturing",
+                                         "Transport \u0026 Travel",
+                                         "Central, Federal and Regional Government"
+                                     ],
+                      "compliance":  [
+                                         "Baseline",
+                                         "SOC 2",
+                                         "GDPR",
+                                         "HIPAA"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Dead-lettering on integration queues prevents message loss",
+                                                                  "Premium Service Bus with zone redundancy in prod",
+                                                                  "Stateful workflows checkpoint progress durably"
+                                                              ],
+                                              "security":  [
+                                                               "Service Bus local auth disabled; connector uses managed identity",
+                                                               "HTTPS-only, TLS 1.2 runtime",
+                                                               "No public blob access on the runtime storage account"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "WS1 plan and Standard Service Bus in dev",
+                                                                       "Elastic Workflow Standard plan scales with workflow load"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Workflow run history and metrics in Application Insights / Log Analytics",
+                                                                            "Workflows and infrastructure versioned together as code"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Decoupled queues smooth bursty integration traffic",
+                                                                            "Plan SKU scales for higher workflow concurrency"
+                                                                        ]
+                                          },
+                      "path":  "integration-workflow",
+                      "readme":  "catalog/integration-workflow/README.md",
+                      "template":  "catalog/integration-workflow/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  3,
+                      "costProfile":  "Prod profile: WS3 Workflow Standard plan, Premium Service Bus."
+                  },
+                  {
+                      "name":  "landing-zone-ai",
+                      "displayName":  "AI / GenAI Landing Zone",
+                      "category":  "Foundation",
+                      "description":  "Shared foundation for generative-AI workloads: Azure AI Services (Foundry), Azure AI Search, Key Vault, hardened Storage, and Log Analytics - all keyless and managed-identity ready.",
+                      "what":  "A platform foundation purpose-built for GenAI: an Azure AI Services (Foundry) account for models, an Azure AI Search service for retrieval/RAG, plus the shared Key Vault, Storage, and Log Analytics every AI app needs. Local/key auth is disabled - access is via Microsoft Entra and managed identities.",
+                      "why":  "GenAI apps (RAG chatbots, agents, copilots) repeatedly need the same backbone: a models endpoint, a vector/keyword index, durable storage for documents, a place for secrets, and centralized telemetry. Standing this up once as a governed, keyless landing zone lets every AI use case plug in without re-solving identity, networking, and observability.",
+                      "potentialUseCases":  [
+                                                "Foundation for RAG chat apps and AI agents that build on top",
+                                                "Shared AI platform for several app teams in a business unit",
+                                                "Hackathon / lab environment for GenAI prototyping with guardrails",
+                                                "Base you extend with private endpoints + CMK for regulated AI workloads"
+                                            ],
+                      "industries":  [
+                                         "Cross-industry",
+                                         "Banking",
+                                         "Insurance",
+                                         "Health Provider",
+                                         "Health Pharma",
+                                         "Process Manufacturing",
+                                         "Discrete Manufacturing",
+                                         "Automotive",
+                                         "Retailers",
+                                         "Central, Federal and Regional Government"
+                                     ],
+                      "compliance":  [
+                                         "Baseline"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Scaled, SLA-backed Azure AI Search in prod (replicas \u003e= 3)",
+                                                                  "Zone-redundant storage option for document/grounding data",
+                                                                  "Regional Log Analytics for durable AI telemetry"
+                                                              ],
+                                              "security":  [
+                                                               "Keyless: local auth disabled on AI Services and Search (Entra + managed identity only)",
+                                                               "Key Vault (RBAC, soft delete) for any required secrets",
+                                                               "Custom subdomain on AI Services enables token-based auth"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Basic search + LRS storage in dev; scale up only for prod",
+                                                                       "Pay-as-you-go model consumption on AI Services",
+                                                                       "Single shared foundation amortized across many AI workloads"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Centralized telemetry for models, search, and storage",
+                                                                            "IaC with dev/prod parameter files",
+                                                                            "Managed identities remove credential rotation toil"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Search replicas/partitions tuned per environment",
+                                                                            "Semantic ranking available for higher-quality retrieval",
+                                                                            "Regional co-location of models, search, and storage"
+                                                                        ]
+                                          },
+                      "path":  "landing-zone/ai",
+                      "readme":  "catalog/landing-zone/ai/README.md",
+                      "template":  "catalog/landing-zone/ai/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  3,
+                      "costProfile":  "prod"
+                  },
+                  {
+                      "name":  "landing-zone-core",
+                      "displayName":  "Core Landing Zone (lite)",
+                      "category":  "Foundation",
+                      "description":  "Foundational resource-group scaffolding: hub VNet + NSG, Log Analytics, hardened Storage, and Key Vault. The shared base other workloads build on.",
+                      "what":  "A minimal but production-shaped platform foundation: a hub virtual network with a default subnet and NSG, a Log Analytics workspace for centralized diagnostics, a hardened Storage account, and an RBAC-enabled Key Vault.",
+                      "why":  "Every workload needs the same handful of shared services - somewhere to send logs, store state, and keep secrets, inside a governed network. Standing these up once, consistently and as code, prevents snowflake environments and gives every downstream use case a known-good base.",
+                      "potentialUseCases":  [
+                                                "Bootstrapping a demo or MVP subscription before deploying workloads",
+                                                "A shared services resource group that multiple app teams build on",
+                                                "Teaching the landing-zone concept (logging, secrets, network segmentation) in a lab",
+                                                "A starting point you extend with private endpoints and policy for regulated workloads"
+                                            ],
+                      "industries":  [
+                                         "Cross-industry"
+                                     ],
+                      "compliance":  [
+                                         "Baseline"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Regional Log Analytics workspace for durable diagnostics",
+                                                                  "Storage account defaults are durable (LRS dev / ZRS or GRS prod)",
+                                                                  "Network segmentation via dedicated subnets and NSG"
+                                                              ],
+                                              "security":  [
+                                                               "Key Vault with RBAC authorization and soft delete",
+                                                               "Storage hardened: TLS 1.2, HTTPS-only, no public blob access",
+                                                               "NSG governs subnet traffic; private workloads deploy into the hub VNet"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Mostly consumption-based (logs, storage, secret ops) - pay for what you use",
+                                                                       "VNet and NSG incur no standing charge",
+                                                                       "Log Analytics retention tuned to 30 days by default"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Single IaC entry point for the shared platform",
+                                                                            "Consistent tagging (Environment, Owner)",
+                                                                            "Centralized logging endpoint for all workloads"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Workspace-based telemetry scales without capacity planning",
+                                                                            "Storage and Key Vault are fully managed PaaS"
+                                                                        ]
+                                          },
+                      "path":  "landing-zone/core",
+                      "readme":  "catalog/landing-zone/core/README.md",
+                      "template":  "catalog/landing-zone/core/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  3,
+                      "costProfile":  "dev"
+                  },
+                  {
+                      "name":  "microservices-aca",
+                      "displayName":  "Event-Driven Microservices (Container Apps + Dapr)",
+                      "category":  "Containers",
+                      "description":  "Azure Container Apps with Dapr pub/sub over Service Bus, a Cosmos Dapr state store, an external API and an internal worker, scaled by KEDA - all keyless.",
+                      "what":  "A Container Apps environment with Dapr enabled and two services: an externally-exposed API and an internal worker. Dapr components wire a Cosmos DB state store and a Service Bus topic pub/sub, both authenticated with a shared user-assigned managed identity. The worker scales on Service Bus queue depth via a keyless KEDA rule. Service Bus and Cosmos have local auth disabled.",
+                      "why":  "Microservices teams want async messaging, durable state, and event-driven autoscaling without running Kubernetes or managing broker credentials. Container Apps + Dapr provides the building-block APIs while Service Bus and Cosmos supply the backbone - and managed identity removes every connection string.",
+                      "potentialUseCases":  [
+                                                "Order processing / saga workflows with a worker pool",
+                                                "Decoupled command and event services behind a single gateway",
+                                                "Burst-scaling background processing off a queue",
+                                                "Polyglot microservices needing portable state and pub/sub"
+                                            ],
+                      "industries":  [
+                                         "Retailers",
+                                         "Consumer Goods",
+                                         "Transport \u0026 Travel",
+                                         "Media \u0026 Entertainment",
+                                         "Gaming",
+                                         "Banking",
+                                         "Insurance",
+                                         "Telecommunications",
+                                         "IT Services \u0026 Business Advisory",
+                                         "At scale SW, data \u0026 platforms"
+                                     ],
+                      "compliance":  [
+                                         "Baseline",
+                                         "SOC 2",
+                                         "PCI-DSS",
+                                         "GDPR"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Zone-redundant environment and Premium Service Bus in prod",
+                                                                  "Dead-lettering on the worker subscription",
+                                                                  "Multiple replicas keep the worker warm in prod"
+                                                              ],
+                                              "security":  [
+                                                               "Local auth disabled on Service Bus and Cosmos",
+                                                               "Shared user-assigned identity with least-privilege data-plane roles",
+                                                               "External ingress is HTTPS-only; worker has no ingress"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Scale-to-zero API and Standard Service Bus in dev",
+                                                                       "KEDA scales the worker to queue depth",
+                                                                       "Serverless Cosmos bills per request"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Dapr telemetry and container logs flow to App Insights / Log Analytics",
+                                                                            "Dapr decouples app code from broker and store specifics"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Event-driven autoscaling matches compute to backlog",
+                                                                            "Concurrency-based HTTP scaling on the API"
+                                                                        ]
+                                          },
+                      "path":  "microservices-aca",
+                      "readme":  "catalog/microservices-aca/README.md",
+                      "template":  "catalog/microservices-aca/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  4,
+                      "costProfile":  "Prod profile: zone-redundant environment, Premium Service Bus, warm replicas."
+                  },
+                  {
+                      "name":  "multiregion-web",
+                      "displayName":  "Active-Active Multi-Region Web",
+                      "category":  "Web \u0026 API",
+                      "description":  "Azure Front Door Premium + WAF routing to App Service backends in two regions, backed by multi-region Cosmos DB with automatic failover.",
+                      "what":  "A global Front Door profile with a managed WAF fronts two regional App Service deployments. Front Door health-probes both origins and load-balances across them; each web app accepts traffic only from Front Door (service tag + x-azure-fdid header). Cosmos DB replicates across both regions with automatic failover, optionally with multi-region writes.",
+                      "why":  "Business-critical web workloads need to survive a regional outage and serve users with low latency worldwide. This template delivers an active-active footprint with a single global anycast entry point, automated failover, and origin lockdown - the standard mission-critical web pattern.",
+                      "potentialUseCases":  [
+                                                "Mission-critical customer portal with an availability SLO",
+                                                "Global e-commerce storefront needing low latency per geography",
+                                                "Regulated workload requiring regional resilience and DR",
+                                                "Public API needing global WAF and DDoS protection"
+                                            ],
+                      "industries":  [
+                                         "Banking",
+                                         "Capital Markets",
+                                         "Insurance",
+                                         "Retailers",
+                                         "Consumer Goods",
+                                         "Media \u0026 Entertainment",
+                                         "Gaming",
+                                         "Transport \u0026 Travel",
+                                         "Telecommunications",
+                                         "Central, Federal and Regional Government",
+                                         "Health Provider"
+                                     ],
+                      "compliance":  [
+                                         "Baseline",
+                                         "PCI-DSS",
+                                         "SOC 2",
+                                         "GDPR",
+                                         "HIPAA"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Active-active App Service in two regions behind Front Door",
+                                                                  "Cosmos DB multi-region with automatic failover",
+                                                                  "Health-probe-driven origin failover",
+                                                                  "Zone-redundant plans within each region (prod)"
+                                                              ],
+                                              "security":  [
+                                                               "Front Door managed WAF (DRS 2.1) in Prevention mode",
+                                                               "Origins locked to Front Door via service tag + x-azure-fdid header",
+                                                               "HTTPS-only end to end with HTTP-to-HTTPS redirect",
+                                                               "Cosmos local auth disabled"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Standard Front Door and single-instance P0v3 in dev",
+                                                                       "Single-write Cosmos in dev; multi-write only in prod"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Shared Application Insights / Log Analytics across regions",
+                                                                            "Region surfaced to the app via configuration for observability"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Anycast edge routing sends users to the nearest healthy origin",
+                                                                            "Front Door caching and connection offload at the edge"
+                                                                        ]
+                                          },
+                      "path":  "multiregion-web",
+                      "readme":  "catalog/multiregion-web/README.md",
+                      "template":  "catalog/multiregion-web/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  4,
+                      "costProfile":  "Prod profile: Premium Front Door, P1v3 x3 in two regions, multi-region Cosmos."
+                  },
+                  {
+                      "name":  "secure-web-app",
+                      "displayName":  "Secure Web App Baseline (WAF + Private Data)",
+                      "category":  "Web \u0026 API",
+                      "description":  "Network-hardened App Service with private SQL and Key Vault behind private endpoints, fronted by Application Gateway with WAF.",
+                      "what":  "A Linux App Service integrated into a VNet, talking to Azure SQL and Key Vault exclusively over private endpoints with private DNS. The only public ingress is an Application Gateway running an OWASP WAF policy in Prevention mode. Connectivity to SQL is passwordless via managed identity.",
+                      "why":  "Most regulated web workloads cannot expose data services to the public internet or accept unfiltered inbound traffic. This baseline closes both gaps while keeping a passwordless, observable, zone-redundant footprint.",
+                      "potentialUseCases":  [
+                                                "Customer-facing portal handling regulated or PII data",
+                                                "Internal line-of-business app reachable only through WAF",
+                                                "Lift-and-shift of a public web app into a private-networking posture",
+                                                "PCI-scoped checkout or account-management front end"
+                                            ],
+                      "industries":  [
+                                         "Banking",
+                                         "Insurance",
+                                         "Capital Markets",
+                                         "Health Provider",
+                                         "Health Payor",
+                                         "Retailers",
+                                         "Consumer Goods",
+                                         "Higher Education",
+                                         "Central, Federal and Regional Government",
+                                         "Public Finance"
+                                     ],
+                      "compliance":  [
+                                         "Baseline",
+                                         "PCI-DSS",
+                                         "HIPAA",
+                                         "HITRUST",
+                                         "SOC 2",
+                                         "GDPR"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Zone-redundant App Service plan and Application Gateway in prod",
+                                                                  "Zone-redundant SQL database in prod",
+                                                                  "Health probe drives gateway backend health"
+                                                              ],
+                                              "security":  [
+                                                               "SQL and Key Vault reachable only via private endpoints (public access disabled)",
+                                                               "Passwordless SQL access via managed identity and Entra-only auth",
+                                                               "OWASP 3.2 WAF in Prevention mode is the sole public entry point",
+                                                               "HTTPS-only, TLS 1.2 minimum, FTPS disabled"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Serverless SQL and P0v3 plan in dev",
+                                                                       "Application Gateway autoscales between a floor and ceiling"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Application Insights and Log Analytics wired in",
+                                                                            "Secrets referenced from Key Vault rather than stored in config"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "HTTP/2 enabled and Always On for warm instances",
+                                                                            "Gateway autoscale matches capacity to load"
+                                                                        ]
+                                          },
+                      "path":  "secure-web-app",
+                      "readme":  "catalog/secure-web-app/README.md",
+                      "template":  "catalog/secure-web-app/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  5,
+                      "costProfile":  "Zone-redundant prod profile: P1v3 x3, GP_Gen5_2 SQL, WAF_v2 gateway."
+                  },
+                  {
+                      "name":  "sql-data-api",
+                      "displayName":  "SQL Data API (App Service + Azure SQL)",
+                      "category":  "Web \u0026 API",
+                      "description":  "A .NET API on App Service backed by Azure SQL Database, using passwordless managed-identity auth and Entra-only SQL administration. Dev runs serverless SQL; prod runs zone-redundant compute and database.",
+                      "what":  "A .NET API on App Service backed by Azure SQL Database. The app authenticates to SQL passwordlessly via its managed identity, and the SQL server uses Microsoft Entra-only authentication. Dev uses serverless auto-pause SQL; prod uses zone-redundant compute and database.",
+                      "why":  "Most business apps are a stateless API in front of a relational database. Doing it passwordlessly (managed identity + Entra-only SQL) removes the most common security failure - leaked connection strings - while the dev/prod split keeps lab costs low and production resilient.",
+                      "potentialUseCases":  [
+                                                "A CRUD/business API over relational data (orders, customers, inventory)",
+                                                "Modernizing a legacy app\u0027s data tier to managed Azure SQL",
+                                                "Demonstrating passwordless, Entra-only database access patterns",
+                                                "A reporting or back-office API that needs transactional consistency"
+                                            ],
+                      "industries":  [
+                                         "Cross-industry"
+                                     ],
+                      "compliance":  [
+                                         "Baseline"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Zone-redundant App Service plan and zone-redundant SQL database in prod",
+                                                                  "Azure SQL automated backups with point-in-time restore",
+                                                                  "Health checks evict unhealthy app instances"
+                                                              ],
+                                              "security":  [
+                                                               "Microsoft Entra-only authentication on the SQL server (no SQL logins)",
+                                                               "Passwordless app-to-SQL connection via managed identity",
+                                                               "HTTPS-only, TLS 1.2 minimum on both tiers"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Serverless SQL (auto-pause) in dev",
+                                                                       "Provisioned vCore in prod sized to steady load",
+                                                                       "Scale app capacity to demand; consider reservations for prod"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Telemetry in Application Insights + Log Analytics",
+                                                                            "IaC with dev/prod parameter files",
+                                                                            "Entra admin managed as a group object id"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "vCore-based SQL scaling",
+                                                                            "Premium v3 app compute in prod",
+                                                                            "Connection pooling via managed identity tokens"
+                                                                        ]
+                                          },
+                      "path":  "sql-data-api",
+                      "readme":  "catalog/sql-data-api/README.md",
+                      "template":  "catalog/sql-data-api/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  3,
+                      "costProfile":  "prod"
+                  },
+                  {
+                      "name":  "web-app",
+                      "displayName":  "Web App (PaaS)",
+                      "category":  "Web \u0026 API",
+                      "description":  "Linux App Service web app with Application Insights and Log Analytics. Dev runs a single Basic instance; prod runs a zone-redundant Premium v3 plan.",
+                      "what":  "A Linux App Service web app running your code (.NET, Node, Python, etc.), with a system-assigned managed identity and built-in Application Insights + Log Analytics telemetry. Dev is a single Basic instance; prod is a zone-redundant Premium v3 plan.",
+                      "why":  "App Service is the fastest way to host a web app or API on Azure without managing servers. Wiring identity, HTTPS hardening, health checks, and monitoring from the start means the same template carries a demo all the way to a resilient production footprint.",
+                      "potentialUseCases":  [
+                                                "Hosting a company website, marketing site, or customer portal",
+                                                "A REST/GraphQL API backing a SPA or mobile app",
+                                                "A line-of-business app that needs HA without container/Kubernetes overhead",
+                                                "A demo or MVP you later scale to production by switching to the prod profile"
+                                            ],
+                      "industries":  [
+                                         "Cross-industry"
+                                     ],
+                      "compliance":  [
+                                         "Baseline"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Zone-redundant App Service plan (prod: P1v3, 3 instances across availability zones)",
+                                                                  "Platform health checks evict unhealthy instances (healthCheckPath)",
+                                                                  "Stateless app tier - scale out horizontally"
+                                                              ],
+                                              "security":  [
+                                                               "System-assigned managed identity (no stored credentials)",
+                                                               "HTTPS-only, TLS 1.2 minimum, FTPS disabled",
+                                                               "Secrets belong in Key Vault referenced via managed identity"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Dev uses Basic B1; prod uses Premium v3",
+                                                                       "Scale capacity to demand; consider reserved instances / savings plan for steady prod load",
+                                                                       "Application Insights sampling to cap ingestion cost"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Centralized logs/metrics in Log Analytics + Application Insights",
+                                                                            "Infrastructure as Code with dev/prod parameter files",
+                                                                            "Health endpoint enables automated probes and alerts"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "HTTP/2 enabled",
+                                                                            "Premium v3 compute for prod throughput",
+                                                                            "Horizontal autoscale-ready (capacity parameter)"
+                                                                        ]
+                                          },
+                      "path":  "web-app",
+                      "readme":  "catalog/web-app/README.md",
+                      "template":  "catalog/web-app/main.bicep",
+                      "hasProd":  true,
+                      "componentCount":  3,
+                      "costProfile":  "prod"
+                  }
+              ]
+}

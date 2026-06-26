@@ -1,0 +1,51 @@
+# SME&C Techlabs
+
+> A catalog of templatized Azure use cases as Infrastructure as Code (Bicep). Every
+> use case is resilient by design, mapped to the Azure Well-Architected Framework,
+> ships with dev and prod parameter profiles, and carries machine-readable cost
+> metadata that a script prices live against the public Azure Retail Prices API.
+
+## How the catalog is organized
+
+- Each use case lives under `catalog/<use-case>/` (landing zones are nested, e.g. `catalog/landing-zone/core`).
+- A use case folder contains: `main.bicep` (deployable template), `parameters/dev.bicepparam` and usually `parameters/prod.bicepparam`, `metadata.json` (WAF + cost + what/why), and `README.md`.
+- Shared building blocks live under `modules/` and are referenced by templates.
+- `metadata.json` is the contract: `what`, `why`, `potentialUseCases`, `category`, `industries`, `compliance`, `wellArchitected` (5 pillars), and `cost.components` (each `fixed` or `usage`).
+
+## Use cases
+
+- [Core Landing Zone](catalog/landing-zone/core/README.md): Log Analytics, hardened Storage, Key Vault, hub VNet + NSG.
+- [AI / GenAI Landing Zone](catalog/landing-zone/ai/README.md): Azure AI Services (Foundry), Azure AI Search, Key Vault, Storage, Log Analytics — keyless.
+- [Web App](catalog/web-app/README.md): Linux App Service + App Insights + Log Analytics; zone-redundant in prod.
+- [Container App](catalog/container-app/README.md): Azure Container Apps with HTTP autoscaling; scale-to-zero in dev.
+- [SQL Data API](catalog/sql-data-api/README.md): App Service + Azure SQL, passwordless managed-identity, Entra-only SQL.
+- [AI Chat](catalog/ai-chat/README.md): Azure OpenAI gpt-4o-mini + App Service + serverless Cosmos DB, keyless.
+
+## Shared modules
+
+- [log-analytics](modules/log-analytics.bicep): Log Analytics workspace.
+- [app-insights](modules/app-insights.bicep): workspace-based Application Insights.
+- [storage-account](modules/storage-account.bicep): hardened StorageV2 (TLS 1.2, no public blob).
+- [key-vault](modules/key-vault.bicep): RBAC-enabled Key Vault with soft delete.
+- [private-endpoint](modules/private-endpoint.bicep): generic private endpoint + DNS zone group (industry hardening overlay).
+
+## Cost estimation
+
+- `tools/Get-CatalogCost.ps1 -UseCase <path>` prices one use case; `-All` rolls up the portfolio TCO.
+- Prices come live from `https://prices.azure.com/api/retail/prices` (public, no auth). Components are `fixed` (committed monthly) or `usage` (illustrative, from assumed monthly quantities).
+
+## Website (gallery)
+
+- `site/` is a static SME&C Techlabs gallery (index.html + assets) that loads `site/catalog.json`.
+- `tools/Build-Catalog.ps1` regenerates `site/catalog.json` from every `metadata.json`.
+- `.github/workflows/pages.yml` builds and publishes the site to GitHub Pages.
+
+## Validation
+
+- `.github/workflows/bicep-validate.yml` builds and lints every `main.bicep`, module, and `.bicepparam` on PR/push.
+- Locally: `az bicep build --file <template>` and `az bicep build-params --file <paramfile>`.
+
+## Tailoring for regulated industries
+
+- Landing zones are the same across industries; regulated differences (HLS/HIPAA-HITRUST, FSI, manufacturing, automotive) come from a hardening overlay: private endpoints, customer-managed keys, diagnostic settings, and Azure Policy — opted into via parameters and the `private-endpoint` module, not by forking templates.
+- `industries` and `compliance` arrays in each `metadata.json` drive the gallery filters.

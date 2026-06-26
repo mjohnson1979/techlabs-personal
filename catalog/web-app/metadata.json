@@ -1,0 +1,78 @@
+{
+  "name": "web-app",
+  "displayName": "Web App (PaaS)",
+  "category": "Web & API",
+  "description": "Linux App Service web app with Application Insights and Log Analytics. Dev runs a single Basic instance; prod runs a zone-redundant Premium v3 plan.",
+  "what": "A Linux App Service web app running your code (.NET, Node, Python, etc.), with a system-assigned managed identity and built-in Application Insights + Log Analytics telemetry. Dev is a single Basic instance; prod is a zone-redundant Premium v3 plan.",
+  "why": "App Service is the fastest way to host a web app or API on Azure without managing servers. Wiring identity, HTTPS hardening, health checks, and monitoring from the start means the same template carries a demo all the way to a resilient production footprint.",
+  "potentialUseCases": [
+    "Hosting a company website, marketing site, or customer portal",
+    "A REST/GraphQL API backing a SPA or mobile app",
+    "A line-of-business app that needs HA without container/Kubernetes overhead",
+    "A demo or MVP you later scale to production by switching to the prod profile"
+  ],
+  "industries": ["Cross-industry"],
+  "compliance": ["Baseline"],
+  "wellArchitected": {
+    "reliability": [
+      "Zone-redundant App Service plan (prod: P1v3, 3 instances across availability zones)",
+      "Platform health checks evict unhealthy instances (healthCheckPath)",
+      "Stateless app tier - scale out horizontally"
+    ],
+    "security": [
+      "System-assigned managed identity (no stored credentials)",
+      "HTTPS-only, TLS 1.2 minimum, FTPS disabled",
+      "Secrets belong in Key Vault referenced via managed identity"
+    ],
+    "costOptimization": [
+      "Dev uses Basic B1; prod uses Premium v3",
+      "Scale capacity to demand; consider reserved instances / savings plan for steady prod load",
+      "Application Insights sampling to cap ingestion cost"
+    ],
+    "operationalExcellence": [
+      "Centralized logs/metrics in Log Analytics + Application Insights",
+      "Infrastructure as Code with dev/prod parameter files",
+      "Health endpoint enables automated probes and alerts"
+    ],
+    "performanceEfficiency": [
+      "HTTP/2 enabled",
+      "Premium v3 compute for prod throughput",
+      "Horizontal autoscale-ready (capacity parameter)"
+    ]
+  },
+  "cost": {
+    "currency": "USD",
+    "region": "eastus",
+    "profile": "prod",
+    "components": [
+      {
+        "name": "App Service plan (P1v3 Linux) x3",
+        "billing": "fixed",
+        "serviceName": "Azure App Service",
+        "armSkuName": "P1v3",
+        "productNameContains": "Linux",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 2190,
+        "notes": "3 instances x 730 hours for zone redundancy."
+      },
+      {
+        "name": "Application Insights ingestion",
+        "billing": "usage",
+        "serviceName": "Azure Monitor",
+        "meterNameContains": "Data Ingestion",
+        "unitOfMeasure": "1 GB",
+        "quantityPerMonth": 10,
+        "notes": "Assumes ~10 GB/month telemetry after sampling."
+      },
+      {
+        "name": "Log Analytics analytics logs",
+        "billing": "usage",
+        "serviceName": "Azure Monitor",
+        "meterNameContains": "Analytics Logs Data Ingestion",
+        "unitOfMeasure": "1 GB",
+        "quantityPerMonth": 5,
+        "notes": "Assumes ~5 GB/month platform logs."
+      }
+    ]
+  }
+}

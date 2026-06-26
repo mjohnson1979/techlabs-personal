@@ -1,0 +1,83 @@
+{
+  "name": "api-management-gateway",
+  "displayName": "API Gateway Landing Zone",
+  "category": "Web & API",
+  "description": "VNet-integrated API Management fronting a private App Service backend, with a rate-limited product, App Insights logging, and a published API.",
+  "what": "An API Management service deployed in External VNet mode with a hardened subnet NSG, fronting a private App Service backend reachable only through the gateway over the VNet. A published product applies a rate-limit policy, subscriptions gate access, and gateway telemetry flows to Application Insights.",
+  "why": "Enterprises expose dozens of backend services and need one governed, observable, throttled entry point rather than bespoke per-app gateways. This establishes the API platform with VNet isolation, policy, and metering as first-class concerns.",
+  "potentialUseCases": [
+    "Central API platform for internal and partner APIs",
+    "Monetized or quota-limited public API program",
+    "Facade and versioning layer in front of legacy services",
+    "Policy enforcement (auth, rate limit, transformation) at the edge"
+  ],
+  "industries": [
+    "IT Services & Business Advisory",
+    "Other Professional Services",
+    "Banking",
+    "Insurance",
+    "Capital Markets",
+    "Telecommunications",
+    "Retailers",
+    "Transport & Travel",
+    "Central, Federal and Regional Government",
+    "At scale SW, data & platforms"
+  ],
+  "compliance": [
+    "Baseline",
+    "PCI-DSS",
+    "SOC 2",
+    "GDPR"
+  ],
+  "wellArchitected": {
+    "reliability": [
+      "Premium APIM with multiple scale units in prod",
+      "Zone-redundant backend plan in prod"
+    ],
+    "security": [
+      "Backend App Service has public access disabled; only APIM reaches it",
+      "APIM injected into a VNet with a least-privilege NSG",
+      "Subscription-gated products with approval required",
+      "HTTPS-only protocols"
+    ],
+    "costOptimization": [
+      "Developer SKU and P0v3 backend in dev",
+      "Capacity scaled per environment"
+    ],
+    "operationalExcellence": [
+      "Gateway telemetry to Application Insights and Log Analytics",
+      "Policy and product defined as code"
+    ],
+    "performanceEfficiency": [
+      "Rate-limit policy protects backends from overload",
+      "APIM caching and scale units tune throughput"
+    ]
+  },
+  "cost": {
+    "currency": "USD",
+    "region": "eastus",
+    "profile": "Prod profile: Premium APIM x2 units, P1v3 x3 backend.",
+    "components": [
+      {
+        "name": "API Management (Premium)",
+        "billing": "fixed",
+        "serviceName": "API Management",
+        "skuNameContains": "Premium",
+        "meterNameContains": "Premium Unit",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 1460,
+        "notes": "Two Premium units x 730 hours."
+      },
+      {
+        "name": "Backend App Service Plan (P1v3 x3)",
+        "billing": "fixed",
+        "serviceName": "Azure App Service",
+        "armSkuName": "P1v3",
+        "meterNameContains": "P1 v3",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 2190,
+        "notes": "Three backend instances."
+      }
+    ]
+  }
+}

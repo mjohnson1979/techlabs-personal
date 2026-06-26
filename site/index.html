@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SME&amp;C Techlabs — Azure Use Case Catalog</title>
+  <meta name="description"
+    content="Templatized Azure use cases as Infrastructure as Code — resilient, Well-Architected, with built-in cost estimation." />
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="brand">
+        <span class="brand-mark">SME&amp;C</span>
+        <span class="brand-name">Techlabs</span>
+      </div>
+      <nav class="header-links">
+        <a href="https://github.com/sebaclem/azure-tech-labs" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://learn.microsoft.com/azure/well-architected/" target="_blank" rel="noopener">Well-Architected</a>
+        <div id="user-menu" class="user-menu" hidden>
+          <button id="user-button" class="user-button" type="button" aria-haspopup="true"
+            aria-expanded="false" aria-label="Account">
+            <span id="user-avatar" class="user-avatar" aria-hidden="true"></span>
+            <span id="user-name" class="user-name"></span>
+            <svg class="user-caret" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+              <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <div id="user-dropdown" class="user-dropdown" role="menu" hidden>
+            <div class="user-card">
+              <span id="user-avatar-lg" class="user-avatar user-avatar-lg" aria-hidden="true"></span>
+              <div class="user-card-text">
+                <div id="user-card-name" class="user-card-name"></div>
+                <div id="user-card-upn" class="user-card-upn"></div>
+              </div>
+            </div>
+            <button id="signout-button" class="signout-button" type="button" role="menuitem">
+              Sign out
+            </button>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <h1>Azure Use Case Catalog</h1>
+      <p class="lede">
+        Templatized Azure use cases as Infrastructure as Code. Every scenario is
+        resilient by design, mapped to the Well-Architected Framework, and ships
+        with a live cost estimate. Pick one, deploy it, and build.
+      </p>
+      <div class="hero-actions">
+        <input id="search" type="search" placeholder="Search use cases…" aria-label="Search use cases" />
+        <span id="result-count" class="result-count"></span>
+      </div>
+    </div>
+  </section>
+
+  <main class="wrap layout">
+    <aside class="filters" aria-label="Filters">
+      <div class="filter-group">
+        <h3>Category</h3>
+        <div id="filter-category" class="filter-options"></div>
+      </div>
+      <div class="filter-group">
+        <h3>Industry</h3>
+        <div id="filter-industry" class="filter-options"></div>
+      </div>
+      <div class="filter-group">
+        <h3>Compliance</h3>
+        <div id="filter-compliance" class="filter-options"></div>
+      </div>
+      <button id="clear-filters" class="clear-btn" type="button">Clear filters</button>
+    </aside>
+
+    <section class="cards" id="cards" aria-live="polite"></section>
+  </main>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal-close" data-close aria-label="Close">&times;</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>SME&amp;C Techlabs — Azure use case catalog. Cost figures are illustrative retail
+        list prices from the Azure Retail Prices API; verify against your agreement.</p>
+    </div>
+  </footer>
+
+  <script src="assets/app.js"></script>
+  <script src="assets/user-menu.js"></script>
+</body>
+
+</html>

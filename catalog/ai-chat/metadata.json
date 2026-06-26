@@ -1,0 +1,98 @@
+{
+  "name": "ai-chat",
+  "displayName": "AI Chat (Azure OpenAI + App Service + Cosmos DB)",
+  "category": "AI / GenAI",
+  "description": "A chat API on App Service that calls an Azure OpenAI gpt-4o-mini deployment and persists conversations in serverless Cosmos DB. All access is keyless via managed identity.",
+  "what": "A chat API on App Service that calls an Azure OpenAI gpt-4o-mini deployment and stores conversation history in serverless Cosmos DB. Access to both OpenAI and Cosmos is keyless via the app's managed identity (local auth disabled). Dev is cheap; prod is zone-redundant with higher model throughput.",
+  "why": "Conversational AI is the most requested GenAI pattern. This wires the three pieces every chatbot needs - a model endpoint, a stateless app tier, and durable conversation storage - with keyless security and pay-per-use billing that matches spiky chat traffic.",
+  "potentialUseCases": [
+    "A customer-support or internal helpdesk chatbot",
+    "A product/document Q&A assistant (extend with retrieval from the AI landing zone)",
+    "A copilot embedded in an existing web app",
+    "A GenAI prototype you harden to production with the prod profile"
+  ],
+  "industries": ["Cross-industry"],
+  "compliance": ["Baseline"],
+  "wellArchitected": {
+    "reliability": [
+      "Zone-redundant App Service plan in prod",
+      "Cosmos DB serverless with Session consistency and automatic failover priority",
+      "Stateless app tier - conversation state lives in Cosmos"
+    ],
+    "security": [
+      "Keyless access: managed identity to Azure OpenAI and Cosmos (local auth disabled)",
+      "TLS 1.2 minimum across all tiers, HTTPS-only app",
+      "Custom subdomain on the OpenAI account for Entra token auth"
+    ],
+    "costOptimization": [
+      "Cosmos serverless - pay per request unit, ideal for spiky chat load",
+      "Pay-as-you-go token billing on the model deployment",
+      "Dev uses Basic app plan and low TPM capacity"
+    ],
+    "operationalExcellence": [
+      "Telemetry in Application Insights + Log Analytics",
+      "Model name/version and TPM capacity are parameters",
+      "IaC with dev/prod parameter files"
+    ],
+    "performanceEfficiency": [
+      "Provisioned TPM capacity tuned per environment",
+      "Cosmos serverless scales throughput automatically",
+      "Premium v3 app compute in prod"
+    ]
+  },
+  "cost": {
+    "currency": "USD",
+    "region": "eastus",
+    "profile": "prod",
+    "components": [
+      {
+        "name": "App Service plan (P1v3 Linux) x3",
+        "billing": "fixed",
+        "serviceName": "Azure App Service",
+        "armSkuName": "P1v3",
+        "productNameContains": "Linux",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 2190,
+        "notes": "3 instances x 730 hours."
+      },
+      {
+        "name": "Azure OpenAI gpt-4o-mini input tokens",
+        "billing": "usage",
+        "serviceName": "Cognitive Services",
+        "productNameContains": "Azure OpenAI",
+        "meterNameContains": "gpt-4o-mini-0718 Input",
+        "unitOfMeasure": "1M",
+        "quantityPerMonth": 20,
+        "notes": "Assumes ~20M input tokens/month. Meter naming varies - verify."
+      },
+      {
+        "name": "Azure OpenAI gpt-4o-mini output tokens",
+        "billing": "usage",
+        "serviceName": "Cognitive Services",
+        "productNameContains": "Azure OpenAI",
+        "meterNameContains": "gpt-4o-mini-0718 Output",
+        "unitOfMeasure": "1M",
+        "quantityPerMonth": 5,
+        "notes": "Assumes ~5M output tokens/month. Meter naming varies - verify."
+      },
+      {
+        "name": "Cosmos DB serverless request units",
+        "billing": "usage",
+        "serviceName": "Azure Cosmos DB",
+        "meterNameContains": "Serverless",
+        "unitOfMeasure": "1M",
+        "quantityPerMonth": 50,
+        "notes": "Assumes ~50M RUs/month."
+      },
+      {
+        "name": "Application Insights ingestion",
+        "billing": "usage",
+        "serviceName": "Azure Monitor",
+        "meterNameContains": "Data Ingestion",
+        "unitOfMeasure": "1 GB",
+        "quantityPerMonth": 10,
+        "notes": "Assumes ~10 GB/month telemetry."
+      }
+    ]
+  }
+}

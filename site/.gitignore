@@ -1,0 +1,11 @@
+# Python virtual environment & caches
+server/.venv/
+**/__pycache__/
+*.pyc
+
+# Local environment configuration (never commit secrets/tenant config)
+server/.env
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db

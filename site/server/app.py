@@ -1,0 +1,205 @@
+"""Techlabs gallery — Entra-authenticated static host.
+
+Serves the static gallery (site/index.html, assets/, catalog.json) only to
+users who have signed in with Microsoft Entra ID. Unauthenticated requests are
+redirected into the OAuth PKCE flow (see entra_auth.py).
+
+Run locally:
+    cd site/server
+    pip install -r requirements.txt
+    # set GALLERY_ENTRA_TENANT_ID (your tenant GUID) — see .env.example
+    uvicorn app:app --host 127.0.0.1 --port 8000
+
+Then browse http://localhost:8000/ and sign in.
+"""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+from fastapi import FastAPI, Cookie, Request, Response
+from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
+
+from entra_auth import (
+    COOKIE_NAME,
+    EntraClient,
+    SessionStore,
+    build_router,
+    finalize_oauth_landing,
+    identity_from_easy_auth,
+)
+
+# Static gallery lives one directory up from this server package.
+SITE_ROOT = Path(__file__).resolve().parent.parent
+SERVER_DIR = Path(__file__).resolve().parent
+SIGNIN_PAGE = SERVER_DIR / "signin.html"
+
+# Tenant GUID restricts sign-in to your organization. "organizations" allows any
+# work/school account; set your tenant GUID for true internal-only access.
+TENANT_ID = os.environ.get("GALLERY_ENTRA_TENANT_ID", "organizations").strip()
+
+# Send Secure cookies + HSTS only when served over HTTPS (e.g. behind a TLS
+# terminating proxy). Defaults to off for local http://localhost.
+HTTPS_ENABLED = os.environ.get("GALLERY_HTTPS", "false").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+)
+
+# When hosted behind Azure App Service Authentication ("Easy Auth"), the
+# platform authenticates every request at the edge and forwards a signed
+# identity in X-MS-CLIENT-PRINCIPAL headers (client copies are stripped by the
+# platform, so they are trustworthy). In this mode the app trusts that identity
+# and the self-hosted OAuth flow is disabled — there is exactly one way in.
+EASY_AUTH_ENABLED = os.environ.get("GALLERY_EASY_AUTH", "false").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+)
+
+# A real tenant GUID (not the "organizations"/"common" placeholders) enables a
+# defence-in-depth check that the signed-in user belongs to our tenant.
+_PLACEHOLDER_TENANTS = {"organizations", "common", "consumers", ""}
+EXPECTED_TENANT_ID = "" if TENANT_ID.lower() in _PLACEHOLDER_TENANTS else TENANT_ID
+
+# Paths that never require authentication.
+PUBLIC_PREFIXES = ("/api/auth/entra/",)
+PUBLIC_PATHS = {"/favicon.ico", "/healthz"}
+
+app = FastAPI(title="Techlabs Gallery (Entra-secured)", docs_url=None, redoc_url=None)
+app.state.session_store = SessionStore()
+app.state.entra_client = EntraClient(tenant_id=TENANT_ID)
+app.state.entra_pkce = {}
+# Mount the /api/auth/entra/* router so the user badge can read whoami/photo and
+# trigger sign-out. Behind Easy Auth the request gate ignores the self-hosted
+# session cookie entirely (it trusts the platform identity headers instead), so
+# the only *effective* way in remains App Service Authentication.
+app.include_router(build_router(secure_cookie=HTTPS_ENABLED or EASY_AUTH_ENABLED))
+
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    """Apply SFI-aligned security headers to every response."""
+    response: Response = await call_next(request)
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; base-uri 'self'; object-src 'none'; "
+        "frame-ancestors 'none'; img-src 'self' data:; style-src 'self'; "
+        "script-src 'self'; connect-src 'self'; font-src 'self'; "
+        "form-action 'self'"
+    )
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = (
+        "geolocation=(), microphone=(), camera=(), usb=(), payment=()"
+    )
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+    response.headers["Cache-Control"] = "no-store"
+    if HTTPS_ENABLED or EASY_AUTH_ENABLED:
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=63072000; includeSubDomains; preload"
+        )
+    return response
+
+
+@app.get("/healthz")
+async def healthz() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+# Sign-in gate assets — served from the server dir and public by design so the
+# unauthenticated sign-in page can style itself and run its button script under
+# the strict CSP (no inline style/script allowed).
+@app.get("/signin.css")
+async def signin_css() -> Response:
+    return FileResponse(SERVER_DIR / "signin.css", media_type="text/css")
+
+
+@app.get("/signin.js")
+async def signin_js() -> Response:
+    return FileResponse(SERVER_DIR / "signin.js", media_type="text/javascript")
+
+
+def _resolve_static(url_path: str) -> Path | None:
+    """Map a URL path to a file inside SITE_ROOT, blocking path traversal."""
+    rel = url_path.lstrip("/") or "index.html"
+    candidate = (SITE_ROOT / rel).resolve()
+    # Never serve the server package itself.
+    if candidate == (SITE_ROOT / "server").resolve() or str(candidate).startswith(
+        str((SITE_ROOT / "server").resolve())
+    ):
+        return None
+    try:
+        candidate.relative_to(SITE_ROOT)
+    except ValueError:
+        return None  # escaped the site root
+    if candidate.is_dir():
+        candidate = candidate / "index.html"
+    return candidate if candidate.is_file() else None
+
+
+@app.get("/{full_path:path}")
+async def serve_gallery(
+    request: Request,
+    full_path: str,
+    code: str = "",
+    state: str = "",
+    error: str = "",
+    error_description: str = "",
+    session: str | None = Cookie(default=None, alias=COOKIE_NAME),
+) -> Response:
+    path = "/" + full_path
+
+    # 1. OAuth landing: Entra redirects back to "/?code=...&state=..." because the
+    #    Azure CLI public client only allows the loopback root as redirect URI.
+    #    (Self-hosted mode only — disabled behind Easy Auth.)
+    if not EASY_AUTH_ENABLED and path == "/" and (code or error):
+        return await finalize_oauth_landing(
+            request, code, state, error, error_description, HTTPS_ENABLED
+        )
+
+    # 2. Public paths bypass auth.
+    if path in PUBLIC_PATHS or any(path.startswith(p) for p in PUBLIC_PREFIXES):
+        target = _resolve_static(path)
+        if target is not None:
+            return FileResponse(target)
+        return JSONResponse({"detail": "not found"}, status_code=404)
+
+    # 3a. Behind App Service Easy Auth: trust the platform-verified identity in
+    #     the request headers. The platform already blocks unauthenticated
+    #     requests, so a missing identity here means a misconfiguration — fail
+    #     closed with 401 rather than serving content.
+    if EASY_AUTH_ENABLED:
+        ident = identity_from_easy_auth(request)
+        if ident is None or not ident.oid and not ident.upn:
+            return JSONResponse({"detail": "unauthorized"}, status_code=401)
+        # Defence in depth: reject users outside our tenant when configured.
+        if (
+            EXPECTED_TENANT_ID
+            and ident.tenant_id
+            and ident.tenant_id.lower() != EXPECTED_TENANT_ID.lower()
+        ):
+            return JSONResponse({"detail": "forbidden"}, status_code=403)
+        target = _resolve_static(path)
+        if target is None:
+            return JSONResponse({"detail": "not found"}, status_code=404)
+        return FileResponse(target)
+
+    # 3b. Self-hosted mode: require a signed-in Entra session. Unauthenticated
+    #     users get a sign-in landing page with a "Sign in with Microsoft" button
+    #     (mirrors the BusinessAgent EntraSignInModal) rather than an automatic
+    #     redirect — the button does a top-level navigation in the real browser,
+    #     which carries the Windows SSO / device-compliance claims Entra requires.
+    rec = app.state.session_store.get(session)
+    if rec is None or not rec.signed_in:
+        return FileResponse(
+            SIGNIN_PAGE, status_code=200, headers={"Cache-Control": "no-store"}
+        )
+
+    target = _resolve_static(path)
+    if target is None:
+        return JSONResponse({"detail": "not found"}, status_code=404)
+    return FileResponse(target)

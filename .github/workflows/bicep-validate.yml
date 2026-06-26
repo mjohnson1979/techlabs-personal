@@ -1,0 +1,63 @@
+name: bicep-validate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'catalog/**'
+      - 'modules/**'
+      - '.github/workflows/bicep-validate.yml'
+  pull_request:
+    paths:
+      - 'catalog/**'
+      - 'modules/**'
+      - '.github/workflows/bicep-validate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Build & lint Bicep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Bicep CLI
+        run: |
+          curl -Lo bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64
+          chmod +x ./bicep
+          sudo mv ./bicep /usr/local/bin/bicep
+          bicep --version
+
+      - name: Build all templates and modules
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          failed=0
+          for file in catalog/**/main.bicep modules/**/*.bicep; do
+            echo "::group::bicep build $file"
+            if ! bicep build "$file" --stdout > /dev/null; then
+              echo "::error file=$file::bicep build failed"
+              failed=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $failed
+
+      - name: Lint bicepparam files
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          failed=0
+          for file in catalog/**/parameters/*.bicepparam; do
+            echo "::group::bicep build-params $file"
+            if ! bicep build-params "$file" --stdout > /dev/null; then
+              echo "::error file=$file::bicep build-params failed"
+              failed=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $failed
