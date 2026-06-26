@@ -43,5 +43,5 @@ module vnet '../../../../modules/virtual-network/main.bicep' = {
 
 output vnetId string = vnet.outputs.id
 output vnetName string = vnet.outputs.name
-output sessionHostsSubnetId string = [for subnet in vnet.outputs.subnets: if (subnet.name == 'session-hosts') subnet.id][0]
-output privateEndpointsSubnetId string = [for subnet in vnet.outputs.subnets: if (subnet.name == 'private-endpoints') subnet.id][0]
+output sessionHostsSubnetId string = first(filter(vnet.outputs.subnets, subnet => subnet.name == 'session-hosts')).id
+output privateEndpointsSubnetId string = first(filter(vnet.outputs.subnets, subnet => subnet.name == 'private-endpoints')).id
