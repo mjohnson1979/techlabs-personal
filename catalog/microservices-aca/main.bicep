@@ -40,7 +40,7 @@ param retentionInDays int = 30
 var serviceBusDataOwnerRoleId = '090c5cfd-751d-490a-894a-3ce6f1109419'
 var cosmosDataContributorRoleId = '00000000-0000-0000-0000-000000000002'
 
-module law '../../modules/log-analytics.bicep' = {
+module law '../../modules/log-analytics/main.bicep' = {
   name: 'law'
   params: {
     name: '${namePrefix}-law'
@@ -50,7 +50,7 @@ module law '../../modules/log-analytics.bicep' = {
   }
 }
 
-module appInsights '../../modules/app-insights.bicep' = {
+module appInsights '../../modules/app-insights/main.bicep' = {
   name: 'appInsights'
   params: {
     name: '${namePrefix}-ai'

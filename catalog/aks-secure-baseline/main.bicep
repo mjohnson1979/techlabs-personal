@@ -37,7 +37,7 @@ param retentionInDays int = 30
 
 var vnetAddressPrefix = '10.3.0.0/16'
 
-module law '../../modules/log-analytics.bicep' = {
+module law '../../modules/log-analytics/main.bicep' = {
   name: 'law'
   params: {
     name: '${namePrefix}-law'
@@ -47,7 +47,7 @@ module law '../../modules/log-analytics.bicep' = {
   }
 }
 
-module network '../../modules/virtual-network.bicep' = {
+module network '../../modules/virtual-network/main.bicep' = {
   name: 'network'
   params: {
     name: '${namePrefix}-vnet'

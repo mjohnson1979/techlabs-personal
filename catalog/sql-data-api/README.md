@@ -24,8 +24,8 @@ and production resilient.
 
 | Component | Purpose | Module |
 | --- | --- | --- |
-| Log Analytics workspace | Central log store | [log-analytics](../../modules/log-analytics.bicep) |
-| Application Insights | App monitoring | [app-insights](../../modules/app-insights.bicep) |
+| Log Analytics workspace | Central log store | [log-analytics](../../modules/log-analytics/main.bicep) |
+| Application Insights | App monitoring | [app-insights](../../modules/app-insights/main.bicep) |
 | App Service plan + Web App | API tier with managed identity | inline |
 | Azure SQL server + database | Data tier, Entra-only auth | inline |
 

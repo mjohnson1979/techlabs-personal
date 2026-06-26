@@ -53,7 +53,7 @@ var cosmosDataContributorRoleId = '00000000-0000-0000-0000-000000000002'
 var lakeStorageName = toLower('${namePrefix}lake')
 var funcStorageName = toLower('${namePrefix}func')
 
-module law '../../modules/log-analytics.bicep' = {
+module law '../../modules/log-analytics/main.bicep' = {
   name: 'law'
   params: {
     name: '${namePrefix}-law'
@@ -63,7 +63,7 @@ module law '../../modules/log-analytics.bicep' = {
   }
 }
 
-module appInsights '../../modules/app-insights.bicep' = {
+module appInsights '../../modules/app-insights/main.bicep' = {
   name: 'appInsights'
   params: {
     name: '${namePrefix}-ai'
@@ -73,7 +73,7 @@ module appInsights '../../modules/app-insights.bicep' = {
   }
 }
 
-module lake '../../modules/storage-account.bicep' = {
+module lake '../../modules/storage-account/main.bicep' = {
   name: 'lake'
   params: {
     name: lakeStorageName

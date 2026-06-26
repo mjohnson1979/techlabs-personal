@@ -43,7 +43,7 @@ param retentionInDays int = 30
 var vnetAddressPrefix = '10.2.0.0/16'
 var linuxFxVersion = 'DOTNETCORE|8.0'
 
-module law '../../modules/log-analytics.bicep' = {
+module law '../../modules/log-analytics/main.bicep' = {
   name: 'law'
   params: {
     name: '${namePrefix}-law'
@@ -53,7 +53,7 @@ module law '../../modules/log-analytics.bicep' = {
   }
 }
 
-module appInsights '../../modules/app-insights.bicep' = {
+module appInsights '../../modules/app-insights/main.bicep' = {
   name: 'appInsights'
   params: {
     name: '${namePrefix}-ai'
@@ -63,7 +63,7 @@ module appInsights '../../modules/app-insights.bicep' = {
   }
 }
 
-module network '../../modules/virtual-network.bicep' = {
+module network '../../modules/virtual-network/main.bicep' = {
   name: 'network'
   params: {
     name: '${namePrefix}-vnet'
@@ -96,7 +96,7 @@ var appGatewaySubnetId = first(filter(network.outputs.subnets, s => s.name == 'a
 var integrationSubnetId = first(filter(network.outputs.subnets, s => s.name == 'appServiceIntegration')).id
 var privateEndpointSubnetId = first(filter(network.outputs.subnets, s => s.name == 'privateEndpoints')).id
 
-module sqlDnsZone '../../modules/private-dns-zone.bicep' = {
+module sqlDnsZone '../../modules/private-dns-zone/main.bicep' = {
   name: 'sqlDnsZone'
   params: {
     name: 'privatelink${environment().suffixes.sqlServerHostname}'
@@ -105,7 +105,7 @@ module sqlDnsZone '../../modules/private-dns-zone.bicep' = {
   }
 }
 
-module kvDnsZone '../../modules/private-dns-zone.bicep' = {
+module kvDnsZone '../../modules/private-dns-zone/main.bicep' = {
   name: 'kvDnsZone'
   params: {
     name: 'privatelink.vaultcore.azure.net'
@@ -145,7 +145,7 @@ resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
   }
 }
 
-module sqlPrivateEndpoint '../../modules/private-endpoint.bicep' = {
+module sqlPrivateEndpoint '../../modules/private-endpoint/main.bicep' = {
   name: 'sqlPrivateEndpoint'
   params: {
     name: '${namePrefix}-sql-pe'
@@ -181,7 +181,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   }
 }
 
-module kvPrivateEndpoint '../../modules/private-endpoint.bicep' = {
+module kvPrivateEndpoint '../../modules/private-endpoint/main.bicep' = {
   name: 'kvPrivateEndpoint'
   params: {
     name: '${namePrefix}-kv-pe'

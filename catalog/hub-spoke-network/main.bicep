@@ -31,7 +31,7 @@ param retentionInDays int = 30
 var hubVnetName = '${namePrefix}-hub-vnet'
 var spokeVnetName = '${namePrefix}-spoke-vnet'
 
-module law '../../modules/log-analytics.bicep' = {
+module law '../../modules/log-analytics/main.bicep' = {
   name: 'law'
   params: {
     name: '${namePrefix}-law'

@@ -21,7 +21,7 @@ resource avsPrivateCloud 'Microsoft.AVS/privateClouds@2023-09-01' existing = if 
   name: avsPrivateCloudName
 }
 
-module law '../../../../modules/log-analytics.bicep' = {
+module law '../../../../modules/log-analytics/main.bicep' = {
   name: 'law'
   params: {
     name: '${namePrefix}-law'
@@ -31,7 +31,7 @@ module law '../../../../modules/log-analytics.bicep' = {
   }
 }
 
-module appInsights '../../../../modules/app-insights.bicep' = {
+module appInsights '../../../../modules/app-insights/main.bicep' = {
   name: 'appInsights'
   params: {
     name: '${namePrefix}-appi'

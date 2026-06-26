@@ -43,7 +43,7 @@ param retentionInDays int = 30
 
 var linuxFxVersion = 'DOTNETCORE|8.0'
 
-module law '../../modules/log-analytics.bicep' = {
+module law '../../modules/log-analytics/main.bicep' = {
   name: 'law'
   params: {
     name: '${namePrefix}-law'
@@ -53,7 +53,7 @@ module law '../../modules/log-analytics.bicep' = {
   }
 }
 
-module appInsights '../../modules/app-insights.bicep' = {
+module appInsights '../../modules/app-insights/main.bicep' = {
   name: 'appInsights'
   params: {
     name: '${namePrefix}-ai'

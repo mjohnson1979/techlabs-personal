@@ -39,7 +39,7 @@ var tags = {
   UseCase: 'ai-landing-zone'
 }
 
-module logAnalytics '../../../modules/log-analytics.bicep' = {
+module logAnalytics '../../../modules/log-analytics/main.bicep' = {
   name: 'logAnalytics'
   params: {
     name: '${prefix}-${environment}-ai-law'
@@ -48,7 +48,7 @@ module logAnalytics '../../../modules/log-analytics.bicep' = {
   }
 }
 
-module keyVault '../../../modules/key-vault.bicep' = {
+module keyVault '../../../modules/key-vault/main.bicep' = {
   name: 'keyVault'
   params: {
     name: '${prefix}-${environment}-aikv'
@@ -57,7 +57,7 @@ module keyVault '../../../modules/key-vault.bicep' = {
   }
 }
 
-module storage '../../../modules/storage-account.bicep' = {
+module storage '../../../modules/storage-account/main.bicep' = {
   name: 'storage'
   params: {
     name: '${uniqueString(resourceGroup().id)}aistg'

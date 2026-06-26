@@ -23,8 +23,8 @@ spiky chat traffic.
 
 | Component | Purpose | Module |
 | --- | --- | --- |
-| Log Analytics workspace | Central log store | [log-analytics](../../modules/log-analytics.bicep) |
-| Application Insights | App monitoring | [app-insights](../../modules/app-insights.bicep) |
+| Log Analytics workspace | Central log store | [log-analytics](../../modules/log-analytics/main.bicep) |
+| Application Insights | App monitoring | [app-insights](../../modules/app-insights/main.bicep) |
 | Azure OpenAI account + deployment | gpt-4o-mini chat model | inline |
 | Cosmos DB (serverless) + container | Conversation history | inline |
 | App Service plan + Web App | Chat API with managed identity | inline |

@@ -12,7 +12,7 @@ param tags object = {}
 @description('Enable RBAC authorization on the Key Vault data plane.')
 param enableRbacAuthorization bool = true
 
-module keyVault '../../../../modules/key-vault.bicep' = {
+module keyVault '../../../../modules/key-vault/main.bicep' = {
   name: 'keyVault'
   params: {
     name: '${namePrefix}-kv'

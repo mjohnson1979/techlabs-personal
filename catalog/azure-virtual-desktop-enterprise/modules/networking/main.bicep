@@ -20,7 +20,7 @@ param avdSubnetPrefix string = '10.40.1.0/24'
 @description('Subnet prefix reserved for private endpoints.')
 param privateEndpointSubnetPrefix string = '10.40.2.0/24'
 
-module vnet '../../../../modules/virtual-network.bicep' = {
+module vnet '../../../../modules/virtual-network/main.bicep' = {
   name: 'vnet'
   params: {
     name: '${namePrefix}-vnet'

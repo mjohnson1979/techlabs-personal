@@ -20,7 +20,7 @@ var tags = {
   Owner: 'AzureTechLabs'
 }
 
-module logAnalytics '../../../modules/log-analytics.bicep' = {
+module logAnalytics '../../../modules/log-analytics/main.bicep' = {
   name: 'logAnalytics'
   params: {
     name: '${prefix}-law'
@@ -29,7 +29,7 @@ module logAnalytics '../../../modules/log-analytics.bicep' = {
   }
 }
 
-module storage '../../../modules/storage-account.bicep' = {
+module storage '../../../modules/storage-account/main.bicep' = {
   name: 'storage'
   params: {
     name: '${uniqueString(resourceGroup().id)}stg'
@@ -39,7 +39,7 @@ module storage '../../../modules/storage-account.bicep' = {
   }
 }
 
-module keyVault '../../../modules/key-vault.bicep' = {
+module keyVault '../../../modules/key-vault/main.bicep' = {
   name: 'keyVault'
   params: {
     name: '${prefix}-kv'

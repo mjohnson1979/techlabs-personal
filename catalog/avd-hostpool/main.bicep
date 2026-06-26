@@ -29,7 +29,7 @@ param scalingTimeZone string = 'Eastern Standard Time'
 @description('Log Analytics retention in days.')
 param retentionInDays int = 30
 
-module law '../../modules/log-analytics.bicep' = {
+module law '../../modules/log-analytics/main.bicep' = {
   name: 'law'
   params: {
     name: '${namePrefix}-law'

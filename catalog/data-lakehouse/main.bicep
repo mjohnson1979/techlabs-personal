@@ -35,7 +35,7 @@ var lakeName = toLower('${namePrefix}lake')
 var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 var managedResourceGroupName = '${namePrefix}-dbw-managed'
 
-module law '../../modules/log-analytics.bicep' = {
+module law '../../modules/log-analytics/main.bicep' = {
   name: 'law'
   params: {
     name: '${namePrefix}-law'
@@ -45,7 +45,7 @@ module law '../../modules/log-analytics.bicep' = {
   }
 }
 
-module keyVault '../../modules/key-vault.bicep' = {
+module keyVault '../../modules/key-vault/main.bicep' = {
   name: 'keyVault'
   params: {
     name: '${namePrefix}-kv'

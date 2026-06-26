@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const REPO = "https://github.com/sebaclem/azure-tech-labs";
+  const REPO = "https://github.com/mcaps-microsoft/TechLabs";
   const state = { items: [], q: "", category: new Set(), industry: new Set(), compliance: new Set() };
 
   const $ = (sel) => document.querySelector(sel);
