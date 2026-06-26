@@ -34,7 +34,7 @@
     const actions = el("td", { class: "row-actions" });
     if (dep.ghRunUrl) {
       actions.appendChild(
-        el("a", { href: dep.ghRunUrl, target: "_blank", rel: "noopener", class: "link-btn", text: "Logs" })
+        el("a", { href: dep.ghRunUrl, target: "_blank", rel: "noopener", class: "link-btn", text: "Azure portal" })
       );
     }
     if (LIVE.indexOf(dep.status) !== -1) {

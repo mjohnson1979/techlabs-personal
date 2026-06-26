@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "catalog/**"
+      - "tools/Build-Templates.ps1"
       - ".github/workflows/deploy-gallery.yml"
   workflow_dispatch:
 
@@ -22,6 +24,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install Bicep
+        run: |
+          set -euo pipefail
+          curl -Lo bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64
+          chmod +x bicep
+          sudo mv bicep /usr/local/bin/bicep
+          bicep --version
+
+      - name: Compile use-case templates
+        shell: pwsh
+        run: ./tools/Build-Templates.ps1
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3

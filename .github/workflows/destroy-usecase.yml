@@ -1,8 +1,9 @@
 name: Destroy use case
 
-# Tears down a use-case deployment by deleting its resource group. Dispatched by
-# the gallery backend when a deployment's end time is reached (auto-cleanup) or
-# when a user/admin clicks "Tear down now". Can also be run manually.
+# Manual, GitHub-side teardown button: deletes a use-case resource group. Run it
+# from the Actions tab → Run workflow. The website/auto-cleanup path does NOT use
+# this workflow — the gallery backend deletes resource groups directly with its
+# managed identity (see site/server/azure_deploy.py).
 
 on:
   workflow_dispatch:
@@ -13,14 +14,6 @@ on:
         type: string
       subscription_id:
         description: "Subscription ID (defaults to repo secret)"
-        required: false
-        type: string
-      deployment_id:
-        description: "Gallery deployment id (for status callback)"
-        required: false
-        type: string
-      callback_url:
-        description: "Gallery callback URL (status updates)"
         required: false
         type: string
 
@@ -36,13 +29,12 @@ jobs:
   destroy:
     runs-on: ubuntu-latest
     steps:
-      - name: Resolve subscription + run URL
+      - name: Resolve subscription
         run: |
           set -euo pipefail
           sub="${{ inputs.subscription_id }}"
           if [ -z "$sub" ]; then sub="${{ secrets.AZURE_SUBSCRIPTION_ID }}"; fi
           echo "SUBSCRIPTION=$sub" >> "$GITHUB_ENV"
-          echo "RUN_URL=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "$GITHUB_ENV"
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
@@ -66,21 +58,3 @@ jobs:
             exit 1
           fi
           az group delete --name "${{ inputs.resource_group }}" --yes
-
-      - name: Report destroyed
-        if: success() && inputs.callback_url != ''
-        run: |
-          curl -fsS -X POST "${{ inputs.callback_url }}" \
-            -H "Content-Type: application/json" \
-            -H "X-Techlabs-Callback-Token: ${{ secrets.GALLERY_CALLBACK_TOKEN }}" \
-            -d "{\"status\":\"destroyed\",\"runUrl\":\"$RUN_URL\",\"detail\":\"resource group deleted\"}" \
-            || echo "::warning::status callback failed"
-
-      - name: Report failure
-        if: failure() && inputs.callback_url != ''
-        run: |
-          curl -fsS -X POST "${{ inputs.callback_url }}" \
-            -H "Content-Type: application/json" \
-            -H "X-Techlabs-Callback-Token: ${{ secrets.GALLERY_CALLBACK_TOKEN }}" \
-            -d "{\"status\":\"failed\",\"runUrl\":\"$RUN_URL\",\"detail\":\"teardown failed — see run logs\"}" \
-            || echo "::warning::status callback failed"

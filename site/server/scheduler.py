@@ -1,9 +1,10 @@
 """Background cleanup scheduler.
 
 Polls the deployment table on an interval and tears down any deployment whose
-chosen end time has passed by dispatching the destroy workflow. Runs as an
-asyncio task inside the single gunicorn worker (sessions are in-memory, so the
-app already runs one worker — exactly one scheduler, no leader election needed).
+chosen end time has passed by running the in-process Azure executor
+(azure_deploy.py). Runs as an asyncio task inside the single gunicorn worker
+(sessions are in-memory, so the app already runs one worker — exactly one
+scheduler, no leader election needed).
 """
 
 from __future__ import annotations
@@ -11,8 +12,8 @@ from __future__ import annotations
 import asyncio
 import os
 
+import azure_deploy as az
 import db
-import github_dispatch as gh
 
 _INTERVAL = max(
     30, int(os.environ.get("GALLERY_CLEANUP_INTERVAL_SECONDS", "300").strip() or "300")
@@ -31,9 +32,7 @@ async def _sweep_once() -> None:
                 use_case=dep["use_case"],
                 deployment_id=dep["id"],
             )
-            ok, detail = await gh.dispatch_destroy(dep)
-            if not ok:
-                db.update_deployment(dep["id"], detail=detail)
+            az.schedule(az.run_destroy(dep))
         except Exception as exc:  # never let one bad row kill the loop
             db.update_deployment(dep["id"], detail=f"cleanup error: {exc}"[:500])
 

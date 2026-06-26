@@ -1,8 +1,9 @@
 """Gallery control-plane API: identity, telemetry, and deployments.
 
-The backend is the system of record. It records who deployed what and when,
-schedules teardown at the chosen end time, and dispatches the actual Azure work
-to GitHub Actions (github_dispatch.py). It holds no Azure credentials.
+The backend is the system of record AND the executor. It records who deployed
+what and when, schedules teardown at the chosen end time, and runs the actual
+Azure deployments in-process using the App Service managed identity (see
+azure_deploy.py). No GitHub PAT, no stored Azure secret.
 """
 
 from __future__ import annotations
@@ -19,8 +20,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
+import azure_deploy as az
 import db
-import github_dispatch as gh
 from identity import (
     CurrentUser,
     require_admin,
@@ -212,16 +213,19 @@ def build_api_router() -> APIRouter:
 
         dep = db.get_deployment(dep_id)
         assert dep is not None
-        ok, detail = await gh.dispatch_deploy(dep)
-        if ok:
-            db.update_deployment(dep_id, status="deploying", detail=detail)
-        else:
-            # Keep the record as 'requested' so an admin can retry / dispatch
-            # manually; surface the reason (e.g. dispatch not configured).
-            db.update_deployment(dep_id, detail=detail)
+        # Hand off to the in-process executor (managed identity + ARM SDK). The
+        # provisioning runs as a background task; status flows to 'active' or
+        # 'failed' as it completes.
+        db.update_deployment(
+            dep_id,
+            status="deploying",
+            gh_run_url=az.portal_rg_url(DEFAULT_SUBSCRIPTION, rg),
+            detail="queued for provisioning",
+        )
+        az.schedule(az.run_deploy(dep))
         dep = db.get_deployment(dep_id)
         assert dep is not None
-        return {"deployment": _deployment_view(dep), "dispatched": ok, "detail": detail}
+        return {"deployment": _deployment_view(dep), "detail": "deployment started"}
 
     @router.get("/deployments")
     async def list_my_deployments(
@@ -261,9 +265,10 @@ def build_api_router() -> APIRouter:
         if dep["user_oid"] != user.oid and not user.is_admin:
             raise HTTPException(status_code=403, detail="not your deployment")
         if dep["status"] in ("destroyed", "destroying"):
-            return {"deployment": _deployment_view(dep), "dispatched": False,
+            return {"deployment": _deployment_view(dep),
                     "detail": f"already {dep['status']}"}
-        db.update_deployment(deployment_id, status="destroying")
+        db.update_deployment(deployment_id, status="destroying",
+                             detail="teardown started")
         db.record_event(
             type="destroy_requested",
             user_oid=user.oid,
@@ -271,56 +276,10 @@ def build_api_router() -> APIRouter:
             use_case=dep["use_case"],
             deployment_id=deployment_id,
         )
-        ok, detail = await gh.dispatch_destroy(dep)
-        if not ok:
-            db.update_deployment(deployment_id, detail=detail)
+        az.schedule(az.run_destroy(dep))
         dep = db.get_deployment(deployment_id)
         assert dep is not None
-        return {"deployment": _deployment_view(dep), "dispatched": ok, "detail": detail}
-
-    @router.post("/deployments/{deployment_id}/callback", status_code=204)
-    async def deployment_callback(
-        deployment_id: str, request: Request
-    ) -> None:
-        """Status callback from the deploy/destroy GitHub workflow.
-
-        Authenticated with a shared secret (GALLERY_CALLBACK_TOKEN), compared in
-        constant time. Not a user route — no session required.
-        """
-        _verify_callback_token(request)
-        dep = db.get_deployment(deployment_id)
-        if dep is None:
-            raise HTTPException(status_code=404, detail="not found")
-        try:
-            payload = await request.json()
-        except (ValueError, json.JSONDecodeError):
-            raise HTTPException(status_code=400, detail="invalid JSON")
-
-        status = str(payload.get("status", "")).strip()
-        run_url = str(payload.get("runUrl", "")).strip()
-        detail = str(payload.get("detail", ""))[:500]
-        allowed = {
-            "deploying", "active", "destroying", "destroyed", "failed",
-        }
-        fields: dict[str, Any] = {}
-        if status in allowed:
-            fields["status"] = status
-            if status == "destroyed":
-                fields["destroyed_at"] = time.time()
-        if run_url:
-            fields["gh_run_url"] = run_url
-        if detail:
-            fields["detail"] = detail
-        if fields:
-            db.update_deployment(deployment_id, **fields)
-        if status in ("active", "destroyed", "failed"):
-            db.record_event(
-                type=f"deploy_{status}" if status != "destroyed" else "destroy_succeeded",
-                user_oid=dep["user_oid"],
-                user_upn=dep["user_upn"],
-                use_case=dep["use_case"],
-                deployment_id=deployment_id,
-            )
+        return {"deployment": _deployment_view(dep), "detail": "teardown started"}
 
     # --------------------------------------------------------------- admin ---
     @router.get("/admin/telemetry")
@@ -405,12 +364,3 @@ def _resolve_end_at(body: DeployIn, now: float, user: CurrentUser) -> float:
             detail=f"end time exceeds the {max_hours}h maximum lifetime",
         )
     return end_at
-
-
-def _verify_callback_token(request: Request) -> None:
-    expected = os.environ.get("GALLERY_CALLBACK_TOKEN", "").strip()
-    if not expected:
-        raise HTTPException(status_code=503, detail="callback not configured")
-    provided = request.headers.get("x-techlabs-callback-token", "")
-    if not provided or not secrets.compare_digest(provided, expected):
-        raise HTTPException(status_code=401, detail="invalid callback token")

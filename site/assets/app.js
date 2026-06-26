@@ -5,8 +5,6 @@
   const REPO = "https://github.com/mcaps-microsoft/TechLabs";
   const state = { items: [], q: "", category: new Set(), industry: new Set(), compliance: new Set(), me: null };
 
-  const ACTIONS_URL = REPO + "/actions";
-
   function pad2(n) {
     return String(n).padStart(2, "0");
   }
@@ -218,7 +216,7 @@
             el("span", { text: `Queued (${dep.status}). Resource group ${dep.resourceGroup}. ` })
           );
           status.appendChild(
-            el("a", { href: dep.ghRunUrl || ACTIONS_URL, target: "_blank", rel: "noopener", text: "Track in GitHub Actions →" })
+            el("a", { href: dep.ghRunUrl || "", target: "_blank", rel: "noopener", text: "View in Azure portal →" })
           );
         })
         .catch((err) => {

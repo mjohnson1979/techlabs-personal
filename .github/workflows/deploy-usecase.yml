@@ -1,10 +1,12 @@
 name: Deploy use case
 
-# The gallery backend dispatches this workflow (or you can run it manually from
-# the Actions tab — the "Run workflow" button is the GitHub-side deploy button).
-# It authenticates to Azure with OIDC federated credentials (no stored secret),
-# creates a per-deployment resource group, deploys the use case's Bicep, then
-# calls back to the gallery with the result.
+# Manual, GitHub-side deploy button for a catalog use case (the "deploy in
+# GitHub" path). Run it from the Actions tab → Run workflow. It authenticates to
+# Azure with OIDC federated credentials (no stored secret) and deploys the use
+# case's Bicep into the resource group you name.
+#
+# The website's Deploy button does NOT use this workflow — the gallery backend
+# deploys directly with its managed identity (see site/server/azure_deploy.py).
 
 on:
   workflow_dispatch:
@@ -34,14 +36,6 @@ on:
         description: "Target subscription ID (defaults to repo secret)"
         required: false
         type: string
-      deployment_id:
-        description: "Gallery deployment id (for status callback)"
-        required: false
-        type: string
-      callback_url:
-        description: "Gallery callback URL (status updates)"
-        required: false
-        type: string
 
 concurrency:
   group: deploy-${{ inputs.resource_group }}
@@ -67,7 +61,6 @@ jobs:
           if [ ! -f "$prm" ]; then echo "::error::parameters not found: $prm"; exit 1; fi
           echo "TEMPLATE=$tmpl" >> "$GITHUB_ENV"
           echo "PARAMS=$prm" >> "$GITHUB_ENV"
-          echo "RUN_URL=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "$GITHUB_ENV"
           sub="${{ inputs.subscription_id }}"
           if [ -z "$sub" ]; then sub="${{ secrets.AZURE_SUBSCRIPTION_ID }}"; fi
           echo "SUBSCRIPTION=$sub" >> "$GITHUB_ENV"
@@ -86,34 +79,14 @@ jobs:
           az group create \
             --name "${{ inputs.resource_group }}" \
             --location "${{ inputs.location }}" \
-            --tags techlabs-deployment="${{ inputs.deployment_id }}" \
-                   techlabs-usecase="${{ inputs.use_case }}" \
+            --tags techlabs-usecase="${{ inputs.use_case }}" \
                    techlabs-managed=true
 
       - name: Deploy Bicep
-        id: deploy
         run: |
           set -euo pipefail
           az deployment group create \
             --resource-group "${{ inputs.resource_group }}" \
             --template-file "$TEMPLATE" \
             --parameters "$PARAMS" \
-            --name "techlabs-${{ inputs.deployment_id }}"
-
-      - name: Report success
-        if: success() && inputs.callback_url != ''
-        run: |
-          curl -fsS -X POST "${{ inputs.callback_url }}" \
-            -H "Content-Type: application/json" \
-            -H "X-Techlabs-Callback-Token: ${{ secrets.GALLERY_CALLBACK_TOKEN }}" \
-            -d "{\"status\":\"active\",\"runUrl\":\"$RUN_URL\",\"detail\":\"deployment succeeded\"}" \
-            || echo "::warning::status callback failed"
-
-      - name: Report failure
-        if: failure() && inputs.callback_url != ''
-        run: |
-          curl -fsS -X POST "${{ inputs.callback_url }}" \
-            -H "Content-Type: application/json" \
-            -H "X-Techlabs-Callback-Token: ${{ secrets.GALLERY_CALLBACK_TOKEN }}" \
-            -d "{\"status\":\"failed\",\"runUrl\":\"$RUN_URL\",\"detail\":\"deployment failed — see run logs\"}" \
-            || echo "::warning::status callback failed"
+            --name "techlabs-$(date +%s)"

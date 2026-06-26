@@ -1,8 +1,9 @@
 """SQLite persistence for the Techlabs gallery backend.
 
 Stores telemetry events, deployment records, and user roles. A single SQLite
-file is the system of record; the backend stays the control plane while the
-actual Azure work runs in GitHub Actions (see github_dispatch.py).
+file is the system of record; the backend is both the control plane and the
+executor, deploying Azure resources directly with its managed identity (see
+azure_deploy.py).
 
 The database lives on App Service's persistent ``/home`` share by default, so
 it survives restarts even though the OAuth session store is in-memory. Override

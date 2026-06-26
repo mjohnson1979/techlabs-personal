@@ -1,0 +1,240 @@
+"""Execute Azure deployments directly with the App Service managed identity.
+
+Option B: the backend is BOTH the control plane and the executor. It holds no
+secrets — it authenticates to Azure with ``DefaultAzureCredential`` (the App
+Service system-assigned managed identity in production; ``az login`` / developer
+credentials locally) and submits ARM deployments via the resource-management
+SDK. No GitHub PAT, no callback token.
+
+Templates are precompiled from Bicep to ARM JSON by ``tools/Build-Templates.ps1``
+(run in CI before the site is published, and locally before testing deploys).
+Each use case/environment becomes
+``site/server/_templates/<use_case>/<env>.json`` with the shape
+``{"template": {...}, "parameters": {...}}`` — ready to submit as-is.
+
+Deployments and teardowns run as background asyncio tasks (the SDK is
+synchronous, so the blocking calls run in a worker thread). The single gunicorn
+worker means exactly one in-process executor — no leader election needed.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+import time
+from pathlib import Path
+from typing import Any
+
+import db
+
+SERVER_DIR = Path(__file__).resolve().parent
+TEMPLATES_DIR = SERVER_DIR / "_templates"
+
+# Keep references to in-flight tasks so they are not garbage-collected mid-run.
+_TASKS: set[asyncio.Task] = set()
+
+
+def _location() -> str:
+    return os.environ.get("GALLERY_DEPLOY_LOCATION", "eastus").strip() or "eastus"
+
+
+def executor_available() -> tuple[bool, str]:
+    """Return (ok, reason) — whether the Azure SDK is importable."""
+    try:
+        import azure.identity  # noqa: F401
+        import azure.mgmt.resource  # noqa: F401
+    except Exception as exc:  # pragma: no cover - import-time environment issue
+        return False, f"Azure SDK not installed ({exc})"
+    return True, "ok"
+
+
+def portal_rg_url(subscription_id: str, resource_group: str) -> str:
+    """Azure portal link to the deployment's resource group."""
+    return (
+        "https://portal.azure.com/#@/resource/subscriptions/"
+        f"{subscription_id}/resourceGroups/{resource_group}/overview"
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Template loading (precompiled ARM JSON)
+# --------------------------------------------------------------------------- #
+def _template_path(use_case: str, environment: str) -> Path:
+    return TEMPLATES_DIR / use_case / f"{environment}.json"
+
+
+def load_template(use_case: str, environment: str) -> tuple[dict, dict]:
+    path = _template_path(use_case, environment)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise RuntimeError(
+            f"No compiled template for {use_case}/{environment}. "
+            "Run tools/Build-Templates.ps1 to generate site/server/_templates."
+        ) from exc
+    except (OSError, ValueError) as exc:
+        raise RuntimeError(f"Bad template for {use_case}/{environment}: {exc}") from exc
+    template = data.get("template")
+    if not isinstance(template, dict):
+        raise RuntimeError(f"Compiled template for {use_case}/{environment} is malformed")
+    parameters = data.get("parameters") or {}
+    return template, parameters
+
+
+# --------------------------------------------------------------------------- #
+# Azure SDK clients (lazy — only imported when actually deploying)
+# --------------------------------------------------------------------------- #
+_credential: Any = None
+
+
+def _get_credential() -> Any:
+    global _credential
+    if _credential is None:
+        from azure.identity import DefaultAzureCredential
+
+        # Managed identity in App Service; az/developer creds locally. Never the
+        # interactive browser flow (this runs headless on the server).
+        _credential = DefaultAzureCredential(
+            exclude_interactive_browser_credential=True
+        )
+    return _credential
+
+
+def _client(subscription_id: str) -> Any:
+    from azure.mgmt.resource import ResourceManagementClient
+
+    return ResourceManagementClient(_get_credential(), subscription_id)
+
+
+def _clean_error(exc: Exception) -> str:
+    msg = str(exc).strip()
+    return (msg[:500] if msg else exc.__class__.__name__)
+
+
+# --------------------------------------------------------------------------- #
+# Blocking SDK work (run in a thread via asyncio.to_thread)
+# --------------------------------------------------------------------------- #
+def _do_deploy(dep: dict[str, Any]) -> None:
+    from azure.mgmt.resource.resources.models import (
+        Deployment,
+        DeploymentMode,
+        DeploymentProperties,
+    )
+
+    subscription_id = dep["subscription_id"]
+    resource_group = dep["resource_group"]
+    template, parameters = load_template(dep["use_case"], dep["environment"])
+
+    client = _client(subscription_id)
+    client.resource_groups.create_or_update(
+        resource_group,
+        {
+            "location": _location(),
+            "tags": {
+                "techlabs-managed": "true",
+                "techlabs-deployment": dep["id"],
+                "techlabs-usecase": dep["use_case"],
+                "techlabs-owner": dep.get("user_upn", ""),
+            },
+        },
+    )
+    properties = DeploymentProperties(
+        mode=DeploymentMode.incremental, template=template, parameters=parameters
+    )
+    poller = client.deployments.begin_create_or_update(
+        resource_group, f"techlabs-{dep['id']}", Deployment(properties=properties)
+    )
+    poller.result()  # blocks until the deployment finishes; raises on failure
+
+
+def _do_destroy(dep: dict[str, Any]) -> None:
+    from azure.core.exceptions import ResourceNotFoundError
+
+    client = _client(dep["subscription_id"])
+    resource_group = dep["resource_group"]
+    try:
+        existing = client.resource_groups.get(resource_group)
+    except ResourceNotFoundError:
+        return  # already gone — treat as success
+    # Safety: only ever delete resource groups this system created.
+    tags = getattr(existing, "tags", None) or {}
+    if tags.get("techlabs-managed") != "true":
+        raise RuntimeError(
+            f"refusing to delete unmanaged resource group {resource_group}"
+        )
+    client.resource_groups.begin_delete(resource_group).result()
+
+
+# --------------------------------------------------------------------------- #
+# Async orchestration
+# --------------------------------------------------------------------------- #
+async def run_deploy(dep: dict[str, Any]) -> None:
+    dep_id = dep["id"]
+    try:
+        ok, reason = executor_available()
+        if not ok:
+            raise RuntimeError(reason)
+        db.update_deployment(
+            dep_id,
+            status="deploying",
+            gh_run_url=portal_rg_url(dep["subscription_id"], dep["resource_group"]),
+            detail="provisioning in Azure",
+        )
+        await asyncio.to_thread(_do_deploy, dep)
+        db.update_deployment(dep_id, status="active", detail="deployment succeeded")
+        db.record_event(
+            type="deploy_active",
+            user_oid=dep["user_oid"],
+            user_upn=dep["user_upn"],
+            use_case=dep["use_case"],
+            deployment_id=dep_id,
+        )
+    except Exception as exc:
+        db.update_deployment(dep_id, status="failed", detail=_clean_error(exc))
+        db.record_event(
+            type="deploy_failed",
+            user_oid=dep["user_oid"],
+            user_upn=dep["user_upn"],
+            use_case=dep["use_case"],
+            deployment_id=dep_id,
+        )
+
+
+async def run_destroy(dep: dict[str, Any]) -> None:
+    dep_id = dep["id"]
+    try:
+        ok, reason = executor_available()
+        if not ok:
+            raise RuntimeError(reason)
+        await asyncio.to_thread(_do_destroy, dep)
+        db.update_deployment(
+            dep_id,
+            status="destroyed",
+            destroyed_at=time.time(),
+            detail="resource group deleted",
+        )
+        db.record_event(
+            type="destroy_succeeded",
+            user_oid=dep["user_oid"],
+            user_upn=dep["user_upn"],
+            use_case=dep["use_case"],
+            deployment_id=dep_id,
+        )
+    except Exception as exc:
+        db.update_deployment(dep_id, status="failed", detail=_clean_error(exc))
+        db.record_event(
+            type="destroy_failed",
+            user_oid=dep["user_oid"],
+            user_upn=dep["user_upn"],
+            use_case=dep["use_case"],
+            deployment_id=dep_id,
+        )
+
+
+def schedule(coro: Any) -> asyncio.Task:
+    """Run an executor coroutine as a tracked background task."""
+    task = asyncio.create_task(coro)
+    _TASKS.add(task)
+    task.add_done_callback(_TASKS.discard)
+    return task
