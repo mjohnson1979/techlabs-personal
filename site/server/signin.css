@@ -45,3 +45,20 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   font-size: 0.85rem;
 }
 .hint { margin-top: 1rem; font-size: 0.78rem; color: #94a3b8; }
+.device { margin: 0.5rem 0 0.5rem; }
+.device-step { font-size: 0.9rem; color: #1e293b; margin: 0 0 0.5rem; }
+.device-step a { color: #2563eb; font-weight: 600; }
+.device-code {
+  font-family: "Cascadia Code", "Consolas", ui-monospace, monospace;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-align: center;
+  color: #0f172a;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin: 0.25rem 0 0.75rem;
+  user-select: all;
+}

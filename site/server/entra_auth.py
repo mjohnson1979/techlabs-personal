@@ -21,13 +21,14 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
 import secrets
 import time
 from dataclasses import dataclass, field
 from urllib.parse import quote, urlencode, urlparse, urlunparse
 
 import httpx
-from fastapi import APIRouter, Cookie, Request, Response
+from fastapi import APIRouter, Cookie, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
@@ -318,12 +319,82 @@ class EntraClient:
             raise EntraAuthError("refresh returned no access token")
         return token, str(body.get("refresh_token", ""))
 
+    async def begin_device_code(self) -> dict[str, object]:
+        """Start the device authorization flow against the configured tenant.
+
+        Returns the raw provider response (device_code, user_code,
+        verification_uri, expires_in, interval, message). The device code flow
+        needs no redirect URI, so it works for a hosted web app where the Azure
+        CLI public client's loopback-only redirect cannot be used.
+        """
+        data = {"client_id": self._client_id, "scope": SCOPE}
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(15.0),
+            headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+        ) as http:
+            resp = await http.post(
+                f"{AUTHORITY}/{self._tenant}/oauth2/v2.0/devicecode", data=data
+            )
+        body = resp.json() if resp.content else {}
+        if body.get("error"):
+            raise EntraAuthError(
+                f"{body['error']}: {body.get('error_description', '').strip()}".strip(
+                    ": "
+                )
+            )
+        if not body.get("device_code") or not body.get("user_code"):
+            raise EntraAuthError("device authorization returned no code")
+        return body
+
+    async def poll_device_code(self, device_code: str) -> "tuple[Identity, str] | None":
+        """Poll the token endpoint for a completed device authorization.
+
+        Returns (identity, refresh_token) once the user finishes signing in, or
+        None while still pending (authorization_pending / slow_down). Raises
+        EntraAuthError on a terminal error (expired_token, access_denied, ...).
+        """
+        data = {
+            "client_id": self._client_id,
+            "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+            "device_code": device_code,
+        }
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(15.0),
+            headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+        ) as http:
+            resp = await http.post(self._endpoint("token"), data=data)
+        body = resp.json() if resp.content else {}
+        err = str(body.get("error", ""))
+        if err in ("authorization_pending", "slow_down"):
+            return None
+        if err:
+            raise EntraAuthError(
+                f"{err}: {body.get('error_description', '').strip()}".strip(": ")
+            )
+        identity = _identity_from_id_token(body.get("id_token", ""))
+        if identity is None or not identity.oid:
+            raise EntraAuthError("device code exchange returned no identity")
+        return identity, str(body.get("refresh_token", ""))
+
 
 # --------------------------------------------------------------------------- #
 # Router: /api/auth/entra/*
 # --------------------------------------------------------------------------- #
 class StartResponse(BaseModel):
     auth_url: str
+
+
+class DeviceStartResponse(BaseModel):
+    user_code: str
+    verification_uri: str
+    expires_in: int
+    interval: int
+    message: str = ""
+
+
+class DevicePollResponse(BaseModel):
+    status: str  # "pending" | "complete" | "error"
+    message: str = ""
 
 
 class WhoamiResponse(BaseModel):
@@ -346,6 +417,10 @@ def _pkce(request: Request) -> dict[str, dict[str, object]]:
     return request.app.state.entra_pkce
 
 
+def _device(request: Request) -> dict[str, dict[str, object]]:
+    return request.app.state.entra_device
+
+
 def _photo_cache(request: Request) -> dict[str, dict[str, object]]:
     cache = getattr(request.app.state, "entra_photo_cache", None)
     if cache is None:
@@ -356,7 +431,16 @@ def _photo_cache(request: Request) -> dict[str, dict[str, object]]:
 
 def _redirect_uri(request: Request) -> str:
     base = str(request.base_url).rstrip("/")
-    return normalize_loopback_redirect(f"{base}/")
+    uri = normalize_loopback_redirect(f"{base}/")
+    # Behind App Service's TLS-terminating proxy, request.base_url often reports
+    # http:// even though the public URL is https://. The registered redirect
+    # URI is https, and both auth legs must byte-match, so force https when the
+    # app is configured for it (GALLERY_HTTPS=true).
+    if uri.startswith("http://") and os.environ.get(
+        "GALLERY_HTTPS", ""
+    ).strip().lower() in ("1", "true", "yes"):
+        uri = "https://" + uri[len("http://") :]
+    return uri
 
 
 def _set_cookie(response: Response, sid: str, secure: bool) -> None:
@@ -401,6 +485,77 @@ def build_router(secure_cookie: bool) -> APIRouter:
                 r.headers.append("set-cookie", c)
             return r
         return StartResponse(auth_url=auth_url)
+
+    @router.post("/device/start", response_model=DeviceStartResponse)
+    async def device_start(  # type: ignore[unused-ignore]
+        request: Request,
+        response: Response,
+        session: str | None = Cookie(default=None, alias=COOKIE_NAME),
+    ) -> DeviceStartResponse:
+        """Begin device-code sign-in: returns a user code + verification URL.
+
+        Works for the hosted web app (no redirect URI needed). The browser shows
+        the code; the user enters it at microsoft.com/devicelogin; meanwhile the
+        page polls /device/poll until the session is established.
+        """
+        sid = session or SessionStore.new_session_id()
+        _set_cookie(response, sid, secure_cookie)
+        try:
+            body = await _client(request).begin_device_code()
+        except EntraAuthError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+        interval = int(body.get("interval", 5) or 5)
+        expires_in = int(body.get("expires_in", 900) or 900)
+        dev = _device(request)
+        now = time.time()
+        for k in [k for k, v in dev.items() if float(v.get("expires_at", 0.0)) < now]:
+            dev.pop(k, None)
+        dev[sid] = {
+            "device_code": str(body.get("device_code", "")),
+            "interval": interval,
+            "expires_at": now + expires_in,
+        }
+        return DeviceStartResponse(
+            user_code=str(body.get("user_code", "")),
+            verification_uri=str(
+                body.get("verification_uri")
+                or body.get("verification_url")
+                or "https://microsoft.com/devicelogin"
+            ),
+            expires_in=expires_in,
+            interval=interval,
+            message=str(body.get("message", "")),
+        )
+
+    @router.post("/device/poll", response_model=DevicePollResponse)
+    async def device_poll(  # type: ignore[unused-ignore]
+        request: Request,
+        session: str | None = Cookie(default=None, alias=COOKIE_NAME),
+    ) -> DevicePollResponse:
+        dev = _device(request)
+        entry = dev.get(session) if session else None
+        if entry is None:
+            return DevicePollResponse(
+                status="error", message="no sign-in in progress; start again"
+            )
+        if float(entry.get("expires_at", 0.0)) < time.time():
+            dev.pop(session, None)
+            return DevicePollResponse(
+                status="error", message="sign-in code expired; start again"
+            )
+        try:
+            result = await _client(request).poll_device_code(
+                str(entry.get("device_code", ""))
+            )
+        except EntraAuthError as exc:
+            dev.pop(session, None)
+            return DevicePollResponse(status="error", message=str(exc))
+        if result is None:
+            return DevicePollResponse(status="pending")
+        identity, refresh_token = result
+        dev.pop(session, None)
+        _store(request).set_identity(session, identity, refresh_token)
+        return DevicePollResponse(status="complete")
 
     @router.post("/signout")
     async def signout(  # type: ignore[unused-ignore]

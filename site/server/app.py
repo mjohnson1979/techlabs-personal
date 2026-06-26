@@ -39,6 +39,12 @@ SIGNIN_PAGE = SERVER_DIR / "signin.html"
 # work/school account; set your tenant GUID for true internal-only access.
 TENANT_ID = os.environ.get("GALLERY_ENTRA_TENANT_ID", "organizations").strip()
 
+# App registration (client) ID. Defaults to the Azure CLI public client, which
+# only accepts loopback redirects (local dev). For a hosted deployment set this
+# to your own public-client app registration that lists the site's https
+# redirect URI, so the PKCE code exchange needs no client secret.
+CLIENT_ID = os.environ.get("GALLERY_ENTRA_CLIENT_ID", "").strip()
+
 # Send Secure cookies + HSTS only when served over HTTPS (e.g. behind a TLS
 # terminating proxy). Defaults to off for local http://localhost.
 HTTPS_ENABLED = os.environ.get("GALLERY_HTTPS", "false").strip().lower() in (
@@ -69,8 +75,13 @@ PUBLIC_PATHS = {"/favicon.ico", "/healthz"}
 
 app = FastAPI(title="Techlabs Gallery (Entra-secured)", docs_url=None, redoc_url=None)
 app.state.session_store = SessionStore()
-app.state.entra_client = EntraClient(tenant_id=TENANT_ID)
+app.state.entra_client = (
+    EntraClient(tenant_id=TENANT_ID, client_id=CLIENT_ID)
+    if CLIENT_ID
+    else EntraClient(tenant_id=TENANT_ID)
+)
 app.state.entra_pkce = {}
+app.state.entra_device = {}
 # Mount the /api/auth/entra/* router so the user badge can read whoami/photo and
 # trigger sign-out. Behind Easy Auth the request gate ignores the self-hosted
 # session cookie entirely (it trusts the platform identity headers instead), so
@@ -194,10 +205,19 @@ async def serve_gallery(
     #     redirect — the button does a top-level navigation in the real browser,
     #     which carries the Windows SSO / device-compliance claims Entra requires.
     rec = app.state.session_store.get(session)
-    if rec is None or not rec.signed_in:
+    if rec is None or not rec.signed_in or rec.identity is None:
         return FileResponse(
             SIGNIN_PAGE, status_code=200, headers={"Cache-Control": "no-store"}
         )
+    # Defence in depth: reject users outside our tenant when configured. The
+    # device-code flow already runs against the tenant authority, so this is a
+    # belt-and-braces check mirroring the Easy Auth path.
+    if (
+        EXPECTED_TENANT_ID
+        and rec.identity.tenant_id
+        and rec.identity.tenant_id.lower() != EXPECTED_TENANT_ID.lower()
+    ):
+        return JSONResponse({"detail": "forbidden"}, status_code=403)
 
     target = _resolve_static(path)
     if target is None:
