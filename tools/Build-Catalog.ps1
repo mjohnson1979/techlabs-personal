@@ -47,6 +47,7 @@ foreach ($mf in $metaFiles) {
         hasProd          = $hasProd
         componentCount   = $componentCount
         costProfile      = if ($meta.cost) { $meta.cost.profile } else { $null }
+        cost             = if ($meta.cost) { $meta.cost } else { $null }
     })
 }
 

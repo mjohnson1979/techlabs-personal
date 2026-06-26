@@ -1,0 +1,92 @@
+{
+  "name": "azure-vmware-solution-enterprise",
+  "displayName": "Azure VMware Solution Enterprise",
+  "category": "Hybrid & Migration",
+  "description": "Enterprise Azure VMware Solution baseline with private cloud, landing network, ExpressRoute connectivity, and centralized monitoring.",
+  "what": "A starter AVS landing zone that provisions the core building blocks for VMware workloads in Azure: an AVS private cloud, a landing virtual network with GatewaySubnet, baseline security controls, optional ExpressRoute gateway connectivity, and centralized monitoring in Azure Monitor.",
+  "why": "Organizations migrating vSphere workloads need a governed, repeatable way to stand up AVS with secure connectivity and observability from day one. This template accelerates migration while preserving operational consistency across environments.",
+  "potentialUseCases": [
+    "Datacenter exit and lift-and-shift of VMware workloads",
+    "Capacity expansion for existing on-premises vSphere clusters",
+    "Disaster recovery target for critical VMware applications",
+    "Hybrid operations while modernizing applications over time"
+  ],
+  "industries": [
+    "Banking",
+    "Insurance",
+    "Health Provider",
+    "Central, Federal and Regional Government",
+    "Defense",
+    "Retailers",
+    "Manufacturing",
+    "Cross-industry"
+  ],
+  "compliance": [
+    "Baseline",
+    "SOC 2",
+    "ISO 27001",
+    "GDPR"
+  ],
+  "wellArchitected": {
+    "reliability": [
+      "Dedicated AVS private cloud for isolated VMware operations",
+      "Environment-specific parameterization for controlled dev/prod rollout"
+    ],
+    "security": [
+      "Key Vault baseline for secure secret management",
+      "Network segmentation with dedicated gateway and shared-services subnets",
+      "Optional diagnostics for AVS control-plane visibility"
+    ],
+    "costOptimization": [
+      "Right-size AVS node count by environment",
+      "Use dev profile for early validation before production scale",
+      "Centralized monitoring to optimize resource utilization"
+    ],
+    "operationalExcellence": [
+      "Infrastructure as Code modules for repeatable deployment",
+      "Unified logging via Log Analytics and Application Insights"
+    ],
+    "performanceEfficiency": [
+      "ExpressRoute-ready connectivity for low-latency hybrid traffic",
+      "Scalable AVS cluster size parameter to match workload demand"
+    ]
+  },
+  "cost": {
+    "currency": "USD",
+    "region": "eastus",
+    "profile": "prod",
+    "components": [
+      {
+        "name": "AVS private cloud nodes (AV36)",
+        "billing": "usage",
+        "serviceName": "Specialized Compute",
+        "productNameContains": "Azure VMware Solution",
+        "skuNameContains": "AV36 VCF BYOL",
+        "meterNameContains": "AV36 VCF BYOL Node",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 2190,
+        "notes": "Example assumes 3 nodes x 730 hours. Replace with your cluster size and region rates."
+      },
+      {
+        "name": "ExpressRoute gateway (ErGw2AZ)",
+        "billing": "usage",
+        "serviceName": "ExpressRoute",
+        "skuNameContains": "ErGw2AZ",
+        "meterNameContains": "ErGw2AZ Gateway",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 730,
+        "notes": "Optional but commonly required for hybrid AVS connectivity."
+      },
+      {
+        "name": "Log Analytics ingestion",
+        "billing": "usage",
+        "serviceName": "Log Analytics",
+        "skuNameContains": "Analytics Logs",
+        "meterNameContains": "Analytics Logs Data Ingestion",
+        "unitOfMeasure": "1 GB",
+        "quantityPerMonth": 20,
+        "notes": "Example monthly diagnostic and platform telemetry ingestion."
+      }
+    ]
+  }
+}

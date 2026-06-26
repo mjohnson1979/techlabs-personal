@@ -109,6 +109,39 @@
     return wrap;
   }
 
+  function costBlock(it) {
+    if (!it.cost) return null;
+
+    const wrap = el("div", { class: "modal-section" }, [el("h3", { text: "Cost estimate" })]);
+
+    if (it.cost.profile) {
+      wrap.appendChild(el("p", { text: it.cost.profile }));
+    }
+
+    const components = it.cost.components || [];
+    if (components.length) {
+      wrap.appendChild(el("h4", { text: "Estimated components" }));
+      wrap.appendChild(
+        el(
+          "ul",
+          {},
+          components.map((c) => {
+            const qty = c.quantityPerMonth !== undefined ? `${c.quantityPerMonth} ${c.unitOfMeasure || "units"}` : "variable usage";
+            const line = `${c.name} (${qty})`;
+            const note = c.notes ? ` - ${c.notes}` : "";
+            return el("li", { text: `${line}${note}` });
+          })
+        )
+      );
+    }
+
+    wrap.appendChild(
+      el("div", { class: "code", text: `./tools/Get-CatalogCost.ps1 -UseCase ${it.path}` })
+    );
+
+    return wrap;
+  }
+
   function openModal(it) {
     const body = $("#modal-body");
     body.innerHTML = "";
@@ -139,12 +172,8 @@
       ])
     );
 
-    body.appendChild(
-      el("div", { class: "modal-section" }, [
-        el("h3", { text: "Estimate cost" }),
-        el("div", { class: "code", text: `./tools/Get-CatalogCost.ps1 -UseCase ${it.path}` }),
-      ])
-    );
+    const cost = costBlock(it);
+    if (cost) body.appendChild(cost);
 
     body.appendChild(
       el("div", { class: "modal-section" }, [

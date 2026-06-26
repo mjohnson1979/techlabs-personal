@@ -65,7 +65,8 @@ function Get-RetailPrice {
     if ($Component.armSkuName) { $filterParts += "armSkuName eq '$($Component.armSkuName)'" }
     $filter = $filterParts -join ' and '
 
-    $url = "$ApiBase?currencyCode='$Currency'&`$filter=$([uri]::EscapeDataString($filter))"
+    $escapedFilter = [uri]::EscapeDataString($filter)
+    $url = "{0}?currencyCode={1}&`$filter={2}" -f $ApiBase, $Currency, $escapedFilter
 
     $items = New-Object System.Collections.Generic.List[object]
     do {
