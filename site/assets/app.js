@@ -38,6 +38,23 @@
     return node;
   };
 
+  // Format a number as currency (no decimals for figures >= 100).
+  function fmtMoney(n, currency) {
+    if (typeof n !== "number" || !isFinite(n)) return null;
+    const cur = currency || "USD";
+    const digits = n >= 100 ? 0 : 2;
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: cur,
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      }).format(n);
+    } catch (e) {
+      return `${cur} ${n.toFixed(digits)}`;
+    }
+  }
+
   function uniqueValues(key) {
     const set = new Set();
     state.items.forEach((it) => (it[key] || []).forEach((v) => set.add(v)));
@@ -84,6 +101,7 @@
       el("span", { class: "card-cat", text: it.category || "Other" }),
       el("h2", { text: it.displayName }),
       el("p", { class: "card-desc", text: it.description || "" }),
+      cardCost(it),
       el("div", { class: "chips" }, chips),
     ]);
     node.addEventListener("click", () => openModal(it));
@@ -91,6 +109,22 @@
       if (e.key === "Enter") openModal(it);
     });
     return node;
+  }
+
+  // Compact monthly-cost line shown on each card.
+  function cardCost(it) {
+    const cost = it.cost;
+    const total = cost && typeof cost.totalMonthly === "number" ? cost.totalMonthly : null;
+    const money = total !== null ? fmtMoney(total, cost.currency) : null;
+    if (money && total > 0) {
+      return el("div", { class: "card-cost" }, [
+        el("span", { class: "card-cost-amount", text: `~${money}` }),
+        el("span", { class: "card-cost-unit", text: "/mo est." }),
+      ]);
+    }
+    return el("div", { class: "card-cost card-cost-muted" }, [
+      el("span", { class: "card-cost-unit", text: "Usage-based — see details" }),
+    ]);
   }
 
   function render() {
@@ -128,26 +162,76 @@
   }
 
   function costBlock(it) {
-    if (!it.cost) return null;
+    const cost = it.cost;
+    if (!cost) return null;
 
     const wrap = el("div", { class: "modal-section" }, [el("h3", { text: "Cost estimate" })]);
 
-    if (it.cost.profile) {
-      wrap.appendChild(el("p", { text: it.cost.profile }));
+    if (cost.profile) {
+      wrap.appendChild(el("p", { text: cost.profile }));
     }
 
-    const components = it.cost.components || [];
-    if (components.length) {
-      wrap.appendChild(el("h4", { text: "Estimated components" }));
+    const components = cost.components || [];
+    const priced = components.some((c) => typeof c.monthly === "number");
+
+    if (components.length && priced) {
+      const head = el("div", { class: "cost-row cost-head" }, [
+        el("span", { class: "cost-name", text: "Component" }),
+        el("span", { class: "cost-qty", text: "Qty/mo" }),
+        el("span", { class: "cost-amt", text: "Monthly" }),
+      ]);
+      const rows = components.map((c) => {
+        const qty =
+          c.quantityPerMonth !== undefined && c.quantityPerMonth !== null
+            ? `${c.quantityPerMonth} ${c.unitOfMeasure || ""}`.trim()
+            : "variable";
+        const money = typeof c.monthly === "number" ? fmtMoney(c.monthly, cost.currency) : "—";
+        const name = el("span", { class: "cost-name" }, [
+          el("span", { text: c.name }),
+          c.billing ? el("span", { class: "cost-tag", text: c.billing }) : null,
+        ]);
+        return el("div", { class: "cost-row", title: c.notes || "" }, [
+          name,
+          el("span", { class: "cost-qty", text: qty }),
+          el("span", { class: "cost-amt", text: money }),
+        ]);
+      });
+      const table = el("div", { class: "cost-table" }, [head, ...rows]);
+
+      const totalRow = (label, value, cls) =>
+        el("div", { class: `cost-row cost-total ${cls || ""}` }, [
+          el("span", { class: "cost-name", text: label }),
+          el("span", { class: "cost-qty", text: "" }),
+          el("span", { class: "cost-amt", text: value }),
+        ]);
+      if (typeof cost.fixedMonthly === "number")
+        table.appendChild(totalRow("Committed (fixed)", fmtMoney(cost.fixedMonthly, cost.currency)));
+      if (typeof cost.usageMonthly === "number")
+        table.appendChild(totalRow("Estimated usage", fmtMoney(cost.usageMonthly, cost.currency)));
+      if (typeof cost.totalMonthly === "number")
+        table.appendChild(
+          totalRow("Total / month", fmtMoney(cost.totalMonthly, cost.currency), "cost-grand")
+        );
+
+      wrap.appendChild(table);
+
+      const meta = [];
+      if (cost.region) meta.push(`Region ${cost.region}`);
+      if (cost.pricedAt) meta.push(`retail prices as of ${cost.pricedAt}`);
+      meta.push("PAYG list price, excludes tax/reservations/free tiers");
+      if (cost.complete === false) meta.push("some components not priced — see notes");
+      wrap.appendChild(el("p", { class: "cost-note", text: meta.join(" · ") }));
+    } else if (components.length) {
+      // No prices available — fall back to the component list.
       wrap.appendChild(
         el(
           "ul",
           {},
           components.map((c) => {
-            const qty = c.quantityPerMonth !== undefined ? `${c.quantityPerMonth} ${c.unitOfMeasure || "units"}` : "variable usage";
-            const line = `${c.name} (${qty})`;
-            const note = c.notes ? ` - ${c.notes}` : "";
-            return el("li", { text: `${line}${note}` });
+            const qty =
+              c.quantityPerMonth !== undefined ? `${c.quantityPerMonth} ${c.unitOfMeasure || "units"}` : "variable usage";
+            const note = c.notes ? ` — ${c.notes}` : "";
+            return el("li", { text: `${c.name} (${qty})${note}` });
           })
         )
       );

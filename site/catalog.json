@@ -1,7 +1,7 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-06-26T21:10:40Z",
+    "generated":  "2026-06-26T23:20:30Z",
     "count":  19,
     "items":  [
                   {
@@ -65,51 +65,58 @@
                                                           "name":  "App Service plan (P1v3 Linux) x3",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure App Service",
-                                                          "armSkuName":  "P1v3",
-                                                          "productNameContains":  "Linux",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "3 instances x 730 hours."
+                                                          "notes":  "3 instances x 730 hours.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Azure OpenAI gpt-4o-mini input tokens",
                                                           "billing":  "usage",
                                                           "serviceName":  "Cognitive Services",
-                                                          "productNameContains":  "Azure OpenAI",
-                                                          "meterNameContains":  "gpt-4o-mini-0718 Input",
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  20,
-                                                          "notes":  "Assumes ~20M input tokens/month. Meter naming varies - verify."
+                                                          "notes":  "Assumes ~20M input tokens/month. Meter naming varies - verify.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Azure OpenAI gpt-4o-mini output tokens",
                                                           "billing":  "usage",
                                                           "serviceName":  "Cognitive Services",
-                                                          "productNameContains":  "Azure OpenAI",
-                                                          "meterNameContains":  "gpt-4o-mini-0718 Output",
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  5,
-                                                          "notes":  "Assumes ~5M output tokens/month. Meter naming varies - verify."
+                                                          "notes":  "Assumes ~5M output tokens/month. Meter naming varies - verify.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Cosmos DB serverless request units",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Cosmos DB",
-                                                          "meterNameContains":  "Serverless",
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  50,
-                                                          "notes":  "Assumes ~50M RUs/month."
+                                                          "notes":  "Assumes ~50M RUs/month.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Monitor",
-                                                          "meterNameContains":  "Data Ingestion",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  10,
-                                                          "notes":  "Assumes ~10 GB/month telemetry."
+                                                          "notes":  "Assumes ~10 GB/month telemetry.",
+                                                          "unitPrice":  0.05,
+                                                          "monthly":  0.50
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  0.50,
+                                   "totalMonthly":  0.50,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -187,42 +194,48 @@
                                                           "name":  "AKS control plane (Standard tier)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure Kubernetes Service",
-                                                          "skuNameContains":  "Standard",
-                                                          "meterNameContains":  "Standard Uptime SLA",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
-                                                          "notes":  "Per-cluster uptime SLA charge (Free tier in dev)."
+                                                          "notes":  "Per-cluster uptime SLA charge (Free tier in dev).",
+                                                          "unitPrice":  0.1,
+                                                          "monthly":  73.0
                                                       },
                                                       {
                                                           "name":  "System nodes (D4s_v5 x3)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Virtual Machines",
-                                                          "armSkuName":  "Standard_D4s_v5",
-                                                          "meterNameContains":  "D4s v5",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "Three nodes x 730 hours."
+                                                          "notes":  "Three nodes x 730 hours.",
+                                                          "unitPrice":  0.0384,
+                                                          "monthly":  84.10
                                                       },
                                                       {
                                                           "name":  "Premium Container Registry",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Container Registry",
-                                                          "skuNameContains":  "Premium",
-                                                          "meterNameContains":  "Premium Registry",
                                                           "unitOfMeasure":  "1 Day",
                                                           "quantityPerMonth":  30,
-                                                          "notes":  "Premium registry daily charge."
+                                                          "notes":  "Premium registry daily charge.",
+                                                          "unitPrice":  1.6666,
+                                                          "monthly":  50.00
                                                       },
                                                       {
                                                           "name":  "Container Insights ingestion",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Monitor",
-                                                          "meterNameContains":  "Data Ingestion",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  100,
-                                                          "notes":  "Assumes ~100 GB/month of cluster logs."
+                                                          "notes":  "Assumes ~100 GB/month of cluster logs.",
+                                                          "unitPrice":  0.05,
+                                                          "monthly":  5.00
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  207.10,
+                                   "usageMonthly":  5.00,
+                                   "totalMonthly":  212.10,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -295,23 +308,28 @@
                                                           "name":  "API Management (Premium)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "API Management",
-                                                          "skuNameContains":  "Premium",
-                                                          "meterNameContains":  "Premium Unit",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "Two Premium units x 730 hours."
+                                                          "notes":  "Two Premium units x 730 hours.",
+                                                          "unitPrice":  1.91781,
+                                                          "monthly":  2800.00
                                                       },
                                                       {
                                                           "name":  "Backend App Service Plan (P1v3 x3)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure App Service",
-                                                          "armSkuName":  "P1v3",
-                                                          "meterNameContains":  "P1 v3",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "Three backend instances."
+                                                          "notes":  "Three backend instances.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  2800.00,
+                                   "usageMonthly":  0,
+                                   "totalMonthly":  2800.00,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -389,23 +407,28 @@
                                                           "name":  "Session host VMs (D-series, example)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Virtual Machines",
-                                                          "armSkuName":  "Standard_D4s_v5",
-                                                          "meterNameContains":  "D4s v5",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "Example: 2 hosts averaged over business hours with autoscaling. Replace with your pool sizing."
+                                                          "notes":  "Example: 2 hosts averaged over business hours with autoscaling. Replace with your pool sizing.",
+                                                          "unitPrice":  0.0384,
+                                                          "monthly":  56.06
                                                       },
                                                       {
                                                           "name":  "Session host managed disks (Premium SSD)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Storage",
-                                                          "skuNameContains":  "Premium SSD",
-                                                          "meterNameContains":  "P10",
                                                           "unitOfMeasure":  "1/Month",
                                                           "quantityPerMonth":  2,
-                                                          "notes":  "One OS disk per session host."
+                                                          "notes":  "One OS disk per session host.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  56.06,
+                                   "totalMonthly":  56.06,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -478,35 +501,38 @@
                                                           "name":  "Session host VMs (D4s v5) x5",
                                                           "billing":  "usage",
                                                           "serviceName":  "Virtual Machines",
-                                                          "productNameContains":  "Virtual Machines Dv5 Series",
-                                                          "skuNameContains":  "D4s v5",
-                                                          "meterNameContains":  "D4s v5",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  3650,
-                                                          "notes":  "Example assumes 5 session hosts x 730 hours. A scaling plan reduces this materially; replace with your host count and schedule."
+                                                          "notes":  "Example assumes 5 session hosts x 730 hours. A scaling plan reduces this materially; replace with your host count and schedule.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "FSLogix profile storage (Azure Files)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Storage",
-                                                          "productNameContains":  "Files",
-                                                          "skuNameContains":  "Standard LRS",
-                                                          "meterNameContains":  "LRS Data Stored",
                                                           "unitOfMeasure":  "1 GB/Month",
                                                           "quantityPerMonth":  500,
-                                                          "notes":  "Example assumes ~500 GB of pooled user profiles."
+                                                          "notes":  "Example assumes ~500 GB of pooled user profiles.",
+                                                          "unitPrice":  0.06,
+                                                          "monthly":  30.00
                                                       },
                                                       {
                                                           "name":  "Log Analytics ingestion",
                                                           "billing":  "usage",
                                                           "serviceName":  "Log Analytics",
-                                                          "skuNameContains":  "Analytics Logs",
-                                                          "meterNameContains":  "Analytics Logs Data Ingestion",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  20,
-                                                          "notes":  "Example monthly diagnostic and platform telemetry ingestion."
+                                                          "notes":  "Example monthly diagnostic and platform telemetry ingestion.",
+                                                          "unitPrice":  2.3,
+                                                          "monthly":  46.0
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  76.00,
+                                   "totalMonthly":  76.00,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -577,34 +603,38 @@
                                                           "name":  "AVS private cloud nodes (AV36)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Specialized Compute",
-                                                          "productNameContains":  "Azure VMware Solution",
-                                                          "skuNameContains":  "AV36 VCF BYOL",
-                                                          "meterNameContains":  "AV36 VCF BYOL Node",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "Example assumes 3 nodes x 730 hours. Replace with your cluster size and region rates."
+                                                          "notes":  "Example assumes 3 nodes x 730 hours. Replace with your cluster size and region rates.",
+                                                          "unitPrice":  7.35311,
+                                                          "monthly":  16103.31
                                                       },
                                                       {
                                                           "name":  "ExpressRoute gateway (ErGw2AZ)",
                                                           "billing":  "usage",
                                                           "serviceName":  "ExpressRoute",
-                                                          "skuNameContains":  "ErGw2AZ",
-                                                          "meterNameContains":  "ErGw2AZ Gateway",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
-                                                          "notes":  "Optional but commonly required for hybrid AVS connectivity."
+                                                          "notes":  "Optional but commonly required for hybrid AVS connectivity.",
+                                                          "unitPrice":  0.632,
+                                                          "monthly":  461.36
                                                       },
                                                       {
                                                           "name":  "Log Analytics ingestion",
                                                           "billing":  "usage",
                                                           "serviceName":  "Log Analytics",
-                                                          "skuNameContains":  "Analytics Logs",
-                                                          "meterNameContains":  "Analytics Logs Data Ingestion",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  20,
-                                                          "notes":  "Example monthly diagnostic and platform telemetry ingestion."
+                                                          "notes":  "Example monthly diagnostic and platform telemetry ingestion.",
+                                                          "unitPrice":  2.3,
+                                                          "monthly":  46.0
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  16610.67,
+                                   "totalMonthly":  16610.67,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -668,30 +698,38 @@
                                                           "name":  "Container Apps vCPU (active)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Container Apps",
-                                                          "meterNameContains":  "vCPU Active Usage",
                                                           "unitOfMeasure":  "1 Second",
                                                           "quantityPerMonth":  5256000,
-                                                          "notes":  "2 warm replicas x 1 vCPU x 730h x 3600s. Active rate (resource-allocated)."
+                                                          "notes":  "2 warm replicas x 1 vCPU x 730h x 3600s. Active rate (resource-allocated).",
+                                                          "unitPrice":  0.00002,
+                                                          "monthly":  126.14
                                                       },
                                                       {
                                                           "name":  "Container Apps memory (active)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Container Apps",
-                                                          "meterNameContains":  "Memory Active Usage",
                                                           "unitOfMeasure":  "1 GiB Second",
                                                           "quantityPerMonth":  10512000,
-                                                          "notes":  "2 warm replicas x 2 GiB x 730h x 3600s."
+                                                          "notes":  "2 warm replicas x 2 GiB x 730h x 3600s.",
+                                                          "unitPrice":  0.00000,
+                                                          "monthly":  31.54
                                                       },
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Monitor",
-                                                          "meterNameContains":  "Analytics Logs Data Ingestion",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
-                                                          "notes":  "Assumes ~5 GB/month container logs."
+                                                          "notes":  "Assumes ~5 GB/month container logs.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  157.68,
+                                   "totalMonthly":  157.68,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -768,41 +806,48 @@
                                                           "name":  "Data lake storage (ZRS, hot)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Storage",
-                                                          "skuNameContains":  "ZRS",
-                                                          "meterNameContains":  "Data Stored",
                                                           "unitOfMeasure":  "1 GB/Month",
                                                           "quantityPerMonth":  5000,
-                                                          "notes":  "Assumes ~5 TB across bronze/silver/gold."
+                                                          "notes":  "Assumes ~5 TB across bronze/silver/gold.",
+                                                          "unitPrice":  0.004,
+                                                          "monthly":  20.00
                                                       },
                                                       {
                                                           "name":  "Databricks (premium) DBUs",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Databricks",
-                                                          "skuNameContains":  "Premium",
-                                                          "meterNameContains":  "All-purpose Compute DBU",
                                                           "unitOfMeasure":  "1 DBU",
                                                           "quantityPerMonth":  2000,
-                                                          "notes":  "Assumes ~2000 DBUs/month; VM compute billed separately."
+                                                          "notes":  "Assumes ~2000 DBUs/month; VM compute billed separately.",
+                                                          "unitPrice":  0.55,
+                                                          "monthly":  1100.00
                                                       },
                                                       {
                                                           "name":  "Data Factory pipeline activity runs",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Data Factory v2",
-                                                          "meterNameContains":  "Cloud Activity Runs",
                                                           "unitOfMeasure":  "1000",
                                                           "quantityPerMonth":  50,
-                                                          "notes":  "Assumes ~50K orchestration activity runs/month."
+                                                          "notes":  "Assumes ~50K orchestration activity runs/month.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Data Factory managed VNet IR (data flow)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Data Factory v2",
-                                                          "meterNameContains":  "vCore",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  200,
-                                                          "notes":  "Assumes ~200 vCore-hours of managed-VNet data movement."
+                                                          "notes":  "Assumes ~200 vCore-hours of managed-VNet data movement.",
+                                                          "unitPrice":  0.0961,
+                                                          "monthly":  19.22
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  1139.22,
+                                   "totalMonthly":  1139.22,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -878,60 +923,68 @@
                                                           "name":  "Azure OpenAI - gpt-4o-mini input",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure OpenAI",
-                                                          "meterNameContains":  "gpt-4o-mini-0718 Inp",
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  50,
-                                                          "notes":  "Assumes ~50M input tokens/month."
+                                                          "notes":  "Assumes ~50M input tokens/month.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Azure OpenAI - gpt-4o-mini output",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure OpenAI",
-                                                          "meterNameContains":  "gpt-4o-mini-0718 Outp",
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  15,
-                                                          "notes":  "Assumes ~15M output tokens/month."
+                                                          "notes":  "Assumes ~15M output tokens/month.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Azure OpenAI - text-embedding-3-large",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure OpenAI",
-                                                          "meterNameContains":  "Text-Embedding-3-Large",
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  20,
-                                                          "notes":  "Embedding tokens for ingestion + queries."
+                                                          "notes":  "Embedding tokens for ingestion + queries.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Azure AI Search (Standard S1)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure Cognitive Search",
-                                                          "skuNameContains":  "Standard",
-                                                          "meterNameContains":  "Standard",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "Three replicas x 730 hours."
+                                                          "notes":  "Three replicas x 730 hours.",
+                                                          "unitPrice":  0.336,
+                                                          "monthly":  735.84
                                                       },
                                                       {
                                                           "name":  "App Service Plan (P1v3 x3)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure App Service",
-                                                          "armSkuName":  "P1v3",
-                                                          "meterNameContains":  "P1 v3",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "Three orchestrator instances."
+                                                          "notes":  "Three orchestrator instances.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "API Management (Premium)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "API Management",
-                                                          "skuNameContains":  "Premium",
-                                                          "meterNameContains":  "Premium Unit",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
-                                                          "notes":  "One Premium unit; Developer tier in dev is far cheaper."
+                                                          "notes":  "One Premium unit; Developer tier in dev is far cheaper.",
+                                                          "unitPrice":  1.91781,
+                                                          "monthly":  1400.00
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  2135.84,
+                                   "usageMonthly":  0,
+                                   "totalMonthly":  2135.84,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -1006,51 +1059,58 @@
                                                           "name":  "Event Hubs (Premium)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Event Hubs",
-                                                          "skuNameContains":  "Premium",
-                                                          "meterNameContains":  "Processing Unit",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "Two processing units x 730 hours."
+                                                          "notes":  "Two processing units x 730 hours.",
+                                                          "unitPrice":  1.027,
+                                                          "monthly":  1499.42
                                                       },
                                                       {
                                                           "name":  "Stream Analytics (6 SU)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Stream Analytics",
-                                                          "meterNameContains":  "Standard Streaming Unit",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  4380,
-                                                          "notes":  "Six streaming units x 730 hours."
+                                                          "notes":  "Six streaming units x 730 hours.",
+                                                          "unitPrice":  0.11,
+                                                          "monthly":  481.80
                                                       },
                                                       {
                                                           "name":  "Functions (Elastic Premium EP1)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Functions",
-                                                          "skuNameContains":  "EP1",
-                                                          "meterNameContains":  "vCPU Duration",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
-                                                          "notes":  "One always-ready EP1 instance."
+                                                          "notes":  "One always-ready EP1 instance.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Cosmos DB (serverless RU)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Cosmos DB",
-                                                          "meterNameContains":  "Serverless",
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  50,
-                                                          "notes":  "Assumes ~50M serverless request units/month."
+                                                          "notes":  "Assumes ~50M serverless request units/month.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Curated lake storage (ZRS)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Storage",
-                                                          "skuNameContains":  "ZRS",
-                                                          "meterNameContains":  "Data Stored",
                                                           "unitOfMeasure":  "1 GB/Month",
                                                           "quantityPerMonth":  1000,
-                                                          "notes":  "Assumes ~1 TB curated Parquet retained."
+                                                          "notes":  "Assumes ~1 TB curated Parquet retained.",
+                                                          "unitPrice":  0.004,
+                                                          "monthly":  4.00
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  1981.22,
+                                   "usageMonthly":  4.00,
+                                   "totalMonthly":  1985.22,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -1125,41 +1185,48 @@
                                                           "name":  "Azure Firewall (Premium)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure Firewall",
-                                                          "skuNameContains":  "Premium",
-                                                          "meterNameContains":  "Deployment",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
-                                                          "notes":  "Per-deployment hourly charge; data processing billed separately."
+                                                          "notes":  "Per-deployment hourly charge; data processing billed separately.",
+                                                          "unitPrice":  1.75,
+                                                          "monthly":  1277.50
                                                       },
                                                       {
                                                           "name":  "Azure Firewall data processed",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Firewall",
-                                                          "meterNameContains":  "Data Processed",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  1000,
-                                                          "notes":  "Assumes ~1 TB/month inspected egress."
+                                                          "notes":  "Assumes ~1 TB/month inspected egress.",
+                                                          "unitPrice":  0.016,
+                                                          "monthly":  16.00
                                                       },
                                                       {
                                                           "name":  "Azure Bastion (Standard)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure Bastion",
-                                                          "skuNameContains":  "Standard",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
-                                                          "notes":  "Per-hour Bastion host charge."
+                                                          "notes":  "Per-hour Bastion host charge.",
+                                                          "unitPrice":  0.05000,
+                                                          "monthly":  36.50
                                                       },
                                                       {
                                                           "name":  "Public IP (Standard, static)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Virtual Network",
-                                                          "skuNameContains":  "Standard",
-                                                          "meterNameContains":  "Static IP",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "Two static public IPs (firewall + bastion)."
+                                                          "notes":  "Two static public IPs (firewall + bastion).",
+                                                          "unitPrice":  0.006,
+                                                          "monthly":  8.76
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  1322.76,
+                                   "usageMonthly":  16.00,
+                                   "totalMonthly":  1338.76,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -1234,33 +1301,38 @@
                                                           "name":  "Logic Apps Standard plan (WS3)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Logic Apps",
-                                                          "skuNameContains":  "WS3",
-                                                          "meterNameContains":  "WS3",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
-                                                          "notes":  "One WS3 instance x 730 hours."
+                                                          "notes":  "One WS3 instance x 730 hours.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Service Bus (Premium)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Service Bus",
-                                                          "skuNameContains":  "Premium",
-                                                          "meterNameContains":  "Messaging Unit",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
-                                                          "notes":  "One Premium messaging unit."
+                                                          "notes":  "One Premium messaging unit.",
+                                                          "unitPrice":  0.9275,
+                                                          "monthly":  677.08
                                                       },
                                                       {
                                                           "name":  "Runtime storage (LRS)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Storage",
-                                                          "skuNameContains":  "LRS",
-                                                          "meterNameContains":  "Data Stored",
                                                           "unitOfMeasure":  "1 GB/Month",
                                                           "quantityPerMonth":  50,
-                                                          "notes":  "Workflow run history and content share."
+                                                          "notes":  "Workflow run history and content share.",
+                                                          "unitPrice":  0.00099,
+                                                          "monthly":  0.05
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  677.08,
+                                   "usageMonthly":  0.05,
+                                   "totalMonthly":  677.13,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -1333,31 +1405,38 @@
                                                           "name":  "Azure AI Search (Standard S1) x3 replicas",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure Cognitive Search",
-                                                          "meterNameContains":  "Standard Unit",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "3 search units (replicas) x 730 hours. Meter naming varies - verify."
+                                                          "notes":  "3 search units (replicas) x 730 hours. Meter naming varies - verify.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Blob storage (hot ZRS)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Storage",
-                                                          "productNameContains":  "General Block Blob",
-                                                          "meterNameContains":  "Hot ZRS Data Stored",
                                                           "unitOfMeasure":  "1 GB/Month",
                                                           "quantityPerMonth":  200,
-                                                          "notes":  "Assumes ~200 GB of grounding documents."
+                                                          "notes":  "Assumes ~200 GB of grounding documents.",
+                                                          "unitPrice":  0.0239,
+                                                          "monthly":  4.78
                                                       },
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Monitor",
-                                                          "meterNameContains":  "Analytics Logs Data Ingestion",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
-                                                          "notes":  "Assumes ~5 GB/month telemetry. Model token usage is billed per AI use case."
+                                                          "notes":  "Assumes ~5 GB/month telemetry. Model token usage is billed per AI use case.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  4.78,
+                                   "totalMonthly":  4.78,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -1420,31 +1499,38 @@
                                                           "name":  "Log Analytics analytics logs ingestion",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Monitor",
-                                                          "meterNameContains":  "Analytics Logs Data Ingestion",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
-                                                          "notes":  "Assumes ~5 GB/month platform logs."
+                                                          "notes":  "Assumes ~5 GB/month platform logs.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Blob storage (hot LRS)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Storage",
-                                                          "productNameContains":  "General Block Blob",
-                                                          "meterNameContains":  "Hot LRS Data Stored",
                                                           "unitOfMeasure":  "1 GB/Month",
                                                           "quantityPerMonth":  100,
-                                                          "notes":  "Assumes ~100 GB stored."
+                                                          "notes":  "Assumes ~100 GB stored.",
+                                                          "unitPrice":  0.0191,
+                                                          "monthly":  1.91
                                                       },
                                                       {
                                                           "name":  "Key Vault operations",
                                                           "billing":  "usage",
                                                           "serviceName":  "Key Vault",
-                                                          "meterNameContains":  "Operations",
                                                           "unitOfMeasure":  "10K",
                                                           "quantityPerMonth":  5,
-                                                          "notes":  "Assumes ~50K secret/key operations per month."
+                                                          "notes":  "Assumes ~50K secret/key operations per month.",
+                                                          "unitPrice":  0.03,
+                                                          "monthly":  0.15
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  2.06,
+                                   "totalMonthly":  2.06,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -1518,40 +1604,48 @@
                                                           "name":  "Container Apps vCPU (active)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Container Apps",
-                                                          "meterNameContains":  "vCPU Active Usage",
                                                           "unitOfMeasure":  "1 Second",
                                                           "quantityPerMonth":  5256000,
-                                                          "notes":  "~2 active vCPU-equivalents continuously (2 x 730h)."
+                                                          "notes":  "~2 active vCPU-equivalents continuously (2 x 730h).",
+                                                          "unitPrice":  0.00002,
+                                                          "monthly":  126.14
                                                       },
                                                       {
                                                           "name":  "Container Apps memory (active)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Container Apps",
-                                                          "meterNameContains":  "Memory Active Usage",
                                                           "unitOfMeasure":  "1 GiB Second",
                                                           "quantityPerMonth":  10512000,
-                                                          "notes":  "~4 GiB active continuously."
+                                                          "notes":  "~4 GiB active continuously.",
+                                                          "unitPrice":  0.00000,
+                                                          "monthly":  31.54
                                                       },
                                                       {
                                                           "name":  "Service Bus (Premium)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Service Bus",
-                                                          "skuNameContains":  "Premium",
-                                                          "meterNameContains":  "Messaging Unit",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
-                                                          "notes":  "One Premium messaging unit."
+                                                          "notes":  "One Premium messaging unit.",
+                                                          "unitPrice":  0.9275,
+                                                          "monthly":  677.08
                                                       },
                                                       {
                                                           "name":  "Cosmos DB (serverless RU)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Cosmos DB",
-                                                          "meterNameContains":  "Serverless",
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  25,
-                                                          "notes":  "Assumes ~25M serverless request units/month."
+                                                          "notes":  "Assumes ~25M serverless request units/month.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  677.08,
+                                   "usageMonthly":  157.68,
+                                   "totalMonthly":  834.76,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -1628,42 +1722,48 @@
                                                           "name":  "Front Door Premium base",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure Front Door Service",
-                                                          "skuNameContains":  "Premium",
-                                                          "meterNameContains":  "Premium Base",
                                                           "unitOfMeasure":  "1/Month",
                                                           "quantityPerMonth":  1,
-                                                          "notes":  "Monthly Premium profile base fee."
+                                                          "notes":  "Monthly Premium profile base fee.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "App Service Plan primary (P1v3 x3)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure App Service",
-                                                          "armSkuName":  "P1v3",
-                                                          "meterNameContains":  "P1 v3",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "Three instances in the primary region."
+                                                          "notes":  "Three instances in the primary region.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "App Service Plan secondary (P1v3 x3)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure App Service",
-                                                          "armSkuName":  "P1v3",
-                                                          "meterNameContains":  "P1 v3",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "Three instances in the secondary region."
+                                                          "notes":  "Three instances in the secondary region.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Cosmos DB multi-region (provisioned RU)",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Cosmos DB",
-                                                          "meterNameContains":  "100 RU/s",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  14600,
-                                                          "notes":  "~1000 RU/s replicated across two regions (2 x 730h x 10 units)."
+                                                          "notes":  "~1000 RU/s replicated across two regions (2 x 730h x 10 units).",
+                                                          "unitPrice":  0.008,
+                                                          "monthly":  116.80
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  116.80,
+                                   "totalMonthly":  116.80,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -1739,52 +1839,58 @@
                                                           "name":  "App Service Plan (P1v3 x3)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure App Service",
-                                                          "armSkuName":  "P1v3",
-                                                          "meterNameContains":  "P1 v3",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "Three instances x 730 hours."
+                                                          "notes":  "Three instances x 730 hours.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Application Gateway WAF_v2",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Application Gateway",
-                                                          "skuNameContains":  "WAF",
-                                                          "meterNameContains":  "Gateway",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
-                                                          "notes":  "Fixed gateway hours; capacity units billed separately."
+                                                          "notes":  "Fixed gateway hours; capacity units billed separately.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Application Gateway capacity units",
                                                           "billing":  "usage",
                                                           "serviceName":  "Application Gateway",
-                                                          "skuNameContains":  "WAF",
-                                                          "meterNameContains":  "Capacity Unit",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "Assumes ~2 capacity units sustained."
+                                                          "notes":  "Assumes ~2 capacity units sustained.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Azure SQL (GP_Gen5_2)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "SQL Database",
-                                                          "skuNameContains":  "GP_Gen5",
-                                                          "meterNameContains":  "vCore",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "2 vCores x 730 hours, General Purpose provisioned."
+                                                          "notes":  "2 vCores x 730 hours, General Purpose provisioned.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Private Endpoints (SQL + Key Vault)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Virtual Network",
-                                                          "meterNameContains":  "Private Endpoint",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "Two private endpoints x 730 hours."
+                                                          "notes":  "Two private endpoints x 730 hours.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  0,
+                                   "totalMonthly":  0,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -1848,32 +1954,38 @@
                                                           "name":  "App Service plan (P1v3 Linux) x3",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure App Service",
-                                                          "armSkuName":  "P1v3",
-                                                          "productNameContains":  "Linux",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "3 instances x 730 hours."
+                                                          "notes":  "3 instances x 730 hours.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Azure SQL Database (GP Gen5 2 vCore)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "SQL Database",
-                                                          "productNameContains":  "Single Database General Purpose - Compute Gen5",
-                                                          "meterNameContains":  "vCore",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "2 vCores x 730 hours. Meter matching is approximate - verify against your bill."
+                                                          "notes":  "2 vCores x 730 hours. Meter matching is approximate - verify against your bill.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Monitor",
-                                                          "meterNameContains":  "Data Ingestion",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  10,
-                                                          "notes":  "Assumes ~10 GB/month telemetry."
+                                                          "notes":  "Assumes ~10 GB/month telemetry.",
+                                                          "unitPrice":  0.05,
+                                                          "monthly":  0.50
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  0.50,
+                                   "totalMonthly":  0.50,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   },
                   {
@@ -1937,31 +2049,38 @@
                                                           "name":  "App Service plan (P1v3 Linux) x3",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Azure App Service",
-                                                          "armSkuName":  "P1v3",
-                                                          "productNameContains":  "Linux",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "3 instances x 730 hours for zone redundancy."
+                                                          "notes":  "3 instances x 730 hours for zone redundancy.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Monitor",
-                                                          "meterNameContains":  "Data Ingestion",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  10,
-                                                          "notes":  "Assumes ~10 GB/month telemetry after sampling."
+                                                          "notes":  "Assumes ~10 GB/month telemetry after sampling.",
+                                                          "unitPrice":  0.05,
+                                                          "monthly":  0.50
                                                       },
                                                       {
                                                           "name":  "Log Analytics analytics logs",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure Monitor",
-                                                          "meterNameContains":  "Analytics Logs Data Ingestion",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
-                                                          "notes":  "Assumes ~5 GB/month platform logs."
+                                                          "notes":  "Assumes ~5 GB/month platform logs.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       }
-                                                  ]
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  0.50,
+                                   "totalMonthly":  0.50,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-06-26"
                                }
                   }
               ]

@@ -378,6 +378,111 @@ a:hover {
   border-color: rgba(110, 231, 183, 0.4);
 }
 
+/* Card cost line */
+.card-cost {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin: 0 0 14px;
+}
+
+.card-cost-amount {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent-2);
+}
+
+.card-cost-unit {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.card-cost-muted .card-cost-unit {
+  font-style: italic;
+}
+
+/* Itemized cost table (modal) */
+.cost-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.cost-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.cost-row:first-child {
+  border-top: none;
+}
+
+.cost-head {
+  background: var(--surface-2);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.cost-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cost-tag {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.cost-qty {
+  color: var(--muted);
+  font-size: 0.84rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cost-amt {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cost-total {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.cost-total .cost-name {
+  color: var(--text);
+}
+
+.cost-grand .cost-amt {
+  color: var(--accent-2);
+  font-size: 1.05rem;
+}
+
+.cost-note {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
 /* Modal */
 .modal {
   position: fixed;
