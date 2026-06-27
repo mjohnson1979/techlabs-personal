@@ -232,7 +232,7 @@
     const cost = it.cost;
     if (!cost) return null;
 
-    const wrap = el("div", { class: "modal-section" }, [el("h3", { text: "Cost estimate" })]);
+    const wrap = el("div", { class: "modal-section modal-card" }, [el("h3", { text: "Cost estimate" })]);
 
     if (cost.profile) {
       wrap.appendChild(el("p", { text: cost.profile }));
@@ -527,14 +527,14 @@
       }),
     ]);
 
-    return el("div", { class: "modal-section" }, [el("h3", { text: "Deploy" }), form, manual]);
+    return el("div", { class: "modal-section modal-card" }, [el("h3", { text: "Deploy" }), form, manual]);
   }
 
   // Capacity & quota notice for the use-case detail modal.
   function quotaBlock(it) {
     const q = it.quota;
     if (!q || !(q.requirements && q.requirements.length)) return null;
-    const wrap = el("div", { class: "modal-section" }, [el("h3", { text: "Capacity & quota" })]);
+    const wrap = el("div", { class: "modal-section modal-card" }, [el("h3", { text: "Capacity & quota" })]);
     if (q.summary) wrap.appendChild(el("p", { text: q.summary }));
 
     const list = el("div", { class: "quota-list" });
@@ -674,43 +674,48 @@
     body.appendChild(el("span", { class: "card-cat", text: it.category || "Other" }));
     body.appendChild(el("h2", { text: it.displayName }));
 
-    // Left column: narrative + well-architected + quota + deploy + cost.
-    const main = el("div", { class: "modal-col-main" });
-
+    // Row 1: narrative (left) + architecture diagram (right).
+    const narrative = el("div", { class: "modal-col-main" });
     const sections = [];
     if (it.what) sections.push(["What it is", el("p", { text: it.what })]);
     if (it.why) sections.push(["Why it exists", el("p", { text: it.why })]);
     if (it.potentialUseCases && it.potentialUseCases.length)
       sections.push(["Potential use cases", el("ul", {}, it.potentialUseCases.map((u) => el("li", { text: u })))]);
-
     sections.forEach(([title, content]) => {
-      main.appendChild(el("div", { class: "modal-section" }, [el("h3", { text: title }), content]));
+      narrative.appendChild(el("div", { class: "modal-section" }, [el("h3", { text: title }), content]));
     });
 
+    const arch = architectureBlock(it);
+    const row1 = el("div", { class: arch ? "modal-grid" : "modal-grid modal-grid-single" }, [narrative]);
+    if (arch) row1.appendChild(el("div", { class: "modal-col-side" }, [arch]));
+    body.appendChild(row1);
+
+    // Row 2: Well-Architected + Capacity & quota, side by side.
     const pillars = pillarBlock(it.wellArchitected);
-    if (pillars)
-      main.appendChild(el("div", { class: "modal-section" }, [el("h3", { text: "Well-Architected" }), pillars]));
-
+    const waCard = pillars
+      ? el("div", { class: "modal-section modal-card" }, [el("h3", { text: "Well-Architected" }), pillars])
+      : null;
     const quota = quotaBlock(it);
-    if (quota) main.appendChild(quota);
+    const row2 = [];
+    if (waCard) row2.push(waCard);
+    if (quota) row2.push(quota);
+    if (row2.length) {
+      const cls = row2.length === 2 ? "modal-grid modal-grid-even" : "modal-grid modal-grid-single";
+      body.appendChild(el("div", { class: cls }, row2));
+    }
 
-    main.appendChild(deployBlock(it));
+    // Deploy section (boxed).
+    body.appendChild(deployBlock(it));
 
+    // Cost estimate (boxed).
     const cost = costBlock(it);
-    if (cost) main.appendChild(cost);
+    if (cost) body.appendChild(cost);
 
-    main.appendChild(
-      el("div", { class: "modal-section" }, [
+    body.appendChild(
+      el("div", { class: "modal-section modal-foot" }, [
         el("a", { href: `${REPO}/tree/main/catalog/${it.path}`, target: "_blank", rel: "noopener", text: "View on GitHub →" }),
       ])
     );
-
-    // Right column: architecture diagram (sticky). Falls back to a single
-    // column when the use case has no derivable services.
-    const arch = architectureBlock(it);
-    const grid = el("div", { class: arch ? "modal-grid" : "modal-grid modal-grid-single" }, [main]);
-    if (arch) grid.appendChild(el("div", { class: "modal-col-side" }, [arch]));
-    body.appendChild(grid);
 
     $("#modal").hidden = false;
   }

@@ -640,13 +640,17 @@ a:hover {
   margin: 0 auto;
 }
 
-/* Two-column detail: narrative on the left, architecture on the right. */
+/* Two-column detail rows: narrative/architecture, well-architected/quota. */
 .modal-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: 40px;
-  align-items: start;
-  margin-top: 10px;
+  gap: 24px;
+  align-items: stretch;
+  margin: 22px 0;
+}
+
+.modal-grid-even {
+  grid-template-columns: 1fr 1fr;
 }
 
 .modal-grid-single {
@@ -659,17 +663,36 @@ a:hover {
 
 .modal-col-side {
   min-width: 0;
-  position: sticky;
-  top: 0;
+  display: flex;
+}
+
+.modal-col-side > .arch-block {
+  flex: 1;
+}
+
+/* Reusable rounded "card" panel used to separate detail sections. */
+.modal-card.modal-section,
+.arch-block.modal-section {
+  margin: 22px 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px 24px;
+}
+
+/* Cards sitting inside a grid row should not add their own outer margin. */
+.modal-grid > .modal-card.modal-section,
+.modal-grid > .modal-col-side > .arch-block.modal-section {
+  margin: 0;
+}
+
+.modal-foot {
+  margin-top: 20px;
 }
 
 @media (max-width: 900px) {
   .modal-grid {
     grid-template-columns: 1fr;
-  }
-
-  .modal-col-side {
-    position: static;
   }
 }
 
@@ -1296,15 +1319,6 @@ a:hover {
   color: var(--muted);
   font-size: 0.9rem;
   margin: 0 0 14px;
-}
-
-/* Architecture rendered as a rounded card in the right-hand column. */
-.arch-block.modal-section {
-  margin: 0;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 22px 24px;
 }
 
 .arch-block.modal-section h3 {
