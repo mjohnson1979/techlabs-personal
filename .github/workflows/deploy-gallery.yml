@@ -25,6 +25,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r site/requirements.txt pytest
+
+      - name: Verify executor SDK (fails before deploy if SDK layout is wrong)
+        run: python -m pytest site/server/tests -v
+
       - name: Install Bicep
         run: |
           set -euo pipefail
