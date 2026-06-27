@@ -43,7 +43,11 @@ def executor_available() -> tuple[bool, str]:
     """Return (ok, reason) — whether the Azure SDK is importable."""
     try:
         import azure.identity  # noqa: F401
-        import azure.mgmt.resource  # noqa: F401
+
+        try:
+            from azure.mgmt.resource.resources import ResourceManagementClient  # noqa: F401
+        except ImportError:
+            from azure.mgmt.resource import ResourceManagementClient  # noqa: F401
     except Exception as exc:  # pragma: no cover - import-time environment issue
         return False, f"Azure SDK not installed ({exc})"
     return True, "ok"
@@ -102,7 +106,13 @@ def _get_credential() -> Any:
 
 
 def _client(subscription_id: str) -> Any:
-    from azure.mgmt.resource import ResourceManagementClient
+    # In some azure-mgmt-resource versions ``azure.mgmt.resource`` is a namespace
+    # package and ``ResourceManagementClient`` is only exported from the concrete
+    # ``resources`` subpackage. Prefer that, fall back to the top-level name.
+    try:
+        from azure.mgmt.resource.resources import ResourceManagementClient
+    except ImportError:  # pragma: no cover - depends on installed SDK layout
+        from azure.mgmt.resource import ResourceManagementClient
 
     return ResourceManagementClient(_get_credential(), subscription_id)
 
