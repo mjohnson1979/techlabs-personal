@@ -62,7 +62,7 @@ function Get-RetailPrice {
 
     $filterParts = @("armRegionName eq '$Region'", "priceType eq 'Consumption'")
     if ($Component.serviceName) { $filterParts += "serviceName eq '$($Component.serviceName)'" }
-    if ($Component.armSkuName) { $filterParts += "armSkuName eq '$($Component.armSkuName)'" }
+    if ($Component.meterNameExact) { $filterParts += "meterName eq '$($Component.meterNameExact)'" }
     $filter = $filterParts -join ' and '
 
     $escapedFilter = [uri]::EscapeDataString($filter)
@@ -79,7 +79,27 @@ function Get-RetailPrice {
     if ($Component.skuNameContains) { $cand = $cand | Where-Object { $_.skuName -like "*$($Component.skuNameContains)*" } }
     if ($Component.productNameContains) { $cand = $cand | Where-Object { $_.productName -like "*$($Component.productNameContains)*" } }
     if ($Component.meterNameContains) { $cand = $cand | Where-Object { $_.meterName -like "*$($Component.meterNameContains)*" } }
-    $cand = $cand | Where-Object { $_.retailPrice -gt 0 }
+    if ($Component.armSkuName) {
+        $want = ($Component.armSkuName -replace '[^a-zA-Z0-9]', '').ToLowerInvariant()
+        $cand = $cand | Where-Object {
+            $hay = (@($_.armSkuName, $_.skuName, $_.meterName) -join ' ') -replace '[^a-zA-Z0-9]', ''
+            $hay.ToLowerInvariant().Contains($want)
+        }
+    }
+    # Skip reserved/spot/discounted/dev-test rows so the cheapest-match
+    # heuristic reflects pay-as-you-go list price.
+    $cand = $cand | Where-Object {
+        $blob = "$($_.productName) $($_.skuName) $($_.meterName)"
+        $blob -notmatch '(?i)discount|reserv|spot|low priority|dev[ /-]?test'
+    }
+    $cand = @($cand | Where-Object { $_.retailPrice -gt 0 })
+
+    # Prefer exact meter-name matches so sub-meters (e.g. "... Disk Mount")
+    # don't win the cheapest sort.
+    if ($Component.meterNameContains) {
+        $exact = @($cand | Where-Object { $_.meterName -eq $Component.meterNameContains })
+        if ($exact.Count) { $cand = $exact }
+    }
 
     if (-not $cand) { return $null }
     return $cand | Sort-Object retailPrice | Select-Object -First 1

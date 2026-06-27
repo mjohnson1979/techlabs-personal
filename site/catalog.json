@@ -1,7 +1,7 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-06-26T23:20:30Z",
+    "generated":  "2026-06-27T01:23:05Z",
     "count":  19,
     "items":  [
                   {
@@ -68,8 +68,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "3 instances x 730 hours.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.155,
+                                                          "monthly":  339.45
                                                       },
                                                       {
                                                           "name":  "Azure OpenAI gpt-4o-mini input tokens",
@@ -98,8 +98,8 @@
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  50,
                                                           "notes":  "Assumes ~50M RUs/month.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.25,
+                                                          "monthly":  12.50
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
@@ -112,11 +112,11 @@
                                                           "monthly":  0.50
                                                       }
                                                   ],
-                                   "fixedMonthly":  0,
-                                   "usageMonthly":  0.50,
-                                   "totalMonthly":  0.50,
+                                   "fixedMonthly":  339.45,
+                                   "usageMonthly":  13.00,
+                                   "totalMonthly":  352.45,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -207,8 +207,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Three nodes x 730 hours.",
-                                                          "unitPrice":  0.0384,
-                                                          "monthly":  84.10
+                                                          "unitPrice":  0.192,
+                                                          "monthly":  420.48
                                                       },
                                                       {
                                                           "name":  "Premium Container Registry",
@@ -231,11 +231,11 @@
                                                           "monthly":  5.00
                                                       }
                                                   ],
-                                   "fixedMonthly":  207.10,
+                                   "fixedMonthly":  543.48,
                                    "usageMonthly":  5.00,
-                                   "totalMonthly":  212.10,
+                                   "totalMonthly":  548.48,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-26"
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -311,8 +311,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "Two Premium units x 730 hours.",
-                                                          "unitPrice":  1.91781,
-                                                          "monthly":  2800.00
+                                                          "unitPrice":  3.829,
+                                                          "monthly":  5590.34
                                                       },
                                                       {
                                                           "name":  "Backend App Service Plan (P1v3 x3)",
@@ -321,15 +321,15 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Three backend instances.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.155,
+                                                          "monthly":  339.45
                                                       }
                                                   ],
-                                   "fixedMonthly":  2800.00,
+                                   "fixedMonthly":  5929.79,
                                    "usageMonthly":  0,
-                                   "totalMonthly":  2800.00,
-                                   "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "totalMonthly":  5929.79,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -410,8 +410,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "Example: 2 hosts averaged over business hours with autoscaling. Replace with your pool sizing.",
-                                                          "unitPrice":  0.0384,
-                                                          "monthly":  56.06
+                                                          "unitPrice":  0.192,
+                                                          "monthly":  280.32
                                                       },
                                                       {
                                                           "name":  "Session host managed disks (Premium SSD)",
@@ -420,15 +420,15 @@
                                                           "unitOfMeasure":  "1/Month",
                                                           "quantityPerMonth":  2,
                                                           "notes":  "One OS disk per session host.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  19.71,
+                                                          "monthly":  39.42
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
-                                   "usageMonthly":  56.06,
-                                   "totalMonthly":  56.06,
-                                   "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "usageMonthly":  319.74,
+                                   "totalMonthly":  319.74,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -504,8 +504,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  3650,
                                                           "notes":  "Example assumes 5 session hosts x 730 hours. A scaling plan reduces this materially; replace with your host count and schedule.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.376,
+                                                          "monthly":  1372.40
                                                       },
                                                       {
                                                           "name":  "FSLogix profile storage (Azure Files)",
@@ -529,10 +529,10 @@
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
-                                   "usageMonthly":  76.00,
-                                   "totalMonthly":  76.00,
-                                   "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "usageMonthly":  1448.40,
+                                   "totalMonthly":  1448.40,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -634,7 +634,7 @@
                                    "usageMonthly":  16610.67,
                                    "totalMonthly":  16610.67,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-26"
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -717,19 +717,19 @@
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
                                                           "billing":  "usage",
-                                                          "serviceName":  "Azure Monitor",
+                                                          "serviceName":  "Log Analytics",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month container logs.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  2.3,
+                                                          "monthly":  11.5
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
-                                   "usageMonthly":  157.68,
-                                   "totalMonthly":  157.68,
-                                   "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "usageMonthly":  169.18,
+                                   "totalMonthly":  169.18,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -847,7 +847,7 @@
                                    "usageMonthly":  1139.22,
                                    "totalMonthly":  1139.22,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -966,8 +966,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Three orchestrator instances.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.155,
+                                                          "monthly":  339.45
                                                       },
                                                       {
                                                           "name":  "API Management (Premium)",
@@ -976,15 +976,15 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
                                                           "notes":  "One Premium unit; Developer tier in dev is far cheaper.",
-                                                          "unitPrice":  1.91781,
-                                                          "monthly":  1400.00
+                                                          "unitPrice":  3.829,
+                                                          "monthly":  2795.17
                                                       }
                                                   ],
-                                   "fixedMonthly":  2135.84,
+                                   "fixedMonthly":  3870.46,
                                    "usageMonthly":  0,
-                                   "totalMonthly":  2135.84,
+                                   "totalMonthly":  3870.46,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -1092,8 +1092,8 @@
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  50,
                                                           "notes":  "Assumes ~50M serverless request units/month.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.25,
+                                                          "monthly":  12.50
                                                       },
                                                       {
                                                           "name":  "Curated lake storage (ZRS)",
@@ -1107,10 +1107,10 @@
                                                       }
                                                   ],
                                    "fixedMonthly":  1981.22,
-                                   "usageMonthly":  4.00,
-                                   "totalMonthly":  1985.22,
+                                   "usageMonthly":  16.50,
+                                   "totalMonthly":  1997.72,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -1226,7 +1226,7 @@
                                    "usageMonthly":  16.00,
                                    "totalMonthly":  1338.76,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-26"
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -1332,7 +1332,7 @@
                                    "usageMonthly":  0.05,
                                    "totalMonthly":  677.13,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -1407,9 +1407,9 @@
                                                           "serviceName":  "Azure Cognitive Search",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "3 search units (replicas) x 730 hours. Meter naming varies - verify.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "notes":  "3 search units (replicas) x 730 hours.",
+                                                          "unitPrice":  0.336,
+                                                          "monthly":  735.84
                                                       },
                                                       {
                                                           "name":  "Blob storage (hot ZRS)",
@@ -1424,19 +1424,19 @@
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
                                                           "billing":  "usage",
-                                                          "serviceName":  "Azure Monitor",
+                                                          "serviceName":  "Log Analytics",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month telemetry. Model token usage is billed per AI use case.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  2.3,
+                                                          "monthly":  11.5
                                                       }
                                                   ],
-                                   "fixedMonthly":  0,
-                                   "usageMonthly":  4.78,
-                                   "totalMonthly":  4.78,
-                                   "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "fixedMonthly":  735.84,
+                                   "usageMonthly":  16.28,
+                                   "totalMonthly":  752.12,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -1498,12 +1498,12 @@
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
                                                           "billing":  "usage",
-                                                          "serviceName":  "Azure Monitor",
+                                                          "serviceName":  "Log Analytics",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month platform logs.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  2.3,
+                                                          "monthly":  11.5
                                                       },
                                                       {
                                                           "name":  "Blob storage (hot LRS)",
@@ -1527,10 +1527,10 @@
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
-                                   "usageMonthly":  2.06,
-                                   "totalMonthly":  2.06,
-                                   "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "usageMonthly":  13.56,
+                                   "totalMonthly":  13.56,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -1637,15 +1637,15 @@
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  25,
                                                           "notes":  "Assumes ~25M serverless request units/month.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.25,
+                                                          "monthly":  6.25
                                                       }
                                                   ],
                                    "fixedMonthly":  677.08,
-                                   "usageMonthly":  157.68,
-                                   "totalMonthly":  834.76,
-                                   "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "usageMonthly":  163.93,
+                                   "totalMonthly":  841.01,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -1735,8 +1735,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Three instances in the primary region.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.155,
+                                                          "monthly":  339.45
                                                       },
                                                       {
                                                           "name":  "App Service Plan secondary (P1v3 x3)",
@@ -1745,8 +1745,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Three instances in the secondary region.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.155,
+                                                          "monthly":  339.45
                                                       },
                                                       {
                                                           "name":  "Cosmos DB multi-region (provisioned RU)",
@@ -1759,11 +1759,11 @@
                                                           "monthly":  116.80
                                                       }
                                                   ],
-                                   "fixedMonthly":  0,
+                                   "fixedMonthly":  678.90,
                                    "usageMonthly":  116.80,
-                                   "totalMonthly":  116.80,
+                                   "totalMonthly":  795.70,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -1842,8 +1842,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Three instances x 730 hours.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.155,
+                                                          "monthly":  339.45
                                                       },
                                                       {
                                                           "name":  "Application Gateway WAF_v2",
@@ -1852,8 +1852,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
                                                           "notes":  "Fixed gateway hours; capacity units billed separately.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.36,
+                                                          "monthly":  262.80
                                                       },
                                                       {
                                                           "name":  "Application Gateway capacity units",
@@ -1862,8 +1862,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "Assumes ~2 capacity units sustained.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.0144,
+                                                          "monthly":  21.02
                                                       },
                                                       {
                                                           "name":  "Azure SQL (GP_Gen5_2)",
@@ -1871,9 +1871,9 @@
                                                           "serviceName":  "SQL Database",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "2 vCores x 730 hours, General Purpose provisioned.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "notes":  "2 vCores x 730 hours, General Purpose provisioned. Priced per vCore-hour.",
+                                                          "unitPrice":  0.15222,
+                                                          "monthly":  222.24
                                                       },
                                                       {
                                                           "name":  "Private Endpoints (SQL + Key Vault)",
@@ -1882,15 +1882,15 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "Two private endpoints x 730 hours.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.01,
+                                                          "monthly":  14.60
                                                       }
                                                   ],
-                                   "fixedMonthly":  0,
-                                   "usageMonthly":  0,
-                                   "totalMonthly":  0,
-                                   "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "fixedMonthly":  839.09,
+                                   "usageMonthly":  21.02,
+                                   "totalMonthly":  860.11,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -1957,8 +1957,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "3 instances x 730 hours.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.155,
+                                                          "monthly":  339.45
                                                       },
                                                       {
                                                           "name":  "Azure SQL Database (GP Gen5 2 vCore)",
@@ -1966,9 +1966,9 @@
                                                           "serviceName":  "SQL Database",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "2 vCores x 730 hours. Meter matching is approximate - verify against your bill.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "notes":  "2 vCores x 730 hours, General Purpose provisioned. Priced per vCore-hour.",
+                                                          "unitPrice":  0.15222,
+                                                          "monthly":  222.24
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
@@ -1981,11 +1981,11 @@
                                                           "monthly":  0.50
                                                       }
                                                   ],
-                                   "fixedMonthly":  0,
+                                   "fixedMonthly":  561.69,
                                    "usageMonthly":  0.50,
-                                   "totalMonthly":  0.50,
-                                   "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "totalMonthly":  562.19,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-06-27"
                                }
                   },
                   {
@@ -2052,8 +2052,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "3 instances x 730 hours for zone redundancy.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.155,
+                                                          "monthly":  339.45
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
@@ -2068,19 +2068,19 @@
                                                       {
                                                           "name":  "Log Analytics analytics logs",
                                                           "billing":  "usage",
-                                                          "serviceName":  "Azure Monitor",
+                                                          "serviceName":  "Log Analytics",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month platform logs.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  2.3,
+                                                          "monthly":  11.5
                                                       }
                                                   ],
-                                   "fixedMonthly":  0,
-                                   "usageMonthly":  0.50,
-                                   "totalMonthly":  0.50,
-                                   "complete":  false,
-                                   "pricedAt":  "2026-06-26"
+                                   "fixedMonthly":  339.45,
+                                   "usageMonthly":  12.00,
+                                   "totalMonthly":  351.45,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-06-27"
                                }
                   }
               ]

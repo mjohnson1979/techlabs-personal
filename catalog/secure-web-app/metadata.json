@@ -75,8 +75,8 @@
         "name": "Application Gateway WAF_v2",
         "billing": "fixed",
         "serviceName": "Application Gateway",
-        "skuNameContains": "WAF",
-        "meterNameContains": "Gateway",
+        "productNameContains": "Application Gateway WAF v2",
+        "meterNameContains": "Fixed Cost",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 730,
         "notes": "Fixed gateway hours; capacity units billed separately."
@@ -85,8 +85,8 @@
         "name": "Application Gateway capacity units",
         "billing": "usage",
         "serviceName": "Application Gateway",
-        "skuNameContains": "WAF",
-        "meterNameContains": "Capacity Unit",
+        "productNameContains": "Application Gateway WAF v2",
+        "meterNameContains": "Capacity Units",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 1460,
         "notes": "Assumes ~2 capacity units sustained."
@@ -95,11 +95,12 @@
         "name": "Azure SQL (GP_Gen5_2)",
         "billing": "fixed",
         "serviceName": "SQL Database",
-        "skuNameContains": "GP_Gen5",
+        "skuNameContains": "1 vCore",
+        "productNameContains": "General Purpose - Compute Gen5",
         "meterNameContains": "vCore",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 1460,
-        "notes": "2 vCores x 730 hours, General Purpose provisioned."
+        "notes": "2 vCores x 730 hours, General Purpose provisioned. Priced per vCore-hour."
       },
       {
         "name": "Private Endpoints (SQL + Key Vault)",

@@ -35,36 +35,78 @@ $script:PriceCache = @{}
 function Get-RetailPrice {
     param([Parameter(Mandatory)] $Component)
 
-    $filterParts = @("armRegionName eq '$Region'", "priceType eq 'Consumption'")
-    if ($Component.serviceName) { $filterParts += "serviceName eq '$($Component.serviceName)'" }
-    if ($Component.armSkuName) { $filterParts += "armSkuName eq '$($Component.armSkuName)'" }
-    $filter = $filterParts -join ' and '
+    # Note: armSkuName is intentionally NOT pushed into the server-side OData
+    # filter. Metadata often uses friendly SKU names (e.g. 'P1v3') that do not
+    # equal the API's region-specific armSkuName (e.g. 'Standard_P1_v3_Windows'),
+    # so an exact match returns nothing. We fetch by serviceName and match the
+    # SKU loosely client-side below. Global services (Front Door, DNS, etc.) are
+    # priced under armRegionName 'Global', so we retry there when the regional
+    # query yields nothing.
+    foreach ($regionName in @($Region, 'Global')) {
+        $filterParts = @("armRegionName eq '$regionName'", "priceType eq 'Consumption'")
+        if ($Component.serviceName) { $filterParts += "serviceName eq '$($Component.serviceName)'" }
+        # For very large services (e.g. Virtual Machines) the 40-page cap can
+        # truncate before the wanted SKU. When metadata supplies an exact meter
+        # name, push it server-side so the result set is tiny and reliable.
+        if ($Component.meterNameExact) { $filterParts += "meterName eq '$($Component.meterNameExact)'" }
+        $filter = $filterParts -join ' and '
 
-    if ($script:PriceCache.ContainsKey($filter)) {
-        $items = $script:PriceCache[$filter]
+        if ($script:PriceCache.ContainsKey($filter)) {
+            $items = $script:PriceCache[$filter]
+        }
+        else {
+            $escaped = [uri]::EscapeDataString($filter)
+            $url = "{0}?currencyCode={1}&`$filter={2}" -f $PricesApi, $Currency, $escaped
+            $items = New-Object System.Collections.Generic.List[object]
+            $page = 0
+            do {
+                $resp = $null
+                for ($attempt = 0; $attempt -lt 5; $attempt++) {
+                    try { $resp = Invoke-RestMethod -Uri $url -Method Get; break }
+                    catch {
+                        if ($_.Exception.Response.StatusCode.value__ -eq 429) {
+                            Start-Sleep -Seconds ([math]::Pow(2, $attempt))
+                        }
+                        else { throw }
+                    }
+                }
+                if (-not $resp) { break }
+                foreach ($i in $resp.Items) { $items.Add($i) }
+                $url = $resp.NextPageLink
+                $page++
+            } while ($url -and $page -lt 40)
+            $script:PriceCache[$filter] = $items
+        }
+
+        $cand = $items
+        if ($Component.skuNameContains) { $cand = $cand | Where-Object { $_.skuName -like "*$($Component.skuNameContains)*" } }
+        if ($Component.productNameContains) { $cand = $cand | Where-Object { $_.productName -like "*$($Component.productNameContains)*" } }
+        if ($Component.meterNameContains) { $cand = $cand | Where-Object { $_.meterName -like "*$($Component.meterNameContains)*" } }
+        if ($Component.armSkuName) {
+            $want = ($Component.armSkuName -replace '[^a-zA-Z0-9]', '').ToLowerInvariant()
+            $cand = $cand | Where-Object {
+                $hay = (@($_.armSkuName, $_.skuName, $_.meterName) -join ' ') -replace '[^a-zA-Z0-9]', ''
+                $hay.ToLowerInvariant().Contains($want)
+            }
+        }
+        # Skip reserved/spot/discounted/dev-test rows so the cheapest-match
+        # heuristic below reflects pay-as-you-go list price.
+        $cand = $cand | Where-Object {
+            $blob = "$($_.productName) $($_.skuName) $($_.meterName)"
+            $blob -notmatch '(?i)discount|reserv|spot|low priority|dev[ /-]?test'
+        }
+        $cand = @($cand | Where-Object { $_.retailPrice -gt 0 })
+
+        # If the requested meter name matches a meter exactly, prefer those rows
+        # so sub-meters (e.g. "P10 LRS Disk Mount") don't win the cheapest sort.
+        if ($Component.meterNameContains) {
+            $exact = @($cand | Where-Object { $_.meterName -eq $Component.meterNameContains })
+            if ($exact.Count) { $cand = $exact }
+        }
+
+        if ($cand.Count) { return $cand | Sort-Object retailPrice | Select-Object -First 1 }
     }
-    else {
-        $escaped = [uri]::EscapeDataString($filter)
-        $url = "{0}?currencyCode={1}&`$filter={2}" -f $PricesApi, $Currency, $escaped
-        $items = New-Object System.Collections.Generic.List[object]
-        $page = 0
-        do {
-            $resp = Invoke-RestMethod -Uri $url -Method Get
-            foreach ($i in $resp.Items) { $items.Add($i) }
-            $url = $resp.NextPageLink
-            $page++
-        } while ($url -and $page -lt 20)
-        $script:PriceCache[$filter] = $items
-    }
-
-    $cand = $items
-    if ($Component.skuNameContains) { $cand = $cand | Where-Object { $_.skuName -like "*$($Component.skuNameContains)*" } }
-    if ($Component.productNameContains) { $cand = $cand | Where-Object { $_.productName -like "*$($Component.productNameContains)*" } }
-    if ($Component.meterNameContains) { $cand = $cand | Where-Object { $_.meterName -like "*$($Component.meterNameContains)*" } }
-    $cand = $cand | Where-Object { $_.retailPrice -gt 0 }
-
-    if (-not $cand) { return $null }
-    return $cand | Sort-Object retailPrice | Select-Object -First 1
+    return $null
 }
 
 function Get-PricedCost {

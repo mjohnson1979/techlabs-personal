@@ -77,8 +77,10 @@
         "name": "Session host managed disks (Premium SSD)",
         "billing": "usage",
         "serviceName": "Storage",
-        "skuNameContains": "Premium SSD",
-        "meterNameContains": "P10",
+        "productNameContains": "Premium SSD Managed Disks",
+        "skuNameContains": "P10 LRS",
+        "meterNameContains": "P10 LRS Disk",
+        "meterNameExact": "P10 LRS Disk",
         "unitOfMeasure": "1/Month",
         "quantityPerMonth": 2,
         "notes": "One OS disk per session host."

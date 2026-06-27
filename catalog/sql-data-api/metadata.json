@@ -59,11 +59,12 @@
         "name": "Azure SQL Database (GP Gen5 2 vCore)",
         "billing": "fixed",
         "serviceName": "SQL Database",
-        "productNameContains": "Single Database General Purpose - Compute Gen5",
+        "skuNameContains": "1 vCore",
+        "productNameContains": "General Purpose - Compute Gen5",
         "meterNameContains": "vCore",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 1460,
-        "notes": "2 vCores x 730 hours. Meter matching is approximate - verify against your bill."
+        "notes": "2 vCores x 730 hours, General Purpose provisioned. Priced per vCore-hour."
       },
       {
         "name": "Application Insights ingestion",

@@ -67,7 +67,8 @@
       {
         "name": "Log Analytics analytics logs",
         "billing": "usage",
-        "serviceName": "Azure Monitor",
+        "serviceName": "Log Analytics",
+        "skuNameContains": "Analytics Logs",
         "meterNameContains": "Analytics Logs Data Ingestion",
         "unitOfMeasure": "1 GB",
         "quantityPerMonth": 5,

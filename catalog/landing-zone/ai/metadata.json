@@ -49,10 +49,11 @@
         "name": "Azure AI Search (Standard S1) x3 replicas",
         "billing": "fixed",
         "serviceName": "Azure Cognitive Search",
-        "meterNameContains": "Standard Unit",
+        "skuNameContains": "Standard S1",
+        "meterNameContains": "S1 Unit",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
-        "notes": "3 search units (replicas) x 730 hours. Meter naming varies - verify."
+        "notes": "3 search units (replicas) x 730 hours."
       },
       {
         "name": "Blob storage (hot ZRS)",
@@ -67,7 +68,8 @@
       {
         "name": "Log Analytics analytics logs ingestion",
         "billing": "usage",
-        "serviceName": "Azure Monitor",
+        "serviceName": "Log Analytics",
+        "skuNameContains": "Analytics Logs",
         "meterNameContains": "Analytics Logs Data Ingestion",
         "unitOfMeasure": "1 GB",
         "quantityPerMonth": 5,

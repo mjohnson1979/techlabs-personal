@@ -62,9 +62,9 @@
         "name": "Session host VMs (D4s v5) x5",
         "billing": "usage",
         "serviceName": "Virtual Machines",
-        "productNameContains": "Virtual Machines Dv5 Series",
-        "skuNameContains": "D4s v5",
+        "productNameContains": "Dsv5 Series Windows",
         "meterNameContains": "D4s v5",
+        "meterNameExact": "D4s v5",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 3650,
         "notes": "Example assumes 5 session hosts x 730 hours. A scaling plan reduces this materially; replace with your host count and schedule."

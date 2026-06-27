@@ -91,7 +91,8 @@
         "name": "Cosmos DB (serverless RU)",
         "billing": "usage",
         "serviceName": "Azure Cosmos DB",
-        "meterNameContains": "Serverless",
+        "productNameContains": "serverless",
+        "meterNameContains": "RUs",
         "unitOfMeasure": "1M",
         "quantityPerMonth": 25,
         "notes": "Assumes ~25M serverless request units/month."
