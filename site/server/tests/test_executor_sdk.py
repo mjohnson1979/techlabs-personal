@@ -72,5 +72,41 @@ def test_deployments_client_has_required_methods(monkeypatch) -> None:
     assert hasattr(client.resource_groups, "get")
 
 
+class _ErrNode:
+    """Minimal stand-in for an ARM error node (code/message/details)."""
+
+    def __init__(self, code=None, message=None, details=None):
+        self.code = code
+        self.message = message
+        self.details = details or []
+
+
+def test_clean_error_digs_to_innermost_arm_reason() -> None:
+    """A quota error buried under generic preflight wrappers should surface."""
+    leaf = _ErrNode(
+        code="InternalSubscriptionIsOverQuotaForSku",
+        message="Operation cannot be completed without additional quota.\r\n"
+        "Current Limit (Total VMs): 0",
+    )
+    mid = _ErrNode(code="ValidationForResourceFailed", details=[leaf])
+    root = _ErrNode(code="InvalidTemplateDeployment", details=[mid])
+
+    exc = Exception("The template deployment is not valid ...")
+    exc.error = root  # type: ignore[attr-defined]
+
+    cleaned = azure_deploy._clean_error(exc)
+    assert "InternalSubscriptionIsOverQuotaForSku" in cleaned
+    assert "Current Limit (Total VMs): 0" in cleaned
+    # Generic wrapper codes must NOT be what the user sees.
+    assert not cleaned.startswith("InvalidTemplateDeployment")
+    # No raw newlines leaking into the single-line live-log detail.
+    assert "\r" not in cleaned and "\n" not in cleaned
+
+
+def test_clean_error_falls_back_to_str_without_arm_error() -> None:
+    cleaned = azure_deploy._clean_error(RuntimeError("plain failure"))
+    assert cleaned == "plain failure"
+
+
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(pytest.main([__file__, "-v"]))

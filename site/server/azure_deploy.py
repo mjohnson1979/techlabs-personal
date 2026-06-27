@@ -36,7 +36,10 @@ _TASKS: set[asyncio.Task] = set()
 
 
 def _location() -> str:
-    return os.environ.get("GALLERY_DEPLOY_LOCATION", "eastus").strip() or "eastus"
+    # Default to Central US: that is where this subscription has App Service /
+    # serverFarms quota (East US is currently capped at 0). Override per
+    # environment with GALLERY_DEPLOY_LOCATION.
+    return os.environ.get("GALLERY_DEPLOY_LOCATION", "centralus").strip() or "centralus"
 
 
 def executor_available() -> tuple[bool, str]:
@@ -112,9 +115,36 @@ def _client(subscription_id: str) -> Any:
     return ResourceManagementClient(_get_credential(), subscription_id)
 
 
+def _innermost_arm_error(err: Any) -> tuple[str | None, str | None]:
+    """Walk an ARM error tree to the deepest, most specific code/message.
+
+    Azure wraps the useful reason (e.g. a quota error) several levels deep under
+    generic 'InvalidTemplateDeployment' / 'ValidationForResourceFailed' nodes.
+    The leaf carries the actionable detail, so dig to it.
+    """
+    code = getattr(err, "code", None)
+    message = getattr(err, "message", None)
+    details = getattr(err, "details", None) or []
+    for child in details:
+        c_code, c_msg = _innermost_arm_error(child)
+        if c_code or c_msg:
+            return c_code, c_msg
+    return code, message
+
+
 def _clean_error(exc: Exception) -> str:
-    msg = str(exc).strip()
-    return (msg[:500] if msg else exc.__class__.__name__)
+    # Azure SDK errors carry a structured ``.error`` tree whose leaf has the
+    # actionable reason; surface that instead of the generic outer wrapper.
+    arm_error = getattr(exc, "error", None)
+    if arm_error is not None:
+        code, message = _innermost_arm_error(arm_error)
+        if code or message:
+            text = " ".join(p for p in (code, message) if p).strip()
+            text = " ".join(text.split())  # collapse newlines/whitespace
+            if text:
+                return text[:600]
+    msg = " ".join(str(exc).split()).strip()
+    return (msg[:600] if msg else exc.__class__.__name__)
 
 
 # --------------------------------------------------------------------------- #
