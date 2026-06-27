@@ -111,6 +111,9 @@ class EventIn(BaseModel):
 class DeployIn(BaseModel):
     useCase: str
     environment: str = "dev"
+    # Azure region to deploy into (e.g. "centralus"). Empty falls back to the
+    # server default (GALLERY_DEPLOY_LOCATION).
+    location: str = ""
     # Either an explicit end time (ISO 8601) or a lifetime in hours.
     endAt: str = ""
     lifetimeHours: float | None = None
@@ -187,6 +190,10 @@ def build_api_router() -> APIRouter:
         now = time.time()
         end_at = _resolve_end_at(body, now, user)
 
+        location = (body.location or "").strip().lower()
+        if location and not re.fullmatch(r"[a-z][a-z0-9]{2,30}", location):
+            raise HTTPException(status_code=400, detail="invalid location")
+
         dep_id = secrets.token_hex(8)
         short_id = dep_id[:6]
         rg = _resource_group_name(body.useCase, env, short_id)
@@ -200,7 +207,7 @@ def build_api_router() -> APIRouter:
             subscription_id=DEFAULT_SUBSCRIPTION,
             resource_group=rg,
             end_at=end_at,
-            params={"template": item.get("template", "")},
+            params={"template": item.get("template", ""), "location": location},
         )
         db.record_event(
             type="deploy_requested",

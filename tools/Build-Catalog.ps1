@@ -186,6 +186,7 @@ foreach ($mf in $metaFiles) {
         industries       = @($meta.industries)
         compliance       = @($meta.compliance)
         wellArchitected  = $meta.wellArchitected
+        quota            = $meta.quota
         path             = $rel
         readme           = "catalog/$rel/README.md"
         template         = "catalog/$rel/main.bicep"

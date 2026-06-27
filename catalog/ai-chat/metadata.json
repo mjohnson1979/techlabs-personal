@@ -40,6 +40,29 @@
       "Premium v3 app compute in prod"
     ]
   },
+  "quota": {
+    "summary": "Needs Azure OpenAI gpt-4o-mini TPM capacity and App Service compute quota in the target region. Some subscriptions/regions have 0 App Service quota (e.g. East US on this lab subscription), which blocks the App Service plan at preflight.",
+    "requirements": [
+      {
+        "service": "Azure OpenAI",
+        "provider": "Microsoft.CognitiveServices/accounts/deployments",
+        "kind": "model-tpm",
+        "model": "gpt-4o-mini",
+        "modelVersion": "2024-07-18",
+        "sku": "Standard",
+        "detail": "The model deployment requires tokens-per-minute (TPM) quota for gpt-4o-mini in the region (10K TPM in dev). gpt-4o-mini is not offered in every region.",
+        "checkUrl": "https://learn.microsoft.com/azure/ai-services/openai/how-to/quota"
+      },
+      {
+        "service": "Azure App Service",
+        "provider": "Microsoft.Web/serverFarms",
+        "kind": "compute",
+        "sku": "B1 (dev) / P1v3 x3 (prod)",
+        "detail": "The App Service plan needs available compute (vCPU) quota for the chosen SKU in the region. Premium v3 zone redundancy in prod requires capacity >= 3.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",

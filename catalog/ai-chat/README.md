@@ -46,6 +46,24 @@ See [metadata.json](metadata.json) for the machine-readable WAF + cost declarati
 > `Cognitive Services OpenAI User` on the OpenAI account and a Cosmos DB SQL
 > data role (e.g. *Cosmos DB Built-in Data Contributor*) on the account.
 
+## Quota & capacity
+
+This use case is **quota-sensitive** — it cannot deploy into a region/subscription
+that lacks capacity for its core services:
+
+| Service | Needs | Check |
+| --- | --- | --- |
+| Azure OpenAI (`gpt-4o-mini`) | Model offered in the region + available TPM quota | [Quotas blade](https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/Quotas) |
+| Azure App Service (Linux plan) | Compute quota in the region | [App Service quotas](https://portal.azure.com/#view/Microsoft_Azure_Capacity/QuotaMenuBlade/~/myQuotas) |
+
+The gallery surfaces this live: each capacity-sensitive card shows a **"Quota-sensitive"**
+badge, the deploy dialog has a **color-coded region picker** (green = can host,
+yellow = may hit constraints, red = no capacity for at least one service), and the
+**Capacity** page in the header shows a service × region grid. That data is a daily
+snapshot produced by [`tools/Build-Capacity.ps1`](../../tools/Build-Capacity.ps1)
+(written to `site/capacity.json`). If every candidate region is red, split the
+workload across regions (multi-region deployment) or request a quota increase.
+
 ## Parameters
 
 | Name | Default | Description |

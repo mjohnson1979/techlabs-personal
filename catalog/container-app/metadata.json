@@ -40,6 +40,19 @@
       "Scales out to maxReplicas under load"
     ]
   },
+  "quota": {
+    "summary": "Needs Container Apps managed-environment (vCPU/memory) quota in the target region. New regions or constrained subscriptions can hit per-region Container Apps quota at preflight.",
+    "requirements": [
+      {
+        "service": "Azure Container Apps",
+        "provider": "Microsoft.App/managedEnvironments",
+        "kind": "compute",
+        "sku": "Consumption",
+        "detail": "The managed environment needs available vCPU/memory quota for the requested replica sizing in the region.",
+        "checkUrl": "https://learn.microsoft.com/azure/container-apps/quotas"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",

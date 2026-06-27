@@ -51,6 +51,19 @@
       "Scalable AVS cluster size parameter to match workload demand"
     ]
   },
+  "quota": {
+    "summary": "Azure VMware Solution requires dedicated bare-metal host quota in the region, which is NOT enabled by default \u2014 it must be requested via a support/quota request before deployment. AVS hosts are also region- and SKU-limited.",
+    "requirements": [
+      {
+        "service": "Azure VMware Solution",
+        "provider": "Microsoft.AVS/privateClouds",
+        "kind": "dedicated-host",
+        "sku": "AV36 / AV36P / AV52 (per region availability)",
+        "detail": "AVS dedicated hosts require an explicit host quota grant per region and host SKU. New subscriptions start at 0 and must request quota before the cluster can be created.",
+        "checkUrl": "https://learn.microsoft.com/azure/azure-vmware/request-host-quota-azure-vmware"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",

@@ -53,6 +53,19 @@
       "TransactionOptimized Azure Files tier for responsive profile I/O"
     ]
   },
+  "quota": {
+    "summary": "Session-host VMs require significant regional vCPU (compute) quota for the chosen VM size and host count. This is the most common blocker for AVD at scale \u2014 confirm Compute cores quota in the region before deploying.",
+    "requirements": [
+      {
+        "service": "Virtual Machines (session hosts)",
+        "provider": "Microsoft.Compute/virtualMachines",
+        "kind": "compute",
+        "sku": "Dsv5 / Dav4 family (per session-host size)",
+        "detail": "VM size x session-host count must fit the subscription's regional Compute cores quota. Enterprise host counts can require a quota increase.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",

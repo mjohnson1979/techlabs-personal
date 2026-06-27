@@ -1004,3 +1004,236 @@ a:hover {
 .error-text {
   color: #ff8a8a;
 }
+
+/* ------------------------------------------------------------------ */
+/* Capacity: nav button, card badge, region picker, capacity grid     */
+/* ------------------------------------------------------------------ */
+
+/* "Capacity" nav button styled to match the header links. */
+.header-link-btn {
+  margin-left: 20px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.header-link-btn:hover {
+  color: var(--text);
+}
+
+/* Status dot shared by the picker, breakdown lists and capacity grid. */
+.cap-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  vertical-align: middle;
+  background: var(--muted);
+}
+
+.cap-green {
+  background: var(--accent-2);
+}
+
+.cap-yellow {
+  background: #f5c451;
+}
+
+.cap-red {
+  background: var(--danger);
+}
+
+.cap-unknown {
+  background: var(--muted);
+}
+
+/* Card badge for quota-sensitive use cases. */
+.card-attention {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 5px 9px;
+  border: 1px solid rgba(245, 196, 81, 0.35);
+  border-radius: 8px;
+  background: rgba(245, 196, 81, 0.08);
+  color: #f5c451;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.card-attention-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+/* Region picker border reflects the selected region's rolled-up status. */
+.deploy-region[data-status="green"] {
+  border-color: var(--accent-2);
+}
+
+.deploy-region[data-status="yellow"] {
+  border-color: #f5c451;
+}
+
+.deploy-region[data-status="red"] {
+  border-color: var(--danger);
+}
+
+.deploy-region-note {
+  margin: 2px 0 4px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.deploy-region-note .cap-summary {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cap-svc-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.cap-svc-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.deploy-region-hint {
+  margin-top: 6px;
+  padding: 6px 9px;
+  border-left: 3px solid var(--danger);
+  background: rgba(255, 138, 138, 0.08);
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+/* Capacity & quota section in the use-case modal. */
+.quota-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.quota-item {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.quota-item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.quota-item-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.quota-tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.quota-item-detail {
+  margin: 0 0 6px;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.quota-item a {
+  color: var(--accent);
+  font-size: 0.84rem;
+}
+
+.link-btn {
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+/* Region capacity grid (panel overlay). */
+.cap-generated {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.cap-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 12px 0 16px;
+}
+
+.cap-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.cap-table-wrap {
+  overflow-x: auto;
+}
+
+.cap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.cap-table th,
+.cap-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+.cap-table th:first-child,
+.cap-table td.cap-svc-name {
+  text-align: left;
+}
+
+.cap-table thead th {
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.cap-svc-name {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.cap-cell {
+  cursor: default;
+}

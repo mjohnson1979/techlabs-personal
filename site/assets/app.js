@@ -3,7 +3,57 @@
   "use strict";
 
   const REPO = "https://github.com/mcaps-microsoft/TechLabs";
-  const state = { items: [], q: "", category: new Set(), industry: new Set(), compliance: new Set(), me: null };
+  const state = { items: [], q: "", category: new Set(), industry: new Set(), compliance: new Set(), me: null, capacity: null };
+
+  // Capacity status ranking: green is best, red is worst. unknown/yellow are
+  // treated as the same middle "caution" tier when rolling up a use case.
+  const CAP_RANK = { green: 0, unknown: 1, yellow: 1, red: 2 };
+  const ROLL_LABEL = {
+    green: "Can host this use case",
+    yellow: "May hit capacity constraints",
+    red: "No capacity for at least one service",
+    unknown: "Capacity unknown",
+  };
+  function worseStatus(a, b) {
+    const ra = CAP_RANK[a] === undefined ? 1 : CAP_RANK[a];
+    const rb = CAP_RANK[b] === undefined ? 1 : CAP_RANK[b];
+    return rb > ra ? b : a;
+  }
+  // Map a use-case quota requirement to a key in capacity.json's services map.
+  function capacityServiceKey(req) {
+    if (!req) return null;
+    if (req.kind === "model-tpm" && req.model) return "openai:" + req.model;
+    const p = (req.provider || "").toLowerCase();
+    if (p.indexOf("microsoft.web/serverfarms") === 0) return "appservice";
+    if (p.indexOf("microsoft.compute/virtualmachines") === 0) return "vm";
+    if (p.indexOf("microsoft.app/managedenvironments") === 0) return "containerapps";
+    if (p.indexOf("microsoft.avs/privateclouds") === 0) return "avs";
+    return null;
+  }
+  // Roll up every quota requirement of a use case to a single status for one
+  // region, plus a per-service breakdown.
+  function regionStatus(it, region) {
+    const cap = state.capacity;
+    const reqs = (it.quota && it.quota.requirements) || [];
+    const services = reqs.map((req) => {
+      const key = capacityServiceKey(req);
+      let status = "unknown";
+      let detail = "No live capacity signal for this service.";
+      if (cap && key && cap.services && cap.services[key] && cap.services[key].byRegion[region]) {
+        const e = cap.services[key].byRegion[region];
+        status = e.status;
+        detail = e.detail || detail;
+      }
+      return { key: key, label: req.service, status: status, detail: detail };
+    });
+    let roll = services.length ? "green" : "unknown";
+    services.forEach((s) => (roll = worseStatus(roll, s.status)));
+    return { status: roll, services: services };
+  }
+  function capacityRegions() {
+    const cap = state.capacity;
+    return cap && cap.regions && cap.regions.length ? cap.regions : ["centralus"];
+  }
 
   function pad2(n) {
     return String(n).padStart(2, "0");
@@ -102,6 +152,7 @@
       el("h2", { text: it.displayName }),
       el("p", { class: "card-desc", text: it.description || "" }),
       cardCost(it),
+      cardAttention(it),
       el("div", { class: "chips" }, chips),
     ]);
     node.addEventListener("click", () => openModal(it));
@@ -124,6 +175,16 @@
     }
     return el("div", { class: "card-cost card-cost-muted" }, [
       el("span", { class: "card-cost-unit", text: "Usage-based — see details" }),
+    ]);
+  }
+
+  // Small badge on cards whose services may be quota/capacity constrained.
+  function cardAttention(it) {
+    const reqs = it.quota && it.quota.requirements;
+    if (!reqs || !reqs.length) return null;
+    return el("div", { class: "card-attention", title: it.quota.summary || "" }, [
+      el("span", { class: "card-attention-icon", text: "\u26A0", "aria-hidden": "true" }),
+      el("span", { text: "Quota-sensitive \u2014 check region capacity" }),
     ]);
   }
 
@@ -321,6 +382,61 @@
     }, 3000);
   }
 
+  // Color-coded region picker reflecting live capacity for a use case.
+  function deployRegionField(it) {
+    const regions = capacityRegions();
+    const select = el("select", { class: "deploy-input deploy-region", id: "deploy-region" });
+    let preferred = null;
+    regions.forEach((r) => {
+      const rs = regionStatus(it, r);
+      const opt = el("option", { value: r, text: `${r} \u2014 ${ROLL_LABEL[rs.status]}` });
+      opt.setAttribute("data-status", rs.status);
+      select.appendChild(opt);
+      if (!preferred && rs.status === "green") preferred = r;
+    });
+    if (preferred) select.value = preferred;
+
+    const note = el("div", { class: "deploy-region-note" });
+    function refresh() {
+      const r = select.value;
+      const rs = regionStatus(it, r);
+      select.setAttribute("data-status", rs.status);
+      note.className = "deploy-region-note cap-note-" + rs.status;
+      note.innerHTML = "";
+      note.appendChild(
+        el("div", { class: "cap-summary" }, [
+          el("span", { class: "cap-dot cap-" + rs.status }),
+          el("span", { text: ` ${ROLL_LABEL[rs.status]} in ${r}.` }),
+        ])
+      );
+      if (rs.services.length) {
+        note.appendChild(
+          el(
+            "ul",
+            { class: "cap-svc-list" },
+            rs.services.map((s) =>
+              el("li", {}, [
+                el("span", { class: "cap-dot cap-" + s.status }),
+                el("span", { text: ` ${s.label} \u2014 ${s.detail}` }),
+              ])
+            )
+          )
+        );
+      }
+      if (rs.status === "red") {
+        note.appendChild(
+          el("div", {
+            class: "deploy-region-hint",
+            text: "At least one required service has no capacity here. Pick a greener region, or split the workload across regions (multi-region deployment).",
+          })
+        );
+      }
+    }
+    select.addEventListener("change", refresh);
+    refresh();
+    return { select: select, note: note };
+  }
+
   function deployBlock(it) {
     const me = state.me;
     const maxHours = me && me.maxLifetimeHours ? me.maxLifetimeHours : 48;
@@ -332,6 +448,8 @@
       el("option", { value: "dev", text: "dev" }),
     ]);
     if (it.hasProd) envSelect.appendChild(el("option", { value: "prod", text: "prod" }));
+
+    const region = deployRegionField(it);
 
     const endInput = el("input", {
       type: "datetime-local",
@@ -365,6 +483,7 @@
       const payload = {
         useCase: it.path,
         environment: envSelect.value,
+        location: region.select.value,
         endAt: new Date(endVal).toISOString(),
       };
       btn.disabled = true;
@@ -382,6 +501,9 @@
     });
 
     const form = el("div", { class: "deploy-form" }, [
+      el("label", { class: "deploy-label", text: "Region" }),
+      region.select,
+      region.note,
       el("label", { class: "deploy-label", text: "Environment" }),
       envSelect,
       el("label", { class: "deploy-label", text: "End time (auto-cleanup)" }),
@@ -395,11 +517,41 @@
       el("summary", { text: "Or deploy manually with the Azure CLI" }),
       el("div", {
         class: "code",
-        text: `az group create --name rg-techlabs --location eastus\naz deployment group create \`\n  --resource-group rg-techlabs \`\n  --template-file ${it.template} \`\n  --parameters catalog/${it.path}/parameters/dev.bicepparam`,
+        text: `az group create --name rg-techlabs --location centralus\naz deployment group create \`\n  --resource-group rg-techlabs \`\n  --template-file ${it.template} \`\n  --parameters catalog/${it.path}/parameters/dev.bicepparam`,
       }),
     ]);
 
     return el("div", { class: "modal-section" }, [el("h3", { text: "Deploy" }), form, manual]);
+  }
+
+  // Capacity & quota notice for the use-case detail modal.
+  function quotaBlock(it) {
+    const q = it.quota;
+    if (!q || !(q.requirements && q.requirements.length)) return null;
+    const wrap = el("div", { class: "modal-section" }, [el("h3", { text: "Capacity & quota" })]);
+    if (q.summary) wrap.appendChild(el("p", { text: q.summary }));
+
+    const list = el("div", { class: "quota-list" });
+    q.requirements.forEach((req) => {
+      list.appendChild(
+        el("div", { class: "quota-item" }, [
+          el("div", { class: "quota-item-head" }, [
+            el("span", { class: "quota-item-name", text: req.service }),
+            req.sku ? el("span", { class: "quota-tag", text: req.sku }) : null,
+          ]),
+          el("p", { class: "quota-item-detail", text: req.detail || "" }),
+          req.checkUrl
+            ? el("a", { href: req.checkUrl, target: "_blank", rel: "noopener", text: "Check quota \u2192" })
+            : null,
+        ])
+      );
+    });
+    wrap.appendChild(list);
+
+    const link = el("button", { class: "link-btn", type: "button", text: "View full region capacity \u2192" });
+    link.addEventListener("click", openCapacityPanel);
+    wrap.appendChild(link);
+    return wrap;
   }
 
   function openModal(it) {
@@ -423,6 +575,9 @@
     if (pillars)
       body.appendChild(el("div", { class: "modal-section" }, [el("h3", { text: "Well-Architected" }), pillars]));
 
+    const quota = quotaBlock(it);
+    if (quota) body.appendChild(quota);
+
     body.appendChild(deployBlock(it));
 
     const cost = costBlock(it);
@@ -439,6 +594,69 @@
 
   function closeModal() {
     $("#modal").hidden = true;
+  }
+
+  // Full-screen "Region capacity" view: a service x region status grid built
+  // from the static capacity.json snapshot. Reuses the shared panel overlay.
+  function openCapacityPanel() {
+    if (!window.TechlabsPanel) return;
+    closeModal();
+    window.TechlabsPanel.open((bodyEl, e) => {
+      bodyEl.appendChild(e("h2", { text: "Region capacity" }));
+      const cap = state.capacity;
+      if (!cap || !cap.services) {
+        bodyEl.appendChild(
+          e("p", { text: "Capacity data is not available yet. It is refreshed daily by tools/Build-Capacity.ps1." })
+        );
+        return;
+      }
+      bodyEl.appendChild(
+        e("p", {
+          class: "cap-generated",
+          text:
+            "Snapshot of subscription quota and regional availability for capacity-sensitive services. Last updated " +
+            new Date(cap.generated).toLocaleString() +
+            ".",
+        })
+      );
+
+      const legend = e("div", { class: "cap-legend" });
+      ["green", "yellow", "red", "unknown"].forEach((s) => {
+        if (!cap.legend || !cap.legend[s]) return;
+        legend.appendChild(
+          e("span", { class: "cap-legend-item" }, [
+            e("span", { class: "cap-dot cap-" + s }),
+            e("span", { text: " " + cap.legend[s] }),
+          ])
+        );
+      });
+      bodyEl.appendChild(legend);
+
+      const regions = cap.regions || [];
+      const headRow = e(
+        "tr",
+        {},
+        [e("th", { text: "Service" })].concat(regions.map((r) => e("th", { text: r })))
+      );
+      const rows = Object.keys(cap.services).map((key) => {
+        const svc = cap.services[key];
+        const cells = [e("td", { class: "cap-svc-name", text: svc.label || key })];
+        regions.forEach((r) => {
+          const cell = (svc.byRegion && svc.byRegion[r]) || { status: "unknown", detail: "" };
+          cells.push(
+            e("td", { class: "cap-cell", title: cell.detail || "" }, [
+              e("span", { class: "cap-dot cap-" + cell.status }),
+            ])
+          );
+        });
+        return e("tr", {}, cells);
+      });
+      bodyEl.appendChild(
+        e("div", { class: "cap-table-wrap" }, [
+          e("table", { class: "cap-table" }, [e("thead", {}, headRow), e("tbody", {}, rows)]),
+        ])
+      );
+    });
   }
 
   function wireModal() {
@@ -472,6 +690,11 @@
     render();
   }
 
+  function wireCapacityNav() {
+    const btn = $("#nav-capacity");
+    if (btn) btn.addEventListener("click", openCapacityPanel);
+  }
+
   function loadIdentity() {
     if (!window.TechlabsApi) return;
     window.TechlabsApi.me()
@@ -489,6 +712,18 @@
   }
 
   loadIdentity();
+  wireCapacityNav();
+
+  // Capacity snapshot is best-effort: the gallery still works without it
+  // (the region picker just falls back to a single default region).
+  fetch("capacity.json")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((c) => {
+      state.capacity = c;
+    })
+    .catch(() => {
+      /* no capacity data — degrade gracefully */
+    });
 
   fetch("catalog.json")
     .then((r) => {

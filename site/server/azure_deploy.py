@@ -155,11 +155,12 @@ def _do_deploy(dep: dict[str, Any]) -> None:
     resource_group = dep["resource_group"]
     template, parameters = load_template(dep["use_case"], dep["environment"])
 
+    location = (dep.get("params") or {}).get("location") or _location()
     client = _client(subscription_id)
     client.resource_groups.create_or_update(
         resource_group,
         {
-            "location": _location(),
+            "location": location,
             "tags": {
                 "techlabs-managed": "true",
                 "techlabs-deployment": dep["id"],

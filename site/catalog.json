@@ -1,7 +1,7 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-06-27T01:23:05Z",
+    "generated":  "2026-06-27T14:19:03Z",
     "count":  19,
     "items":  [
                   {
@@ -50,6 +50,29 @@
                                                                             "Premium v3 app compute in prod"
                                                                         ]
                                           },
+                      "quota":  {
+                                    "summary":  "Needs Azure OpenAI gpt-4o-mini TPM capacity and App Service compute quota in the target region. Some subscriptions/regions have 0 App Service quota (e.g. East US on this lab subscription), which blocks the App Service plan at preflight.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Azure OpenAI",
+                                                             "provider":  "Microsoft.CognitiveServices/accounts/deployments",
+                                                             "kind":  "model-tpm",
+                                                             "model":  "gpt-4o-mini",
+                                                             "modelVersion":  "2024-07-18",
+                                                             "sku":  "Standard",
+                                                             "detail":  "The model deployment requires tokens-per-minute (TPM) quota for gpt-4o-mini in the region (10K TPM in dev). gpt-4o-mini is not offered in every region.",
+                                                             "checkUrl":  "https://learn.microsoft.com/azure/ai-services/openai/how-to/quota"
+                                                         },
+                                                         {
+                                                             "service":  "Azure App Service",
+                                                             "provider":  "Microsoft.Web/serverFarms",
+                                                             "kind":  "compute",
+                                                             "sku":  "B1 (dev) / P1v3 x3 (prod)",
+                                                             "detail":  "The App Service plan needs available compute (vCPU) quota for the chosen SKU in the region. Premium v3 zone redundancy in prod requires capacity \u003e= 3.",
+                                                             "checkUrl":  "https://aka.ms/antquotahelp"
+                                                         }
+                                                     ]
+                                },
                       "path":  "ai-chat",
                       "readme":  "catalog/ai-chat/README.md",
                       "template":  "catalog/ai-chat/main.bicep",
@@ -179,6 +202,7 @@
                                                                             "Overlay networking conserves VNet address space"
                                                                         ]
                                           },
+                      "quota":  null,
                       "path":  "aks-secure-baseline",
                       "readme":  "catalog/aks-secure-baseline/README.md",
                       "template":  "catalog/aks-secure-baseline/main.bicep",
@@ -293,6 +317,7 @@
                                                                             "APIM caching and scale units tune throughput"
                                                                         ]
                                           },
+                      "quota":  null,
                       "path":  "api-management-gateway",
                       "readme":  "catalog/api-management-gateway/README.md",
                       "template":  "catalog/api-management-gateway/main.bicep",
@@ -392,6 +417,19 @@
                                                                             "Breadth-first balancing spreads load during peak"
                                                                         ]
                                           },
+                      "quota":  {
+                                    "summary":  "Session-host VMs require regional vCPU (compute) quota for the chosen VM size. The host pool/app group control plane is free, but adding session hosts needs Compute cores quota in the region.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Virtual Machines (session hosts)",
+                                                             "provider":  "Microsoft.Compute/virtualMachines",
+                                                             "kind":  "compute",
+                                                             "sku":  "Dav4 / Dsv5 family (per session-host size)",
+                                                             "detail":  "Each session host consumes regional vCPU quota for its VM family. Size x host count must fit the subscription\u0027s Compute cores limit in the region.",
+                                                             "checkUrl":  "https://aka.ms/antquotahelp"
+                                                         }
+                                                     ]
+                                },
                       "path":  "avd-hostpool",
                       "readme":  "catalog/avd-hostpool/README.md",
                       "template":  "catalog/avd-hostpool/main.bicep",
@@ -486,6 +524,19 @@
                                                                             "TransactionOptimized Azure Files tier for responsive profile I/O"
                                                                         ]
                                           },
+                      "quota":  {
+                                    "summary":  "Session-host VMs require significant regional vCPU (compute) quota for the chosen VM size and host count. This is the most common blocker for AVD at scale — confirm Compute cores quota in the region before deploying.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Virtual Machines (session hosts)",
+                                                             "provider":  "Microsoft.Compute/virtualMachines",
+                                                             "kind":  "compute",
+                                                             "sku":  "Dsv5 / Dav4 family (per session-host size)",
+                                                             "detail":  "VM size x session-host count must fit the subscription\u0027s regional Compute cores quota. Enterprise host counts can require a quota increase.",
+                                                             "checkUrl":  "https://aka.ms/antquotahelp"
+                                                         }
+                                                     ]
+                                },
                       "path":  "azure-virtual-desktop-enterprise",
                       "readme":  "catalog/azure-virtual-desktop-enterprise/README.md",
                       "template":  "catalog/azure-virtual-desktop-enterprise/main.bicep",
@@ -588,6 +639,19 @@
                                                                             "Scalable AVS cluster size parameter to match workload demand"
                                                                         ]
                                           },
+                      "quota":  {
+                                    "summary":  "Azure VMware Solution requires dedicated bare-metal host quota in the region, which is NOT enabled by default — it must be requested via a support/quota request before deployment. AVS hosts are also region- and SKU-limited.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Azure VMware Solution",
+                                                             "provider":  "Microsoft.AVS/privateClouds",
+                                                             "kind":  "dedicated-host",
+                                                             "sku":  "AV36 / AV36P / AV52 (per region availability)",
+                                                             "detail":  "AVS dedicated hosts require an explicit host quota grant per region and host SKU. New subscriptions start at 0 and must request quota before the cluster can be created.",
+                                                             "checkUrl":  "https://learn.microsoft.com/azure/azure-vmware/request-host-quota-azure-vmware"
+                                                         }
+                                                     ]
+                                },
                       "path":  "azure-vmware-solution-enterprise",
                       "readme":  "catalog/azure-vmware-solution-enterprise/README.md",
                       "template":  "catalog/azure-vmware-solution-enterprise/main.bicep",
@@ -683,6 +747,19 @@
                                                                             "Scales out to maxReplicas under load"
                                                                         ]
                                           },
+                      "quota":  {
+                                    "summary":  "Needs Container Apps managed-environment (vCPU/memory) quota in the target region. New regions or constrained subscriptions can hit per-region Container Apps quota at preflight.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Azure Container Apps",
+                                                             "provider":  "Microsoft.App/managedEnvironments",
+                                                             "kind":  "compute",
+                                                             "sku":  "Consumption",
+                                                             "detail":  "The managed environment needs available vCPU/memory quota for the requested replica sizing in the region.",
+                                                             "checkUrl":  "https://learn.microsoft.com/azure/container-apps/quotas"
+                                                         }
+                                                     ]
+                                },
                       "path":  "container-app",
                       "readme":  "catalog/container-app/README.md",
                       "template":  "catalog/container-app/main.bicep",
@@ -791,6 +868,7 @@
                                                                             "Databricks Photon / job clusters tune compute to the stage"
                                                                         ]
                                           },
+                      "quota":  null,
                       "path":  "data-lakehouse",
                       "readme":  "catalog/data-lakehouse/README.md",
                       "template":  "catalog/data-lakehouse/main.bicep",
@@ -908,6 +986,37 @@
                                                                             "Embedding and chat deployments scaled independently"
                                                                         ]
                                           },
+                      "quota":  {
+                                    "summary":  "Needs Azure OpenAI TPM capacity for BOTH a chat and an embedding model, plus App Service compute and an AI Search service, in the target region. OpenAI models are region-restricted and TPM quota is per-model.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Azure OpenAI (chat)",
+                                                             "provider":  "Microsoft.CognitiveServices/accounts/deployments",
+                                                             "kind":  "model-tpm",
+                                                             "model":  "gpt-4o-mini",
+                                                             "sku":  "Standard",
+                                                             "detail":  "Chat model deployment requires tokens-per-minute (TPM) quota in the region.",
+                                                             "checkUrl":  "https://learn.microsoft.com/azure/ai-services/openai/how-to/quota"
+                                                         },
+                                                         {
+                                                             "service":  "Azure OpenAI (embeddings)",
+                                                             "provider":  "Microsoft.CognitiveServices/accounts/deployments",
+                                                             "kind":  "model-tpm",
+                                                             "model":  "text-embedding-3-small",
+                                                             "sku":  "Standard",
+                                                             "detail":  "Embedding model deployment requires its own TPM quota in the region.",
+                                                             "checkUrl":  "https://learn.microsoft.com/azure/ai-services/openai/how-to/quota"
+                                                         },
+                                                         {
+                                                             "service":  "Azure App Service",
+                                                             "provider":  "Microsoft.Web/serverFarms",
+                                                             "kind":  "compute",
+                                                             "sku":  "App Service plan",
+                                                             "detail":  "App Service plan needs available compute (vCPU) quota for the chosen SKU in the region.",
+                                                             "checkUrl":  "https://aka.ms/antquotahelp"
+                                                         }
+                                                     ]
+                                },
                       "path":  "enterprise-rag",
                       "readme":  "catalog/enterprise-rag/README.md",
                       "template":  "catalog/enterprise-rag/main.bicep",
@@ -1044,6 +1153,7 @@
                                                                             "Elastic Premium Functions scale out for the hot path"
                                                                         ]
                                           },
+                      "quota":  null,
                       "path":  "event-streaming-analytics",
                       "readme":  "catalog/event-streaming-analytics/README.md",
                       "template":  "catalog/event-streaming-analytics/main.bicep",
@@ -1170,6 +1280,7 @@
                                                                             "Spoke subnets sized with CIDR functions to avoid overlap"
                                                                         ]
                                           },
+                      "quota":  null,
                       "path":  "hub-spoke-network",
                       "readme":  "catalog/hub-spoke-network/README.md",
                       "template":  "catalog/hub-spoke-network/main.bicep",
@@ -1286,6 +1397,7 @@
                                                                             "Plan SKU scales for higher workflow concurrency"
                                                                         ]
                                           },
+                      "quota":  null,
                       "path":  "integration-workflow",
                       "readme":  "catalog/integration-workflow/README.md",
                       "template":  "catalog/integration-workflow/main.bicep",
@@ -1390,6 +1502,7 @@
                                                                             "Regional co-location of models, search, and storage"
                                                                         ]
                                           },
+                      "quota":  null,
                       "path":  "landing-zone/ai",
                       "readme":  "catalog/landing-zone/ai/README.md",
                       "template":  "catalog/landing-zone/ai/main.bicep",
@@ -1484,6 +1597,7 @@
                                                                             "Storage and Key Vault are fully managed PaaS"
                                                                         ]
                                           },
+                      "quota":  null,
                       "path":  "landing-zone/core",
                       "readme":  "catalog/landing-zone/core/README.md",
                       "template":  "catalog/landing-zone/core/main.bicep",
@@ -1589,6 +1703,7 @@
                                                                             "Concurrency-based HTTP scaling on the API"
                                                                         ]
                                           },
+                      "quota":  null,
                       "path":  "microservices-aca",
                       "readme":  "catalog/microservices-aca/README.md",
                       "template":  "catalog/microservices-aca/main.bicep",
@@ -1707,6 +1822,7 @@
                                                                             "Front Door caching and connection offload at the edge"
                                                                         ]
                                           },
+                      "quota":  null,
                       "path":  "multiregion-web",
                       "readme":  "catalog/multiregion-web/README.md",
                       "template":  "catalog/multiregion-web/main.bicep",
@@ -1824,6 +1940,7 @@
                                                                             "Gateway autoscale matches capacity to load"
                                                                         ]
                                           },
+                      "quota":  null,
                       "path":  "secure-web-app",
                       "readme":  "catalog/secure-web-app/README.md",
                       "template":  "catalog/secure-web-app/main.bicep",
@@ -1939,6 +2056,7 @@
                                                                             "Connection pooling via managed identity tokens"
                                                                         ]
                                           },
+                      "quota":  null,
                       "path":  "sql-data-api",
                       "readme":  "catalog/sql-data-api/README.md",
                       "template":  "catalog/sql-data-api/main.bicep",
@@ -2034,6 +2152,19 @@
                                                                             "Horizontal autoscale-ready (capacity parameter)"
                                                                         ]
                                           },
+                      "quota":  {
+                                    "summary":  "Needs App Service compute quota for the chosen plan SKU in the target region. Some subscriptions/regions have 0 App Service quota (e.g. East US on this lab subscription), which blocks the plan at preflight.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Azure App Service",
+                                                             "provider":  "Microsoft.Web/serverFarms",
+                                                             "kind":  "compute",
+                                                             "sku":  "B1 (dev) / P1v3 (prod)",
+                                                             "detail":  "The App Service plan needs available compute (vCPU) quota for the chosen SKU in the region. Premium v3 zone redundancy requires capacity \u003e= 3.",
+                                                             "checkUrl":  "https://aka.ms/antquotahelp"
+                                                         }
+                                                     ]
+                                },
                       "path":  "web-app",
                       "readme":  "catalog/web-app/README.md",
                       "template":  "catalog/web-app/main.bicep",

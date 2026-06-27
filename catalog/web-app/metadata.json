@@ -40,6 +40,19 @@
       "Horizontal autoscale-ready (capacity parameter)"
     ]
   },
+  "quota": {
+    "summary": "Needs App Service compute quota for the chosen plan SKU in the target region. Some subscriptions/regions have 0 App Service quota (e.g. East US on this lab subscription), which blocks the plan at preflight.",
+    "requirements": [
+      {
+        "service": "Azure App Service",
+        "provider": "Microsoft.Web/serverFarms",
+        "kind": "compute",
+        "sku": "B1 (dev) / P1v3 (prod)",
+        "detail": "The App Service plan needs available compute (vCPU) quota for the chosen SKU in the region. Premium v3 zone redundancy requires capacity >= 3.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",
