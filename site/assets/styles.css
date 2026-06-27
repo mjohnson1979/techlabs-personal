@@ -631,12 +631,46 @@ a:hover {
   height: calc(100vh - 40px);
   max-height: calc(100vh - 40px);
   padding: 40px 48px;
+  border-radius: 24px;
 }
 
 /* Keep the detail content readable at full width by capping the column. */
 .modal-body-full {
-  max-width: 920px;
+  max-width: 1160px;
   margin: 0 auto;
+}
+
+/* Two-column detail: narrative on the left, architecture on the right. */
+.modal-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 40px;
+  align-items: start;
+  margin-top: 10px;
+}
+
+.modal-grid-single {
+  grid-template-columns: 1fr;
+}
+
+.modal-col-main {
+  min-width: 0;
+}
+
+.modal-col-side {
+  min-width: 0;
+  position: sticky;
+  top: 0;
+}
+
+@media (max-width: 900px) {
+  .modal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-col-side {
+    position: static;
+  }
 }
 
 /* Deploy form inside the use-case modal */
@@ -1264,6 +1298,19 @@ a:hover {
   margin: 0 0 14px;
 }
 
+/* Architecture rendered as a rounded card in the right-hand column. */
+.arch-block.modal-section {
+  margin: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px 24px;
+}
+
+.arch-block.modal-section h3 {
+  margin-bottom: 12px;
+}
+
 .arch-scroll {
   overflow-x: auto;
   padding-bottom: 6px;
@@ -1333,6 +1380,32 @@ a:hover {
 .arch-conn svg {
   width: 30px;
   height: 16px;
+}
+
+/* Vertical orientation: tiers stack top-to-bottom in the side column. */
+.arch-flow-vertical {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+}
+
+.arch-flow-vertical .arch-col {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.arch-flow-vertical .arch-node {
+  width: 100%;
+  min-width: 0;
+}
+
+.arch-flow-vertical .arch-conn {
+  align-self: center;
+}
+
+.arch-flow-vertical .arch-conn svg {
+  transform: rotate(90deg);
 }
 
 .arch-grid {

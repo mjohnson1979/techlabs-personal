@@ -573,16 +573,17 @@
     ]);
   }
 
-  // Render a left-to-right flow: nodes grouped into columns (by node.col) with
-  // arrow connectors between adjacent columns to convey request/data flow.
-  function renderArchFlow(nodes) {
+  // Render a flow of nodes grouped into columns (by node.col) with arrow
+  // connectors between adjacent columns to convey request/data flow. When
+  // `vertical` is set the tiers stack top-to-bottom (used in the side panel).
+  function renderArchFlow(nodes, vertical) {
     const byCol = {};
     nodes.forEach((n) => {
       const c = typeof n.col === "number" ? n.col : 0;
       (byCol[c] = byCol[c] || []).push(n);
     });
     const cols = Object.keys(byCol).map(Number).sort((a, b) => a - b);
-    const flow = el("div", { class: "arch-flow" });
+    const flow = el("div", { class: vertical ? "arch-flow arch-flow-vertical" : "arch-flow" });
     cols.forEach((c, idx) => {
       flow.appendChild(el("div", { class: "arch-col" }, byCol[c].map(archNode)));
       if (idx < cols.length - 1) {
@@ -598,11 +599,11 @@
   function architectureBlock(it) {
     const icons = window.AzureIcons;
     const arch = it.architecture;
-    const wrap = el("div", { class: "modal-section" }, [el("h3", { text: "Architecture" })]);
+    const wrap = el("div", { class: "modal-section arch-block" }, [el("h3", { text: "Architecture" })]);
 
     if (arch && arch.nodes && arch.nodes.length) {
       if (arch.summary) wrap.appendChild(el("p", { class: "arch-summary", text: arch.summary }));
-      wrap.appendChild(renderArchFlow(arch.nodes));
+      wrap.appendChild(renderArchFlow(arch.nodes, true));
 
       const edges = (arch.edges || []).filter((e) => e.from && e.to);
       if (edges.length) {
@@ -662,7 +663,7 @@
     wrap.appendChild(
       el("p", { class: "arch-summary", text: "Request and data flow across the Azure services this use case provisions:" })
     );
-    wrap.appendChild(renderArchFlow(nodes));
+    wrap.appendChild(renderArchFlow(nodes, true));
     return wrap;
   }
 
@@ -673,6 +674,9 @@
     body.appendChild(el("span", { class: "card-cat", text: it.category || "Other" }));
     body.appendChild(el("h2", { text: it.displayName }));
 
+    // Left column: narrative + well-architected + quota + deploy + cost.
+    const main = el("div", { class: "modal-col-main" });
+
     const sections = [];
     if (it.what) sections.push(["What it is", el("p", { text: it.what })]);
     if (it.why) sections.push(["Why it exists", el("p", { text: it.why })]);
@@ -680,29 +684,33 @@
       sections.push(["Potential use cases", el("ul", {}, it.potentialUseCases.map((u) => el("li", { text: u })))]);
 
     sections.forEach(([title, content]) => {
-      body.appendChild(el("div", { class: "modal-section" }, [el("h3", { text: title }), content]));
+      main.appendChild(el("div", { class: "modal-section" }, [el("h3", { text: title }), content]));
     });
-
-    const arch = architectureBlock(it);
-    if (arch) body.appendChild(arch);
 
     const pillars = pillarBlock(it.wellArchitected);
     if (pillars)
-      body.appendChild(el("div", { class: "modal-section" }, [el("h3", { text: "Well-Architected" }), pillars]));
+      main.appendChild(el("div", { class: "modal-section" }, [el("h3", { text: "Well-Architected" }), pillars]));
 
     const quota = quotaBlock(it);
-    if (quota) body.appendChild(quota);
+    if (quota) main.appendChild(quota);
 
-    body.appendChild(deployBlock(it));
+    main.appendChild(deployBlock(it));
 
     const cost = costBlock(it);
-    if (cost) body.appendChild(cost);
+    if (cost) main.appendChild(cost);
 
-    body.appendChild(
+    main.appendChild(
       el("div", { class: "modal-section" }, [
         el("a", { href: `${REPO}/tree/main/catalog/${it.path}`, target: "_blank", rel: "noopener", text: "View on GitHub →" }),
       ])
     );
+
+    // Right column: architecture diagram (sticky). Falls back to a single
+    // column when the use case has no derivable services.
+    const arch = architectureBlock(it);
+    const grid = el("div", { class: arch ? "modal-grid" : "modal-grid modal-grid-single" }, [main]);
+    if (arch) grid.appendChild(el("div", { class: "modal-col-side" }, [arch]));
+    body.appendChild(grid);
 
     $("#modal").hidden = false;
   }
