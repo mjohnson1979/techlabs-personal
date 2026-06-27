@@ -5,6 +5,12 @@
   const REPO = "https://github.com/mcaps-microsoft/TechLabs";
   const state = { items: [], q: "", category: new Set(), industry: new Set(), compliance: new Set(), me: null, capacity: null };
 
+  // Connector arrow drawn between architecture columns (theme accent).
+  const ARROW_SVG =
+    '<svg viewBox="0 0 32 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">' +
+    '<path d="M2 8h24M22 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
   // Capacity status ranking: green is best, red is worst. unknown/yellow are
   // treated as the same middle "caution" tier when rolling up a use case.
   const CAP_RANK = { green: 0, unknown: 1, yellow: 1, red: 2 };
@@ -554,6 +560,102 @@
     return wrap;
   }
 
+  // A single service tile: official-style Azure icon + label/sublabel.
+  function archNode(node) {
+    const icons = window.AzureIcons;
+    const svg = icons ? icons.iconFor(node.icon) : "";
+    return el("div", { class: "arch-node" }, [
+      el("span", { class: "arch-icon", html: svg }),
+      el("span", { class: "arch-node-text" }, [
+        el("span", { class: "arch-node-label", text: node.label || node.id }),
+        node.sublabel ? el("span", { class: "arch-node-sub", text: node.sublabel }) : null,
+      ]),
+    ]);
+  }
+
+  // Architecture diagram for the use-case modal. Uses an explicit node/edge
+  // graph when the use case declares one, otherwise derives a service strip
+  // from the cost components. Always renders official-style Azure icons.
+  function architectureBlock(it) {
+    const icons = window.AzureIcons;
+    const arch = it.architecture;
+    const wrap = el("div", { class: "modal-section" }, [el("h3", { text: "Architecture" })]);
+
+    if (arch && arch.nodes && arch.nodes.length) {
+      if (arch.summary) wrap.appendChild(el("p", { class: "arch-summary", text: arch.summary }));
+
+      // Group nodes into columns (default col 0) and lay them out left-to-right
+      // with arrow connectors between columns to convey request flow.
+      const byCol = {};
+      arch.nodes.forEach((n) => {
+        const c = typeof n.col === "number" ? n.col : 0;
+        (byCol[c] = byCol[c] || []).push(n);
+      });
+      const cols = Object.keys(byCol).map(Number).sort((a, b) => a - b);
+      const flow = el("div", { class: "arch-flow" });
+      cols.forEach((c, idx) => {
+        flow.appendChild(el("div", { class: "arch-col" }, byCol[c].map(archNode)));
+        if (idx < cols.length - 1) {
+          flow.appendChild(el("div", { class: "arch-conn", "aria-hidden": "true", html: ARROW_SVG }));
+        }
+      });
+      wrap.appendChild(el("div", { class: "arch-scroll" }, [flow]));
+
+      const edges = (arch.edges || []).filter((e) => e.from && e.to);
+      if (edges.length) {
+        const labelOf = (id) => {
+          const n = arch.nodes.find((x) => x.id === id);
+          return n ? n.label || n.id : id;
+        };
+        wrap.appendChild(
+          el(
+            "ul",
+            { class: "arch-edges" },
+            edges.map((e) =>
+              el("li", {}, [
+                el("span", { text: labelOf(e.from) }),
+                el("span", { class: "arch-edge-arrow", text: " \u2192 " }),
+                el("span", { text: labelOf(e.to) }),
+                e.label ? el("span", { class: "arch-edge-label", text: " \u00b7 " + e.label }) : null,
+              ])
+            )
+          )
+        );
+      }
+      return wrap;
+    }
+
+    // Fallback: distinct Azure services from the cost components.
+    const comps = (it.cost && it.cost.components) || [];
+    const seen = {};
+    const services = [];
+    comps.forEach((c) => {
+      const name = c.serviceName;
+      if (!name) return;
+      const key = name.toLowerCase();
+      if (seen[key]) return;
+      seen[key] = 1;
+      services.push(name);
+    });
+    if (!services.length || !icons) return null;
+    wrap.appendChild(
+      el("p", { class: "arch-summary", text: "Azure services provisioned by this use case:" })
+    );
+    wrap.appendChild(
+      el(
+        "div",
+        { class: "arch-grid" },
+        services.map((name) =>
+          el("div", { class: "arch-node" }, [
+            el("span", { class: "arch-icon", html: icons.iconForService(name) }),
+            el("span", { class: "arch-node-text" }, [el("span", { class: "arch-node-label", text: name })]),
+          ])
+        )
+      )
+    );
+    return wrap;
+  }
+
   function openModal(it) {
     if (window.TechlabsApi) window.TechlabsApi.recordEvent("view", it.path);
     const body = $("#modal-body");
@@ -570,6 +672,9 @@
     sections.forEach(([title, content]) => {
       body.appendChild(el("div", { class: "modal-section" }, [el("h3", { text: title }), content]));
     });
+
+    const arch = architectureBlock(it);
+    if (arch) body.appendChild(arch);
 
     const pillars = pillarBlock(it.wellArchitected);
     if (pillars)

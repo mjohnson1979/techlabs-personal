@@ -624,6 +624,21 @@ a:hover {
   max-width: 980px;
 }
 
+/* Full-screen panel for the use-case detail view */
+.modal-panel-full {
+  max-width: 1280px;
+  width: calc(100vw - 40px);
+  height: calc(100vh - 40px);
+  max-height: calc(100vh - 40px);
+  padding: 40px 48px;
+}
+
+/* Keep the detail content readable at full width by capping the column. */
+.modal-body-full {
+  max-width: 920px;
+  margin: 0 auto;
+}
+
 /* Deploy form inside the use-case modal */
 .deploy-form {
   display: grid;
@@ -1238,4 +1253,116 @@ a:hover {
 
 .cap-cell {
   cursor: default;
+}
+
+/* ------------------------------------------------------------------ */
+/* Architecture diagram (use-case modal) with Azure service icons      */
+/* ------------------------------------------------------------------ */
+.arch-summary {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 14px;
+}
+
+.arch-scroll {
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.arch-flow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: min-content;
+}
+
+.arch-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+}
+
+.arch-node {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  min-width: 170px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.arch-icon {
+  display: inline-flex;
+  flex: none;
+  width: 38px;
+  height: 38px;
+}
+
+.arch-icon svg {
+  width: 38px;
+  height: 38px;
+}
+
+.arch-node-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.arch-node-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.arch-node-sub {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.arch-conn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+}
+
+.arch-conn svg {
+  width: 30px;
+  height: 16px;
+}
+
+.arch-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.arch-grid .arch-node {
+  min-width: 150px;
+}
+
+.arch-edges {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.arch-edges li {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.arch-edge-arrow {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.arch-edge-label {
+  color: var(--text);
 }

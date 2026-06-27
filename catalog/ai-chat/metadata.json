@@ -63,6 +63,22 @@
       }
     ]
   },
+  "architecture": {
+    "summary": "Stateless chat API on App Service calls a keyless Azure OpenAI deployment and persists conversation history in serverless Cosmos DB, with telemetry to Application Insights.",
+    "nodes": [
+      { "id": "user", "label": "Users", "sublabel": "HTTPS clients", "icon": "client", "col": 0 },
+      { "id": "app", "label": "Chat API", "sublabel": "App Service (managed identity)", "icon": "appservice", "col": 1 },
+      { "id": "oai", "label": "Azure OpenAI", "sublabel": "gpt-4o-mini, keyless", "icon": "openai", "col": 2 },
+      { "id": "cosmos", "label": "Cosmos DB", "sublabel": "serverless chat history", "icon": "cosmos", "col": 2 },
+      { "id": "obs", "label": "App Insights", "sublabel": "Log Analytics", "icon": "monitor", "col": 2 }
+    ],
+    "edges": [
+      { "from": "user", "to": "app", "label": "HTTPS" },
+      { "from": "app", "to": "oai", "label": "token auth" },
+      { "from": "app", "to": "cosmos", "label": "RBAC" },
+      { "from": "app", "to": "obs", "label": "telemetry" }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",

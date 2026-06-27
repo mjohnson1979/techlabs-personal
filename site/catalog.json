@@ -1,7 +1,7 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-06-27T14:19:03Z",
+    "generated":  "2026-06-27T15:55:21Z",
     "count":  19,
     "items":  [
                   {
@@ -73,6 +73,68 @@
                                                          }
                                                      ]
                                 },
+                      "architecture":  {
+                                           "summary":  "Stateless chat API on App Service calls a keyless Azure OpenAI deployment and persists conversation history in serverless Cosmos DB, with telemetry to Application Insights.",
+                                           "nodes":  [
+                                                         {
+                                                             "id":  "user",
+                                                             "label":  "Users",
+                                                             "sublabel":  "HTTPS clients",
+                                                             "icon":  "client",
+                                                             "col":  0
+                                                         },
+                                                         {
+                                                             "id":  "app",
+                                                             "label":  "Chat API",
+                                                             "sublabel":  "App Service (managed identity)",
+                                                             "icon":  "appservice",
+                                                             "col":  1
+                                                         },
+                                                         {
+                                                             "id":  "oai",
+                                                             "label":  "Azure OpenAI",
+                                                             "sublabel":  "gpt-4o-mini, keyless",
+                                                             "icon":  "openai",
+                                                             "col":  2
+                                                         },
+                                                         {
+                                                             "id":  "cosmos",
+                                                             "label":  "Cosmos DB",
+                                                             "sublabel":  "serverless chat history",
+                                                             "icon":  "cosmos",
+                                                             "col":  2
+                                                         },
+                                                         {
+                                                             "id":  "obs",
+                                                             "label":  "App Insights",
+                                                             "sublabel":  "Log Analytics",
+                                                             "icon":  "monitor",
+                                                             "col":  2
+                                                         }
+                                                     ],
+                                           "edges":  [
+                                                         {
+                                                             "from":  "user",
+                                                             "to":  "app",
+                                                             "label":  "HTTPS"
+                                                         },
+                                                         {
+                                                             "from":  "app",
+                                                             "to":  "oai",
+                                                             "label":  "token auth"
+                                                         },
+                                                         {
+                                                             "from":  "app",
+                                                             "to":  "cosmos",
+                                                             "label":  "RBAC"
+                                                         },
+                                                         {
+                                                             "from":  "app",
+                                                             "to":  "obs",
+                                                             "label":  "telemetry"
+                                                         }
+                                                     ]
+                                       },
                       "path":  "ai-chat",
                       "readme":  "catalog/ai-chat/README.md",
                       "template":  "catalog/ai-chat/main.bicep",
@@ -203,6 +265,7 @@
                                                                         ]
                                           },
                       "quota":  null,
+                      "architecture":  null,
                       "path":  "aks-secure-baseline",
                       "readme":  "catalog/aks-secure-baseline/README.md",
                       "template":  "catalog/aks-secure-baseline/main.bicep",
@@ -318,6 +381,7 @@
                                                                         ]
                                           },
                       "quota":  null,
+                      "architecture":  null,
                       "path":  "api-management-gateway",
                       "readme":  "catalog/api-management-gateway/README.md",
                       "template":  "catalog/api-management-gateway/main.bicep",
@@ -430,6 +494,7 @@
                                                          }
                                                      ]
                                 },
+                      "architecture":  null,
                       "path":  "avd-hostpool",
                       "readme":  "catalog/avd-hostpool/README.md",
                       "template":  "catalog/avd-hostpool/main.bicep",
@@ -537,6 +602,7 @@
                                                          }
                                                      ]
                                 },
+                      "architecture":  null,
                       "path":  "azure-virtual-desktop-enterprise",
                       "readme":  "catalog/azure-virtual-desktop-enterprise/README.md",
                       "template":  "catalog/azure-virtual-desktop-enterprise/main.bicep",
@@ -652,6 +718,7 @@
                                                          }
                                                      ]
                                 },
+                      "architecture":  null,
                       "path":  "azure-vmware-solution-enterprise",
                       "readme":  "catalog/azure-vmware-solution-enterprise/README.md",
                       "template":  "catalog/azure-vmware-solution-enterprise/main.bicep",
@@ -760,6 +827,7 @@
                                                          }
                                                      ]
                                 },
+                      "architecture":  null,
                       "path":  "container-app",
                       "readme":  "catalog/container-app/README.md",
                       "template":  "catalog/container-app/main.bicep",
@@ -869,6 +937,7 @@
                                                                         ]
                                           },
                       "quota":  null,
+                      "architecture":  null,
                       "path":  "data-lakehouse",
                       "readme":  "catalog/data-lakehouse/README.md",
                       "template":  "catalog/data-lakehouse/main.bicep",
@@ -1017,6 +1086,7 @@
                                                          }
                                                      ]
                                 },
+                      "architecture":  null,
                       "path":  "enterprise-rag",
                       "readme":  "catalog/enterprise-rag/README.md",
                       "template":  "catalog/enterprise-rag/main.bicep",
@@ -1154,6 +1224,7 @@
                                                                         ]
                                           },
                       "quota":  null,
+                      "architecture":  null,
                       "path":  "event-streaming-analytics",
                       "readme":  "catalog/event-streaming-analytics/README.md",
                       "template":  "catalog/event-streaming-analytics/main.bicep",
@@ -1281,6 +1352,7 @@
                                                                         ]
                                           },
                       "quota":  null,
+                      "architecture":  null,
                       "path":  "hub-spoke-network",
                       "readme":  "catalog/hub-spoke-network/README.md",
                       "template":  "catalog/hub-spoke-network/main.bicep",
@@ -1398,6 +1470,7 @@
                                                                         ]
                                           },
                       "quota":  null,
+                      "architecture":  null,
                       "path":  "integration-workflow",
                       "readme":  "catalog/integration-workflow/README.md",
                       "template":  "catalog/integration-workflow/main.bicep",
@@ -1503,6 +1576,7 @@
                                                                         ]
                                           },
                       "quota":  null,
+                      "architecture":  null,
                       "path":  "landing-zone/ai",
                       "readme":  "catalog/landing-zone/ai/README.md",
                       "template":  "catalog/landing-zone/ai/main.bicep",
@@ -1598,6 +1672,7 @@
                                                                         ]
                                           },
                       "quota":  null,
+                      "architecture":  null,
                       "path":  "landing-zone/core",
                       "readme":  "catalog/landing-zone/core/README.md",
                       "template":  "catalog/landing-zone/core/main.bicep",
@@ -1704,6 +1779,7 @@
                                                                         ]
                                           },
                       "quota":  null,
+                      "architecture":  null,
                       "path":  "microservices-aca",
                       "readme":  "catalog/microservices-aca/README.md",
                       "template":  "catalog/microservices-aca/main.bicep",
@@ -1823,6 +1899,7 @@
                                                                         ]
                                           },
                       "quota":  null,
+                      "architecture":  null,
                       "path":  "multiregion-web",
                       "readme":  "catalog/multiregion-web/README.md",
                       "template":  "catalog/multiregion-web/main.bicep",
@@ -1941,6 +2018,7 @@
                                                                         ]
                                           },
                       "quota":  null,
+                      "architecture":  null,
                       "path":  "secure-web-app",
                       "readme":  "catalog/secure-web-app/README.md",
                       "template":  "catalog/secure-web-app/main.bicep",
@@ -2057,6 +2135,7 @@
                                                                         ]
                                           },
                       "quota":  null,
+                      "architecture":  null,
                       "path":  "sql-data-api",
                       "readme":  "catalog/sql-data-api/README.md",
                       "template":  "catalog/sql-data-api/main.bicep",
@@ -2165,6 +2244,7 @@
                                                          }
                                                      ]
                                 },
+                      "architecture":  null,
                       "path":  "web-app",
                       "readme":  "catalog/web-app/README.md",
                       "template":  "catalog/web-app/main.bicep",
