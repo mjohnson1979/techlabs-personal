@@ -7,6 +7,7 @@
   --muted: #9aa3b2;
   --accent: #4ea1ff;
   --accent-2: #6ee7b7;
+  --danger: #ff8a8a;
   --chip: #232834;
   --radius: 12px;
   --shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
@@ -683,7 +684,7 @@ a:hover {
 }
 
 .deploy-status.err {
-  color: #ff8a8a;
+  color: var(--danger);
 }
 
 .deploy-status a {
@@ -710,6 +711,29 @@ a:hover {
 .deploy-log-line {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.deploy-log-ts {
+  color: var(--muted);
+}
+
+/* Colour-coded provisioning states in the live deploy log (theme colours). */
+.deploy-log .s-ok,
+.deploy-log-head .s-ok {
+  color: var(--accent-2);
+  font-weight: 600;
+}
+
+.deploy-log .s-err,
+.deploy-log-head .s-err {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.deploy-log .s-run,
+.deploy-log-head .s-run {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .deploy-manual {

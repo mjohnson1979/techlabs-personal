@@ -185,6 +185,62 @@ def _do_deploy(dep: dict[str, Any]) -> None:
     poller.result()  # blocks until the deployment finishes; raises on failure
 
 
+# Friendly display names for the resource types our catalog templates create,
+# so the live log reads "App Service plan: ready" instead of "serverfarms: Succeeded".
+_RESOURCE_LABELS = {
+    "microsoft.web/serverfarms": "App Service plan",
+    "microsoft.web/sites": "Web App",
+    "microsoft.web/sites/config": "Web App settings",
+    "microsoft.web/sites/slots": "Web App slot",
+    "microsoft.cognitiveservices/accounts": "Azure OpenAI",
+    "microsoft.cognitiveservices/accounts/deployments": "Model deployment",
+    "microsoft.documentdb/databaseaccounts": "Cosmos DB",
+    "microsoft.documentdb/databaseaccounts/sqldatabases": "Cosmos database",
+    "microsoft.documentdb/databaseaccounts/sqldatabases/containers": "Cosmos container",
+    "microsoft.storage/storageaccounts": "Storage account",
+    "microsoft.keyvault/vaults": "Key Vault",
+    "microsoft.insights/components": "Application Insights",
+    "microsoft.operationalinsights/workspaces": "Log Analytics",
+    "microsoft.managedidentity/userassignedidentities": "Managed identity",
+    "microsoft.search/searchservices": "AI Search",
+    "microsoft.sql/servers": "SQL server",
+    "microsoft.sql/servers/databases": "SQL database",
+    "microsoft.network/virtualnetworks": "Virtual network",
+    "microsoft.network/privateendpoints": "Private endpoint",
+    "microsoft.authorization/roleassignments": "Role assignment",
+    "microsoft.containerregistry/registries": "Container registry",
+    "microsoft.app/containerapps": "Container App",
+    "microsoft.app/managedenvironments": "Container Apps environment",
+}
+
+# Map raw ARM provisioning states to friendly, consistently-cased words that the
+# frontend colour-codes (green = done, red = failed, accent = in progress).
+_STATE_LABELS = {
+    "succeeded": "ready",
+    "running": "provisioning",
+    "creating": "creating",
+    "started": "provisioning",
+    "accepted": "queued",
+    "deleting": "deleting",
+    "failed": "failed",
+    "canceled": "canceled",
+    "cancelled": "canceled",
+}
+
+
+def _resource_label(rtype: str, name: str) -> str:
+    """Human-friendly label for a deployment operation's target resource."""
+    key = (rtype or "").lower()
+    if key == "microsoft.resources/deployments":
+        # Nested module deployments — the resource name is the bicep module name
+        # (e.g. "openai", "cosmos"), which is the most descriptive thing to show.
+        return f"{name} module" if name else "module"
+    label = _RESOURCE_LABELS.get(key)
+    if label:
+        return label
+    return (rtype or "resource").split("/")[-1]
+
+
 def _deploy_progress(dep: dict[str, Any]) -> str | None:
     """Summarise in-flight ARM deployment operations for the live log."""
     client = _client(dep["subscription_id"])
@@ -193,18 +249,45 @@ def _deploy_progress(dep: dict[str, Any]) -> str | None:
         ops = list(client.deployment_operations.list(dep["resource_group"], name))
     except Exception:
         return None
-    states: dict[str, str] = {}
+    # Key by resource *name* so multiple resources of the same type — or several
+    # nested module deployments — stay distinct instead of overwriting each other.
+    entries: list[tuple[str, str]] = []
+    seen_keys: set[str] = set()
     for op in ops:
         props = getattr(op, "properties", None)
         target = getattr(props, "target_resource", None)
-        rtype = getattr(target, "resource_type", None)
-        if rtype:
-            states[rtype] = getattr(props, "provisioning_state", "") or ""
-    if not states:
+        if target is None:
+            continue
+        rtype = getattr(target, "resource_type", None) or ""
+        rname = getattr(target, "resource_name", None) or ""
+        if not rtype and not rname:
+            continue
+        key = f"{rtype}/{rname}"
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        raw_state = (getattr(props, "provisioning_state", "") or "").strip()
+        label = _resource_label(rtype, rname)
+        state = _STATE_LABELS.get(raw_state.lower(), raw_state.lower() or "pending")
+        entries.append((label, state))
+    if not entries:
         return None
-    done = sum(1 for s in states.values() if s in ("Succeeded", "Failed"))
-    parts = [f"{rt.split('/')[-1]}: {st}" for rt, st in list(states.items())[:6]]
-    return f"{done}/{len(states)} resources — " + ", ".join(parts)
+    total = len(entries)
+    ready = sum(1 for _, s in entries if s == "ready")
+    failed = sum(1 for _, s in entries if s in ("failed", "canceled"))
+    # Show failing/in-progress resources first so they're immediately visible,
+    # then the finished ones. Cap the list so the live-log line stays readable.
+    rank = {"failed": 0, "canceled": 0, "provisioning": 1, "creating": 1,
+            "queued": 2, "deleting": 2, "ready": 3}
+    entries.sort(key=lambda e: rank.get(e[1], 2))
+    shown = entries[:8]
+    detail = " · ".join(f"{label}: {state}" for label, state in shown)
+    if len(entries) > len(shown):
+        detail += f" · +{len(entries) - len(shown)} more"
+    head = f"{ready}/{total} resources ready"
+    if failed:
+        head += f", {failed} failed"
+    return f"{head} · {detail}"
 
 
 

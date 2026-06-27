@@ -246,6 +246,24 @@
 
   function pollDeployment(dep, status, btn) {
     const TERMINAL = { active: 1, failed: 1, destroyed: 1 };
+    // Status words → colour class (green done, red failed, accent in-progress).
+    const STATUS_CLASS = {
+      ready: "s-ok", succeeded: "s-ok", active: "s-ok", deployed: "s-ok", complete: "s-ok",
+      failed: "s-err", canceled: "s-err", cancelled: "s-err", error: "s-err",
+      provisioning: "s-run", creating: "s-run", queued: "s-run", deploying: "s-run",
+      requested: "s-run", destroying: "s-run", deleting: "s-run", pending: "s-run",
+    };
+    function colorize(text) {
+      const frag = document.createDocumentFragment();
+      // Split on whole words, keeping delimiters, so each status token can be wrapped.
+      String(text).split(/(\b[A-Za-z]+\b)/).forEach((part) => {
+        const cls = STATUS_CLASS[part.toLowerCase()];
+        if (cls) frag.appendChild(el("span", { class: cls, text: part }));
+        else if (part) frag.appendChild(document.createTextNode(part));
+      });
+      return frag;
+    }
+
     status.classList.remove("err", "ok");
     status.innerHTML = "";
     const head = el("div", { class: "deploy-log-head" });
@@ -256,12 +274,17 @@
 
     function logLine(text) {
       const ts = new Date().toLocaleTimeString();
-      log.appendChild(el("div", { class: "deploy-log-line", text: `[${ts}] ${text}` }));
+      const line = el("div", { class: "deploy-log-line" });
+      line.appendChild(el("span", { class: "deploy-log-ts", text: `[${ts}] ` }));
+      line.appendChild(colorize(text));
+      log.appendChild(line);
       log.scrollTop = log.scrollHeight;
     }
     function setHead(d) {
       head.innerHTML = "";
-      head.appendChild(el("span", { text: `Status: ${d.status} · resource group ${d.resourceGroup} · ` }));
+      head.appendChild(document.createTextNode("Status: "));
+      head.appendChild(colorize(d.status));
+      head.appendChild(document.createTextNode(` · resource group ${d.resourceGroup} · `));
       head.appendChild(
         el("a", { href: d.ghRunUrl || "", target: "_blank", rel: "noopener", text: "View in Azure portal →" })
       );
@@ -284,6 +307,11 @@
           if (TERMINAL[d.status]) {
             clearInterval(timer);
             status.classList.add(d.status === "active" ? "ok" : "err");
+            if (d.status === "active") {
+              logLine("complete — all resources provisioned and ready.");
+            } else if (d.status === "failed") {
+              logLine("failed — see the error above or open the resource group in the Azure portal.");
+            }
             if (d.status !== "active") btn.disabled = false;
           }
         })

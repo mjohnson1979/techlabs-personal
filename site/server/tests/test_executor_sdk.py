@@ -108,5 +108,15 @@ def test_clean_error_falls_back_to_str_without_arm_error() -> None:
     assert cleaned == "plain failure"
 
 
+def test_resource_label_is_friendly() -> None:
+    assert azure_deploy._resource_label("Microsoft.Web/serverfarms", "p") == "App Service plan"
+    assert azure_deploy._resource_label("Microsoft.CognitiveServices/accounts", "a") == "Azure OpenAI"
+    assert azure_deploy._resource_label("Microsoft.DocumentDB/databaseAccounts", "c") == "Cosmos DB"
+    # Nested module deployments show the bicep module name.
+    assert azure_deploy._resource_label("Microsoft.Resources/deployments", "openai") == "openai module"
+    # Unknown types fall back to the last path segment, never crash.
+    assert azure_deploy._resource_label("Microsoft.Foo/bars", "x") == "bars"
+
+
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(pytest.main([__file__, "-v"]))
