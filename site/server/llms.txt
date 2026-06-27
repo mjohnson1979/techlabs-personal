@@ -1,0 +1,49 @@
+# Techlabs gallery backend
+
+> A small FastAPI control plane that gates the static Techlabs gallery behind
+> Microsoft Entra ID, records who deploys which use case, provisions Azure
+> resources directly with its managed identity, and tears them down on a
+> schedule. A single SQLite file on App Service's persistent `/home` share is the
+> system of record.
+
+## Modules
+
+- [app.py](app.py): FastAPI app — serves the static gallery, runs the Entra OAuth gate, starts the cleanup scheduler.
+- [entra_auth.py](entra_auth.py): Entra ID OAuth (PKCE) sign-in flow and the in-memory session store.
+- [identity.py](identity.py): Resolves the caller's identity + role for `/api/*` routes; fails closed.
+- [api.py](api.py): `/api/*` JSON endpoints (deployments, users, telemetry).
+- [db.py](db.py): All persistence — SQLite schema plus every read/write helper.
+- [azure_deploy.py](azure_deploy.py): In-process executor that provisions/destroys Azure resources with the app's managed identity.
+- [scheduler.py](scheduler.py): Background asyncio task that tears down deployments past their end time.
+
+## Database
+
+- One SQLite file, opened once per process, WAL journaling, guarded by a process-wide lock; the app runs a single gunicorn worker so one writer is always sufficient.
+- Location resolved by `db._default_db_path()`: `GALLERY_DB_PATH` env → `/home/data/techlabs.db` (persistent Azure Files, survives restarts/redeploys) → `site/server/data/techlabs.db` (local fallback).
+- Persistent: user identities, roles, deployment records, telemetry. Not persistent: the in-memory OAuth session (users re-sign-in after a restart; identity and admin role are restored from the DB).
+
+## Schema (see SCHEMA in db.py)
+
+- `users`: one row per signed-in user. `oid` (Entra object ID) PK, `upn`, `name`, `role` ('admin'|'guest'), `created_at`, `last_seen`. First-ever sign-in is bootstrapped to `admin`. Admin pre-assignments are placeholder rows keyed `upn:<upn>` and reconciled on first sign-in.
+- `deployments`: one row per provisioning request. `id` PK, `use_case`, `environment`, `user_oid`/`user_upn`/`user_name`, `subscription_id`, `resource_group`, `status` (requested|deploying|active|expiring|destroying|destroyed|failed), `created_at`, `end_at`, `destroyed_at`, `gh_run_url`, `detail`, `params_json`. Indexed by user, status, end_at.
+- `events`: append-only telemetry. `id` PK, `ts`, `type` (view|signin|deploy_requested|deploy_succeeded|cleanup_triggered|…), `user_oid`/`user_upn`, `use_case`, `deployment_id`, `meta_json`. Indexed by ts, type, user.
+
+## Access helpers (db.py)
+
+- Users/roles: `upsert_user`, `get_role`, `list_users`, `set_user_role`, `has_admin`.
+- Deployments: `create_deployment`, `update_deployment`, `get_deployment`, `list_deployments`, `due_deployments`.
+- Telemetry: `record_event`, `telemetry_summary`.
+
+## Why SQLite
+
+- Internal tool with modest write volume; zero infrastructure and zero database cost.
+- A single gunicorn worker is required anyway (in-memory sessions), so there is no multi-writer problem.
+- Persistent and portable: sits on the App Service `/home` share, backs up with the app, copyable for inspection.
+
+## Configuration
+
+- See [.env.example](.env.example): `GALLERY_ENTRA_TENANT_ID`, `GALLERY_ENTRA_CLIENT_ID`, `GALLERY_SUBSCRIPTION_ID`, `GALLERY_DEPLOY_LOCATION`, `GALLERY_HTTPS`, `GALLERY_CLEANUP_INTERVAL_SECONDS`, `GALLERY_DB_PATH`.
+
+## Run locally
+
+- `cd site/server; pip install -r requirements.txt; uvicorn app:app --host 127.0.0.1 --port 8000` then browse http://localhost:8000/ and sign in.
