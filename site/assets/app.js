@@ -573,9 +573,28 @@
     ]);
   }
 
+  // Render a left-to-right flow: nodes grouped into columns (by node.col) with
+  // arrow connectors between adjacent columns to convey request/data flow.
+  function renderArchFlow(nodes) {
+    const byCol = {};
+    nodes.forEach((n) => {
+      const c = typeof n.col === "number" ? n.col : 0;
+      (byCol[c] = byCol[c] || []).push(n);
+    });
+    const cols = Object.keys(byCol).map(Number).sort((a, b) => a - b);
+    const flow = el("div", { class: "arch-flow" });
+    cols.forEach((c, idx) => {
+      flow.appendChild(el("div", { class: "arch-col" }, byCol[c].map(archNode)));
+      if (idx < cols.length - 1) {
+        flow.appendChild(el("div", { class: "arch-conn", "aria-hidden": "true", html: ARROW_SVG }));
+      }
+    });
+    return el("div", { class: "arch-scroll" }, [flow]);
+  }
+
   // Architecture diagram for the use-case modal. Uses an explicit node/edge
-  // graph when the use case declares one, otherwise derives a service strip
-  // from the cost components. Always renders official-style Azure icons.
+  // graph when the use case declares one, otherwise derives a tiered service
+  // flow from the cost components. Always renders official-style Azure icons.
   function architectureBlock(it) {
     const icons = window.AzureIcons;
     const arch = it.architecture;
@@ -583,23 +602,7 @@
 
     if (arch && arch.nodes && arch.nodes.length) {
       if (arch.summary) wrap.appendChild(el("p", { class: "arch-summary", text: arch.summary }));
-
-      // Group nodes into columns (default col 0) and lay them out left-to-right
-      // with arrow connectors between columns to convey request flow.
-      const byCol = {};
-      arch.nodes.forEach((n) => {
-        const c = typeof n.col === "number" ? n.col : 0;
-        (byCol[c] = byCol[c] || []).push(n);
-      });
-      const cols = Object.keys(byCol).map(Number).sort((a, b) => a - b);
-      const flow = el("div", { class: "arch-flow" });
-      cols.forEach((c, idx) => {
-        flow.appendChild(el("div", { class: "arch-col" }, byCol[c].map(archNode)));
-        if (idx < cols.length - 1) {
-          flow.appendChild(el("div", { class: "arch-conn", "aria-hidden": "true", html: ARROW_SVG }));
-        }
-      });
-      wrap.appendChild(el("div", { class: "arch-scroll" }, [flow]));
+      wrap.appendChild(renderArchFlow(arch.nodes));
 
       const edges = (arch.edges || []).filter((e) => e.from && e.to);
       if (edges.length) {
@@ -625,7 +628,9 @@
       return wrap;
     }
 
-    // Fallback: distinct Azure services from the cost components.
+    // Fallback: derive a tiered flow (Users -> edge -> compute -> data/obs)
+    // from the distinct Azure services this use case provisions.
+    if (!icons) return null;
     const comps = (it.cost && it.cost.components) || [];
     const seen = {};
     const services = [];
@@ -637,22 +642,27 @@
       seen[key] = 1;
       services.push(name);
     });
-    if (!services.length || !icons) return null;
+    if (!services.length) return null;
+
+    // Column index per tier; everything sits to the right of the Users node.
+    const TIER_COL = { edge: 1, compute: 2, data: 3, obs: 3 };
+    const nodes = [
+      { id: "user", label: "Users", sublabel: "HTTPS clients", icon: "client", col: 0 },
+    ];
+    services.forEach((name, i) => {
+      const tier = icons.tierForService(name);
+      nodes.push({
+        id: "n" + i,
+        label: name,
+        icon: icons.keyForService(name),
+        col: tier === "client" ? 1 : TIER_COL[tier] || 2,
+      });
+    });
+
     wrap.appendChild(
-      el("p", { class: "arch-summary", text: "Azure services provisioned by this use case:" })
+      el("p", { class: "arch-summary", text: "Request and data flow across the Azure services this use case provisions:" })
     );
-    wrap.appendChild(
-      el(
-        "div",
-        { class: "arch-grid" },
-        services.map((name) =>
-          el("div", { class: "arch-node" }, [
-            el("span", { class: "arch-icon", html: icons.iconForService(name) }),
-            el("span", { class: "arch-node-text" }, [el("span", { class: "arch-node-label", text: name })]),
-          ])
-        )
-      )
-    );
+    wrap.appendChild(renderArchFlow(nodes));
     return wrap;
   }
 

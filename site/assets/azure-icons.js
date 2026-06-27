@@ -262,6 +262,35 @@
     if (!name) return icons["default"];
     return iconFor(byService[String(name).toLowerCase().trim()]);
   }
+  // Icon key for an Azure cost-meter serviceName (e.g. "appservice").
+  function keyForService(name) {
+    if (!name) return "default";
+    return byService[String(name).toLowerCase().trim()] || "default";
+  }
 
-  window.AzureIcons = { icons: icons, iconFor: iconFor, iconForService: iconForService };
+  // Architecture tier per icon key, used to lay services out as a flow:
+  //   edge (ingress/network) -> compute -> data (backing stores) -> obs.
+  var tierByKey = {
+    frontdoor: "edge", appgateway: "edge", apim: "edge", firewall: "edge",
+    bastion: "edge", vnet: "edge", expressroute: "edge",
+    appservice: "compute", containerapps: "compute", aks: "compute",
+    functions: "compute", logicapps: "compute", vm: "compute",
+    avd: "compute", avs: "compute", streamanalytics: "compute", datafactory: "compute",
+    databricks: "compute",
+    openai: "data", search: "data", cosmos: "data", sql: "data", storage: "data",
+    servicebus: "data", eventhubs: "data", keyvault: "data", acr: "data",
+    monitor: "obs", loganalytics: "obs",
+    client: "client", "default": "data",
+  };
+  function tierForService(name) {
+    return tierByKey[keyForService(name)] || "data";
+  }
+
+  window.AzureIcons = {
+    icons: icons,
+    iconFor: iconFor,
+    iconForService: iconForService,
+    keyForService: keyForService,
+    tierForService: tierForService,
+  };
 })();
