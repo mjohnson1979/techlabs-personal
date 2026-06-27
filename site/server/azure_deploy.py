@@ -116,12 +116,6 @@ def _clean_error(exc: Exception) -> str:
 # Blocking SDK work (run in a thread via asyncio.to_thread)
 # --------------------------------------------------------------------------- #
 def _do_deploy(dep: dict[str, Any]) -> None:
-    from azure.mgmt.resource.resources.models import (
-        Deployment,
-        DeploymentMode,
-        DeploymentProperties,
-    )
-
     subscription_id = dep["subscription_id"]
     resource_group = dep["resource_group"]
     template, parameters = load_template(dep["use_case"], dep["environment"])
@@ -139,13 +133,44 @@ def _do_deploy(dep: dict[str, Any]) -> None:
             },
         },
     )
-    properties = DeploymentProperties(
-        mode=DeploymentMode.incremental, template=template, parameters=parameters
-    )
+    # Pass a plain dict rather than importing the SDK model classes
+    # (Deployment/DeploymentProperties/DeploymentMode). Their import location
+    # moved across azure-mgmt-resource major versions; the SDK serializes this
+    # dict the same way, so the executor stays version-agnostic.
+    deployment = {
+        "properties": {
+            "mode": "Incremental",
+            "template": template,
+            "parameters": parameters,
+        }
+    }
     poller = client.deployments.begin_create_or_update(
-        resource_group, f"techlabs-{dep['id']}", Deployment(properties=properties)
+        resource_group, f"techlabs-{dep['id']}", deployment
     )
     poller.result()  # blocks until the deployment finishes; raises on failure
+
+
+def _deploy_progress(dep: dict[str, Any]) -> str | None:
+    """Summarise in-flight ARM deployment operations for the live log."""
+    client = _client(dep["subscription_id"])
+    name = f"techlabs-{dep['id']}"
+    try:
+        ops = list(client.deployment_operations.list(dep["resource_group"], name))
+    except Exception:
+        return None
+    states: dict[str, str] = {}
+    for op in ops:
+        props = getattr(op, "properties", None)
+        target = getattr(props, "target_resource", None)
+        rtype = getattr(target, "resource_type", None)
+        if rtype:
+            states[rtype] = getattr(props, "provisioning_state", "") or ""
+    if not states:
+        return None
+    done = sum(1 for s in states.values() if s in ("Succeeded", "Failed"))
+    parts = [f"{rt.split('/')[-1]}: {st}" for rt, st in list(states.items())[:6]]
+    return f"{done}/{len(states)} resources — " + ", ".join(parts)
+
 
 
 def _do_destroy(dep: dict[str, Any]) -> None:
@@ -181,8 +206,22 @@ async def run_deploy(dep: dict[str, Any]) -> None:
             gh_run_url=portal_rg_url(dep["subscription_id"], dep["resource_group"]),
             detail="provisioning in Azure",
         )
-        await asyncio.to_thread(_do_deploy, dep)
+        task = asyncio.create_task(asyncio.to_thread(_do_deploy, dep))
+        # Stream coarse progress into the deployment's detail while the blocking
+        # SDK call runs, so the UI can show a live log.
+        while True:
+            done, _ = await asyncio.wait({task}, timeout=5)
+            if task in done:
+                break
+            try:
+                progress = await asyncio.to_thread(_deploy_progress, dep)
+                if progress:
+                    db.update_deployment(dep_id, detail=progress)
+            except Exception:  # progress is best-effort; never break the deploy
+                pass
+        await task  # re-raise any failure from the deploy thread
         db.update_deployment(dep_id, status="active", detail="deployment succeeded")
+
         db.record_event(
             type="deploy_active",
             user_oid=dep["user_oid"],

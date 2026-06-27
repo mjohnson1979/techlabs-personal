@@ -244,6 +244,55 @@
     return wrap;
   }
 
+  function pollDeployment(dep, status, btn) {
+    const TERMINAL = { active: 1, failed: 1, destroyed: 1 };
+    status.classList.remove("err", "ok");
+    status.innerHTML = "";
+    const head = el("div", { class: "deploy-log-head" });
+    const log = el("div", { class: "deploy-log" });
+    status.appendChild(head);
+    status.appendChild(log);
+    const seen = {};
+
+    function logLine(text) {
+      const ts = new Date().toLocaleTimeString();
+      log.appendChild(el("div", { class: "deploy-log-line", text: `[${ts}] ${text}` }));
+      log.scrollTop = log.scrollHeight;
+    }
+    function setHead(d) {
+      head.innerHTML = "";
+      head.appendChild(el("span", { text: `Status: ${d.status} · resource group ${d.resourceGroup} · ` }));
+      head.appendChild(
+        el("a", { href: d.ghRunUrl || "", target: "_blank", rel: "noopener", text: "View in Azure portal →" })
+      );
+    }
+    function note(d) {
+      const key = `${d.status}|${d.detail || ""}`;
+      if (seen[key]) return;
+      seen[key] = 1;
+      logLine(d.detail ? `${d.status} — ${d.detail}` : d.status);
+    }
+
+    setHead(dep);
+    note(dep);
+
+    const timer = setInterval(() => {
+      window.TechlabsApi.getDeployment(dep.id)
+        .then((d) => {
+          setHead(d);
+          note(d);
+          if (TERMINAL[d.status]) {
+            clearInterval(timer);
+            status.classList.add(d.status === "active" ? "ok" : "err");
+            if (d.status !== "active") btn.disabled = false;
+          }
+        })
+        .catch(() => {
+          /* transient errors (e.g. session refresh) — keep polling */
+        });
+    }, 3000);
+  }
+
   function deployBlock(it) {
     const me = state.me;
     const maxHours = me && me.maxLifetimeHours ? me.maxLifetimeHours : 48;
@@ -295,13 +344,7 @@
       window.TechlabsApi.createDeployment(payload)
         .then((dep) => {
           status.classList.add("ok");
-          status.innerHTML = "";
-          status.appendChild(
-            el("span", { text: `Queued (${dep.status}). Resource group ${dep.resourceGroup}. ` })
-          );
-          status.appendChild(
-            el("a", { href: dep.ghRunUrl || "", target: "_blank", rel: "noopener", text: "View in Azure portal →" })
-          );
+          pollDeployment(dep, status, btn);
         })
         .catch((err) => {
           status.classList.add("err");

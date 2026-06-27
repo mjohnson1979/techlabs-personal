@@ -44,6 +44,9 @@
     createDeployment: (payload) =>
       request("POST", "/api/deployments", payload).then((d) => d.deployment),
 
+    getDeployment: (id) =>
+      request("GET", "/api/deployments/" + encodeURIComponent(id)).then((d) => d.deployment),
+
     listDeployments: (scope) =>
       request("GET", "/api/deployments?scope=" + encodeURIComponent(scope || "mine")).then(
         (d) => d.deployments
