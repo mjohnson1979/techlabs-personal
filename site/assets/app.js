@@ -897,6 +897,120 @@
     });
   }
 
+  // -------------------------------------------------------- submit a use case
+  // Categories offered in the submission form (kept in sync with the GitHub
+  // issue form .github/ISSUE_TEMPLATE/use-case-submission.yml).
+  const SUBMIT_CATEGORIES = [
+    "AI / GenAI", "Web & API", "Data & Analytics", "Containers", "Networking",
+    "Integration", "End-User Computing", "Hybrid & Migration", "Foundation",
+    "Security & Identity", "Other",
+  ];
+
+  // Build the pre-filled GitHub issue URL. The issue form's field ids match
+  // these query-param keys, so GitHub renders the form already populated.
+  function submissionUrl(values) {
+    const params = new URLSearchParams();
+    params.set("template", "use-case-submission.yml");
+    params.set("title", "[Use case] " + (values.displayName || ""));
+    Object.keys(values).forEach((k) => {
+      if (values[k]) params.set(k, values[k]);
+    });
+    return REPO + "/issues/new?" + params.toString();
+  }
+
+  // Open the submission panel: a small form that collects the use case and its
+  // services, then hands off to a pre-filled GitHub issue (which an Action turns
+  // into a draft pull request). The gallery never stores a GitHub credential.
+  function openSubmitPanel() {
+    if (!window.TechlabsPanel) return;
+    closeModal();
+    window.TechlabsPanel.open((bodyEl, e) => {
+      bodyEl.appendChild(e("h2", { text: "Submit a use case" }));
+      bodyEl.appendChild(
+        e("p", {
+          class: "submit-intro",
+          text:
+            "Describe the scenario and the Azure services it uses. We'll open a pre-filled GitHub issue; an automation turns it into a draft pull request for a maintainer to author the Bicep and publish it here.",
+        })
+      );
+
+      const controls = {};
+      function field(id, label, opts) {
+        opts = opts || {};
+        const inputId = "submit-" + id;
+        let input;
+        if (opts.type === "textarea") {
+          input = e("textarea", {
+            id: inputId, class: "submit-input", rows: opts.rows || 3,
+            placeholder: opts.placeholder || "",
+          });
+        } else if (opts.type === "select") {
+          input = e("select", { id: inputId, class: "submit-input" },
+            (opts.options || []).map((o) => e("option", { value: o, text: o })));
+        } else {
+          input = e("input", {
+            id: inputId, class: "submit-input", type: "text",
+            placeholder: opts.placeholder || "",
+          });
+        }
+        controls[id] = input;
+        return e("div", { class: "submit-field" }, [
+          e("label", { class: "submit-label", for: inputId, text: label + (opts.required ? " *" : "") }),
+          opts.hint ? e("span", { class: "submit-hint", text: opts.hint }) : null,
+          input,
+        ]);
+      }
+
+      const form = e("div", { class: "submit-form" }, [
+        field("displayName", "Use case name", { required: true, placeholder: "Realtime IoT telemetry dashboard" }),
+        field("category", "Category", { type: "select", options: SUBMIT_CATEGORIES }),
+        field("description", "One-line description", { required: true, type: "textarea", rows: 2, placeholder: "Streams device telemetry through Event Hubs into a real-time dashboard." }),
+        field("what", "What it is", { required: true, type: "textarea", rows: 4, hint: "How the pieces fit together." }),
+        field("why", "Why it matters", { required: true, type: "textarea", rows: 3, hint: "The problem it solves." }),
+        field("services", "Azure services used", { required: true, type: "textarea", rows: 4, hint: "One per line.", placeholder: "Event Hubs\nStream Analytics\nAzure Cosmos DB" }),
+        field("potential", "Example scenarios", { type: "textarea", rows: 3, hint: "One per line." }),
+        field("industries", "Industries", { hint: "Comma-separated. Defaults to Cross-industry.", placeholder: "Manufacturing, Retail" }),
+        field("compliance", "Compliance baselines", { hint: "Comma-separated. Defaults to Baseline.", placeholder: "Baseline" }),
+        field("slug", "Short identifier (optional)", { hint: "Folder name; derived from the name if blank.", placeholder: "iot-telemetry-dashboard" }),
+      ]);
+
+      const status = e("div", { class: "submit-status", role: "status" });
+      const submit = e("button", { class: "submit-btn", type: "button", text: "Continue on GitHub \u2192" });
+      const REQUIRED = [
+        ["displayName", "a name"], ["description", "a one-line description"],
+        ["what", "what it is"], ["why", "why it matters"], ["services", "at least one service"],
+      ];
+      submit.addEventListener("click", () => {
+        status.classList.remove("err", "ok");
+        const values = {};
+        Object.keys(controls).forEach((k) => { values[k] = controls[k].value.trim(); });
+        const missing = REQUIRED.filter(([k]) => !values[k]).map((x) => x[1]);
+        if (missing.length) {
+          status.classList.add("err");
+          status.textContent = "Please add " + missing.join(", ") + ".";
+          return;
+        }
+        const url = submissionUrl(values);
+        const win = window.open(url, "_blank", "noopener");
+        status.classList.add("ok");
+        status.innerHTML = "";
+        status.appendChild(document.createTextNode(
+          win ? "Opened a pre-filled GitHub issue in a new tab. Review and submit it there. " :
+                "Pop-up blocked \u2014 use this link instead: "));
+        status.appendChild(e("a", { href: url, target: "_blank", rel: "noopener", text: "Open the submission issue \u2192" }));
+      });
+
+      bodyEl.appendChild(form);
+      bodyEl.appendChild(submit);
+      bodyEl.appendChild(status);
+    });
+  }
+
+  function wireSubmitNav() {
+    const btn = $("#submit-usecase");
+    if (btn) btn.addEventListener("click", openSubmitPanel);
+  }
+
   function wireModal() {
     document.querySelectorAll("[data-close]").forEach((n) => n.addEventListener("click", closeModal));
     document.addEventListener("keydown", (e) => {
@@ -951,6 +1065,7 @@
 
   loadIdentity();
   wireCapacityNav();
+  wireSubmitNav();
 
   // Capacity snapshot is best-effort: the gallery still works without it
   // (the region picker just falls back to a single default region).

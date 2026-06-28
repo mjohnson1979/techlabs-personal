@@ -14,7 +14,7 @@ metadata that is priced live against the public Azure Retail Prices API.
 | `modules/` | Shared Bicep building blocks referenced by templates (Log Analytics, App Insights, Storage, Key Vault, private endpoints). |
 | `site/` | The static gallery (`index.html` + `assets/`) that loads `site/catalog.json`, plus the `site/capacity.json` and `site/updates.json` signal snapshots. |
 | `site/server/` | FastAPI backend that gates the gallery behind Entra ID and acts as the deploy control plane. See [site/server/README.md](site/server/README.md). |
-| `tools/` | PowerShell utilities — `Build-Catalog.ps1` (regenerates `catalog.json` with live prices), `Get-CatalogCost.ps1` (per-use-case / portfolio cost), `Test-Catalog.ps1` (validation), `Build-Capacity.ps1` (region capacity snapshot), `Build-Updates.ps1` (Azure service lifecycle snapshot). |
+| `tools/` | PowerShell utilities — `Build-Catalog.ps1` (regenerates `catalog.json` with live prices), `Get-CatalogCost.ps1` (per-use-case / portfolio cost), `Test-Catalog.ps1` (validation), `Build-Capacity.ps1` (region capacity snapshot), `Build-Updates.ps1` (Azure service lifecycle snapshot). Plus `new_use_case_from_issue.py`, which scaffolds a catalog entry from a submission issue. |
 | `llms.txt` | Machine-readable overview of the catalog for LLM tooling. |
 
 ## How the catalog is organized
@@ -78,6 +78,23 @@ fully static:
   `id-techlabs-deployer` user-assigned identity via **Azure OIDC** (basic-auth
   publishing is disabled on the web app), using the `AZURE_CLIENT_ID`,
   `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID` repository variables.
+
+## Submitting a use case
+
+Anyone can propose a use case straight from the gallery — no code required:
+
+1. Click **"+ Submit a use case"** on the site and describe the scenario and the
+   Azure services it uses. The form opens a pre-filled GitHub issue (the
+   `.github/ISSUE_TEMPLATE/use-case-submission.yml` form); you review and submit
+   it on GitHub. The gallery stores **no** GitHub credential.
+2. `.github/workflows/use-case-intake.yml` picks up the labelled issue, runs
+   `tools/new_use_case_from_issue.py` to scaffold `catalog/<slug>/metadata.json`
+   (+ `README.md` and a `main.bicep` stub), regenerates `site/catalog.json`, and
+   opens a **draft pull request**. It is secretless — only the built-in
+   `GITHUB_TOKEN`.
+3. A maintainer authors the Bicep and parameters, fills in the Well-Architected
+   pillars / quota / priced cost components, and merges. The deploy workflow then
+   publishes the new use case to the gallery.
 
 ## Tailoring for regulated industries
 

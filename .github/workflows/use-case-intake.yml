@@ -1,0 +1,131 @@
+name: Use case intake
+
+# Turns a "Submit a use case" issue (use-case-submission.yml form) into a draft
+# pull request: scaffold catalog/<slug>/metadata.json, regenerate catalog.json,
+# and open a PR for a maintainer to author the Bicep and merge. Secretless —
+# uses the built-in GITHUB_TOKEN only.
+
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Issue number to (re)process
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: use-case-intake-${{ github.event.issue.number || github.event.inputs.issue }}
+  cancel-in-progress: true
+
+jobs:
+  intake:
+    # Only run for issues carrying the "use-case" label (or a manual dispatch).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.issue.labels.*.name, 'use-case')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Resolve issue payload
+        id: issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_ISSUE: ${{ github.event.inputs.issue }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            NUM="$DISPATCH_ISSUE"
+          else
+            NUM="${{ github.event.issue.number }}"
+          fi
+          echo "number=$NUM" >> "$GITHUB_OUTPUT"
+          # Fetch authoritative title/body/author via the API (handles dispatch).
+          gh issue view "$NUM" --repo "$GITHUB_REPOSITORY" \
+            --json title,body,author > issue.json
+          echo "author=$(jq -r '.author.login' issue.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Scaffold catalog entry
+        id: scaffold
+        env:
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          ISSUE_AUTHOR: ${{ steps.issue.outputs.author }}
+        run: |
+          set -euo pipefail
+          export ISSUE_BODY="$(jq -r '.body' issue.json)"
+          export ISSUE_TITLE="$(jq -r '.title' issue.json)"
+          python tools/new_use_case_from_issue.py
+
+      - name: Regenerate catalog.json
+        shell: pwsh
+        run: ./tools/Build-Catalog.ps1
+
+      - name: Open draft pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SLUG: ${{ steps.scaffold.outputs.slug }}
+          DISPLAY_NAME: ${{ steps.scaffold.outputs.display_name }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          ISSUE_AUTHOR: ${{ steps.issue.outputs.author }}
+        run: |
+          set -euo pipefail
+          BRANCH="usecase-intake/issue-${ISSUE_NUMBER}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add "catalog/${SLUG}" site/catalog.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit; skipping PR."
+            exit 0
+          fi
+          git commit -m "feat(catalog): scaffold '${SLUG}' from issue #${ISSUE_NUMBER}"
+          git push --force-with-lease origin "$BRANCH"
+
+          BODY=$(printf '%s\n' \
+            "Scaffolds the ${DISPLAY_NAME} use case from #${ISSUE_NUMBER} (submitted by @${ISSUE_AUTHOR})." \
+            "" \
+            "This is an automated draft. Before merging, a maintainer should author the Bicep (catalog/${SLUG}/main.bicep) and parameters/dev.bicepparam, fill in the Well-Architected pillars, quota and priced cost components in metadata.json, then re-run ./tools/Build-Catalog.ps1 and ./tools/Build-Templates.ps1." \
+            "" \
+            "Closes #${ISSUE_NUMBER}.")
+
+          if gh pr list --head "$BRANCH" --state open --json number \
+              --jq 'length' --repo "$GITHUB_REPOSITORY" | grep -q '^0$'; then
+            gh pr create --draft --base main --head "$BRANCH" \
+              --title "feat(catalog): ${DISPLAY_NAME}" \
+              --body "$BODY" --repo "$GITHUB_REPOSITORY"
+          else
+            echo "PR for $BRANCH already exists; branch updated."
+          fi
+
+      - name: Comment back on the issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          SLUG: ${{ steps.scaffold.outputs.slug }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ISSUE_NUMBER:-}" ]; then exit 0; fi
+          if [ "$JOB_STATUS" = "success" ] && [ -n "${SLUG:-}" ]; then
+            MSG="Thanks! A draft pull request was opened that scaffolds \`catalog/${SLUG}\` from this submission. A maintainer will complete the Infrastructure as Code and merge it to publish the use case to the gallery."
+          else
+            MSG="The intake automation could not process this submission automatically (status: ${JOB_STATUS}). A maintainer will follow up manually. You can also edit the issue and re-run the workflow."
+          fi
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$MSG"
