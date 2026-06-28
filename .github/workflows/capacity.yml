@@ -4,8 +4,10 @@
 #
 # One-time setup (OIDC, no secrets):
 #   1. A federated credential already exists on the user-assigned identity
-#      `id-techlabs-deployer` (RG TechLabs) with subject
-#      repo:mcaps-microsoft/TechLabs:ref:refs/heads/main.
+#      `id-techlabs-deployer` (RG TechLabs). The mcaps-microsoft org uses a
+#      customized (ID-based) OIDC subject claim, so the credential subject is
+#      `repository_owner_id:119689310:repository_id:1281491769:ref:refs/heads/main`
+#      (not the classic `repo:<org>/<repo>:ref:...` form).
 #   2. Add these *repository variables* (Settings -> Secrets and variables ->
 #      Actions -> Variables). Secrets with the same names also work.
 #        AZURE_CLIENT_ID       = 0159c318-e7f6-4443-87c2-27b47c22a61c
