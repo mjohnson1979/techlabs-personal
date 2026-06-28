@@ -1,170 +1,170 @@
-﻿{
-    "generated":  "2026-06-27T14:17:26Z",
-    "subscriptionId":  "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
-    "regions":  [
-                    "eastus",
-                    "eastus2",
-                    "centralus",
-                    "southcentralus",
-                    "westus2",
-                    "westus3"
-                ],
-    "services":  {
-                     "openai:gpt-4o-mini":  {
-                                                "label":  "Azure OpenAI - gpt-4o-mini",
-                                                "provider":  "Microsoft.CognitiveServices/accounts/deployments",
-                                                "kind":  "model-tpm",
-                                                "model":  "gpt-4o-mini",
-                                                "byRegion":  {
-                                                                 "eastus":  {
-                                                                                "status":  "green",
-                                                                                "detail":  "100000 K TPM available",
-                                                                                "value":  100000
-                                                                            },
-                                                                 "eastus2":  {
-                                                                                 "status":  "green",
-                                                                                 "detail":  "100000 K TPM available",
-                                                                                 "value":  100000
-                                                                             },
-                                                                 "centralus":  {
-                                                                                   "status":  "green",
-                                                                                   "detail":  "100000 K TPM available",
-                                                                                   "value":  100000
-                                                                               },
-                                                                 "southcentralus":  {
-                                                                                        "status":  "green",
-                                                                                        "detail":  "100000 K TPM available",
-                                                                                        "value":  100000
-                                                                                    },
-                                                                 "westus2":  {
-                                                                                 "status":  "unknown",
-                                                                                 "detail":  "model not listed for this region",
-                                                                                 "value":  null
-                                                                             },
-                                                                 "westus3":  {
-                                                                                 "status":  "green",
-                                                                                 "detail":  "100000 K TPM available",
-                                                                                 "value":  100000
-                                                                             }
-                                                             }
-                                            },
-                     "openai:text-embedding-3-small":  {
-                                                           "label":  "Azure OpenAI - text-embedding-3-small",
-                                                           "provider":  "Microsoft.CognitiveServices/accounts/deployments",
-                                                           "kind":  "model-tpm",
-                                                           "model":  "text-embedding-3-small",
-                                                           "byRegion":  {
-                                                                            "eastus":  {
-                                                                                           "status":  "green",
-                                                                                           "detail":  "1000 K TPM available",
-                                                                                           "value":  1000
-                                                                                       },
-                                                                            "eastus2":  {
-                                                                                            "status":  "green",
-                                                                                            "detail":  "1000 K TPM available",
-                                                                                            "value":  1000
-                                                                                        },
-                                                                            "centralus":  {
-                                                                                              "status":  "green",
-                                                                                              "detail":  "1000 K TPM available",
-                                                                                              "value":  1000
-                                                                                          },
-                                                                            "southcentralus":  {
-                                                                                                   "status":  "green",
-                                                                                                   "detail":  "1000 K TPM available",
-                                                                                                   "value":  1000
-                                                                                               },
-                                                                            "westus2":  {
-                                                                                            "status":  "unknown",
-                                                                                            "detail":  "model not listed for this region",
-                                                                                            "value":  null
-                                                                                        },
-                                                                            "westus3":  {
-                                                                                            "status":  "green",
-                                                                                            "detail":  "1000 K TPM available",
-                                                                                            "value":  1000
-                                                                                        }
-                                                                        }
-                                                       },
-                     "appservice":  {
-                                        "label":  "Azure App Service (B1+)",
-                                        "provider":  "Microsoft.Web/serverFarms",
-                                        "kind":  "compute",
-                                        "byRegion":  {
-                                                         "eastus":  {
-                                                                        "status":  "red",
-                                                                        "detail":  "no App Service quota in this region",
-                                                                        "value":  null
-                                                                    },
-                                                         "eastus2":  {
-                                                                         "status":  "red",
-                                                                         "detail":  "no App Service quota in this region",
-                                                                         "value":  null
-                                                                     },
-                                                         "centralus":  {
-                                                                           "status":  "green",
-                                                                           "detail":  "B1 plan passes preflight",
-                                                                           "value":  null
-                                                                       },
-                                                         "southcentralus":  {
-                                                                                "status":  "red",
-                                                                                "detail":  "no App Service quota in this region",
-                                                                                "value":  null
-                                                                            },
-                                                         "westus2":  {
-                                                                         "status":  "green",
-                                                                         "detail":  "B1 plan passes preflight",
-                                                                         "value":  null
-                                                                     },
-                                                         "westus3":  {
-                                                                         "status":  "green",
-                                                                         "detail":  "B1 plan passes preflight",
-                                                                         "value":  null
-                                                                     }
-                                                     }
-                                    },
-                     "vm":  {
-                                "label":  "Virtual Machine cores",
-                                "provider":  "Microsoft.Compute/virtualMachines",
-                                "kind":  "compute",
-                                "byRegion":  {
-                                                 "eastus":  {
-                                                                "status":  "unknown",
-                                                                "detail":  "no regional cores metric",
-                                                                "value":  null
-                                                            },
-                                                 "eastus2":  {
-                                                                 "status":  "unknown",
-                                                                 "detail":  "no regional cores metric",
-                                                                 "value":  null
-                                                             },
-                                                 "centralus":  {
-                                                                   "status":  "unknown",
-                                                                   "detail":  "no regional cores metric",
-                                                                   "value":  null
-                                                               },
-                                                 "southcentralus":  {
-                                                                        "status":  "unknown",
-                                                                        "detail":  "no regional cores metric",
-                                                                        "value":  null
-                                                                    },
-                                                 "westus2":  {
-                                                                 "status":  "unknown",
-                                                                 "detail":  "no regional cores metric",
-                                                                 "value":  null
-                                                             },
-                                                 "westus3":  {
-                                                                 "status":  "unknown",
-                                                                 "detail":  "no regional cores metric",
-                                                                 "value":  null
-                                                             }
-                                             }
-                            }
-                 },
-    "legend":  {
-                   "green":  "Capacity available",
-                   "yellow":  "Limited or unknown - may hit constraints",
-                   "red":  "No capacity - request a quota increase or pick another region",
-                   "unknown":  "Could not determine"
-               }
+{
+  "generated": "2026-06-28T16:25:01Z",
+  "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
+  "regions": [
+    "eastus",
+    "eastus2",
+    "centralus",
+    "southcentralus",
+    "westus2",
+    "westus3"
+  ],
+  "services": {
+    "openai:gpt-4o-mini": {
+      "label": "Azure OpenAI - gpt-4o-mini",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4o-mini",
+      "byRegion": {
+        "eastus": {
+          "status": "green",
+          "detail": "100000 K TPM available",
+          "value": 100000
+        },
+        "eastus2": {
+          "status": "green",
+          "detail": "100000 K TPM available",
+          "value": 100000
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "100000 K TPM available",
+          "value": 100000
+        },
+        "southcentralus": {
+          "status": "green",
+          "detail": "100000 K TPM available",
+          "value": 100000
+        },
+        "westus2": {
+          "status": "unknown",
+          "detail": "model not listed for this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "green",
+          "detail": "100000 K TPM available",
+          "value": 100000
+        }
+      }
+    },
+    "openai:text-embedding-3-small": {
+      "label": "Azure OpenAI - text-embedding-3-small",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "text-embedding-3-small",
+      "byRegion": {
+        "eastus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "eastus2": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "southcentralus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "westus2": {
+          "status": "unknown",
+          "detail": "model not listed for this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        }
+      }
+    },
+    "appservice": {
+      "label": "Azure App Service (B1+)",
+      "provider": "Microsoft.Web/serverFarms",
+      "kind": "compute",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "no App Service quota in this region",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "no App Service quota in this region",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "B1 plan passes preflight",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "no App Service quota in this region",
+          "value": null
+        },
+        "westus2": {
+          "status": "green",
+          "detail": "B1 plan passes preflight",
+          "value": null
+        },
+        "westus3": {
+          "status": "green",
+          "detail": "B1 plan passes preflight",
+          "value": null
+        }
+      }
+    },
+    "vm": {
+      "label": "Virtual Machine cores",
+      "provider": "Microsoft.Compute/virtualMachines",
+      "kind": "compute",
+      "byRegion": {
+        "eastus": {
+          "status": "unknown",
+          "detail": "no regional cores metric",
+          "value": null
+        },
+        "eastus2": {
+          "status": "unknown",
+          "detail": "no regional cores metric",
+          "value": null
+        },
+        "centralus": {
+          "status": "unknown",
+          "detail": "no regional cores metric",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "unknown",
+          "detail": "no regional cores metric",
+          "value": null
+        },
+        "westus2": {
+          "status": "unknown",
+          "detail": "no regional cores metric",
+          "value": null
+        },
+        "westus3": {
+          "status": "unknown",
+          "detail": "no regional cores metric",
+          "value": null
+        }
+      }
+    }
+  },
+  "legend": {
+    "green": "Capacity available",
+    "yellow": "Limited or unknown - may hit constraints",
+    "red": "No capacity - request a quota increase or pick another region",
+    "unknown": "Could not determine"
+  }
 }
