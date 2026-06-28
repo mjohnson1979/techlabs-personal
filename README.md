@@ -12,9 +12,9 @@ metadata that is priced live against the public Azure Retail Prices API.
 | --- | --- |
 | `catalog/` | One folder per use case: `main.bicep`, `parameters/*.bicepparam`, `metadata.json`, `README.md`. Landing zones are nested (e.g. `catalog/landing-zone/core`). |
 | `modules/` | Shared Bicep building blocks referenced by templates (Log Analytics, App Insights, Storage, Key Vault, private endpoints). |
-| `site/` | The static gallery (`index.html` + `assets/`) that loads `site/catalog.json`. |
+| `site/` | The static gallery (`index.html` + `assets/`) that loads `site/catalog.json`, plus the `site/capacity.json` and `site/updates.json` signal snapshots. |
 | `site/server/` | FastAPI backend that gates the gallery behind Entra ID and acts as the deploy control plane. See [site/server/README.md](site/server/README.md). |
-| `tools/` | PowerShell utilities — `Build-Catalog.ps1` (regenerates `catalog.json` with live prices), `Get-CatalogCost.ps1` (per-use-case / portfolio cost), `Test-Catalog.ps1` (validation). |
+| `tools/` | PowerShell utilities — `Build-Catalog.ps1` (regenerates `catalog.json` with live prices), `Get-CatalogCost.ps1` (per-use-case / portfolio cost), `Test-Catalog.ps1` (validation), `Build-Capacity.ps1` (region capacity snapshot), `Build-Updates.ps1` (Azure service lifecycle snapshot). |
 | `llms.txt` | Machine-readable overview of the catalog for LLM tooling. |
 
 ## How the catalog is organized
@@ -43,12 +43,41 @@ metadata that is priced live against the public Azure Retail Prices API.
   monthly quantities). Each card shows an estimated monthly cost with an itemized
   breakdown in the detail view.
 
+## Live signals (capacity & service lifecycle)
+
+The gallery surfaces two refreshed-on-a-schedule signals alongside each use case,
+each a static JSON snapshot committed back to the repo so the site stays
+fully static:
+
+- **Region capacity** — `tools/Build-Capacity.ps1` probes subscription quota and
+  regional availability for capacity-sensitive services (Azure OpenAI TPM, App
+  Service, VM cores, Container Apps) and writes `site/capacity.json`. Cards show a
+  **"Quota-sensitive"** flag, the region picker is colour-coded
+  (green/yellow/red), and the **Capacity** page renders a service x region grid.
+  Refreshed daily by `.github/workflows/capacity.yml` (Azure OIDC).
+- **Service lifecycle** — `tools/Build-Updates.ps1` reads the public Microsoft
+  Release Communications feed behind [azure.microsoft.com/updates](https://azure.microsoft.com/updates)
+  (no Azure auth), maps each update's products onto the services a use case
+  provisions, and writes `site/updates.json`. The modal's **"Azure roadmap &
+  retirements"** section lists upcoming retirements, new previews, and recent GA,
+  and cards flag use cases with an upcoming retirement. Refreshed weekly by
+  `.github/workflows/updates.yml` (no secrets required).
+
 ## Validation
 
 - `.github/workflows/bicep-validate.yml` builds and lints every `main.bicep`,
   module, and `.bicepparam` on PR/push.
 - Locally: `az bicep build --file <template>` and
   `az bicep build-params --file <paramfile>`, or `tools/Test-Catalog.ps1`.
+
+## Deployment
+
+- `.github/workflows/deploy-gallery.yml` compiles the templates and publishes the
+  `site/` gallery to App Service on every push to `main` that touches `site/`,
+  `catalog/`, or `tools/Build-Templates.ps1`. It authenticates with the
+  `id-techlabs-deployer` user-assigned identity via **Azure OIDC** (basic-auth
+  publishing is disabled on the web app), using the `AZURE_CLIENT_ID`,
+  `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID` repository variables.
 
 ## Tailoring for regulated industries
 
