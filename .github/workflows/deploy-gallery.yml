@@ -14,6 +14,10 @@ concurrency:
   group: deploy-gallery
   cancel-in-progress: true
 
+permissions:
+  id-token: write # OIDC login to Azure
+  contents: read
+
 env:
   AZURE_WEBAPP_NAME: techlabs-gallery-w362xa
   AZURE_WEBAPP_PACKAGE_PATH: site
@@ -51,9 +55,18 @@ jobs:
         shell: pwsh
         run: ./tools/Build-Templates.ps1
 
+      # Basic-auth publishing is disabled on the web app, so we deploy with the
+      # user-assigned identity (id-techlabs-deployer) via OIDC instead of a
+      # publish profile. Same repo variables/credential as capacity.yml.
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
