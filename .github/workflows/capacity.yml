@@ -7,7 +7,7 @@
 #      `id-techlabs-deployer` (RG TechLabs) with subject
 #      repo:mcaps-microsoft/TechLabs:ref:refs/heads/main.
 #   2. Add these *repository variables* (Settings -> Secrets and variables ->
-#      Actions -> Variables):
+#      Actions -> Variables). Secrets with the same names also work.
 #        AZURE_CLIENT_ID       = 0159c318-e7f6-4443-87c2-27b47c22a61c
 #        AZURE_TENANT_ID       = 2929f0bd-f87b-47ae-bb73-ec22b65de557
 #        AZURE_SUBSCRIPTION_ID = 8ad2703f-069c-4c1a-8f4f-850c2a4c2676
@@ -38,16 +38,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Verify Azure OIDC config is present
+        env:
+          # Accept the IDs from either repository Variables or Secrets.
+          CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_CLIENT_ID }}
+          TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_TENANT_ID }}
+          SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in CLIENT_ID TENANT_ID SUBSCRIPTION_ID; do
+            val="${!name}"
+            if [ -z "$val" ]; then
+              echo "::error::AZURE_${name} is not set. Add it under Settings -> Secrets and variables -> Actions (Variables tab)."
+              missing=1
+            else
+              echo "AZURE_${name} is set (length ${#val})."
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::One or more Azure OIDC values are missing; aborting before azure/login."
+            exit 1
+          fi
+
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Build capacity snapshot
         shell: pwsh
-        run: ./tools/Build-Capacity.ps1 -SubscriptionId "${{ vars.AZURE_SUBSCRIPTION_ID }}"
+        run: ./tools/Build-Capacity.ps1 -SubscriptionId "${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_SUBSCRIPTION_ID }}"
 
       - name: Commit capacity.json if it changed
         shell: bash
