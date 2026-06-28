@@ -1145,6 +1145,98 @@ a:hover {
   line-height: 1;
 }
 
+/* Stack multiple card notices (quota + retirement) without extra gaps. */
+.card-attention-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.card-attention-group .card-attention {
+  margin: 0;
+}
+
+/* Retirement notice on a card uses the danger palette. */
+.card-attention-retire {
+  border-color: rgba(255, 138, 138, 0.4);
+  background: rgba(255, 138, 138, 0.08);
+  color: var(--danger);
+}
+
+/* Roadmap & retirements section inside the use-case modal. */
+.lifecycle-sub {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.lifecycle-list {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lifecycle-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.lifecycle-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.lifecycle-badge-icon {
+  font-size: 0.82rem;
+  line-height: 1;
+}
+.lifecycle-badge.lc-retire {
+  color: var(--danger);
+  background: rgba(255, 138, 138, 0.12);
+}
+.lifecycle-badge.lc-preview {
+  color: var(--accent);
+  background: rgba(78, 161, 255, 0.12);
+}
+.lifecycle-badge.lc-ga {
+  color: var(--accent-2);
+  background: rgba(110, 231, 183, 0.12);
+}
+.lifecycle-item.lc-retire {
+  border-color: rgba(255, 138, 138, 0.3);
+}
+.lifecycle-title {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+.lifecycle-title:hover {
+  text-decoration: underline;
+  color: var(--accent);
+}
+.lifecycle-date {
+  color: var(--muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+@media (max-width: 560px) {
+  .lifecycle-item {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
 /* Region picker border reflects the selected region's rolled-up status. */
 .deploy-region[data-status="green"] {
   border-color: var(--accent-2);

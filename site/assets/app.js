@@ -3,7 +3,7 @@
   "use strict";
 
   const REPO = "https://github.com/mcaps-microsoft/TechLabs";
-  const state = { items: [], q: "", category: new Set(), industry: new Set(), compliance: new Set(), me: null, capacity: null };
+  const state = { items: [], q: "", category: new Set(), industry: new Set(), compliance: new Set(), me: null, capacity: null, updates: null };
 
   // Connector arrow drawn between architecture columns (theme accent).
   const ARROW_SVG =
@@ -184,14 +184,31 @@
     ]);
   }
 
-  // Small badge on cards whose services may be quota/capacity constrained.
+  // Small badge on cards whose services may be quota/capacity constrained,
+  // or that include a service with an upcoming Azure retirement.
   function cardAttention(it) {
+    const notes = [];
     const reqs = it.quota && it.quota.requirements;
-    if (!reqs || !reqs.length) return null;
-    return el("div", { class: "card-attention", title: it.quota.summary || "" }, [
-      el("span", { class: "card-attention-icon", text: "\u26A0", "aria-hidden": "true" }),
-      el("span", { text: "Quota-sensitive \u2014 check region capacity" }),
-    ]);
+    if (reqs && reqs.length) {
+      notes.push(
+        el("div", { class: "card-attention", title: it.quota.summary || "" }, [
+          el("span", { class: "card-attention-icon", text: "\u26A0", "aria-hidden": "true" }),
+          el("span", { text: "Quota-sensitive \u2014 check region capacity" }),
+        ])
+      );
+    }
+    const life = lifecycleForUseCase(it);
+    if (life.retirements.length) {
+      const n = life.retirements.length;
+      notes.push(
+        el("div", { class: "card-attention card-attention-retire", title: life.retirements[0].title }, [
+          el("span", { class: "card-attention-icon", text: "\u26A0", "aria-hidden": "true" }),
+          el("span", { text: n + " Azure retirement" + (n > 1 ? "s" : "") + " affecting this use case" }),
+        ])
+      );
+    }
+    if (!notes.length) return null;
+    return el("div", { class: "card-attention-group" }, notes);
   }
 
   function render() {
@@ -667,6 +684,95 @@
     return wrap;
   }
 
+  // Distinct catalog icon-keys for the services a use case provisions, derived
+  // from its cost-meter component names (shared vocabulary with updates.json).
+  function useCaseServiceKeys(it) {
+    const icons = window.AzureIcons;
+    const comps = (it.cost && it.cost.components) || [];
+    const keys = [];
+    const seen = {};
+    comps.forEach((c) => {
+      const key = icons ? icons.keyForService(c.serviceName) : null;
+      if (!key || key === "default" || seen[key]) return;
+      seen[key] = 1;
+      keys.push(key);
+    });
+    return keys;
+  }
+
+  // Collect lifecycle notices (retirements / previews / recent GA) for every
+  // service a use case uses, de-duplicated by update id within each bucket.
+  function lifecycleForUseCase(it) {
+    const up = state.updates;
+    if (!up || !up.services) return { retirements: [], previews: [], launched: [] };
+    const out = { retirements: [], previews: [], launched: [] };
+    const seen = { retirements: {}, previews: {}, launched: {} };
+    useCaseServiceKeys(it).forEach((key) => {
+      const svc = up.services[key];
+      if (!svc) return;
+      ["retirements", "previews", "launched"].forEach((bucket) => {
+        (svc[bucket] || []).forEach((e) => {
+          if (seen[bucket][e.id]) return;
+          seen[bucket][e.id] = 1;
+          out[bucket].push(e);
+        });
+      });
+    });
+    return out;
+  }
+
+  // Format a "YYYY-MM" string as "Mon YYYY"; pass through anything else.
+  function fmtMonth(ym) {
+    if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return null;
+    const d = new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)) - 1, 1);
+    return d.toLocaleDateString(undefined, { month: "short", year: "numeric" });
+  }
+
+  // Boxed modal section listing Azure roadmap signals for this use case's
+  // services: upcoming retirements first (action needed), then new previews
+  // and recent GA so architectures can be kept current.
+  function lifecycleBlock(it) {
+    const life = lifecycleForUseCase(it);
+    const total = life.retirements.length + life.previews.length + life.launched.length;
+    if (!total) return null;
+
+    const wrap = el("div", { class: "modal-section modal-card lifecycle-block" }, [
+      el("h3", { text: "Azure roadmap & retirements" }),
+    ]);
+    wrap.appendChild(
+      el("p", {
+        class: "lifecycle-sub",
+        text: "Lifecycle changes for the Azure services this use case uses. Review retirements before they take effect.",
+      })
+    );
+
+    const groups = [
+      ["retirements", "Retiring", "lc-retire", "\u26A0"],
+      ["previews", "In preview", "lc-preview", "\u2728"],
+      ["launched", "Recently GA", "lc-ga", "\u2714"],
+    ];
+    groups.forEach(([bucket, label, cls, glyph]) => {
+      const items = life[bucket];
+      if (!items.length) return;
+      const list = el("ul", { class: "lifecycle-list" });
+      items.slice(0, 6).forEach((e) => {
+        const when = fmtMonth(e.date);
+        list.appendChild(
+          el("li", { class: "lifecycle-item " + cls }, [
+            el("span", { class: "lifecycle-badge " + cls }, [
+              el("span", { class: "lifecycle-badge-icon", text: glyph, "aria-hidden": "true" }),
+              el("span", { text: label }),
+            ]),
+            el("a", { class: "lifecycle-title", href: e.url, target: "_blank", rel: "noopener", text: e.title }),
+            when ? el("span", { class: "lifecycle-date", text: when }) : null,
+          ])
+        );
+      });
+      wrap.appendChild(list);
+    });
+    return wrap;
+  }
+
   function openModal(it) {
     if (window.TechlabsApi) window.TechlabsApi.recordEvent("view", it.path);
     const body = $("#modal-body");
@@ -703,6 +809,10 @@
       const cls = row2.length === 2 ? "modal-grid modal-grid-even" : "modal-grid modal-grid-single";
       body.appendChild(el("div", { class: cls }, row2));
     }
+
+    // Azure roadmap & retirements (boxed) — keeps the architecture current.
+    const lifecycle = lifecycleBlock(it);
+    if (lifecycle) body.appendChild(lifecycle);
 
     // Deploy section (boxed).
     body.appendChild(deployBlock(it));
@@ -851,6 +961,18 @@
     })
     .catch(() => {
       /* no capacity data — degrade gracefully */
+    });
+
+  // Azure service lifecycle snapshot (retirements / previews / recent GA),
+  // refreshed daily by tools/Build-Updates.ps1. Also best-effort.
+  fetch("updates.json")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((u) => {
+      state.updates = u;
+      if (u) render();
+    })
+    .catch(() => {
+      /* no updates data — gallery hides lifecycle notices */
     });
 
   fetch("catalog.json")
