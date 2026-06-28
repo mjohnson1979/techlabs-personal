@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-28T16:25:01Z",
+  "generated": "2026-06-28T18:14:13Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -15,36 +15,37 @@
       "provider": "Microsoft.CognitiveServices/accounts/deployments",
       "kind": "model-tpm",
       "model": "gpt-4o-mini",
+      "sku": "Standard",
       "byRegion": {
         "eastus": {
           "status": "green",
-          "detail": "100000 K TPM available",
-          "value": 100000
+          "detail": "450 K TPM available",
+          "value": 450
         },
         "eastus2": {
           "status": "green",
-          "detail": "100000 K TPM available",
-          "value": 100000
+          "detail": "450 K TPM available",
+          "value": 450
         },
         "centralus": {
-          "status": "green",
-          "detail": "100000 K TPM available",
-          "value": 100000
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4o-mini in this region",
+          "value": null
         },
         "southcentralus": {
           "status": "green",
-          "detail": "100000 K TPM available",
-          "value": 100000
+          "detail": "450 K TPM available",
+          "value": 450
         },
         "westus2": {
-          "status": "unknown",
-          "detail": "model not listed for this region",
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4o-mini in this region",
           "value": null
         },
         "westus3": {
           "status": "green",
-          "detail": "100000 K TPM available",
-          "value": 100000
+          "detail": "450 K TPM available",
+          "value": 450
         }
       }
     },
@@ -53,36 +54,37 @@
       "provider": "Microsoft.CognitiveServices/accounts/deployments",
       "kind": "model-tpm",
       "model": "text-embedding-3-small",
+      "sku": "Standard",
       "byRegion": {
         "eastus": {
           "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "detail": "350 K TPM available",
+          "value": 350
         },
         "eastus2": {
           "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "detail": "350 K TPM available",
+          "value": 350
         },
         "centralus": {
-          "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "status": "red",
+          "detail": "Standard SKU not offered for text-embedding-3-small in this region",
+          "value": null
         },
         "southcentralus": {
-          "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "status": "red",
+          "detail": "Standard SKU not offered for text-embedding-3-small in this region",
+          "value": null
         },
         "westus2": {
-          "status": "unknown",
-          "detail": "model not listed for this region",
+          "status": "red",
+          "detail": "Standard SKU not offered for text-embedding-3-small in this region",
           "value": null
         },
         "westus3": {
-          "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "status": "red",
+          "detail": "Standard SKU not offered for text-embedding-3-small in this region",
+          "value": null
         }
       }
     },

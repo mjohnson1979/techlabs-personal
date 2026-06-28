@@ -42,8 +42,10 @@ param(
     # Regions to scan. Default mirrors where this lab subscription operates.
     [string[]]$Regions = @('eastus', 'eastus2', 'centralus', 'southcentralus', 'westus2', 'westus3'),
 
-    # OpenAI models the catalog deploys (name + version + format).
-    [string[]]$OpenAiModels = @('gpt-4o-mini:2024-07-18', 'text-embedding-3-small:1'),
+    # OpenAI models the catalog deploys (name:version:sku). The SKU matters:
+    # a region can have capacity for one SKU (e.g. GlobalStandard) yet not offer
+    # the SKU we deploy (Standard), in which case the deployment fails preflight.
+    [string[]]$OpenAiModels = @('gpt-4o-mini:2024-07-18:Standard', 'text-embedding-3-small:1:Standard'),
 
     # Skip individual probes (faster offline/partial runs).
     [switch]$SkipOpenAi,
@@ -90,7 +92,7 @@ function New-Status {
 # Probe: Azure OpenAI model capacities (TPM available per region)
 # --------------------------------------------------------------------------- #
 function Get-OpenAiCapacity {
-    param([string]$Sub, [string]$Token, [string]$ModelName, [string]$ModelVersion)
+    param([string]$Sub, [string]$Token, [string]$ModelName, [string]$ModelVersion, [string]$SkuName = 'Standard')
 
     $headers = @{ Authorization = "Bearer $Token" }
     $uri = "https://management.azure.com/subscriptions/$Sub/providers/Microsoft.CognitiveServices/modelCapacities" +
@@ -100,11 +102,16 @@ function Get-OpenAiCapacity {
         $resp = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers
     }
     catch {
-        return $byRegion  # leave empty → callers mark unknown
+        # API call failed entirely -> caller marks every region 'unknown'.
+        return [ordered]@{ ok = $false; byRegion = $byRegion }
     }
+    # The API returns one entry per (region, SKU). We only care about the SKU the
+    # catalog deploys: a region missing that SKU can't host the deployment, so it
+    # must not be reported green just because another SKU has capacity there.
     foreach ($entry in @($resp.value)) {
+        if (($entry.properties.skuName).ToString().ToLower() -ne $SkuName.ToLower()) { continue }
         $loc = ($entry.location).ToString().ToLower()
-        # availableCapacity is in TPM thousands for Standard SKU.
+        # availableCapacity is in TPM thousands for this SKU.
         $avail = [int]($entry.properties.availableCapacity)
         if ($avail -ge $OpenAiTpmGreen) {
             $byRegion[$loc] = New-Status 'green' "$avail K TPM available" $avail
@@ -116,7 +123,7 @@ function Get-OpenAiCapacity {
             $byRegion[$loc] = New-Status 'red' 'no TPM capacity in this region' $avail
         }
     }
-    return $byRegion
+    return [ordered]@{ ok = $true; byRegion = $byRegion }
 }
 
 # --------------------------------------------------------------------------- #
@@ -207,19 +214,30 @@ $services = [ordered]@{}
 # Azure OpenAI models
 if (-not $SkipOpenAi) {
     foreach ($spec in $OpenAiModels) {
-        $name, $ver = $spec.Split(':', 2)
-        Write-Host "  OpenAI $name ($ver) ..." -ForegroundColor DarkGray
-        $byRegion = Get-OpenAiCapacity -Sub $sub -Token $token -ModelName $name -ModelVersion $ver
+        $name, $ver, $sku = $spec.Split(':', 3)
+        if (-not $sku) { $sku = 'Standard' }
+        Write-Host "  OpenAI $name ($ver) [$sku] ..." -ForegroundColor DarkGray
+        $probe = Get-OpenAiCapacity -Sub $sub -Token $token -ModelName $name -ModelVersion $ver -SkuName $sku
+        $byRegion = $probe.byRegion
         $regionMap = [ordered]@{}
         foreach ($r in $Regions) {
-            if ($byRegion.ContainsKey($r)) { $regionMap[$r] = $byRegion[$r] }
-            else { $regionMap[$r] = New-Status 'unknown' 'model not listed for this region' }
+            if ($byRegion.ContainsKey($r)) {
+                $regionMap[$r] = $byRegion[$r]
+            }
+            elseif (-not $probe.ok) {
+                $regionMap[$r] = New-Status 'unknown' 'capacity query failed'
+            }
+            else {
+                # API responded but this region has no entry for the deployed SKU.
+                $regionMap[$r] = New-Status 'red' "$sku SKU not offered for $name in this region"
+            }
         }
         $services["openai:$name"] = [ordered]@{
             label    = "Azure OpenAI - $name"
             provider = 'Microsoft.CognitiveServices/accounts/deployments'
             kind     = 'model-tpm'
             model    = $name
+            sku      = $sku
             byRegion = $regionMap
         }
     }
