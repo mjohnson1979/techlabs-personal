@@ -6,7 +6,7 @@ document store, a Python orchestrator on App Service, and API Management out fro
 
 ## What this deploys
 
-- **Azure OpenAI** with a chat deployment (`gpt-4o-mini`) and an embedding deployment (`text-embedding-3-large`), `disableLocalAuth: true`, custom subdomain.
+- **Azure OpenAI** with a chat deployment (`gpt-4.1-mini`) and an embedding deployment (`text-embedding-3-large`), `disableLocalAuth: true`, custom subdomain.
 - **Azure AI Search** (system identity, keyless, semantic search) for hybrid retrieval and integrated vectorization.
 - **Cosmos DB** (serverless, keyless) storing chat history, partitioned by `sessionId`.
 - **Storage account** holding source documents.

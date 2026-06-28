@@ -1,8 +1,8 @@
 using '../main.bicep'
 
 param namePrefix = 'ragdev'
-param chatModel = 'gpt-4o-mini'
-param chatModelVersion = '2024-07-18'
+param chatModel = 'gpt-4.1-mini'
+param chatModelVersion = '2025-04-14'
 param chatCapacity = 10
 param embeddingModel = 'text-embedding-3-large'
 param embeddingModelVersion = '1'

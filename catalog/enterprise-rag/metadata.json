@@ -63,7 +63,7 @@
         "service": "Azure OpenAI (chat)",
         "provider": "Microsoft.CognitiveServices/accounts/deployments",
         "kind": "model-tpm",
-        "model": "gpt-4o-mini",
+        "model": "gpt-4.1-mini",
         "sku": "Standard",
         "detail": "Chat model deployment requires tokens-per-minute (TPM) quota in the region.",
         "checkUrl": "https://learn.microsoft.com/azure/ai-services/openai/how-to/quota"
@@ -90,22 +90,22 @@
   "cost": {
     "currency": "USD",
     "region": "eastus",
-    "profile": "Prod profile: gpt-4o-mini @60K TPM, Standard Search x3, P1v3 x3, Premium APIM.",
+    "profile": "Prod profile: gpt-4.1-mini @60K TPM, Standard Search x3, P1v3 x3, Premium APIM.",
     "components": [
       {
-        "name": "Azure OpenAI - gpt-4o-mini input",
+        "name": "Azure OpenAI - gpt-4.1-mini input",
         "billing": "usage",
         "serviceName": "Azure OpenAI",
-        "meterNameContains": "gpt-4o-mini-0718 Inp",
+        "meterNameContains": "gpt-4.1-mini-0414-Inp-regnl",
         "unitOfMeasure": "1M",
         "quantityPerMonth": 50,
         "notes": "Assumes ~50M input tokens/month."
       },
       {
-        "name": "Azure OpenAI - gpt-4o-mini output",
+        "name": "Azure OpenAI - gpt-4.1-mini output",
         "billing": "usage",
         "serviceName": "Azure OpenAI",
-        "meterNameContains": "gpt-4o-mini-0718 Outp",
+        "meterNameContains": "gpt-4.1-mini-0414-Outp-regnl",
         "unitOfMeasure": "1M",
         "quantityPerMonth": 15,
         "notes": "Assumes ~15M output tokens/month."

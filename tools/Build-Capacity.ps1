@@ -45,7 +45,7 @@ param(
     # OpenAI models the catalog deploys (name:version:sku). The SKU matters:
     # a region can have capacity for one SKU (e.g. GlobalStandard) yet not offer
     # the SKU we deploy (Standard), in which case the deployment fails preflight.
-    [string[]]$OpenAiModels = @('gpt-4o-mini:2024-07-18:Standard', 'text-embedding-3-small:1:Standard'),
+    [string[]]$OpenAiModels = @('gpt-4.1-mini:2025-04-14:Standard', 'text-embedding-3-small:1:Standard'),
 
     # Skip individual probes (faster offline/partial runs).
     [switch]$SkipOpenAi,
@@ -124,6 +124,39 @@ function Get-OpenAiCapacity {
         }
     }
     return [ordered]@{ ok = $true; byRegion = $byRegion }
+}
+
+# --------------------------------------------------------------------------- #
+# Probe: per-region model/SKU deprecation
+#
+# modelCapacities reports TPM but NOT the deprecation date, so a model can show
+# capacity yet still be blocked for new deployments (ServiceModelDeprecated).
+# The locations/<region>/models API exposes a per-SKU 'deprecationDate'; once it
+# is in the past, Azure rejects new deployments of that model+SKU in that region.
+# We query it per region and cache the result so callers can veto a region.
+# --------------------------------------------------------------------------- #
+function Get-RegionModelDeprecations {
+    param([string]$Sub, [string]$Token, [string]$Region)
+
+    $headers = @{ Authorization = "Bearer $Token" }
+    $uri = "https://management.azure.com/subscriptions/$Sub/providers/Microsoft.CognitiveServices/locations/$Region/models?api-version=2024-10-01"
+    $map = @{}  # key 'name|version|sku-lower' -> deprecationDate string
+    try {
+        $resp = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers
+    }
+    catch {
+        return $null  # query failed -> caller treats deprecation as unknown
+    }
+    foreach ($entry in @($resp.value)) {
+        $m = $entry.model
+        if (-not $m) { continue }
+        foreach ($s in @($m.skus)) {
+            if (-not $s.deprecationDate) { continue }
+            $key = "$($m.name)|$($m.version)|$(($s.name).ToString().ToLower())"
+            $map[$key] = $s.deprecationDate
+        }
+    }
+    return $map
 }
 
 # --------------------------------------------------------------------------- #
@@ -213,6 +246,14 @@ $services = [ordered]@{}
 
 # Azure OpenAI models
 if (-not $SkipOpenAi) {
+    # Per-region model/SKU deprecation lookup, fetched once and reused across
+    # models. $null for a region means the query failed (deprecation unknown).
+    $deprecationByRegion = @{}
+    foreach ($r in $Regions) {
+        $deprecationByRegion[$r] = Get-RegionModelDeprecations -Sub $sub -Token $token -Region $r
+    }
+    $now = (Get-Date).ToUniversalTime()
+
     foreach ($spec in $OpenAiModels) {
         $name, $ver, $sku = $spec.Split(':', 3)
         if (-not $sku) { $sku = 'Standard' }
@@ -230,6 +271,19 @@ if (-not $SkipOpenAi) {
             else {
                 # API responded but this region has no entry for the deployed SKU.
                 $regionMap[$r] = New-Status 'red' "$sku SKU not offered for $name in this region"
+            }
+
+            # Veto on deprecation: even with TPM capacity, a deployed SKU whose
+            # deprecationDate has passed can no longer be newly deployed here.
+            $depMap = $deprecationByRegion[$r]
+            if ($null -ne $depMap) {
+                $depRaw = $depMap["$name|$ver|$($sku.ToLower())"]
+                if ($depRaw) {
+                    $depDate = [datetime]::Parse($depRaw).ToUniversalTime()
+                    if ($depDate -le $now) {
+                        $regionMap[$r] = New-Status 'red' "$name $sku deprecated for new deployments ($($depDate.ToString('yyyy-MM-dd')))"
+                    }
+                }
             }
         }
         $services["openai:$name"] = [ordered]@{

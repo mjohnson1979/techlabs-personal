@@ -10,10 +10,10 @@ param location string = resourceGroup().location
 param tags object = {}
 
 @description('Chat completion model to deploy.')
-param chatModel string = 'gpt-4o-mini'
+param chatModel string = 'gpt-4.1-mini'
 
 @description('Chat model version.')
-param chatModelVersion string = '2024-07-18'
+param chatModelVersion string = '2025-04-14'
 
 @description('Chat deployment capacity (thousands of TPM).')
 @minValue(1)

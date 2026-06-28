@@ -1,15 +1,15 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-06-27T15:55:21Z",
+    "generated":  "2026-06-28T18:43:21Z",
     "count":  19,
     "items":  [
                   {
                       "name":  "ai-chat",
                       "displayName":  "AI Chat (Azure OpenAI + App Service + Cosmos DB)",
                       "category":  "AI / GenAI",
-                      "description":  "A chat API on App Service that calls an Azure OpenAI gpt-4o-mini deployment and persists conversations in serverless Cosmos DB. All access is keyless via managed identity.",
-                      "what":  "A chat API on App Service that calls an Azure OpenAI gpt-4o-mini deployment and stores conversation history in serverless Cosmos DB. Access to both OpenAI and Cosmos is keyless via the app\u0027s managed identity (local auth disabled). Dev is cheap; prod is zone-redundant with higher model throughput.",
+                      "description":  "A chat API on App Service that calls an Azure OpenAI gpt-4.1-mini deployment and persists conversations in serverless Cosmos DB. All access is keyless via managed identity.",
+                      "what":  "A chat API on App Service that calls an Azure OpenAI gpt-4.1-mini deployment and stores conversation history in serverless Cosmos DB. Access to both OpenAI and Cosmos is keyless via the app\u0027s managed identity (local auth disabled). Dev is cheap; prod is zone-redundant with higher model throughput.",
                       "why":  "Conversational AI is the most requested GenAI pattern. This wires the three pieces every chatbot needs - a model endpoint, a stateless app tier, and durable conversation storage - with keyless security and pay-per-use billing that matches spiky chat traffic.",
                       "potentialUseCases":  [
                                                 "A customer-support or internal helpdesk chatbot",
@@ -51,16 +51,16 @@
                                                                         ]
                                           },
                       "quota":  {
-                                    "summary":  "Needs Azure OpenAI gpt-4o-mini TPM capacity and App Service compute quota in the target region. Some subscriptions/regions have 0 App Service quota (e.g. East US on this lab subscription), which blocks the App Service plan at preflight.",
+                                    "summary":  "Needs Azure OpenAI gpt-4.1-mini TPM capacity and App Service compute quota in the target region. Some subscriptions/regions have 0 App Service quota (e.g. East US on this lab subscription), which blocks the App Service plan at preflight.",
                                     "requirements":  [
                                                          {
                                                              "service":  "Azure OpenAI",
                                                              "provider":  "Microsoft.CognitiveServices/accounts/deployments",
                                                              "kind":  "model-tpm",
-                                                             "model":  "gpt-4o-mini",
-                                                             "modelVersion":  "2024-07-18",
+                                                             "model":  "gpt-4.1-mini",
+                                                             "modelVersion":  "2025-04-14",
                                                              "sku":  "Standard",
-                                                             "detail":  "The model deployment requires tokens-per-minute (TPM) quota for gpt-4o-mini in the region (10K TPM in dev). gpt-4o-mini is not offered in every region.",
+                                                             "detail":  "The model deployment requires tokens-per-minute (TPM) quota for gpt-4.1-mini in the region (10K TPM in dev). The Standard SKU of gpt-4.1-mini is not offered in every region.",
                                                              "checkUrl":  "https://learn.microsoft.com/azure/ai-services/openai/how-to/quota"
                                                          },
                                                          {
@@ -93,7 +93,7 @@
                                                          {
                                                              "id":  "oai",
                                                              "label":  "Azure OpenAI",
-                                                             "sublabel":  "gpt-4o-mini, keyless",
+                                                             "sublabel":  "gpt-4.1-mini, keyless",
                                                              "icon":  "openai",
                                                              "col":  2
                                                          },
@@ -157,7 +157,7 @@
                                                           "monthly":  339.45
                                                       },
                                                       {
-                                                          "name":  "Azure OpenAI gpt-4o-mini input tokens",
+                                                          "name":  "Azure OpenAI gpt-4.1-mini input tokens",
                                                           "billing":  "usage",
                                                           "serviceName":  "Cognitive Services",
                                                           "unitOfMeasure":  "1M",
@@ -167,7 +167,7 @@
                                                           "monthly":  null
                                                       },
                                                       {
-                                                          "name":  "Azure OpenAI gpt-4o-mini output tokens",
+                                                          "name":  "Azure OpenAI gpt-4.1-mini output tokens",
                                                           "billing":  "usage",
                                                           "serviceName":  "Cognitive Services",
                                                           "unitOfMeasure":  "1M",
@@ -201,7 +201,7 @@
                                    "usageMonthly":  13.00,
                                    "totalMonthly":  352.45,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -322,7 +322,7 @@
                                    "usageMonthly":  5.00,
                                    "totalMonthly":  548.48,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -418,7 +418,7 @@
                                    "usageMonthly":  0,
                                    "totalMonthly":  5929.79,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -531,7 +531,7 @@
                                    "usageMonthly":  319.74,
                                    "totalMonthly":  319.74,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -649,7 +649,7 @@
                                    "usageMonthly":  1448.40,
                                    "totalMonthly":  1448.40,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -765,7 +765,7 @@
                                    "usageMonthly":  16610.67,
                                    "totalMonthly":  16610.67,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -874,7 +874,7 @@
                                    "usageMonthly":  169.18,
                                    "totalMonthly":  169.18,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -994,7 +994,7 @@
                                    "usageMonthly":  1139.22,
                                    "totalMonthly":  1139.22,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -1062,7 +1062,7 @@
                                                              "service":  "Azure OpenAI (chat)",
                                                              "provider":  "Microsoft.CognitiveServices/accounts/deployments",
                                                              "kind":  "model-tpm",
-                                                             "model":  "gpt-4o-mini",
+                                                             "model":  "gpt-4.1-mini",
                                                              "sku":  "Standard",
                                                              "detail":  "Chat model deployment requires tokens-per-minute (TPM) quota in the region.",
                                                              "checkUrl":  "https://learn.microsoft.com/azure/ai-services/openai/how-to/quota"
@@ -1092,14 +1092,14 @@
                       "template":  "catalog/enterprise-rag/main.bicep",
                       "hasProd":  true,
                       "componentCount":  6,
-                      "costProfile":  "Prod profile: gpt-4o-mini @60K TPM, Standard Search x3, P1v3 x3, Premium APIM.",
+                      "costProfile":  "Prod profile: gpt-4.1-mini @60K TPM, Standard Search x3, P1v3 x3, Premium APIM.",
                       "cost":  {
                                    "currency":  "USD",
                                    "region":  "eastus",
-                                   "profile":  "Prod profile: gpt-4o-mini @60K TPM, Standard Search x3, P1v3 x3, Premium APIM.",
+                                   "profile":  "Prod profile: gpt-4.1-mini @60K TPM, Standard Search x3, P1v3 x3, Premium APIM.",
                                    "components":  [
                                                       {
-                                                          "name":  "Azure OpenAI - gpt-4o-mini input",
+                                                          "name":  "Azure OpenAI - gpt-4.1-mini input",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure OpenAI",
                                                           "unitOfMeasure":  "1M",
@@ -1109,7 +1109,7 @@
                                                           "monthly":  null
                                                       },
                                                       {
-                                                          "name":  "Azure OpenAI - gpt-4o-mini output",
+                                                          "name":  "Azure OpenAI - gpt-4.1-mini output",
                                                           "billing":  "usage",
                                                           "serviceName":  "Azure OpenAI",
                                                           "unitOfMeasure":  "1M",
@@ -1163,7 +1163,7 @@
                                    "usageMonthly":  0,
                                    "totalMonthly":  3870.46,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -1291,7 +1291,7 @@
                                    "usageMonthly":  16.50,
                                    "totalMonthly":  1997.72,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -1409,7 +1409,7 @@
                                    "usageMonthly":  16.00,
                                    "totalMonthly":  1338.76,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -1517,7 +1517,7 @@
                                    "usageMonthly":  0.05,
                                    "totalMonthly":  677.13,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -1623,7 +1623,7 @@
                                    "usageMonthly":  16.28,
                                    "totalMonthly":  752.12,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -1719,7 +1719,7 @@
                                    "usageMonthly":  13.56,
                                    "totalMonthly":  13.56,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -1836,7 +1836,7 @@
                                    "usageMonthly":  163.93,
                                    "totalMonthly":  841.01,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -1956,7 +1956,7 @@
                                    "usageMonthly":  116.80,
                                    "totalMonthly":  795.70,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -2085,7 +2085,7 @@
                                    "usageMonthly":  21.02,
                                    "totalMonthly":  860.11,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -2182,7 +2182,7 @@
                                    "usageMonthly":  0.50,
                                    "totalMonthly":  562.19,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   },
                   {
@@ -2291,7 +2291,7 @@
                                    "usageMonthly":  12.00,
                                    "totalMonthly":  351.45,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-27"
+                                   "pricedAt":  "2026-06-28"
                                }
                   }
               ]

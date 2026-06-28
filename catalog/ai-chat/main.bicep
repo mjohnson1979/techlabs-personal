@@ -25,10 +25,10 @@ param appCapacity int = 1
 param appZoneRedundant bool = false
 
 @description('Chat model to deploy.')
-param chatModelName string = 'gpt-4o-mini'
+param chatModelName string = 'gpt-4.1-mini'
 
 @description('Chat model version.')
-param chatModelVersion string = '2024-07-18'
+param chatModelVersion string = '2025-04-14'
 
 @description('Tokens-per-minute capacity (thousands) for the model deployment.')
 @minValue(1)
