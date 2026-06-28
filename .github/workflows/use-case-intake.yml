@@ -1,9 +1,11 @@
 name: Use case intake
 
 # Turns a "Submit a use case" issue (use-case-submission.yml form) into a draft
-# pull request: scaffold catalog/<slug>/metadata.json, regenerate catalog.json,
-# and open a PR for a maintainer to author the Bicep and merge. Secretless —
-# uses the built-in GITHUB_TOKEN only.
+# pull request. AI (GitHub Models, via actions/ai-inference) structures the
+# submitter's natural-language description into metadata; this workflow then
+# scaffolds catalog/<slug>/metadata.json, regenerates catalog.json, and opens a
+# PR for a maintainer to author the Bicep and merge. Secretless - uses the
+# built-in GITHUB_TOKEN only (plus the models:read permission).
 
 on:
   issues:
@@ -18,6 +20,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
+  models: read
 
 concurrency:
   group: use-case-intake-${{ github.event.issue.number || github.event.inputs.issue }}
@@ -59,16 +62,30 @@ jobs:
           gh issue view "$NUM" --repo "$GITHUB_REPOSITORY" \
             --json title,body,author > issue.json
           echo "author=$(jq -r '.author.login' issue.json)" >> "$GITHUB_OUTPUT"
+          # The full issue body (title + free-form description) is the AI's input.
+          {
+            echo "Title: $(jq -r '.title' issue.json)"
+            echo
+            jq -r '.body' issue.json
+          } > submission.txt
+
+      - name: Structure the submission with AI
+        id: extract
+        uses: actions/ai-inference@v1
+        with:
+          prompt-file: .github/prompts/use-case.prompt.yml
+          file_input: |
+            submission: submission.txt
 
       - name: Scaffold catalog entry
         id: scaffold
         env:
           ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
           ISSUE_AUTHOR: ${{ steps.issue.outputs.author }}
+          EXTRACTED_JSON_FILE: ${{ steps.extract.outputs.response-file }}
         run: |
           set -euo pipefail
-          export ISSUE_BODY="$(jq -r '.body' issue.json)"
-          export ISSUE_TITLE="$(jq -r '.title' issue.json)"
+          export ORIGINAL_DESCRIPTION="$(jq -r '.body' issue.json)"
           python tools/new_use_case_from_issue.py
 
       - name: Regenerate catalog.json

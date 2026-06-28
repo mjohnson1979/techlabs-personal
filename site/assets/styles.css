@@ -1576,6 +1576,11 @@ a:hover {
   margin: 18px 0 8px;
 }
 
+/* Single-column variant (natural-language description form). */
+.submit-form-simple {
+  grid-template-columns: 1fr;
+}
+
 .submit-field {
   display: flex;
   flex-direction: column;
@@ -1583,10 +1588,10 @@ a:hover {
 }
 
 /* Multi-line and full-width fields span both columns. */
-.submit-field:nth-child(1),
-.submit-field:nth-child(3),
-.submit-field:nth-child(4),
-.submit-field:nth-child(6) {
+.submit-form:not(.submit-form-simple) .submit-field:nth-child(1),
+.submit-form:not(.submit-form-simple) .submit-field:nth-child(3),
+.submit-form:not(.submit-form-simple) .submit-field:nth-child(4),
+.submit-form:not(.submit-form-simple) .submit-field:nth-child(6) {
   grid-column: 1 / -1;
 }
 

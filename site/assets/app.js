@@ -898,29 +898,22 @@
   }
 
   // -------------------------------------------------------- submit a use case
-  // Categories offered in the submission form (kept in sync with the GitHub
-  // issue form .github/ISSUE_TEMPLATE/use-case-submission.yml).
-  const SUBMIT_CATEGORIES = [
-    "AI / GenAI", "Web & API", "Data & Analytics", "Containers", "Networking",
-    "Integration", "End-User Computing", "Hybrid & Migration", "Foundation",
-    "Security & Identity", "Other",
-  ];
-
-  // Build the pre-filled GitHub issue URL. The issue form's field ids match
-  // these query-param keys, so GitHub renders the form already populated.
+  // Build the pre-filled GitHub issue URL. The issue form's field ids
+  // (description, displayName) match these query-param keys, so GitHub renders
+  // the form already populated. An AI intake Action then structures the prose.
   function submissionUrl(values) {
     const params = new URLSearchParams();
     params.set("template", "use-case-submission.yml");
-    params.set("title", "[Use case] " + (values.displayName || ""));
-    Object.keys(values).forEach((k) => {
-      if (values[k]) params.set(k, values[k]);
-    });
+    if (values.displayName) params.set("title", "[Use case] " + values.displayName);
+    if (values.description) params.set("description", values.description);
+    if (values.displayName) params.set("displayName", values.displayName);
     return REPO + "/issues/new?" + params.toString();
   }
 
-  // Open the submission panel: a small form that collects the use case and its
-  // services, then hands off to a pre-filled GitHub issue (which an Action turns
-  // into a draft pull request). The gallery never stores a GitHub credential.
+  // Open the submission panel: a single plain-English description (plus an
+  // optional name). It hands off to a pre-filled GitHub issue; an AI Action
+  // (GitHub Models) turns the prose into a structured catalog entry and opens a
+  // draft pull request. The gallery never stores a GitHub credential.
   function openSubmitPanel() {
     if (!window.TechlabsPanel) return;
     closeModal();
@@ -930,64 +923,41 @@
         e("p", {
           class: "submit-intro",
           text:
-            "Describe the scenario and the Azure services it uses. We'll open a pre-filled GitHub issue; an automation turns it into a draft pull request for a maintainer to author the Bicep and publish it here.",
+            "Describe your use case in plain English \u2014 what it is, the problem it solves, and the Azure services it uses. We'll open a pre-filled GitHub issue; an AI automation structures it into a catalog entry and opens a draft pull request for a maintainer to author the Bicep and publish it here.",
         })
       );
 
-      const controls = {};
-      function field(id, label, opts) {
-        opts = opts || {};
-        const inputId = "submit-" + id;
-        let input;
-        if (opts.type === "textarea") {
-          input = e("textarea", {
-            id: inputId, class: "submit-input", rows: opts.rows || 3,
-            placeholder: opts.placeholder || "",
-          });
-        } else if (opts.type === "select") {
-          input = e("select", { id: inputId, class: "submit-input" },
-            (opts.options || []).map((o) => e("option", { value: o, text: o })));
-        } else {
-          input = e("input", {
-            id: inputId, class: "submit-input", type: "text",
-            placeholder: opts.placeholder || "",
-          });
-        }
-        controls[id] = input;
-        return e("div", { class: "submit-field" }, [
-          e("label", { class: "submit-label", for: inputId, text: label + (opts.required ? " *" : "") }),
-          opts.hint ? e("span", { class: "submit-hint", text: opts.hint }) : null,
-          input,
-        ]);
-      }
+      const desc = e("textarea", {
+        id: "submit-description", class: "submit-input", rows: 9,
+        placeholder:
+          "Example: A real-time IoT dashboard for manufacturing. Devices stream telemetry into Azure Event Hubs; Stream Analytics aggregates it on the fly and writes results to Cosmos DB; a web dashboard on App Service reads from Cosmos and Application Insights tracks health. It lets plant operators spot failing machines live without standing up their own Kafka.",
+      });
+      const name = e("input", {
+        id: "submit-name", class: "submit-input", type: "text",
+        placeholder: "Realtime IoT telemetry dashboard",
+      });
 
-      const form = e("div", { class: "submit-form" }, [
-        field("displayName", "Use case name", { required: true, placeholder: "Realtime IoT telemetry dashboard" }),
-        field("category", "Category", { type: "select", options: SUBMIT_CATEGORIES }),
-        field("description", "One-line description", { required: true, type: "textarea", rows: 2, placeholder: "Streams device telemetry through Event Hubs into a real-time dashboard." }),
-        field("what", "What it is", { required: true, type: "textarea", rows: 4, hint: "How the pieces fit together." }),
-        field("why", "Why it matters", { required: true, type: "textarea", rows: 3, hint: "The problem it solves." }),
-        field("services", "Azure services used", { required: true, type: "textarea", rows: 4, hint: "One per line.", placeholder: "Event Hubs\nStream Analytics\nAzure Cosmos DB" }),
-        field("potential", "Example scenarios", { type: "textarea", rows: 3, hint: "One per line." }),
-        field("industries", "Industries", { hint: "Comma-separated. Defaults to Cross-industry.", placeholder: "Manufacturing, Retail" }),
-        field("compliance", "Compliance baselines", { hint: "Comma-separated. Defaults to Baseline.", placeholder: "Baseline" }),
-        field("slug", "Short identifier (optional)", { hint: "Folder name; derived from the name if blank.", placeholder: "iot-telemetry-dashboard" }),
+      const form = e("div", { class: "submit-form submit-form-simple" }, [
+        e("div", { class: "submit-field" }, [
+          e("label", { class: "submit-label", for: "submit-description", text: "Describe your use case *" }),
+          e("span", { class: "submit-hint", text: "The more detail (architecture, services, industry), the better the result." }),
+          desc,
+        ]),
+        e("div", { class: "submit-field" }, [
+          e("label", { class: "submit-label", for: "submit-name", text: "Use case name (optional)" }),
+          e("span", { class: "submit-hint", text: "Leave blank and the AI will name it for you." }),
+          name,
+        ]),
       ]);
 
       const status = e("div", { class: "submit-status", role: "status" });
       const submit = e("button", { class: "submit-btn", type: "button", text: "Continue on GitHub \u2192" });
-      const REQUIRED = [
-        ["displayName", "a name"], ["description", "a one-line description"],
-        ["what", "what it is"], ["why", "why it matters"], ["services", "at least one service"],
-      ];
       submit.addEventListener("click", () => {
         status.classList.remove("err", "ok");
-        const values = {};
-        Object.keys(controls).forEach((k) => { values[k] = controls[k].value.trim(); });
-        const missing = REQUIRED.filter(([k]) => !values[k]).map((x) => x[1]);
-        if (missing.length) {
+        const values = { description: desc.value.trim(), displayName: name.value.trim() };
+        if (values.description.length < 30) {
           status.classList.add("err");
-          status.textContent = "Please add " + missing.join(", ") + ".";
+          status.textContent = "Please describe the use case in a bit more detail first.";
           return;
         }
         const url = submissionUrl(values);

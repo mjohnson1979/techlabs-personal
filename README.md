@@ -83,18 +83,23 @@ fully static:
 
 Anyone can propose a use case straight from the gallery — no code required:
 
-1. Click **"+ Submit a use case"** on the site and describe the scenario and the
-   Azure services it uses. The form opens a pre-filled GitHub issue (the
-   `.github/ISSUE_TEMPLATE/use-case-submission.yml` form); you review and submit
-   it on GitHub. The gallery stores **no** GitHub credential.
-2. `.github/workflows/use-case-intake.yml` picks up the labelled issue, runs
-   `tools/new_use_case_from_issue.py` to scaffold `catalog/<slug>/metadata.json`
-   (+ `README.md` and a `main.bicep` stub), regenerates `site/catalog.json`, and
-   opens a **draft pull request**. It is secretless — only the built-in
-   `GITHUB_TOKEN`.
-3. A maintainer authors the Bicep and parameters, fills in the Well-Architected
+1. Click **"+ Submit a use case"** on the site and describe the scenario in plain
+   English (optionally give it a name). The form opens a pre-filled GitHub issue
+   (the `.github/ISSUE_TEMPLATE/use-case-submission.yml` form); you review and
+   submit it on GitHub. The gallery stores **no** GitHub credential.
+2. `.github/workflows/use-case-intake.yml` picks up the labelled issue and uses
+   **GitHub Models** (`actions/ai-inference`, prompt in
+   `.github/prompts/use-case.prompt.yml`) to structure the free-form description
+   into catalog fields. It then runs `tools/new_use_case_from_issue.py` to
+   scaffold `catalog/<slug>/metadata.json` (+ `README.md` and a `main.bicep`
+   stub), regenerates `site/catalog.json`, and opens a **draft pull request**. It
+   is secretless — only the built-in `GITHUB_TOKEN` plus the `models: read`
+   permission.
+3. A maintainer confirms the AI-structured metadata matches the submitter's
+   intent, authors the Bicep and parameters, fills in the Well-Architected
    pillars / quota / priced cost components, and merges. The deploy workflow then
    publishes the new use case to the gallery.
+
 
 ## Tailoring for regulated industries
 

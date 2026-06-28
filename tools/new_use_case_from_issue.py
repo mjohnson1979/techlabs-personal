@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
-"""Scaffold a catalog use case from a "Submit a use case" GitHub issue.
+"""Scaffold a catalog use case from an AI-structured submission.
 
-The intake workflow (.github/workflows/use-case-intake.yml) runs this after a
-user files the use-case submission issue form. It parses the rendered issue
-body, writes catalog/<slug>/metadata.json (+ README.md + a main.bicep stub),
-and reports the slug/title back to the workflow via $GITHUB_OUTPUT so it can
-open a draft pull request.
+The intake workflow (.github/workflows/use-case-intake.yml) first asks GitHub
+Models (via actions/ai-inference) to turn the submitter's natural-language
+description into a small JSON object, then runs this script to validate it and
+write catalog/<slug>/metadata.json (+ README.md + a main.bicep stub). It reports
+the slug/title back to the workflow via $GITHUB_OUTPUT so it can open a draft PR.
 
-No third-party dependencies — standard library only. The metadata it writes is
-intentionally a *draft*: it lists the services and narrative the submitter
-provided, but leaves Bicep, parameters, Well-Architected pillars and priced
-cost components for a maintainer to complete during PR review.
+Input - the AI-extracted JSON - is read from the file named by EXTRACTED_JSON_FILE
+(or the EXTRACTED_JSON env var). Expected keys: displayName, slug, category,
+description, what, why, potentialUseCases[], services[], industries[], compliance[].
+
+No third-party dependencies - standard library only. The metadata it writes is a
+*draft*: it captures the narrative and the services the AI identified, but leaves
+Bicep, parameters, Well-Architected pillars and priced cost components for a
+maintainer to complete during PR review.
 """
 
 from __future__ import annotations
@@ -24,19 +28,10 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CATALOG_DIR = REPO_ROOT / "catalog"
 
-# Heading label (as rendered in the issue body) -> metadata key.
-FIELD_MAP = {
-    "use case name": "displayName",
-    "short identifier (slug)": "slug",
-    "category": "category",
-    "one-line description": "description",
-    "what it is": "what",
-    "why it matters": "why",
-    "azure services used": "services",
-    "example scenarios": "potential",
-    "industries": "industries",
-    "compliance baselines": "compliance",
-    "your contact (optional)": "contact",
+ALLOWED_CATEGORIES = {
+    "AI / GenAI", "Web & API", "Data & Analytics", "Containers", "Networking",
+    "Integration", "End-User Computing", "Hybrid & Migration", "Foundation",
+    "Security & Identity", "Other",
 }
 
 # Free-text Azure service -> canonical cost-meter serviceName understood by
@@ -74,32 +69,27 @@ SERVICE_ALIASES = [
 ]
 
 
-def parse_issue_body(body: str) -> dict[str, str]:
-    """Split a GitHub issue-form body ("### Label\\n\\nvalue") into a field map."""
-    fields: dict[str, str] = {}
-    current: str | None = None
-    chunks: list[str] = []
-
-    def flush() -> None:
-        if current is None:
-            return
-        key = FIELD_MAP.get(current.strip().lower())
-        if key:
-            value = "\n".join(chunks).strip()
-            if value.lower() in ("_no response_", "_none_", "none", "n/a"):
-                value = ""
-            fields[key] = value
-
-    for line in body.replace("\r\n", "\n").split("\n"):
-        m = re.match(r"^#{2,4}\s+(.*)$", line)
-        if m:
-            flush()
-            current = m.group(1)
-            chunks = []
-        elif current is not None:
-            chunks.append(line)
-    flush()
-    return fields
+def load_extracted() -> dict:
+    """Read and parse the AI-extracted JSON (tolerating ```json code fences)."""
+    raw = os.environ.get("EXTRACTED_JSON", "")
+    path = os.environ.get("EXTRACTED_JSON_FILE", "")
+    if not raw and path:
+        raw = Path(path).read_text(encoding="utf-8")
+    raw = raw.strip()
+    if not raw:
+        raise ValueError("No AI-extracted JSON provided (set EXTRACTED_JSON[_FILE]).")
+    # Strip a leading/trailing markdown code fence if the model added one.
+    fence = re.match(r"^```[a-zA-Z]*\s*(.*?)\s*```$", raw, re.DOTALL)
+    if fence:
+        raw = fence.group(1).strip()
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        # Fall back to the first {...} block if there's stray prose around it.
+        m = re.search(r"\{.*\}", raw, re.DOTALL)
+        if not m:
+            raise
+        return json.loads(m.group(0))
 
 
 def slugify(value: str) -> str:
@@ -117,18 +107,12 @@ def unique_slug(slug: str) -> str:
     return f"{slug}-{i}"
 
 
-def split_lines(value: str) -> list[str]:
-    out = []
-    for raw in value.replace("\r\n", "\n").split("\n"):
-        item = raw.strip().lstrip("-*0123456789. ").strip()
-        if item:
-            out.append(item)
-    return out
-
-
-def split_csv(value: str, default: list[str]) -> list[str]:
-    parts = [p.strip() for p in re.split(r"[,;]", value) if p.strip()]
-    return parts or list(default)
+def as_list(value) -> list[str]:
+    if isinstance(value, list):
+        return [str(v).strip() for v in value if str(v).strip()]
+    if isinstance(value, str) and value.strip():
+        return [p.strip() for p in re.split(r"[\n,;]", value) if p.strip()]
+    return []
 
 
 def canonical_service(name: str) -> str:
@@ -139,32 +123,38 @@ def canonical_service(name: str) -> str:
     return name.strip()
 
 
-def build_metadata(fields: dict[str, str], slug: str, author: str, issue: str) -> dict:
-    services = split_lines(fields.get("services", ""))
+def build_metadata(data: dict, slug: str, author: str, issue: str, original: str) -> dict:
+    services = as_list(data.get("services"))
     components = []
     for svc in services:
-        canonical = canonical_service(svc)
         components.append(
             {
                 "name": f"{svc} (usage)",
                 "billing": "usage",
-                "serviceName": canonical,
+                "serviceName": canonical_service(svc),
                 "unitOfMeasure": "",
                 "quantityPerMonth": None,
                 "notes": "Estimate pending maintainer review.",
             }
         )
 
-    meta = {
+    category = str(data.get("category", "")).strip()
+    if category not in ALLOWED_CATEGORIES:
+        category = "Other"
+
+    industries = as_list(data.get("industries")) or ["Cross-industry"]
+    compliance = as_list(data.get("compliance")) or ["Baseline"]
+
+    return {
         "name": slug,
-        "displayName": fields.get("displayName", slug).strip(),
-        "category": fields.get("category", "Other").strip() or "Other",
-        "description": fields.get("description", "").strip(),
-        "what": fields.get("what", "").strip(),
-        "why": fields.get("why", "").strip(),
-        "potentialUseCases": split_lines(fields.get("potential", "")),
-        "industries": split_csv(fields.get("industries", ""), ["Cross-industry"]),
-        "compliance": split_csv(fields.get("compliance", ""), ["Baseline"]),
+        "displayName": str(data.get("displayName", slug)).strip() or slug,
+        "category": category,
+        "description": str(data.get("description", "")).strip(),
+        "what": str(data.get("what", "")).strip(),
+        "why": str(data.get("why", "")).strip(),
+        "potentialUseCases": as_list(data.get("potentialUseCases")),
+        "industries": industries,
+        "compliance": compliance,
         "cost": {
             "currency": "USD",
             "region": "eastus",
@@ -172,12 +162,12 @@ def build_metadata(fields: dict[str, str], slug: str, author: str, issue: str) -
             "components": components,
         },
         "submission": {
-            "source": "gallery-issue-form",
+            "source": "gallery-ai-intake",
             "issue": int(issue) if str(issue).isdigit() else issue,
             "submittedBy": author,
+            "originalDescription": original.strip(),
         },
     }
-    return meta
 
 
 def render_readme(meta: dict, issue: str, author: str) -> str:
@@ -186,9 +176,9 @@ def render_readme(meta: dict, issue: str, author: str) -> str:
     ) or "_none listed_"
     return f"""# {meta['displayName']}
 
-> Community submission via the gallery use-case form (issue #{issue}, by @{author}).
-> This is a **draft** — a maintainer must complete the Infrastructure as Code
-> before it can be deployed from the gallery.
+> Community submission, AI-structured from the gallery use-case form
+> (issue #{issue}, by @{author}). This is a **draft** - a maintainer must complete
+> the Infrastructure as Code before it can be deployed from the gallery.
 
 {meta['description']}
 
@@ -206,6 +196,7 @@ def render_readme(meta: dict, issue: str, author: str) -> str:
 
 ## Maintainer checklist
 
+- [ ] Confirm the AI-structured `metadata.json` matches the submitter's intent.
 - [ ] Author `main.bicep` for this scenario.
 - [ ] Add `parameters/dev.bicepparam` (and `parameters/prod.bicepparam` if applicable).
 - [ ] Fill in `wellArchitected` pillars in `metadata.json`.
@@ -233,25 +224,27 @@ def write_output(name: str, value: str) -> None:
 
 
 def main() -> int:
-    body = os.environ.get("ISSUE_BODY", "")
     author = os.environ.get("ISSUE_AUTHOR", "unknown")
     issue = os.environ.get("ISSUE_NUMBER", "0")
-    if not body.strip():
-        print("ISSUE_BODY is empty; nothing to scaffold.", file=sys.stderr)
+    original = os.environ.get("ORIGINAL_DESCRIPTION", "")
+
+    try:
+        data = load_extracted()
+    except (ValueError, json.JSONDecodeError, OSError) as exc:
+        print(f"Could not load AI-extracted metadata: {exc}", file=sys.stderr)
         return 1
 
-    fields = parse_issue_body(body)
-    if not fields.get("displayName") and not fields.get("slug"):
-        print("Could not find a use case name or slug in the issue.", file=sys.stderr)
+    base = str(data.get("slug", "")).strip() or str(data.get("displayName", "")).strip()
+    if not base:
+        print("AI output had no slug or displayName; cannot scaffold.", file=sys.stderr)
         return 1
 
-    base = fields.get("slug", "").strip() or fields.get("displayName", "")
     slug = unique_slug(slugify(base))
     if not slug:
         print("Could not derive a valid slug.", file=sys.stderr)
         return 1
 
-    meta = build_metadata(fields, slug, author, issue)
+    meta = build_metadata(data, slug, author, issue, original)
     dest = CATALOG_DIR / slug
     dest.mkdir(parents=True, exist_ok=True)
     (dest / "metadata.json").write_text(
