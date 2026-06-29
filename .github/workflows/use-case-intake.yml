@@ -28,10 +28,14 @@ concurrency:
 
 jobs:
   intake:
-    # Only run for issues carrying the "use-case" label (or a manual dispatch).
+    # Run for manual dispatch, issues carrying the "use-case" label, or issues
+    # whose title uses the submission form's "[Use case] " prefix. The title
+    # fallback keeps intake working even if the "use-case" label is missing from
+    # the repo (issue-form templates silently drop labels that don't exist).
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      contains(github.event.issue.labels.*.name, 'use-case')
+      contains(github.event.issue.labels.*.name, 'use-case') ||
+      startsWith(github.event.issue.title, '[Use case]')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -71,7 +75,12 @@ jobs:
 
       - name: Structure the submission with AI
         id: extract
-        uses: actions/ai-inference@v1
+        # v2 parses the prompt YAML first and then substitutes {{submission}}
+        # into the already-parsed message content. v1 substituted into the raw
+        # YAML text before parsing, so any multi-line submission corrupted the
+        # block scalar and failed with "a multiline key may not be an implicit
+        # key". Keep this at v2 (or newer) so multi-line submissions work.
+        uses: actions/ai-inference@v2
         with:
           prompt-file: .github/prompts/use-case.prompt.yml
           file_input: |
