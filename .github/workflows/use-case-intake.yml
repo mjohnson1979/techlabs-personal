@@ -145,14 +145,33 @@ jobs:
             "" \
             "Closes #${ISSUE_NUMBER}.")
 
-          if gh pr list --head "$BRANCH" --state open --json number \
-              --jq 'length' --repo "$GITHUB_REPOSITORY" | grep -q '^0$'; then
-            gh pr create --draft --base main --head "$BRANCH" \
+          # The branch is pushed above regardless. Opening the PR can still be
+          # blocked when "Allow GitHub Actions to create and approve pull
+          # requests" is disabled for the repo/org (gh fails with "GitHub
+          # Actions is not permitted to create or approve pull requests"). Treat
+          # that as non-fatal: fall back to a one-click compare link so the work
+          # is never lost and the job still succeeds.
+          PR_URL=""
+          COMPARE_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/compare/main...${BRANCH}?expand=1"
+          EXISTING=$(gh pr list --head "$BRANCH" --state open --json url \
+            --jq '.[0].url // ""' --repo "$GITHUB_REPOSITORY" 2>/dev/null || echo "")
+          if [ -n "$EXISTING" ]; then
+            echo "PR for $BRANCH already exists: $EXISTING"
+            PR_URL="$EXISTING"
+          elif PR_URL=$(gh pr create --draft --base main --head "$BRANCH" \
               --title "feat(catalog): ${DISPLAY_NAME}" \
-              --body "$BODY" --repo "$GITHUB_REPOSITORY"
+              --body "$BODY" --repo "$GITHUB_REPOSITORY" 2>pr_err.txt); then
+            echo "Opened draft PR: $PR_URL"
           else
-            echo "PR for $BRANCH already exists; branch updated."
+            echo "::warning::Could not open the PR automatically:"
+            cat pr_err.txt || true
+            PR_URL=""
           fi
+          {
+            echo "branch=$BRANCH"
+            echo "pr_url=$PR_URL"
+            echo "compare_url=$COMPARE_URL"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Comment back on the issue
         if: always()
@@ -160,12 +179,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
           SLUG: ${{ steps.scaffold.outputs.slug }}
+          PR_URL: ${{ steps.pr.outputs.pr_url }}
+          COMPARE_URL: ${{ steps.pr.outputs.compare_url }}
+          BRANCH: ${{ steps.pr.outputs.branch }}
           JOB_STATUS: ${{ job.status }}
         run: |
           set -euo pipefail
           if [ -z "${ISSUE_NUMBER:-}" ]; then exit 0; fi
           if [ "$JOB_STATUS" = "success" ] && [ -n "${SLUG:-}" ]; then
-            MSG="Thanks! A draft pull request was opened that scaffolds \`catalog/${SLUG}\` from this submission. A maintainer will complete the Infrastructure as Code and merge it to publish the use case to the gallery."
+            if [ -n "${PR_URL:-}" ]; then
+              MSG="Thanks! A draft pull request was opened that scaffolds \`catalog/${SLUG}\` from this submission: ${PR_URL} A maintainer will complete the Infrastructure as Code and merge it to publish the use case to the gallery."
+            else
+              MSG="Thanks! I scaffolded \`catalog/${SLUG}\` on branch \`${BRANCH}\`, but this repo does not currently allow GitHub Actions to open pull requests. Open it in one click: ${COMPARE_URL} (A maintainer can fully automate this by enabling Settings -> Actions -> General -> Workflow permissions -> 'Allow GitHub Actions to create and approve pull requests'.)"
+            fi
           else
             MSG="The intake automation could not process this submission automatically (status: ${JOB_STATUS}). A maintainer will follow up manually. You can also edit the issue and re-run the workflow."
           fi
