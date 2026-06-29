@@ -150,16 +150,22 @@ jobs:
           # requests" is disabled for the repo/org (gh fails with "GitHub
           # Actions is not permitted to create or approve pull requests"). Treat
           # that as non-fatal: fall back to a one-click compare link so the work
-          # is never lost and the job still succeeds.
+          # is never lost and the job still succeeds. The compare link carries
+          # the same title/body as the auto-PR (url-encoded), so a maintainer
+          # lands on a fully pre-filled PR form and only has to click "Create" -
+          # no special permissions needed for a human to open the PR.
           PR_URL=""
-          COMPARE_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/compare/main...${BRANCH}?expand=1"
+          PR_TITLE="feat(catalog): ${DISPLAY_NAME}"
+          ENC_TITLE=$(printf '%s' "$PR_TITLE" | jq -sRr @uri)
+          ENC_BODY=$(printf '%s' "$BODY" | jq -sRr @uri)
+          COMPARE_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/compare/main...${BRANCH}?expand=1&title=${ENC_TITLE}&body=${ENC_BODY}"
           EXISTING=$(gh pr list --head "$BRANCH" --state open --json url \
             --jq '.[0].url // ""' --repo "$GITHUB_REPOSITORY" 2>/dev/null || echo "")
           if [ -n "$EXISTING" ]; then
             echo "PR for $BRANCH already exists: $EXISTING"
             PR_URL="$EXISTING"
           elif PR_URL=$(gh pr create --draft --base main --head "$BRANCH" \
-              --title "feat(catalog): ${DISPLAY_NAME}" \
+              --title "$PR_TITLE" \
               --body "$BODY" --repo "$GITHUB_REPOSITORY" 2>pr_err.txt); then
             echo "Opened draft PR: $PR_URL"
           else
