@@ -82,6 +82,12 @@ jobs:
         # key". Keep this at v2 (or newer) so multi-line submissions work.
         uses: actions/ai-inference@v2
         with:
+          # The built-in GITHUB_TOKEN can only call GitHub Models if the org has
+          # enabled Models access for Actions; otherwise the endpoint returns
+          # 403. Set a MODELS_TOKEN repo/org secret (a fine-grained PAT with the
+          # "Models" permission) to use it instead; it falls back to the
+          # built-in token when the secret is absent.
+          token: ${{ secrets.MODELS_TOKEN || github.token }}
           prompt-file: .github/prompts/use-case.prompt.yml
           file_input: |
             submission: submission.txt
