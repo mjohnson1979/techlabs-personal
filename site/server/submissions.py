@@ -273,6 +273,23 @@ def _unique_slug(slug: str) -> str:
     return f"{slug}-{i}"
 
 
+def staged_files(submission: dict[str, Any]) -> dict[str, bytes]:
+    """Read the staged catalog/<slug>/ files as {repo_relative_path: bytes}.
+
+    Paths are repository-relative (e.g. ``catalog/slug/main.bicep``) so they can
+    be committed straight into a branch by github_intake.push_submission.
+    """
+    root = Path(submission["path"])
+    catalog_dir = root / "catalog"
+    if not catalog_dir.is_dir():
+        raise SubmissionError("Staged files are no longer available.")
+    out: dict[str, bytes] = {}
+    for path in sorted(catalog_dir.rglob("*")):
+        if path.is_file():
+            out[path.relative_to(root).as_posix()] = path.read_bytes()
+    return out
+
+
 def bundle_zip(submission: dict[str, Any]) -> bytes:
     """Zip the staged catalog/<slug>/ folder for an admin to download."""
     root = Path(submission["path"])

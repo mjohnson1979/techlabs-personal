@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 
 import azure_deploy as az
 import db
+import github_intake
 import submissions
 from identity import (
     CurrentUser,
@@ -110,6 +111,8 @@ def _submission_view(s: dict[str, Any]) -> dict[str, Any]:
         "status": s["status"],
         "createdAt": _iso(s["created_at"]),
         "files": s.get("files", []),
+        "branch": s.get("branch", ""),
+        "compareUrl": s.get("compare_url", ""),
         "detail": s["detail"],
     }
 
@@ -401,11 +404,52 @@ def build_api_router() -> APIRouter:
             use_case=staged["slug"],
             meta={"files": str(len(staged["files"]))},
         )
+
+        # Create branch + commit the bundle so a maintainer can open the PR.
+        # Best-effort: if the push fails (or no token is configured) the
+        # submission stays staged for manual download from the admin panel.
+        detail = "Uploaded; queued for a maintainer to review."
+        if github_intake.configured():
+            try:
+                branch = f"usecase-intake/{staged['slug']}-{staged['id'][:6]}"
+                files = submissions.staged_files(
+                    {"path": staged["path"], "slug": staged["slug"]}
+                )
+                pushed = await github_intake.push_submission(
+                    branch=branch,
+                    files=files,
+                    message=(
+                        f"feat(catalog): {staged['displayName']} "
+                        f"(community submission by {user.upn})"
+                    ),
+                )
+                db.update_submission(
+                    staged["id"],
+                    status="branched",
+                    branch=pushed["branch"],
+                    compare_url=pushed["compareUrl"],
+                    detail="Branch created; a maintainer can open the pull request.",
+                )
+                db.record_event(
+                    type="use_case_branch_created",
+                    user_oid=user.oid,
+                    user_upn=user.upn,
+                    use_case=staged["slug"],
+                    meta={"branch": pushed["branch"]},
+                )
+                detail = "Uploaded and a review branch was created. A maintainer will open the pull request."
+            except Exception as exc:  # push is best-effort; keep the staged copy
+                db.update_submission(
+                    staged["id"],
+                    detail=f"Staged; branch creation failed ({type(exc).__name__}). "
+                    "A maintainer can download the bundle instead.",
+                )
+
         sub = db.get_submission(staged["id"])
         assert sub is not None
         return {
             "submission": _submission_view(sub),
-            "detail": "Thanks! Your template was uploaded and is queued for a maintainer to review.",
+            "detail": detail,
         }
 
     @router.get("/admin/submissions")

@@ -95,10 +95,12 @@ CREATE TABLE IF NOT EXISTS submissions (
     user_oid     TEXT NOT NULL DEFAULT '',
     user_upn     TEXT NOT NULL DEFAULT '',
     user_name    TEXT NOT NULL DEFAULT '',
-    status       TEXT NOT NULL DEFAULT 'pending',  -- pending|discarded|merged
+    status       TEXT NOT NULL DEFAULT 'pending',  -- pending|branched|discarded|merged
     created_at   REAL NOT NULL,
     path         TEXT NOT NULL DEFAULT '',
     files_json   TEXT NOT NULL DEFAULT '[]',
+    branch       TEXT NOT NULL DEFAULT '',
+    compare_url  TEXT NOT NULL DEFAULT '',
     detail       TEXT NOT NULL DEFAULT ''
 );
 
@@ -120,9 +122,20 @@ def init_db() -> sqlite3.Connection:
         conn.execute("PRAGMA journal_mode=WAL;")
         conn.execute("PRAGMA foreign_keys=ON;")
         conn.executescript(SCHEMA)
+        _migrate(conn)
         conn.commit()
         _CONN = conn
     return _CONN
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Lightweight additive migrations for columns added after first release."""
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(submissions)").fetchall()}
+    for col in ("branch", "compare_url"):
+        if col not in cols:
+            conn.execute(
+                f"ALTER TABLE submissions ADD COLUMN {col} TEXT NOT NULL DEFAULT ''"
+            )
 
 
 def _conn() -> sqlite3.Connection:
@@ -572,6 +585,8 @@ def update_submission(
     *,
     status: str | None = None,
     detail: str | None = None,
+    branch: str | None = None,
+    compare_url: str | None = None,
 ) -> None:
     sets: list[str] = []
     args: list[Any] = []
@@ -581,6 +596,12 @@ def update_submission(
     if detail is not None:
         sets.append("detail=?")
         args.append(detail)
+    if branch is not None:
+        sets.append("branch=?")
+        args.append(branch)
+    if compare_url is not None:
+        sets.append("compare_url=?")
+        args.append(compare_url)
     if not sets:
         return
     args.append(submission_id)

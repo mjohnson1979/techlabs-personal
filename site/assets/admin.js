@@ -207,7 +207,16 @@
     const files = el("td", {}, el("span", { class: "muted small", text: (sub.files || []).length + " files" }));
 
     const actions = el("td", { class: "row-actions" });
-    if (sub.status === "pending") {
+    // Primary path: a review branch exists -> one-click "Open pull request".
+    if (sub.compareUrl) {
+      actions.appendChild(
+        el("a", {
+          href: sub.compareUrl, target: "_blank", rel: "noopener",
+          class: "link-btn", text: "Open pull request",
+        })
+      );
+    }
+    if (sub.status !== "discarded") {
       actions.appendChild(
         el("a", {
           href: Api.submissionDownloadUrl(sub.id), class: "link-btn",
@@ -230,11 +239,16 @@
       actions.appendChild(btn);
     }
 
+    const useCaseCell = el("td", {}, [
+      el("strong", { text: sub.displayName || sub.slug }),
+      el("div", { class: "muted small", text: sub.slug }),
+    ]);
+    if (sub.branch) {
+      useCaseCell.appendChild(el("div", { class: "muted small" }, el("code", { text: sub.branch })));
+    }
+
     return el("tr", {}, [
-      el("td", {}, [
-        el("strong", { text: sub.displayName || sub.slug }),
-        el("div", { class: "muted small", text: sub.slug }),
-      ]),
+      useCaseCell,
       owner,
       el("td", {}, statusBadge(sub.status)),
       el("td", { text: fmtDate(sub.createdAt) }),
@@ -263,7 +277,7 @@
           mount.appendChild(
             el("p", {
               class: "muted small",
-              text: "Uploaded templates are validated and staged on the server. Download a bundle, commit it to a branch, and open a PR; discard removes the staged files.",
+              text: "Uploaded templates are validated and committed to a review branch. Click \u201COpen pull request\u201D to review and merge; Download grabs the bundle; Discard removes the staged files.",
             })
           );
 
