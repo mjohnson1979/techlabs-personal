@@ -2,6 +2,7 @@ fastapi>=0.111
 uvicorn>=0.30
 httpx>=0.27
 gunicorn>=22.0
+python-multipart>=0.0.9
 azure-identity>=1.17
 # Pin to the 23.x line: the unified ResourceManagementClient still exposes
 # .deployments / .deployment_operations there. v24+ split deployments into a
