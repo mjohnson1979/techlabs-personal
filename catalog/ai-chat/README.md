@@ -1,6 +1,6 @@
 # AI Chat (Azure OpenAI + App Service + Cosmos DB)
 
-A chat API on App Service that calls an Azure OpenAI **gpt-4.1-mini** deployment
+A chat API on App Service that calls an Azure OpenAI **gpt-5-mini** deployment
 and persists conversations in **serverless Cosmos DB**. Access is **keyless**:
 the web app's managed identity authenticates to both Azure OpenAI and Cosmos,
 and local/key auth is disabled on both.
@@ -25,7 +25,7 @@ spiky chat traffic.
 | --- | --- | --- |
 | Log Analytics workspace | Central log store | [log-analytics](../../modules/log-analytics/main.bicep) |
 | Application Insights | App monitoring | [app-insights](../../modules/app-insights/main.bicep) |
-| Azure OpenAI account + deployment | gpt-4.1-mini chat model | inline |
+| Azure OpenAI account + deployment | gpt-5-mini chat model | inline |
 | Cosmos DB (serverless) + container | Conversation history | inline |
 | App Service plan + Web App | Chat API with managed identity | inline |
 
@@ -40,7 +40,7 @@ spiky chat traffic.
 See [metadata.json](metadata.json) for the machine-readable WAF + cost declaration.
 
 > **Region note:** Azure OpenAI model availability varies by region. Pick a
-> `location` that offers `gpt-4.1-mini`.
+> `location` that offers `gpt-5-mini`.
 >
 > **After you deploy:** grant the web app's managed identity data-plane roles —
 > `Cognitive Services OpenAI User` on the OpenAI account and a Cosmos DB SQL
@@ -53,7 +53,7 @@ that lacks capacity for its core services:
 
 | Service | Needs | Check |
 | --- | --- | --- |
-| Azure OpenAI (`gpt-4.1-mini`) | Model offered in the region + available TPM quota | [Quotas blade](https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/Quotas) |
+| Azure OpenAI (`gpt-5-mini`) | Model offered in the region + available TPM quota | [Quotas blade](https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/Quotas) |
 | Azure App Service (Linux plan) | Compute quota in the region | [App Service quotas](https://portal.azure.com/#view/Microsoft_Azure_Capacity/QuotaMenuBlade/~/myQuotas) |
 
 The gallery surfaces this live: each capacity-sensitive card shows a **"Quota-sensitive"**
@@ -74,8 +74,9 @@ workload across regions (multi-region deployment) or request a quota increase.
 | `appServiceSku` | `B1` | App plan SKU (P1v3+ for zone redundancy) |
 | `appCapacity` | `1` | App plan instance count |
 | `appZoneRedundant` | `false` | Zone-redundant app plan |
-| `chatModelName` | `gpt-4.1-mini` | Model to deploy |
-| `chatModelVersion` | `2025-04-14` | Model version |
+| `chatModelName` | `gpt-5-mini` | Model to deploy |
+| `chatModelVersion` | `2025-08-07` | Model version |
+| `chatModelSku` | `GlobalStandard` | Model deployment SKU |
 | `chatModelCapacity` | `10` | TPM capacity (thousands) |
 
 ## Architecture
@@ -86,7 +87,7 @@ workload across regions (multi-region deployment) or request a quota increase.
 flowchart LR
   user["Users"]:::edge
   app["Chat API on App Service<br/>B1, managed identity"]:::compute
-  oai["Azure OpenAI<br/>gpt-4.1-mini — keyless"]:::data
+  oai["Azure OpenAI<br/>gpt-5-mini — keyless"]:::data
   cosmos["Cosmos DB serverless<br/>chat history — keyless"]:::data
   obs["App Insights + Log Analytics"]:::obs
   user -->|HTTPS| app
@@ -106,7 +107,7 @@ flowchart LR
 flowchart LR
   user["Users"]:::edge
   app["Chat API on App Service<br/>P1v3, zone-redundant"]:::compute
-  oai["Azure OpenAI<br/>gpt-4.1-mini — higher TPM, keyless"]:::data
+  oai["Azure OpenAI<br/>gpt-5-mini — higher TPM, keyless"]:::data
   cosmos["Cosmos DB serverless<br/>chat history — keyless"]:::data
   obs["App Insights + Log Analytics"]:::obs
   user -->|HTTPS| app

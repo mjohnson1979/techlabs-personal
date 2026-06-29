@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-29T07:50:43Z",
+  "generated": "2026-06-29T15:00:05Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -10,42 +10,42 @@
     "westus3"
   ],
   "services": {
-    "openai:gpt-4.1-mini": {
-      "label": "Azure OpenAI - gpt-4.1-mini",
+    "openai:gpt-5-mini": {
+      "label": "Azure OpenAI - gpt-5-mini",
       "provider": "Microsoft.CognitiveServices/accounts/deployments",
       "kind": "model-tpm",
-      "model": "gpt-4.1-mini",
-      "sku": "Standard",
+      "model": "gpt-5-mini",
+      "sku": "GlobalStandard",
       "byRegion": {
         "eastus": {
           "status": "green",
-          "detail": "5000 K TPM available",
-          "value": 5000
+          "detail": "990 K TPM available",
+          "value": 990
         },
         "eastus2": {
           "status": "green",
-          "detail": "5000 K TPM available",
-          "value": 5000
+          "detail": "990 K TPM available",
+          "value": 990
         },
         "centralus": {
-          "status": "red",
-          "detail": "Standard SKU not offered for gpt-4.1-mini in this region",
-          "value": null
+          "status": "green",
+          "detail": "990 K TPM available",
+          "value": 990
         },
         "southcentralus": {
           "status": "green",
-          "detail": "5000 K TPM available",
-          "value": 5000
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "westus2": {
           "status": "red",
-          "detail": "Standard SKU not offered for gpt-4.1-mini in this region",
+          "detail": "GlobalStandard SKU not offered for gpt-5-mini in this region",
           "value": null
         },
         "westus3": {
           "status": "green",
-          "detail": "5000 K TPM available",
-          "value": 5000
+          "detail": "990 K TPM available",
+          "value": 990
         }
       }
     },

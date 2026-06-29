@@ -19,7 +19,7 @@
 - [Web App](catalog/web-app/README.md): Linux App Service + App Insights + Log Analytics; zone-redundant in prod.
 - [Container App](catalog/container-app/README.md): Azure Container Apps with HTTP autoscaling; scale-to-zero in dev.
 - [SQL Data API](catalog/sql-data-api/README.md): App Service + Azure SQL, passwordless managed-identity, Entra-only SQL.
-- [AI Chat](catalog/ai-chat/README.md): Azure OpenAI gpt-4.1-mini + App Service + serverless Cosmos DB, keyless.
+- [AI Chat](catalog/ai-chat/README.md): Azure OpenAI gpt-5-mini + App Service + serverless Cosmos DB, keyless.
 
 ## Shared modules
 

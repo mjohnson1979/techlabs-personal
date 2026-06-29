@@ -63,9 +63,9 @@
         "service": "Azure OpenAI (chat)",
         "provider": "Microsoft.CognitiveServices/accounts/deployments",
         "kind": "model-tpm",
-        "model": "gpt-4.1-mini",
-        "sku": "Standard",
-        "detail": "Chat model deployment requires tokens-per-minute (TPM) quota in the region.",
+        "model": "gpt-5-mini",
+        "sku": "GlobalStandard",
+        "detail": "Chat model deployment requires tokens-per-minute (TPM) quota in the region. gpt-5-mini is offered on the GlobalStandard SKU.",
         "checkUrl": "https://learn.microsoft.com/azure/ai-services/openai/how-to/quota"
       },
       {
@@ -90,25 +90,27 @@
   "cost": {
     "currency": "USD",
     "region": "eastus",
-    "profile": "Prod profile: gpt-4.1-mini @60K TPM, Standard Search x3, P1v3 x3, Premium APIM.",
+    "profile": "Prod profile: gpt-5-mini @60K TPM GlobalStandard, Standard Search x3, P1v3 x3, Premium APIM.",
     "components": [
       {
-        "name": "Azure OpenAI - gpt-4.1-mini input",
+        "name": "Azure OpenAI - gpt-5-mini input",
         "billing": "usage",
-        "serviceName": "Azure OpenAI",
-        "meterNameContains": "gpt-4.1-mini-0414-Inp-regnl",
+        "serviceName": "Foundry Models",
+        "productNameContains": "GPT5",
+        "meterNameContains": "GPT 5 Mini Inpt Glbl 1M Tokens",
         "unitOfMeasure": "1M",
         "quantityPerMonth": 50,
-        "notes": "Assumes ~50M input tokens/month."
+        "notes": "Assumes ~50M input tokens/month on GlobalStandard."
       },
       {
-        "name": "Azure OpenAI - gpt-4.1-mini output",
+        "name": "Azure OpenAI - gpt-5-mini output",
         "billing": "usage",
-        "serviceName": "Azure OpenAI",
-        "meterNameContains": "gpt-4.1-mini-0414-Outp-regnl",
+        "serviceName": "Foundry Models",
+        "productNameContains": "GPT5",
+        "meterNameContains": "GPT 5 Mini outpt Glbl 1M Tokens",
         "unitOfMeasure": "1M",
         "quantityPerMonth": 15,
-        "notes": "Assumes ~15M output tokens/month."
+        "notes": "Assumes ~15M output tokens/month on GlobalStandard."
       },
       {
         "name": "Azure OpenAI - text-embedding-3-large",

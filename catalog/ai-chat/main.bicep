@@ -25,10 +25,13 @@ param appCapacity int = 1
 param appZoneRedundant bool = false
 
 @description('Chat model to deploy.')
-param chatModelName string = 'gpt-4.1-mini'
+param chatModelName string = 'gpt-5-mini'
 
 @description('Chat model version.')
-param chatModelVersion string = '2025-04-14'
+param chatModelVersion string = '2025-08-07'
+
+@description('Model deployment SKU. GlobalStandard is the generally-available tier for current GPT-5 models.')
+param chatModelSku string = 'GlobalStandard'
 
 @description('Tokens-per-minute capacity (thousands) for the model deployment.')
 @minValue(1)
@@ -79,7 +82,7 @@ resource chatDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-1
   parent: openAi
   name: chatModelName
   sku: {
-    name: 'Standard'
+    name: chatModelSku
     capacity: chatModelCapacity
   }
   properties: {

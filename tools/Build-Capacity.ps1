@@ -44,8 +44,9 @@ param(
 
     # OpenAI models the catalog deploys (name:version:sku). The SKU matters:
     # a region can have capacity for one SKU (e.g. GlobalStandard) yet not offer
-    # the SKU we deploy (Standard), in which case the deployment fails preflight.
-    [string[]]$OpenAiModels = @('gpt-4.1-mini:2025-04-14:Standard', 'text-embedding-3-small:1:Standard'),
+    # another (regional Standard), in which case the deployment fails preflight.
+    # Keep these in lock-step with the catalog's main.bicep model deployments.
+    [string[]]$OpenAiModels = @('gpt-5-mini:2025-08-07:GlobalStandard', 'text-embedding-3-small:1:Standard'),
 
     # Skip individual probes (faster offline/partial runs).
     [switch]$SkipOpenAi,
@@ -127,20 +128,23 @@ function Get-OpenAiCapacity {
 }
 
 # --------------------------------------------------------------------------- #
-# Probe: per-region model/SKU deprecation
+# Probe: per-region model/SKU lifecycle status + deprecation date
 #
-# modelCapacities reports TPM but NOT the deprecation date, so a model can show
-# capacity yet still be blocked for new deployments (ServiceModelDeprecated).
-# The locations/<region>/models API exposes a per-SKU 'deprecationDate'; once it
-# is in the past, Azure rejects new deployments of that model+SKU in that region.
-# We query it per region and cache the result so callers can veto a region.
+# modelCapacities reports TPM but NOT lifecycle state, so a model can show
+# capacity yet still be blocked for new deployments (ServiceModelDeprecating /
+# ServiceModelDeprecated). Azure rejects a NEW deployment as soon as the model's
+# lifecycleStatus becomes 'Deprecating' or 'Deprecated' - this happens BEFORE the
+# published deprecationDate, so the date alone is not enough to gate on.
+# The locations/<region>/models API exposes both the model's lifecycleStatus and
+# each SKU's deprecationDate; we capture both per region so callers can veto a
+# region when a model is no longer deployable there.
 # --------------------------------------------------------------------------- #
 function Get-RegionModelDeprecations {
     param([string]$Sub, [string]$Token, [string]$Region)
 
     $headers = @{ Authorization = "Bearer $Token" }
     $uri = "https://management.azure.com/subscriptions/$Sub/providers/Microsoft.CognitiveServices/locations/$Region/models?api-version=2024-10-01"
-    $map = @{}  # key 'name|version|sku-lower' -> deprecationDate string
+    $map = @{}  # key 'name|version|sku-lower' -> @{ date=<string|$null>; status=<lifecycleStatus> }
     try {
         $resp = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers
     }
@@ -150,10 +154,10 @@ function Get-RegionModelDeprecations {
     foreach ($entry in @($resp.value)) {
         $m = $entry.model
         if (-not $m) { continue }
+        $status = if ($m.lifecycleStatus) { $m.lifecycleStatus.ToString() } else { '' }
         foreach ($s in @($m.skus)) {
-            if (-not $s.deprecationDate) { continue }
             $key = "$($m.name)|$($m.version)|$(($s.name).ToString().ToLower())"
-            $map[$key] = $s.deprecationDate
+            $map[$key] = @{ date = $s.deprecationDate; status = $status }
         }
     }
     return $map
@@ -273,15 +277,27 @@ if (-not $SkipOpenAi) {
                 $regionMap[$r] = New-Status 'red' "$sku SKU not offered for $name in this region"
             }
 
-            # Veto on deprecation: even with TPM capacity, a deployed SKU whose
-            # deprecationDate has passed can no longer be newly deployed here.
+            # Veto on lifecycle: even with TPM capacity, Azure refuses NEW
+            # deployments of a model whose lifecycleStatus is Deprecating or
+            # Deprecated, and of a SKU whose deprecationDate has passed. Either
+            # condition makes the region red so the gallery never offers a
+            # combination that would fail at deploy time.
             $depMap = $deprecationByRegion[$r]
             if ($null -ne $depMap) {
-                $depRaw = $depMap["$name|$ver|$($sku.ToLower())"]
-                if ($depRaw) {
-                    $depDate = [datetime]::Parse($depRaw).ToUniversalTime()
-                    if ($depDate -le $now) {
-                        $regionMap[$r] = New-Status 'red' "$name $sku deprecated for new deployments ($($depDate.ToString('yyyy-MM-dd')))"
+                $info = $depMap["$name|$ver|$($sku.ToLower())"]
+                if ($info) {
+                    $status = "$($info.status)"
+                    $depRaw = $info.date
+                    $depShort = if ($depRaw) { [datetime]::Parse($depRaw).ToUniversalTime().ToString('yyyy-MM-dd') } else { $null }
+                    if ($status -match 'Deprecat') {
+                        $suffix = if ($depShort) { " (retires $depShort)" } else { '' }
+                        $regionMap[$r] = New-Status 'red' "$name $sku is $status - blocked for new deployments$suffix"
+                    }
+                    elseif ($depRaw) {
+                        $depDate = [datetime]::Parse($depRaw).ToUniversalTime()
+                        if ($depDate -le $now) {
+                            $regionMap[$r] = New-Status 'red' "$name $sku deprecated for new deployments ($depShort)"
+                        }
                     }
                 }
             }
