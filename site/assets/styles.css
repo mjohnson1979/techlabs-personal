@@ -1163,8 +1163,45 @@ a:hover {
 }
 
 /* Roadmap & retirements section inside the use-case modal. */
+.lifecycle-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+}
+.lifecycle-summary::-webkit-details-marker {
+  display: none;
+}
+.lifecycle-summary h3 {
+  margin: 0;
+}
+.lifecycle-summary::after {
+  content: "\25B6";
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+.lifecycle-block[open] .lifecycle-summary::after {
+  transform: rotate(90deg);
+}
+.lifecycle-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 11px;
+  background: rgba(255, 138, 138, 0.12);
+  border: 1px solid rgba(255, 138, 138, 0.4);
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
 .lifecycle-sub {
-  margin: 0 0 12px;
+  margin: 12px 0 12px;
   color: var(--muted);
   font-size: 0.86rem;
 }

@@ -736,8 +736,11 @@
     const total = life.retirements.length + life.previews.length + life.launched.length;
     if (!total) return null;
 
-    const wrap = el("div", { class: "modal-section modal-card lifecycle-block" }, [
-      el("h3", { text: "Azure roadmap & retirements" }),
+    const wrap = el("details", { class: "modal-section modal-card lifecycle-block" }, [
+      el("summary", { class: "lifecycle-summary" }, [
+        el("h3", { text: "Azure roadmap & retirements" }),
+        el("span", { class: "lifecycle-count", text: String(total) }),
+      ]),
     ]);
     wrap.appendChild(
       el("p", {
