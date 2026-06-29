@@ -87,6 +87,23 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE INDEX IF NOT EXISTS idx_events_ts ON events(ts);
 CREATE INDEX IF NOT EXISTS idx_events_type ON events(type);
 CREATE INDEX IF NOT EXISTS idx_events_user ON events(user_oid);
+
+CREATE TABLE IF NOT EXISTS submissions (
+    id           TEXT PRIMARY KEY,
+    slug         TEXT NOT NULL,
+    display_name TEXT NOT NULL DEFAULT '',
+    user_oid     TEXT NOT NULL DEFAULT '',
+    user_upn     TEXT NOT NULL DEFAULT '',
+    user_name    TEXT NOT NULL DEFAULT '',
+    status       TEXT NOT NULL DEFAULT 'pending',  -- pending|discarded|merged
+    created_at   REAL NOT NULL,
+    path         TEXT NOT NULL DEFAULT '',
+    files_json   TEXT NOT NULL DEFAULT '[]',
+    detail       TEXT NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS idx_subs_status ON submissions(status);
+CREATE INDEX IF NOT EXISTS idx_subs_created ON submissions(created_at);
 """
 
 
@@ -472,3 +489,116 @@ def telemetry_summary(days: int = 30) -> dict[str, Any]:
         "activeDeployments": active,
         "uniqueUsers": unique_users,
     }
+
+
+# --------------------------------------------------------------------------- #
+# Use-case submissions (zip uploads staged for maintainer review)
+# --------------------------------------------------------------------------- #
+def _row_to_submission(r: sqlite3.Row) -> dict[str, Any]:
+    d = dict(r)
+    try:
+        d["files"] = json.loads(d.pop("files_json", "[]") or "[]")
+    except (ValueError, TypeError):
+        d["files"] = []
+    return d
+
+
+def create_submission(
+    *,
+    submission_id: str,
+    slug: str,
+    display_name: str,
+    user_oid: str,
+    user_upn: str,
+    user_name: str,
+    path: str,
+    files: list[str],
+    detail: str = "",
+) -> None:
+    now = time.time()
+    with _LOCK:
+        conn = _conn()
+        conn.execute(
+            "INSERT INTO submissions(id, slug, display_name, user_oid, user_upn,"
+            " user_name, status, created_at, path, files_json, detail)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                submission_id,
+                slug,
+                display_name,
+                user_oid,
+                user_upn,
+                user_name,
+                "pending",
+                now,
+                path,
+                json.dumps(files or []),
+                detail,
+            ),
+        )
+        conn.commit()
+
+
+def list_submissions(
+    *, status: str | None = None, limit: int = 200
+) -> list[dict[str, Any]]:
+    with _LOCK:
+        conn = _conn()
+        if status is not None:
+            rows = conn.execute(
+                "SELECT * FROM submissions WHERE status = ?"
+                " ORDER BY created_at DESC LIMIT ?",
+                (status, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM submissions ORDER BY created_at DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+    return [_row_to_submission(r) for r in rows]
+
+
+def get_submission(submission_id: str) -> dict[str, Any] | None:
+    with _LOCK:
+        conn = _conn()
+        row = conn.execute(
+            "SELECT * FROM submissions WHERE id = ?", (submission_id,)
+        ).fetchone()
+    return _row_to_submission(row) if row is not None else None
+
+
+def update_submission(
+    submission_id: str,
+    *,
+    status: str | None = None,
+    detail: str | None = None,
+) -> None:
+    sets: list[str] = []
+    args: list[Any] = []
+    if status is not None:
+        sets.append("status=?")
+        args.append(status)
+    if detail is not None:
+        sets.append("detail=?")
+        args.append(detail)
+    if not sets:
+        return
+    args.append(submission_id)
+    with _LOCK:
+        conn = _conn()
+        conn.execute(
+            f"UPDATE submissions SET {', '.join(sets)} WHERE id = ?", tuple(args)
+        )
+        conn.commit()
+
+
+def slug_exists(slug: str) -> bool:
+    """True if an active (non-discarded) submission already claims this slug."""
+    with _LOCK:
+        conn = _conn()
+        row = conn.execute(
+            "SELECT 1 FROM submissions WHERE slug = ? AND status <> 'discarded' LIMIT 1",
+            (slug,),
+        ).fetchone()
+    return row is not None
+

@@ -17,11 +17,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 import azure_deploy as az
 import db
+import submissions
 from identity import (
     CurrentUser,
     require_admin,
@@ -95,6 +97,20 @@ def _deployment_view(d: dict[str, Any]) -> dict[str, Any]:
         "destroyedAt": _iso(d.get("destroyed_at")),
         "ghRunUrl": d["gh_run_url"],
         "detail": d["detail"],
+    }
+
+
+def _submission_view(s: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": s["id"],
+        "slug": s["slug"],
+        "displayName": s["display_name"],
+        "userUpn": s["user_upn"],
+        "userName": s["user_name"],
+        "status": s["status"],
+        "createdAt": _iso(s["created_at"]),
+        "files": s.get("files", []),
+        "detail": s["detail"],
     }
 
 
@@ -338,6 +354,103 @@ def build_api_router() -> APIRouter:
             user_oid=admin.oid,
             user_upn=admin.upn,
             meta={"target": upn, "role": body.role},
+        )
+
+    # ------------------------------------------------------- submissions ---
+    @router.post("/use-cases/upload")
+    async def upload_use_case(
+        request: Request,
+        file: UploadFile = File(...),
+        displayName: str = Form(""),
+        user: CurrentUser = Depends(require_user),
+    ) -> dict[str, Any]:
+        verify_same_origin(request)
+        name = (file.filename or "").lower()
+        if not name.endswith(".zip"):
+            raise HTTPException(status_code=400, detail="Upload a .zip archive.")
+        data = await file.read()
+        if len(data) > submissions.MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="The zip is too large.")
+        try:
+            staged = submissions.stage_submission(
+                data=data,
+                display_name=displayName.strip()[:120],
+                user_oid=user.oid,
+                user_upn=user.upn,
+                user_name=user.name,
+            )
+        except submissions.SubmissionError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        db.create_submission(
+            submission_id=staged["id"],
+            slug=staged["slug"],
+            display_name=staged["displayName"],
+            user_oid=user.oid,
+            user_upn=user.upn,
+            user_name=user.name,
+            path=staged["path"],
+            files=staged["files"],
+            detail="metadata.json included" if staged["hasMetadata"]
+            else "metadata.json drafted (submitter omitted it)",
+        )
+        db.record_event(
+            type="use_case_submitted",
+            user_oid=user.oid,
+            user_upn=user.upn,
+            use_case=staged["slug"],
+            meta={"files": str(len(staged["files"]))},
+        )
+        sub = db.get_submission(staged["id"])
+        assert sub is not None
+        return {
+            "submission": _submission_view(sub),
+            "detail": "Thanks! Your template was uploaded and is queued for a maintainer to review.",
+        }
+
+    @router.get("/admin/submissions")
+    async def admin_submissions(
+        _: CurrentUser = Depends(require_admin),
+    ) -> dict[str, Any]:
+        subs = db.list_submissions(limit=200)
+        return {"submissions": [_submission_view(s) for s in subs]}
+
+    @router.get("/admin/submissions/{submission_id}/download")
+    async def admin_download_submission(
+        submission_id: str,
+        _: CurrentUser = Depends(require_admin),
+    ) -> Response:
+        sub = db.get_submission(submission_id)
+        if sub is None:
+            raise HTTPException(status_code=404, detail="not found")
+        try:
+            blob = submissions.bundle_zip(sub)
+        except submissions.SubmissionError as exc:
+            raise HTTPException(status_code=410, detail=str(exc)) from exc
+        filename = f"{sub['slug']}-submission.zip"
+        return Response(
+            content=blob,
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    @router.post("/admin/submissions/{submission_id}/discard", status_code=204)
+    async def admin_discard_submission(
+        submission_id: str,
+        request: Request,
+        admin: CurrentUser = Depends(require_admin),
+    ) -> None:
+        verify_same_origin(request)
+        sub = db.get_submission(submission_id)
+        if sub is None:
+            raise HTTPException(status_code=404, detail="not found")
+        submissions.discard(sub)
+        db.update_submission(submission_id, status="discarded", detail="discarded by admin")
+        db.record_event(
+            type="use_case_submission_discarded",
+            user_oid=admin.oid,
+            user_upn=admin.upn,
+            use_case=sub["slug"],
         )
 
     return router

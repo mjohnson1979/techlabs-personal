@@ -199,6 +199,106 @@
     load();
   }
 
+  function subRow(sub, onChange) {
+    const owner = el("td", {}, [
+      el("strong", { text: sub.userName || sub.userUpn }),
+      el("div", { class: "muted small", text: sub.userUpn }),
+    ]);
+    const files = el("td", {}, el("span", { class: "muted small", text: (sub.files || []).length + " files" }));
+
+    const actions = el("td", { class: "row-actions" });
+    if (sub.status === "pending") {
+      actions.appendChild(
+        el("a", {
+          href: Api.submissionDownloadUrl(sub.id), class: "link-btn",
+          text: "Download", download: "",
+        })
+      );
+      const btn = el("button", { type: "button", class: "danger-btn", text: "Discard" });
+      btn.addEventListener("click", () => {
+        if (!window.confirm("Discard the submission \"" + (sub.displayName || sub.slug) + "\"? This deletes the staged files.")) return;
+        btn.disabled = true;
+        btn.textContent = "Discarding\u2026";
+        Api.discardSubmission(sub.id)
+          .then(() => onChange())
+          .catch((err) => {
+            btn.disabled = false;
+            btn.textContent = "Discard";
+            window.alert(err && err.message ? err.message : "Discard failed.");
+          });
+      });
+      actions.appendChild(btn);
+    }
+
+    return el("tr", {}, [
+      el("td", {}, [
+        el("strong", { text: sub.displayName || sub.slug }),
+        el("div", { class: "muted small", text: sub.slug }),
+      ]),
+      owner,
+      el("td", {}, statusBadge(sub.status)),
+      el("td", { text: fmtDate(sub.createdAt) }),
+      files,
+      actions,
+    ]);
+  }
+
+  function renderSubmissions(mount) {
+    mount.innerHTML = "";
+    mount.appendChild(el("p", { class: "muted", text: "Loading submissions\u2026" }));
+
+    function load() {
+      Api.adminSubmissions()
+        .then((subs) => {
+          mount.innerHTML = "";
+          subs = subs || [];
+          const pending = subs.filter((s) => s.status === "pending");
+
+          mount.appendChild(
+            el("div", { class: "stat-grid" }, [
+              statCard("Pending review", pending.length),
+              statCard("Total submitted", subs.length),
+            ])
+          );
+          mount.appendChild(
+            el("p", {
+              class: "muted small",
+              text: "Uploaded templates are validated and staged on the server. Download a bundle, commit it to a branch, and open a PR; discard removes the staged files.",
+            })
+          );
+
+          if (!subs.length) {
+            mount.appendChild(el("p", { class: "muted", text: "No submissions yet." }));
+            return;
+          }
+          const head = el("tr", {}, [
+            el("th", { text: "Use case" }),
+            el("th", { text: "Submitted by" }),
+            el("th", { text: "Status" }),
+            el("th", { text: "When" }),
+            el("th", { text: "Files" }),
+            el("th", { text: "" }),
+          ]);
+          mount.appendChild(
+            el("div", { class: "deploy-table-wrap" }, [
+              el("table", { class: "deploy-table" }, [
+                el("thead", {}, head),
+                el("tbody", {}, subs.map((s) => subRow(s, load))),
+              ]),
+            ])
+          );
+        })
+        .catch((err) => {
+          mount.innerHTML = "";
+          mount.appendChild(
+            el("p", { class: "error-text", text: err && err.message ? err.message : "Could not load submissions." })
+          );
+        });
+    }
+
+    load();
+  }
+
   function renderTelemetry(mount) {
     mount.innerHTML = "";
     mount.appendChild(el("p", { class: "muted", text: "Loading telemetry…" }));
@@ -345,9 +445,11 @@
     const tabs = el("div", { class: "tabs" });
     const telBtn = el("button", { type: "button", class: "tab is-active", text: "Telemetry" });
     const depBtn = el("button", { type: "button", class: "tab", text: "Deployments" });
+    const subBtn = el("button", { type: "button", class: "tab", text: "Submissions" });
     const usrBtn = el("button", { type: "button", class: "tab", text: "Users" });
     tabs.appendChild(telBtn);
     tabs.appendChild(depBtn);
+    tabs.appendChild(subBtn);
     tabs.appendChild(usrBtn);
     body.appendChild(tabs);
 
@@ -357,13 +459,16 @@
     function show(which) {
       telBtn.classList.toggle("is-active", which === "tel");
       depBtn.classList.toggle("is-active", which === "dep");
+      subBtn.classList.toggle("is-active", which === "sub");
       usrBtn.classList.toggle("is-active", which === "usr");
       if (which === "tel") renderTelemetry(mount);
       else if (which === "dep") renderDeployments(mount);
+      else if (which === "sub") renderSubmissions(mount);
       else renderUsers(mount);
     }
     telBtn.addEventListener("click", () => show("tel"));
     depBtn.addEventListener("click", () => show("dep"));
+    subBtn.addEventListener("click", () => show("sub"));
     usrBtn.addEventListener("click", () => show("usr"));
     show("tel");
   }

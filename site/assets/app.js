@@ -901,43 +901,114 @@
   }
 
   // -------------------------------------------------------- submit a use case
-  // The natural-language submission flow (AI structures prose -> draft PR) is
-  // parked: AI-drafted Bicep is not deployable without a maintainer finishing
-  // it, so it is being reworked into a zip-upload intake that accepts
-  // ready-to-deploy templates. Tracked in GitHub. Until then the panel explains
-  // the interim path (open an issue / contribute via PR) rather than collecting
-  // prose we cannot turn into a deployable use case automatically.
+  // Primary path: upload a ready-to-deploy template (zip with main.bicep +
+  // parameters). The backend validates + stages it for a maintainer to review
+  // and commit (see GitHub issue #6). The old "describe it in plain English"
+  // flow is parked because AI-drafted Bicep is not deployable without a
+  // maintainer finishing it.
   function openSubmitPanel() {
     if (!window.TechlabsPanel) return;
     closeModal();
+    var Api = window.TechlabsApi;
     window.TechlabsPanel.open((bodyEl, e) => {
       bodyEl.appendChild(e("h2", { text: "Submit a use case" }));
       bodyEl.appendChild(
         e("p", {
           class: "submit-intro",
           text:
-            "Self-service submission is being reworked. We're replacing the old \u201Cdescribe it in plain English\u201D flow with a zip upload that accepts a ready-to-deploy template (main.bicep + parameters), so submissions land deployable instead of as drafts a maintainer has to finish.",
-        })
-      );
-      bodyEl.appendChild(
-        e("p", {
-          class: "submit-intro",
-          text:
-            "In the meantime, open a GitHub issue describing the use case (or send a pull request if you already have the Bicep) and a maintainer will help get it into the catalog.",
+            "Already have a template? Upload a .zip containing your main.bicep and a parameters folder. We'll validate it and queue it for a maintainer to review and publish to the catalog.",
         })
       );
 
-      const actions = e("div", { class: "submit-form-simple" }, [
-        e("a", {
-          class: "submit-btn", href: REPO + "/issues/new", target: "_blank",
-          rel: "noopener", text: "Open a GitHub issue \u2192",
-        }),
-        e("a", {
-          class: "link-btn", href: REPO, target: "_blank",
-          rel: "noopener", text: "Browse the repo / contribute a template",
-        }),
+      const fileInput = e("input", {
+        id: "submit-zip", class: "submit-input", type: "file", accept: ".zip,application/zip",
+      });
+      const name = e("input", {
+        id: "submit-name", class: "submit-input", type: "text",
+        placeholder: "Realtime IoT telemetry dashboard",
+      });
+
+      const form = e("div", { class: "submit-form submit-form-simple" }, [
+        e("div", { class: "submit-field" }, [
+          e("label", { class: "submit-label", for: "submit-zip", text: "Template zip *" }),
+          e("span", {
+            class: "submit-hint",
+            text: "Required inside the zip: main.bicep (at the root) and at least one parameters/<env>.bicepparam. Optional: metadata.json, README.md.",
+          }),
+          fileInput,
+        ]),
+        e("div", { class: "submit-field" }, [
+          e("label", { class: "submit-label", for: "submit-name", text: "Use case name (optional)" }),
+          e("span", { class: "submit-hint", text: "Used to name the catalog entry. Leave blank to derive it from metadata.json." }),
+          name,
+        ]),
       ]);
-      bodyEl.appendChild(actions);
+
+      const status = e("div", { class: "submit-status", role: "status" });
+      const submit = e("button", { class: "submit-btn", type: "button", text: "Upload template" });
+      submit.addEventListener("click", () => {
+        status.classList.remove("err", "ok");
+        status.textContent = "";
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) {
+          status.classList.add("err");
+          status.textContent = "Choose a .zip file to upload first.";
+          return;
+        }
+        if (!/\.zip$/i.test(file.name)) {
+          status.classList.add("err");
+          status.textContent = "That doesn't look like a .zip archive.";
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          status.classList.add("err");
+          status.textContent = "The zip is too large (5 MB limit).";
+          return;
+        }
+        if (!Api || !Api.uploadUseCase) {
+          status.classList.add("err");
+          status.textContent = "Uploads are only available on the hosted gallery.";
+          return;
+        }
+        submit.disabled = true;
+        submit.textContent = "Uploading\u2026";
+        Api.uploadUseCase(file, name.value.trim())
+          .then((res) => {
+            const sub = (res && res.submission) || {};
+            status.classList.add("ok");
+            status.innerHTML = "";
+            status.appendChild(document.createTextNode(
+              (res && res.detail) || "Uploaded. A maintainer will review it shortly."));
+            if (sub.slug) {
+              status.appendChild(e("div", { class: "submit-hint", text: "Catalog entry: " + sub.slug }));
+            }
+            submit.textContent = "Uploaded \u2713";
+          })
+          .catch((err) => {
+            submit.disabled = false;
+            submit.textContent = "Upload template";
+            status.classList.add("err");
+            status.textContent = (err && err.message) || "Upload failed.";
+          });
+      });
+
+      bodyEl.appendChild(form);
+      bodyEl.appendChild(submit);
+      bodyEl.appendChild(status);
+
+      bodyEl.appendChild(
+        e("p", {
+          class: "submit-intro submit-secondary",
+          text:
+            "Don't have the Bicep yet? The describe-it-in-plain-English flow is being reworked \u2014 for now, open a GitHub issue and a maintainer will help.",
+        })
+      );
+      bodyEl.appendChild(
+        e("a", {
+          class: "link-btn", href: REPO + "/issues/new", target: "_blank",
+          rel: "noopener", text: "Open a GitHub issue \u2192",
+        })
+      );
     });
   }
 

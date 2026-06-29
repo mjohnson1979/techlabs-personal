@@ -1627,6 +1627,13 @@ a:hover {
   max-width: 70ch;
 }
 
+.submit-secondary {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.84rem;
+}
+
 .submit-form {
   display: grid;
   grid-template-columns: 1fr 1fr;
