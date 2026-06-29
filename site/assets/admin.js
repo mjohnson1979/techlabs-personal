@@ -47,6 +47,158 @@
       .sort((a, b) => b.n - a.n);
   }
 
+  // Statuses that still hold (or are tearing down) Azure resources.
+  const LIVE = ["requested", "deploying", "active", "expiring", "destroying"];
+
+  function fmtDate(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? "—" : d.toLocaleString();
+  }
+
+  // Human-friendly elapsed time between two ISO timestamps (or now).
+  function fmtDuration(fromIso, toIso) {
+    if (!fromIso) return "—";
+    const start = new Date(fromIso).getTime();
+    if (isNaN(start)) return "—";
+    const end = toIso ? new Date(toIso).getTime() : Date.now();
+    let secs = Math.max(0, Math.round((end - start) / 1000));
+    const days = Math.floor(secs / 86400);
+    secs -= days * 86400;
+    const hours = Math.floor(secs / 3600);
+    secs -= hours * 3600;
+    const mins = Math.floor(secs / 60);
+    if (days > 0) return days + "d " + hours + "h";
+    if (hours > 0) return hours + "h " + mins + "m";
+    return mins + "m";
+  }
+
+  function statusBadge(status) {
+    return el("span", { class: "badge badge-" + status, text: status });
+  }
+
+  function deployRow(dep, onChange) {
+    const owner = el("td", {}, [
+      el("strong", { text: dep.userName || dep.userUpn }),
+      el("div", { class: "muted small", text: dep.userUpn }),
+    ]);
+    const ended = dep.status === "destroyed" || dep.status === "failed";
+    const running = fmtDuration(dep.createdAt, ended ? dep.destroyedAt || dep.endAt : null);
+
+    const cells = [
+      el("td", {}, el("strong", { text: dep.useCase })),
+      el("td", {}, el("span", { class: "chip", text: dep.environment })),
+      owner,
+      el("td", {}, statusBadge(dep.status)),
+      el("td", { text: fmtDate(dep.createdAt) }),
+      el("td", { text: running }),
+      el("td", { text: fmtDate(dep.endAt) }),
+      el("td", {}, el("code", { text: dep.resourceGroup })),
+    ];
+
+    const actions = el("td", { class: "row-actions" });
+    if (dep.ghRunUrl) {
+      actions.appendChild(
+        el("a", { href: dep.ghRunUrl, target: "_blank", rel: "noopener", class: "link-btn", text: "Portal" })
+      );
+    }
+    // Offer cleanup for anything still holding resources, except a teardown
+    // that is already in flight.
+    if (LIVE.indexOf(dep.status) !== -1 && dep.status !== "destroying") {
+      const btn = el("button", { type: "button", class: "danger-btn", text: "Clean up" });
+      btn.addEventListener("click", () => {
+        const who = dep.userName || dep.userUpn;
+        if (!window.confirm("Tear down " + dep.useCase + " (" + who + ") now? This deletes " + dep.resourceGroup + ".")) return;
+        btn.disabled = true;
+        btn.textContent = "Cleaning up…";
+        Api.destroyDeployment(dep.id)
+          .then(() => onChange())
+          .catch((err) => {
+            btn.disabled = false;
+            btn.textContent = "Clean up";
+            window.alert(err && err.message ? err.message : "Cleanup failed.");
+          });
+      });
+      actions.appendChild(btn);
+    }
+    cells.push(actions);
+    return el("tr", {}, cells);
+  }
+
+  function renderDeployments(mount) {
+    const state = { activeOnly: true };
+
+    function load() {
+      mount.innerHTML = "";
+      mount.appendChild(el("p", { class: "muted", text: "Loading deployments…" }));
+      Api.listDeployments("all")
+        .then((deps) => {
+          mount.innerHTML = "";
+          deps = deps || [];
+          const live = deps.filter((d) => LIVE.indexOf(d.status) !== -1);
+
+          mount.appendChild(
+            el("div", { class: "stat-grid" }, [
+              statCard("Active deployments", live.length),
+              statCard("Total tracked", deps.length),
+            ])
+          );
+
+          const checkbox = el("input", { type: "checkbox" });
+          checkbox.checked = state.activeOnly;
+          checkbox.addEventListener("change", () => {
+            state.activeOnly = checkbox.checked;
+            renderTable();
+          });
+          const toggle = el("label", { class: "toggle" }, [checkbox, el("span", { text: "Active only" })]);
+          const refreshBtn = el("button", { type: "button", class: "deploy-btn", text: "Refresh" });
+          refreshBtn.addEventListener("click", load);
+          mount.appendChild(el("div", { class: "deploy-toolbar" }, [toggle, refreshBtn]));
+
+          const tableWrap = el("div", { class: "deploy-table-wrap" });
+          mount.appendChild(tableWrap);
+
+          function renderTable() {
+            const rows = state.activeOnly ? live : deps;
+            tableWrap.innerHTML = "";
+            if (!rows.length) {
+              tableWrap.appendChild(
+                el("p", { class: "muted", text: state.activeOnly ? "No active deployments." : "No deployments tracked yet." })
+              );
+              return;
+            }
+            const head = el("tr", {}, [
+              el("th", { text: "Use case" }),
+              el("th", { text: "Env" }),
+              el("th", { text: "Owner" }),
+              el("th", { text: "Status" }),
+              el("th", { text: "Created" }),
+              el("th", { text: "Running for" }),
+              el("th", { text: "Ends" }),
+              el("th", { text: "Resource group" }),
+              el("th", { text: "" }),
+            ]);
+            tableWrap.appendChild(
+              el("table", { class: "deploy-table" }, [
+                el("thead", {}, head),
+                el("tbody", {}, rows.map((d) => deployRow(d, load))),
+              ])
+            );
+          }
+
+          renderTable();
+        })
+        .catch((err) => {
+          mount.innerHTML = "";
+          mount.appendChild(
+            el("p", { class: "error-text", text: err && err.message ? err.message : "Could not load deployments." })
+          );
+        });
+    }
+
+    load();
+  }
+
   function renderTelemetry(mount) {
     mount.innerHTML = "";
     mount.appendChild(el("p", { class: "muted", text: "Loading telemetry…" }));
@@ -192,8 +344,10 @@
 
     const tabs = el("div", { class: "tabs" });
     const telBtn = el("button", { type: "button", class: "tab is-active", text: "Telemetry" });
+    const depBtn = el("button", { type: "button", class: "tab", text: "Deployments" });
     const usrBtn = el("button", { type: "button", class: "tab", text: "Users" });
     tabs.appendChild(telBtn);
+    tabs.appendChild(depBtn);
     tabs.appendChild(usrBtn);
     body.appendChild(tabs);
 
@@ -202,11 +356,14 @@
 
     function show(which) {
       telBtn.classList.toggle("is-active", which === "tel");
+      depBtn.classList.toggle("is-active", which === "dep");
       usrBtn.classList.toggle("is-active", which === "usr");
       if (which === "tel") renderTelemetry(mount);
+      else if (which === "dep") renderDeployments(mount);
       else renderUsers(mount);
     }
     telBtn.addEventListener("click", () => show("tel"));
+    depBtn.addEventListener("click", () => show("dep"));
     usrBtn.addEventListener("click", () => show("usr"));
     show("tel");
   }

@@ -826,6 +826,27 @@ a:hover {
   overflow-x: auto;
 }
 
+.deploy-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.toggle input {
+  cursor: pointer;
+}
+
 .deploy-table {
   width: 100%;
   border-collapse: collapse;
