@@ -92,6 +92,43 @@ def load_extracted() -> dict:
         return json.loads(m.group(0))
 
 
+def _clean_issue_body(body: str) -> str:
+    """Strip issue-form scaffolding (### headers, '_No response_') from a body."""
+    keep = []
+    for line in body.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or stripped == "_No response_":
+            continue
+        keep.append(stripped)
+    return " ".join(keep).strip()
+
+
+def fallback_from_issue() -> dict:
+    """Build a minimal entry from the raw issue when AI structuring is unavailable.
+
+    The intake workflow runs this path when the GitHub Models step is skipped or
+    fails (e.g. the org has not granted Models access to Actions). It produces a
+    draft good enough to open a PR; a maintainer structures the rest by hand.
+    """
+    title = os.environ.get("ISSUE_TITLE", "").strip()
+    # Drop the submission form's "[Use case] " title prefix if present.
+    title = re.sub(r"^\[use case\]\s*", "", title, flags=re.IGNORECASE).strip()
+    body = _clean_issue_body(os.environ.get("ORIGINAL_DESCRIPTION", ""))
+    display = title or (body[:60].strip() if body else "") or "Community use case"
+    return {
+        "displayName": display,
+        "slug": "",  # derived from displayName downstream
+        "category": "Other",
+        "description": body or display,
+        "what": body,
+        "why": "",
+        "potentialUseCases": [],
+        "services": [],
+        "industries": ["Cross-industry"],
+        "compliance": ["Baseline"],
+    }
+
+
 def slugify(value: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
     return re.sub(r"-{2,}", "-", slug)
@@ -123,7 +160,14 @@ def canonical_service(name: str) -> str:
     return name.strip()
 
 
-def build_metadata(data: dict, slug: str, author: str, issue: str, original: str) -> dict:
+def build_metadata(
+    data: dict,
+    slug: str,
+    author: str,
+    issue: str,
+    original: str,
+    ai_structured: bool = True,
+) -> dict:
     services = as_list(data.get("services"))
     components = []
     for svc in services:
@@ -162,7 +206,8 @@ def build_metadata(data: dict, slug: str, author: str, issue: str, original: str
             "components": components,
         },
         "submission": {
-            "source": "gallery-ai-intake",
+            "source": "gallery-ai-intake" if ai_structured else "gallery-intake-unstructured",
+            "aiStructured": ai_structured,
             "issue": int(issue) if str(issue).isdigit() else issue,
             "submittedBy": author,
             "originalDescription": original.strip(),
@@ -174,9 +219,14 @@ def render_readme(meta: dict, issue: str, author: str) -> str:
     services = ", ".join(
         c["serviceName"] for c in meta["cost"]["components"]
     ) or "_none listed_"
+    origin = (
+        "AI-structured from the gallery use-case form"
+        if meta.get("submission", {}).get("aiStructured", True)
+        else "captured from the gallery use-case form (AI structuring was unavailable, so the fields below are raw)"
+    )
     return f"""# {meta['displayName']}
 
-> Community submission, AI-structured from the gallery use-case form
+> Community submission, {origin}
 > (issue #{issue}, by @{author}). This is a **draft** - a maintainer must complete
 > the Infrastructure as Code before it can be deployed from the gallery.
 
@@ -230,13 +280,18 @@ def main() -> int:
 
     try:
         data = load_extracted()
+        ai_structured = True
     except (ValueError, json.JSONDecodeError, OSError) as exc:
-        print(f"Could not load AI-extracted metadata: {exc}", file=sys.stderr)
-        return 1
+        # The AI step was skipped or failed (e.g. GitHub Models returned 403).
+        # Degrade gracefully: scaffold a minimal draft from the raw issue so a
+        # PR is still opened for a maintainer to structure by hand.
+        print(f"AI metadata unavailable ({exc}); using raw-issue fallback.", file=sys.stderr)
+        data = fallback_from_issue()
+        ai_structured = False
 
     base = str(data.get("slug", "")).strip() or str(data.get("displayName", "")).strip()
     if not base:
-        print("AI output had no slug or displayName; cannot scaffold.", file=sys.stderr)
+        print("No slug or displayName available; cannot scaffold.", file=sys.stderr)
         return 1
 
     slug = unique_slug(slugify(base))
@@ -244,7 +299,7 @@ def main() -> int:
         print("Could not derive a valid slug.", file=sys.stderr)
         return 1
 
-    meta = build_metadata(data, slug, author, issue, original)
+    meta = build_metadata(data, slug, author, issue, original, ai_structured)
     dest = CATALOG_DIR / slug
     dest.mkdir(parents=True, exist_ok=True)
     (dest / "metadata.json").write_text(

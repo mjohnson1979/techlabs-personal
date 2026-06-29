@@ -80,6 +80,12 @@ jobs:
         # YAML text before parsing, so any multi-line submission corrupted the
         # block scalar and failed with "a multiline key may not be an implicit
         # key". Keep this at v2 (or newer) so multi-line submissions work.
+        #
+        # continue-on-error: GitHub Models can be unavailable (e.g. the org has
+        # not granted Models access to Actions, so the endpoint returns 403).
+        # The scaffold step degrades to a raw-issue draft in that case, so a PR
+        # is still opened rather than the whole submission silently failing.
+        continue-on-error: true
         uses: actions/ai-inference@v2
         with:
           # The built-in GITHUB_TOKEN can only call GitHub Models if the org has
@@ -97,9 +103,12 @@ jobs:
         env:
           ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
           ISSUE_AUTHOR: ${{ steps.issue.outputs.author }}
+          # Empty when the AI step failed/was skipped; the scaffolder then falls
+          # back to ISSUE_TITLE + the raw body to still produce a draft entry.
           EXTRACTED_JSON_FILE: ${{ steps.extract.outputs.response-file }}
         run: |
           set -euo pipefail
+          export ISSUE_TITLE="$(jq -r '.title' issue.json)"
           export ORIGINAL_DESCRIPTION="$(jq -r '.body' issue.json)"
           python tools/new_use_case_from_issue.py
 
