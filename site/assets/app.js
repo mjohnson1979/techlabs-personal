@@ -901,22 +901,12 @@
   }
 
   // -------------------------------------------------------- submit a use case
-  // Build the pre-filled GitHub issue URL. The issue form's field ids
-  // (description, displayName) match these query-param keys, so GitHub renders
-  // the form already populated. An AI intake Action then structures the prose.
-  function submissionUrl(values) {
-    const params = new URLSearchParams();
-    params.set("template", "use-case-submission.yml");
-    if (values.displayName) params.set("title", "[Use case] " + values.displayName);
-    if (values.description) params.set("description", values.description);
-    if (values.displayName) params.set("displayName", values.displayName);
-    return REPO + "/issues/new?" + params.toString();
-  }
-
-  // Open the submission panel: a single plain-English description (plus an
-  // optional name). It hands off to a pre-filled GitHub issue; an AI Action
-  // (GitHub Models) turns the prose into a structured catalog entry and opens a
-  // draft pull request. The gallery never stores a GitHub credential.
+  // The natural-language submission flow (AI structures prose -> draft PR) is
+  // parked: AI-drafted Bicep is not deployable without a maintainer finishing
+  // it, so it is being reworked into a zip-upload intake that accepts
+  // ready-to-deploy templates. Tracked in GitHub. Until then the panel explains
+  // the interim path (open an issue / contribute via PR) rather than collecting
+  // prose we cannot turn into a deployable use case automatically.
   function openSubmitPanel() {
     if (!window.TechlabsPanel) return;
     closeModal();
@@ -926,56 +916,28 @@
         e("p", {
           class: "submit-intro",
           text:
-            "Describe your use case in plain English \u2014 what it is, the problem it solves, and the Azure services it uses. We'll open a pre-filled GitHub issue; an AI automation structures it into a catalog entry and opens a draft pull request for a maintainer to author the Bicep and publish it here.",
+            "Self-service submission is being reworked. We're replacing the old \u201Cdescribe it in plain English\u201D flow with a zip upload that accepts a ready-to-deploy template (main.bicep + parameters), so submissions land deployable instead of as drafts a maintainer has to finish.",
+        })
+      );
+      bodyEl.appendChild(
+        e("p", {
+          class: "submit-intro",
+          text:
+            "In the meantime, open a GitHub issue describing the use case (or send a pull request if you already have the Bicep) and a maintainer will help get it into the catalog.",
         })
       );
 
-      const desc = e("textarea", {
-        id: "submit-description", class: "submit-input", rows: 9,
-        placeholder:
-          "Example: A real-time IoT dashboard for manufacturing. Devices stream telemetry into Azure Event Hubs; Stream Analytics aggregates it on the fly and writes results to Cosmos DB; a web dashboard on App Service reads from Cosmos and Application Insights tracks health. It lets plant operators spot failing machines live without standing up their own Kafka.",
-      });
-      const name = e("input", {
-        id: "submit-name", class: "submit-input", type: "text",
-        placeholder: "Realtime IoT telemetry dashboard",
-      });
-
-      const form = e("div", { class: "submit-form submit-form-simple" }, [
-        e("div", { class: "submit-field" }, [
-          e("label", { class: "submit-label", for: "submit-description", text: "Describe your use case *" }),
-          e("span", { class: "submit-hint", text: "The more detail (architecture, services, industry), the better the result." }),
-          desc,
-        ]),
-        e("div", { class: "submit-field" }, [
-          e("label", { class: "submit-label", for: "submit-name", text: "Use case name (optional)" }),
-          e("span", { class: "submit-hint", text: "Leave blank and the AI will name it for you." }),
-          name,
-        ]),
+      const actions = e("div", { class: "submit-form-simple" }, [
+        e("a", {
+          class: "submit-btn", href: REPO + "/issues/new", target: "_blank",
+          rel: "noopener", text: "Open a GitHub issue \u2192",
+        }),
+        e("a", {
+          class: "link-btn", href: REPO, target: "_blank",
+          rel: "noopener", text: "Browse the repo / contribute a template",
+        }),
       ]);
-
-      const status = e("div", { class: "submit-status", role: "status" });
-      const submit = e("button", { class: "submit-btn", type: "button", text: "Continue on GitHub \u2192" });
-      submit.addEventListener("click", () => {
-        status.classList.remove("err", "ok");
-        const values = { description: desc.value.trim(), displayName: name.value.trim() };
-        if (values.description.length < 30) {
-          status.classList.add("err");
-          status.textContent = "Please describe the use case in a bit more detail first.";
-          return;
-        }
-        const url = submissionUrl(values);
-        const win = window.open(url, "_blank", "noopener");
-        status.classList.add("ok");
-        status.innerHTML = "";
-        status.appendChild(document.createTextNode(
-          win ? "Opened a pre-filled GitHub issue in a new tab. Review and submit it there. " :
-                "Pop-up blocked \u2014 use this link instead: "));
-        status.appendChild(e("a", { href: url, target: "_blank", rel: "noopener", text: "Open the submission issue \u2192" }));
-      });
-
-      bodyEl.appendChild(form);
-      bodyEl.appendChild(submit);
-      bodyEl.appendChild(status);
+      bodyEl.appendChild(actions);
     });
   }
 
