@@ -1,36 +1,9 @@
 {
-  "generated": "2026-06-29T06:31:27Z",
+  "generated": "2026-06-29T14:33:24Z",
   "source": "https://azure.microsoft.com/updates",
   "pagesScanned": 40,
   "updatesScanned": 4000,
   "retirements": [
-    {
-      "id": "501668",
-      "title": "Retirement: Remove dependency on these Azure ML SDKs before June 30, 2026",
-      "url": "https://azure.microsoft.com/updates?id=501668",
-      "date": "2026-06",
-      "services": [
-        "openai"
-      ]
-    },
-    {
-      "id": "486238",
-      "title": "Retirement: Azure Machine Learning SDK v1 Will Be Retired on June 30, 2026 – Transition to Machine Learning SDK v2",
-      "url": "https://azure.microsoft.com/updates?id=486238",
-      "date": "2026-06",
-      "services": [
-        "openai"
-      ]
-    },
-    {
-      "id": "496104",
-      "title": "Retirement: DCsv2-series Azure Virtual Machines will be retired on June 30, 2026                                       ",
-      "url": "https://azure.microsoft.com/updates?id=496104",
-      "date": "2026-06",
-      "services": [
-        "vm"
-      ]
-    },
     {
       "id": "557929",
       "title": "Retirement: Flatcar Container Linux for AKS (preview) ",
@@ -41,10 +14,10 @@
       ]
     },
     {
-      "id": "560948",
-      "title": "Retirement: Azure Reserved Virtual Machines Instances for select VM series",
-      "url": "https://azure.microsoft.com/updates?id=560948",
-      "date": "2026-07",
+      "id": "496104",
+      "title": "Retirement: DCsv2-series Azure Virtual Machines will be retired on June 30, 2026                                       ",
+      "url": "https://azure.microsoft.com/updates?id=496104",
+      "date": "2026-06",
       "services": [
         "vm"
       ]
@@ -59,18 +32,27 @@
       ]
     },
     {
-      "id": "501692",
-      "title": "Retirement: Azure Machine Learning - Data labeling Deprecation",
-      "url": "https://azure.microsoft.com/updates?id=501692",
-      "date": "2026-09",
+      "id": "560948",
+      "title": "Retirement: Azure Reserved Virtual Machines Instances for select VM series",
+      "url": "https://azure.microsoft.com/updates?id=560948",
+      "date": "2026-07",
       "services": [
-        "openai"
+        "vm"
       ]
     },
     {
       "id": "501673",
       "title": "Retirement: Azure Monitor SCOM Managed Instance will be retired on Sep 30, 2026",
       "url": "https://azure.microsoft.com/updates?id=501673",
+      "date": "2026-09",
+      "services": [
+        "monitor"
+      ]
+    },
+    {
+      "id": "azure-monitor-data-collection-api-retirement",
+      "title": "Azure Monitor Data Collection API Retirement  ",
+      "url": "https://azure.microsoft.com/updates?id=azure-monitor-data-collection-api-retirement",
       "date": "2026-09",
       "services": [
         "monitor"
@@ -86,12 +68,12 @@
       ]
     },
     {
-      "id": "557406",
-      "title": "Retirement: External Data Import & Data Connections in Azure Machine Learning will be retired on September 30, 2026 ",
-      "url": "https://azure.microsoft.com/updates?id=557406",
+      "id": "559311",
+      "title": "Retirement: Azure Functions runtime v3 on Linux Consumption will stop running September 30, 2026",
+      "url": "https://azure.microsoft.com/updates?id=559311",
       "date": "2026-09",
       "services": [
-        "openai"
+        "functions"
       ]
     },
     {
@@ -104,30 +86,30 @@
       ]
     },
     {
-      "id": "azure-monitor-data-collection-api-retirement",
-      "title": "Azure Monitor Data Collection API Retirement  ",
-      "url": "https://azure.microsoft.com/updates?id=azure-monitor-data-collection-api-retirement",
-      "date": "2026-09",
-      "services": [
-        "monitor"
-      ]
-    },
-    {
-      "id": "559311",
-      "title": "Retirement: Azure Functions runtime v3 on Linux Consumption will stop running September 30, 2026",
-      "url": "https://azure.microsoft.com/updates?id=559311",
-      "date": "2026-09",
-      "services": [
-        "functions"
-      ]
-    },
-    {
       "id": "500273",
       "title": "Retirement: Azure Network Policy Manager (NPM) for Windows nodes on AKS to Be Retired by September 30, 2026",
       "url": "https://azure.microsoft.com/updates?id=500273",
       "date": "2026-09",
       "services": [
         "aks"
+      ]
+    },
+    {
+      "id": "545771",
+      "title": "Retirement: Support for Python 3.10 ends on October 1, 2026 – upgrade your Azure Functions apps to Python 3.13 ",
+      "url": "https://azure.microsoft.com/updates?id=545771",
+      "date": "2026-10",
+      "services": [
+        "functions"
+      ]
+    },
+    {
+      "id": "502623",
+      "title": "Retirement: Azure Databricks Standard tier will retire by October 2026",
+      "url": "https://azure.microsoft.com/updates?id=502623",
+      "date": "2026-10",
+      "services": [
+        "databricks"
       ]
     },
     {
@@ -158,24 +140,6 @@
       ]
     },
     {
-      "id": "502623",
-      "title": "Retirement: Azure Databricks Standard tier will retire by October 2026",
-      "url": "https://azure.microsoft.com/updates?id=502623",
-      "date": "2026-10",
-      "services": [
-        "databricks"
-      ]
-    },
-    {
-      "id": "545771",
-      "title": "Retirement: Support for Python 3.10 ends on October 1, 2026 – upgrade your Azure Functions apps to Python 3.13 ",
-      "url": "https://azure.microsoft.com/updates?id=545771",
-      "date": "2026-10",
-      "services": [
-        "functions"
-      ]
-    },
-    {
       "id": "564441",
       "title": "Retirement: GPv1 and Legacy Blob storage account creation",
       "url": "https://azure.microsoft.com/updates?id=564441",
@@ -194,15 +158,6 @@
       ]
     },
     {
-      "id": "558033",
-      "title": "Retirement: Support for .NET 8 (LTS) ends on November 10, 2026—upgrade your apps to .NET 10 (LTS) ",
-      "url": "https://azure.microsoft.com/updates?id=558033",
-      "date": "2026-11",
-      "services": [
-        "appservice"
-      ]
-    },
-    {
       "id": "555839",
       "title": "Retirement: Managed NGINX Ingress with Application Routing Add-on Retiring November 2026",
       "url": "https://azure.microsoft.com/updates?id=555839",
@@ -212,19 +167,10 @@
       ]
     },
     {
-      "id": "azure-front-door-classic-will-be-retired-on-31-march-2027",
-      "title": "Azure Front Door (classic) will be retired on 31 March 2027",
-      "url": "https://azure.microsoft.com/updates?id=azure-front-door-classic-will-be-retired-on-31-march-2027",
-      "date": "2027-03",
-      "services": [
-        "frontdoor"
-      ]
-    },
-    {
-      "id": "558027",
-      "title": "Retirement: Python support for Azure App Service and Azure Functions on Windows will be retired on March 31, 2027 ",
-      "url": "https://azure.microsoft.com/updates?id=558027",
-      "date": "2027-03",
+      "id": "558033",
+      "title": "Retirement: Support for .NET 8 (LTS) ends on November 10, 2026—upgrade your apps to .NET 10 (LTS) ",
+      "url": "https://azure.microsoft.com/updates?id=558033",
+      "date": "2026-11",
       "services": [
         "appservice"
       ]
@@ -236,6 +182,15 @@
       "date": "2027-03",
       "services": [
         "aks"
+      ]
+    },
+    {
+      "id": "558027",
+      "title": "Retirement: Python support for Azure App Service and Azure Functions on Windows will be retired on March 31, 2027 ",
+      "url": "https://azure.microsoft.com/updates?id=558027",
+      "date": "2027-03",
+      "services": [
+        "appservice"
       ]
     },
     {
@@ -255,6 +210,15 @@
       "services": [
         "aks",
         "monitor"
+      ]
+    },
+    {
+      "id": "azure-front-door-classic-will-be-retired-on-31-march-2027",
+      "title": "Azure Front Door (classic) will be retired on 31 March 2027",
+      "url": "https://azure.microsoft.com/updates?id=azure-front-door-classic-will-be-retired-on-31-march-2027",
+      "date": "2027-03",
+      "services": [
+        "frontdoor"
       ]
     },
     {
@@ -314,27 +278,18 @@
       ]
     },
     {
-      "id": "564735",
-      "title": "Retirement: Azure VMware Solution AV36 node End of Support on September 30, 2027",
-      "url": "https://azure.microsoft.com/updates?id=564735",
+      "id": "503883",
+      "title": "Retirement: Azure VMware Solution AV36 Node Retirement now on September 30, 2027",
+      "url": "https://azure.microsoft.com/updates?id=503883",
       "date": "2027-09",
       "services": [
         "avs"
       ]
     },
     {
-      "id": "azure-docuement-intelligence-v2-retirement",
-      "title": "Retirement: Azure AI Document Intelligence GA API v2.1 is retiring on 15 September 2027 ",
-      "url": "https://azure.microsoft.com/updates?id=azure-docuement-intelligence-v2-retirement",
-      "date": "2027-09",
-      "services": [
-        "openai"
-      ]
-    },
-    {
-      "id": "503883",
-      "title": "Retirement: Azure VMware Solution AV36 Node Retirement now on September 30, 2027",
-      "url": "https://azure.microsoft.com/updates?id=503883",
+      "id": "564735",
+      "title": "Retirement: Azure VMware Solution AV36 node End of Support on September 30, 2027",
+      "url": "https://azure.microsoft.com/updates?id=564735",
       "date": "2027-09",
       "services": [
         "avs"
@@ -350,15 +305,6 @@
       ]
     },
     {
-      "id": "489009",
-      "title": "Retirement: Azure Functions – Durable Functions support for Netherite will end on March 31, 2028 ",
-      "url": "https://azure.microsoft.com/updates?id=489009",
-      "date": "2028-03",
-      "services": [
-        "functions"
-      ]
-    },
-    {
       "id": "486080",
       "title": "Retirement: Log Analytics Batch API to Be Retired on March 31, 2028",
       "url": "https://azure.microsoft.com/updates?id=486080",
@@ -368,12 +314,12 @@
       ]
     },
     {
-      "id": "485241",
-      "title": "Retirement: Docker Content Trust on March 31, 2028 – Replaced by the Notary Project and Azure Key Vault",
-      "url": "https://azure.microsoft.com/updates?id=485241",
+      "id": "485047",
+      "title": "Retirement: Azure App Service Will No Longer Support Linked Databases as a Part of Custom Backups After March 31, 2028",
+      "url": "https://azure.microsoft.com/updates?id=485047",
       "date": "2028-03",
       "services": [
-        "acr"
+        "appservice"
       ]
     },
     {
@@ -386,12 +332,21 @@
       ]
     },
     {
-      "id": "485047",
-      "title": "Retirement: Azure App Service Will No Longer Support Linked Databases as a Part of Custom Backups After March 31, 2028",
-      "url": "https://azure.microsoft.com/updates?id=485047",
+      "id": "485241",
+      "title": "Retirement: Docker Content Trust on March 31, 2028 – Replaced by the Notary Project and Azure Key Vault",
+      "url": "https://azure.microsoft.com/updates?id=485241",
       "date": "2028-03",
       "services": [
-        "appservice"
+        "acr"
+      ]
+    },
+    {
+      "id": "489009",
+      "title": "Retirement: Azure Functions – Durable Functions support for Netherite will end on March 31, 2028 ",
+      "url": "https://azure.microsoft.com/updates?id=489009",
+      "date": "2028-03",
+      "services": [
+        "functions"
       ]
     },
     {
@@ -410,15 +365,6 @@
       "date": "2028-06",
       "services": [
         "monitor"
-      ]
-    },
-    {
-      "id": "493779",
-      "title": "Retirement: Azure Disk Encryption",
-      "url": "https://azure.microsoft.com/updates?id=493779",
-      "date": "2028-09",
-      "services": [
-        "vm"
       ]
     },
     {
@@ -446,6 +392,15 @@
       "date": "2028-09",
       "services": [
         "keyvault"
+      ]
+    },
+    {
+      "id": "493779",
+      "title": "Retirement: Azure Disk Encryption",
+      "url": "https://azure.microsoft.com/updates?id=493779",
+      "date": "2028-09",
+      "services": [
+        "vm"
       ]
     },
     {
@@ -528,15 +483,15 @@
       ],
       "previews": [
         {
-          "id": "566516",
-          "title": "Public Preview: Application Gateway for Containers – Inference gateway",
-          "url": "https://azure.microsoft.com/updates?id=566516",
-          "date": "2026-06"
-        },
-        {
           "id": "562934",
           "title": "Public Preview: Anyscale on Azure",
           "url": "https://azure.microsoft.com/updates?id=562934",
+          "date": "2026-06"
+        },
+        {
+          "id": "566516",
+          "title": "Public Preview: Application Gateway for Containers – Inference gateway",
+          "url": "https://azure.microsoft.com/updates?id=566516",
           "date": "2026-06"
         },
         {
@@ -558,19 +513,13 @@
           "date": "2026-04"
         },
         {
-          "id": "557927",
-          "title": "Public Preview: Application routing with meshless Istio in AKS ",
-          "url": "https://azure.microsoft.com/updates?id=557927",
+          "id": "557882",
+          "title": "Public Preview: AKS managed GPU metrics in Azure Monitor ",
+          "url": "https://azure.microsoft.com/updates?id=557882",
           "date": "2026-03"
         }
       ],
       "launched": [
-        {
-          "id": "564849",
-          "title": "Generally Available: Azure Red Hat OpenShift in Belgium Central",
-          "url": "https://azure.microsoft.com/updates?id=564849",
-          "date": "2026-06"
-        },
         {
           "id": "562919",
           "title": "Generally available: Generally available: Managed system node pools in AKS Automatic",
@@ -578,16 +527,10 @@
           "date": "2026-06"
         },
         {
-          "id": "560521",
-          "title": "Generally Available: Configure AKS backup using a single Azure CLI command",
-          "url": "https://azure.microsoft.com/updates?id=560521",
-          "date": "2026-04"
-        },
-        {
-          "id": "560358",
-          "title": "Generally Available: Azure Monitor for Azure Arc-enabled Kubernetes with OpenShift and Azure Red Hat OpenShift",
-          "url": "https://azure.microsoft.com/updates?id=560358",
-          "date": "2026-04"
+          "id": "564849",
+          "title": "Generally Available: Azure Red Hat OpenShift in Belgium Central",
+          "url": "https://azure.microsoft.com/updates?id=564849",
+          "date": "2026-06"
         },
         {
           "id": "560015",
@@ -599,6 +542,18 @@
           "id": "557857",
           "title": "Generally Available: Disable HTTP proxy in AKS ",
           "url": "https://azure.microsoft.com/updates?id=557857",
+          "date": "2026-04"
+        },
+        {
+          "id": "559547",
+          "title": "Generally Available: Azure Red Hat OpenShift adds NVIDIA H100 and H200 GPU support",
+          "url": "https://azure.microsoft.com/updates?id=559547",
+          "date": "2026-04"
+        },
+        {
+          "id": "561135",
+          "title": "Generally Available: Microsoft Azure Red Hat OpenShift is now available in Austria East ",
+          "url": "https://azure.microsoft.com/updates?id=561135",
           "date": "2026-04"
         }
       ]
@@ -639,15 +594,9 @@
       ],
       "launched": [
         {
-          "id": "562843",
-          "title": "Generally Available: Azure API Management adds support for Agent-to-Agent (A2A) APIs",
-          "url": "https://azure.microsoft.com/updates?id=562843",
-          "date": "2026-06"
-        },
-        {
-          "id": "562848",
-          "title": "Generally Available: Azure API Management workspaces now support the built-in gateway",
-          "url": "https://azure.microsoft.com/updates?id=562848",
+          "id": "562880",
+          "title": "Generally Available: Azure API Management now supports content safety controls for MCP and A2A APIs. ",
+          "url": "https://azure.microsoft.com/updates?id=562880",
           "date": "2026-06"
         },
         {
@@ -657,21 +606,27 @@
           "date": "2026-06"
         },
         {
-          "id": "562880",
-          "title": "Generally Available: Azure API Management now supports content safety controls for MCP and A2A APIs. ",
-          "url": "https://azure.microsoft.com/updates?id=562880",
-          "date": "2026-06"
-        },
-        {
           "id": "562894",
           "title": "Generally Available: Azure API Management Premium v2 and Standard v2 now support wildcard custom hostnames. ",
           "url": "https://azure.microsoft.com/updates?id=562894",
           "date": "2026-06"
         },
         {
+          "id": "562909",
+          "title": "Generally Available: Azure API Center now supports agent registration, agent assessment, and Git-based synchronization. ",
+          "url": "https://azure.microsoft.com/updates?id=562909",
+          "date": "2026-06"
+        },
+        {
           "id": "562899",
           "title": "Generally Available: Azure API Management Premium v2 now supports multiple custom domains",
           "url": "https://azure.microsoft.com/updates?id=562899",
+          "date": "2026-06"
+        },
+        {
+          "id": "562914",
+          "title": "Generally Available: Azure API Center now provides a data plane MCP server for enterprise-wide discovery of APIs and AI assets. ",
+          "url": "https://azure.microsoft.com/updates?id=562914",
           "date": "2026-06"
         }
       ]
@@ -710,9 +665,9 @@
           "date": "2025-11"
         },
         {
-          "id": "489855",
-          "title": "Public Preview: JWT Validation in Azure Application Gateway",
-          "url": "https://azure.microsoft.com/updates?id=489855",
+          "id": "530609",
+          "title": "Public Preview: Microsoft HTTP DDoS Ruleset 1.0 on Application Gateway WAF v2",
+          "url": "https://azure.microsoft.com/updates?id=530609",
           "date": "2025-11"
         }
       ],
@@ -814,9 +769,9 @@
           "date": "2026-02"
         },
         {
-          "id": "523623",
-          "title": "Public Preview: Managed Instance on Azure App Service",
-          "url": "https://azure.microsoft.com/updates?id=523623",
+          "id": "543994",
+          "title": "Public Preview: Azure Command Launcher for Java",
+          "url": "https://azure.microsoft.com/updates?id=543994",
           "date": "2025-11"
         },
         {
@@ -826,9 +781,9 @@
           "date": "2025-11"
         },
         {
-          "id": "543994",
-          "title": "Public Preview: Azure Command Launcher for Java",
-          "url": "https://azure.microsoft.com/updates?id=543994",
+          "id": "523623",
+          "title": "Public Preview: Managed Instance on Azure App Service",
+          "url": "https://azure.microsoft.com/updates?id=523623",
           "date": "2025-11"
         }
       ],
@@ -874,15 +829,15 @@
     "avs": {
       "retirements": [
         {
-          "id": "503883",
-          "title": "Retirement: Azure VMware Solution AV36 Node Retirement now on September 30, 2027",
-          "url": "https://azure.microsoft.com/updates?id=503883",
-          "date": "2027-09"
-        },
-        {
           "id": "564735",
           "title": "Retirement: Azure VMware Solution AV36 node End of Support on September 30, 2027",
           "url": "https://azure.microsoft.com/updates?id=564735",
+          "date": "2027-09"
+        },
+        {
+          "id": "503883",
+          "title": "Retirement: Azure VMware Solution AV36 Node Retirement now on September 30, 2027",
+          "url": "https://azure.microsoft.com/updates?id=503883",
           "date": "2027-09"
         },
         {
@@ -935,9 +890,21 @@
           "date": "2026-05"
         },
         {
+          "id": "543994",
+          "title": "Public Preview: Azure Command Launcher for Java",
+          "url": "https://azure.microsoft.com/updates?id=543994",
+          "date": "2025-11"
+        },
+        {
           "id": "512900",
           "title": "Public Preview: Deployment labels in Azure Container Apps",
           "url": "https://azure.microsoft.com/updates?id=512900",
+          "date": "2025-11"
+        },
+        {
+          "id": "525470",
+          "title": "Public Preview: Azure Container Apps adds support for agentic Docker Compose ",
+          "url": "https://azure.microsoft.com/updates?id=525470",
           "date": "2025-11"
         },
         {
@@ -945,25 +912,13 @@
           "title": "Public Preview: Dynamic sessions shell environment and MCP support in Azure Container Apps",
           "url": "https://azure.microsoft.com/updates?id=512949",
           "date": "2025-11"
-        },
-        {
-          "id": "525455",
-          "title": "Public Preview: Confidential computing in Azure Container Apps",
-          "url": "https://azure.microsoft.com/updates?id=525455",
-          "date": "2025-11"
-        },
-        {
-          "id": "525465",
-          "title": "Public Preview: Azure Container Apps introduces flexible workload profile ",
-          "url": "https://azure.microsoft.com/updates?id=525465",
-          "date": "2025-11"
         }
       ],
       "launched": [
         {
-          "id": "562511",
-          "title": "Generally Available: Override Scale Rules in Azure Functions on Azure Container Apps",
-          "url": "https://azure.microsoft.com/updates?id=562511",
+          "id": "562564",
+          "title": "Generally Available: Confidential Compute support on Azure Container Apps",
+          "url": "https://azure.microsoft.com/updates?id=562564",
           "date": "2026-06"
         },
         {
@@ -979,9 +934,9 @@
           "date": "2026-06"
         },
         {
-          "id": "562564",
-          "title": "Generally Available: Confidential Compute support on Azure Container Apps",
-          "url": "https://azure.microsoft.com/updates?id=562564",
+          "id": "562511",
+          "title": "Generally Available: Override Scale Rules in Azure Functions on Azure Container Apps",
+          "url": "https://azure.microsoft.com/updates?id=562511",
           "date": "2026-06"
         },
         {
@@ -991,9 +946,9 @@
           "date": "2025-11"
         },
         {
-          "id": "512850",
-          "title": "Generally Available: Rule-based routing in Azure Container Apps",
-          "url": "https://azure.microsoft.com/updates?id=512850",
+          "id": "525460",
+          "title": "Generally Available: Azure Container Apps serverless GPUs in additional regions ",
+          "url": "https://azure.microsoft.com/updates?id=525460",
           "date": "2025-11"
         }
       ]
@@ -1009,33 +964,9 @@
       ],
       "previews": [
         {
-          "id": "563052",
-          "title": "Public Preview: Relational Database to Azure Cosmos DB NoSQL Migration Assistant",
-          "url": "https://azure.microsoft.com/updates?id=563052",
-          "date": "2026-06"
-        },
-        {
-          "id": "563027",
-          "title": "Public Preview: Introducing AI Assistant in the Azure Cosmos DB extension for Visual Studio Code",
-          "url": "https://azure.microsoft.com/updates?id=563027",
-          "date": "2026-06"
-        },
-        {
-          "id": "562976",
-          "title": "Public Preview: New Azure Cosmos DB cost estimator",
-          "url": "https://azure.microsoft.com/updates?id=562976",
-          "date": "2026-06"
-        },
-        {
-          "id": "562794",
-          "title": "Public Preview: Agentic Retrieval Toolkit for Azure Cosmos DB",
-          "url": "https://azure.microsoft.com/updates?id=562794",
-          "date": "2026-06"
-        },
-        {
-          "id": "562784",
-          "title": "Public Preview: Semantic reranker in Azure Cosmos DB",
-          "url": "https://azure.microsoft.com/updates?id=562784",
+          "id": "562774",
+          "title": "Public Preview: Safe key rotation for Azure Cosmos DB",
+          "url": "https://azure.microsoft.com/updates?id=562774",
           "date": "2026-06"
         },
         {
@@ -1043,27 +974,33 @@
           "title": "Public Preview: Agent Memory Toolkit for Azure Cosmos DB",
           "url": "https://azure.microsoft.com/updates?id=562779",
           "date": "2026-06"
+        },
+        {
+          "id": "562769",
+          "title": "Public Preview: Azure Backup for Cosmos DB",
+          "url": "https://azure.microsoft.com/updates?id=562769",
+          "date": "2026-06"
+        },
+        {
+          "id": "562759",
+          "title": "Public Preview: OmniVec, an open-source embedding toolkit for Azure",
+          "url": "https://azure.microsoft.com/updates?id=562759",
+          "date": "2026-06"
+        },
+        {
+          "id": "562764",
+          "title": "Public Preview: Integrated embeddings for Azure Cosmos DB for NoSQL",
+          "url": "https://azure.microsoft.com/updates?id=562764",
+          "date": "2026-06"
+        },
+        {
+          "id": "562784",
+          "title": "Public Preview: Semantic reranker in Azure Cosmos DB",
+          "url": "https://azure.microsoft.com/updates?id=562784",
+          "date": "2026-06"
         }
       ],
       "launched": [
-        {
-          "id": "563042",
-          "title": "Generally Available: Per-partition automatic failover for Azure Cosmos DB",
-          "url": "https://azure.microsoft.com/updates?id=563042",
-          "date": "2026-06"
-        },
-        {
-          "id": "563022",
-          "title": "Generally Available: Agent kit for Azure Cosmos DB",
-          "url": "https://azure.microsoft.com/updates?id=563022",
-          "date": "2026-06"
-        },
-        {
-          "id": "563017",
-          "title": "Generally Available: Change partition keys in Azure Cosmos DB for NoSQL API",
-          "url": "https://azure.microsoft.com/updates?id=563017",
-          "date": "2026-06"
-        },
         {
           "id": "562971",
           "title": "Generally Available: Azure Cosmos DB all versions and deletes change feed mode",
@@ -1080,6 +1017,24 @@
           "id": "562754",
           "title": "Generally Available: Azure Cosmos DB Linux emulator (vNext)",
           "url": "https://azure.microsoft.com/updates?id=562754",
+          "date": "2026-06"
+        },
+        {
+          "id": "563017",
+          "title": "Generally Available: Change partition keys in Azure Cosmos DB for NoSQL API",
+          "url": "https://azure.microsoft.com/updates?id=563017",
+          "date": "2026-06"
+        },
+        {
+          "id": "563042",
+          "title": "Generally Available: Per-partition automatic failover for Azure Cosmos DB",
+          "url": "https://azure.microsoft.com/updates?id=563042",
+          "date": "2026-06"
+        },
+        {
+          "id": "563032",
+          "title": "Generally Available: MCP Toolkit for Azure Cosmos DB",
+          "url": "https://azure.microsoft.com/updates?id=563032",
           "date": "2026-06"
         }
       ]
@@ -1119,15 +1074,15 @@
           "date": "2026-03"
         },
         {
-          "id": "536721",
-          "title": "Public Preview: Serverless workspaces in Azure Databricks",
-          "url": "https://azure.microsoft.com/updates?id=536721",
-          "date": "2025-12"
-        },
-        {
           "id": "536907",
           "title": "Public Preview: Azure Databricks Dashboard subscriptions now support Microsoft Teams ",
           "url": "https://azure.microsoft.com/updates?id=536907",
+          "date": "2025-12"
+        },
+        {
+          "id": "536721",
+          "title": "Public Preview: Serverless workspaces in Azure Databricks",
+          "url": "https://azure.microsoft.com/updates?id=536721",
           "date": "2025-12"
         }
       ],
@@ -1163,9 +1118,9 @@
           "date": "2026-03"
         },
         {
-          "id": "550845",
-          "title": "Generally Available: Serverless workspaces in Azure Databricks",
-          "url": "https://azure.microsoft.com/updates?id=550845",
+          "id": "557081",
+          "title": "Generally Available:  Azure Databricks Supervisor Agent",
+          "url": "https://azure.microsoft.com/updates?id=557081",
           "date": "2026-02"
         }
       ]
@@ -1187,9 +1142,9 @@
       ],
       "launched": [
         {
-          "id": "525424",
-          "title": "Generally Available: ExpressRoute resiliency insights",
-          "url": "https://azure.microsoft.com/updates?id=525424",
+          "id": "526729",
+          "title": "Generally Available: ExpressRoute Scalable Gateway",
+          "url": "https://azure.microsoft.com/updates?id=526729",
           "date": "2025-11"
         },
         {
@@ -1199,9 +1154,9 @@
           "date": "2025-11"
         },
         {
-          "id": "526729",
-          "title": "Generally Available: ExpressRoute Scalable Gateway",
-          "url": "https://azure.microsoft.com/updates?id=526729",
+          "id": "525424",
+          "title": "Generally Available: ExpressRoute resiliency insights",
+          "url": "https://azure.microsoft.com/updates?id=525424",
           "date": "2025-11"
         },
         {
@@ -1278,21 +1233,21 @@
           "date": "2026-02"
         },
         {
-          "id": "513802",
-          "title": "Generally Available: Azure WAF JavaScript challenge on Azure Front Door",
-          "url": "https://azure.microsoft.com/updates?id=513802",
-          "date": "2025-11"
-        },
-        {
           "id": "525419",
           "title": "Generally Available: Application Gateway for Containers with Web Application Firewall (WAF)",
           "url": "https://azure.microsoft.com/updates?id=525419",
           "date": "2025-11"
         },
         {
-          "id": "526720",
-          "title": "Generally Available: DNS flow trace logs for Azure Firewall ",
-          "url": "https://azure.microsoft.com/updates?id=526720",
+          "id": "513802",
+          "title": "Generally Available: Azure WAF JavaScript challenge on Azure Front Door",
+          "url": "https://azure.microsoft.com/updates?id=513802",
+          "date": "2025-11"
+        },
+        {
+          "id": "528969",
+          "title": "Generally Available: Troubleshoot Azure Firewall using packet capture",
+          "url": "https://azure.microsoft.com/updates?id=528969",
           "date": "2025-11"
         }
       ]
@@ -1382,27 +1337,27 @@
       ],
       "previews": [
         {
-          "id": "562497",
-          "title": "Public Preview: New project templates and template gallery for Azure Functions in VS Code",
-          "url": "https://azure.microsoft.com/updates?id=562497",
-          "date": "2026-06"
-        },
-        {
           "id": "562487",
           "title": "Public Preview: Copilot-assisted coding & agent skills to build, deploy, and run Azure Functions faster in VS Code, CLI, and azd",
           "url": "https://azure.microsoft.com/updates?id=562487",
           "date": "2026-06"
         },
         {
-          "id": "562482",
-          "title": "Public Preview: Serverless agents runtime for Azure Functions",
-          "url": "https://azure.microsoft.com/updates?id=562482",
-          "date": "2026-06"
-        },
-        {
           "id": "562442",
           "title": "Public Preview: Azure Functions now includes managed connectors to integrate with 1400+ of your favorite systems ",
           "url": "https://azure.microsoft.com/updates?id=562442",
+          "date": "2026-06"
+        },
+        {
+          "id": "562497",
+          "title": "Public Preview: New project templates and template gallery for Azure Functions in VS Code",
+          "url": "https://azure.microsoft.com/updates?id=562497",
+          "date": "2026-06"
+        },
+        {
+          "id": "562482",
+          "title": "Public Preview: Serverless agents runtime for Azure Functions",
+          "url": "https://azure.microsoft.com/updates?id=562482",
           "date": "2026-06"
         },
         {
@@ -1438,15 +1393,15 @@
           "date": "2026-05"
         },
         {
-          "id": "560957",
-          "title": "Generally Available: Azure Functions durable task scheduler Consumption SKU",
-          "url": "https://azure.microsoft.com/updates?id=560957",
-          "date": "2026-04"
-        },
-        {
           "id": "560879",
           "title": "Generally Available: Azure Functions support for Java 25",
           "url": "https://azure.microsoft.com/updates?id=560879",
+          "date": "2026-04"
+        },
+        {
+          "id": "560957",
+          "title": "Generally Available: Azure Functions durable task scheduler Consumption SKU",
+          "url": "https://azure.microsoft.com/updates?id=560957",
           "date": "2026-04"
         },
         {
@@ -1492,9 +1447,9 @@
       ],
       "previews": [
         {
-          "id": "562442",
-          "title": "Public Preview: Azure Functions now includes managed connectors to integrate with 1400+ of your favorite systems ",
-          "url": "https://azure.microsoft.com/updates?id=562442",
+          "id": "562874",
+          "title": "Public preview: Connector Namespace",
+          "url": "https://azure.microsoft.com/updates?id=562874",
           "date": "2026-06"
         },
         {
@@ -1504,9 +1459,9 @@
           "date": "2026-06"
         },
         {
-          "id": "562874",
-          "title": "Public preview: Connector Namespace",
-          "url": "https://azure.microsoft.com/updates?id=562874",
+          "id": "562929",
+          "title": "Public Preview: Knowledge as a Service with Azure Logic Apps.",
+          "url": "https://azure.microsoft.com/updates?id=562929",
           "date": "2026-06"
         },
         {
@@ -1516,15 +1471,15 @@
           "date": "2026-06"
         },
         {
-          "id": "562929",
-          "title": "Public Preview: Knowledge as a Service with Azure Logic Apps.",
-          "url": "https://azure.microsoft.com/updates?id=562929",
-          "date": "2026-06"
-        },
-        {
           "id": "562939",
           "title": "Public Preview: Azure Logic Apps now enables developers to invoke Microsoft Foundry Agents directly from workflows. ",
           "url": "https://azure.microsoft.com/updates?id=562939",
+          "date": "2026-06"
+        },
+        {
+          "id": "562442",
+          "title": "Public Preview: Azure Functions now includes managed connectors to integrate with 1400+ of your favorite systems ",
+          "url": "https://azure.microsoft.com/updates?id=562442",
           "date": "2026-06"
         }
       ],
@@ -1536,12 +1491,6 @@
           "date": "2026-06"
         },
         {
-          "id": "527644",
-          "title": "Generally Available: Automated Testing Framework for Logic Apps [Standard]",
-          "url": "https://azure.microsoft.com/updates?id=527644",
-          "date": "2025-11"
-        },
-        {
           "id": "527649",
           "title": "Generally Available: Agent Loop in Azure Logic Apps [Standard]",
           "url": "https://azure.microsoft.com/updates?id=527649",
@@ -1551,6 +1500,12 @@
           "id": "527683",
           "title": "Generally Available: New Hybrid Integration Connectors for Azure Logic Apps",
           "url": "https://azure.microsoft.com/updates?id=527683",
+          "date": "2025-11"
+        },
+        {
+          "id": "527644",
+          "title": "Generally Available: Automated Testing Framework for Logic Apps [Standard]",
+          "url": "https://azure.microsoft.com/updates?id=527644",
           "date": "2025-11"
         },
         {
@@ -1683,69 +1638,20 @@
         }
       ]
     },
-    "openai": {
-      "retirements": [
-        {
-          "id": "486238",
-          "title": "Retirement: Azure Machine Learning SDK v1 Will Be Retired on June 30, 2026 – Transition to Machine Learning SDK v2",
-          "url": "https://azure.microsoft.com/updates?id=486238",
-          "date": "2026-06"
-        },
-        {
-          "id": "501668",
-          "title": "Retirement: Remove dependency on these Azure ML SDKs before June 30, 2026",
-          "url": "https://azure.microsoft.com/updates?id=501668",
-          "date": "2026-06"
-        },
-        {
-          "id": "501692",
-          "title": "Retirement: Azure Machine Learning - Data labeling Deprecation",
-          "url": "https://azure.microsoft.com/updates?id=501692",
-          "date": "2026-09"
-        },
-        {
-          "id": "557406",
-          "title": "Retirement: External Data Import & Data Connections in Azure Machine Learning will be retired on September 30, 2026 ",
-          "url": "https://azure.microsoft.com/updates?id=557406",
-          "date": "2026-09"
-        },
-        {
-          "id": "azure-docuement-intelligence-v2-retirement",
-          "title": "Retirement: Azure AI Document Intelligence GA API v2.1 is retiring on 15 September 2027 ",
-          "url": "https://azure.microsoft.com/updates?id=azure-docuement-intelligence-v2-retirement",
-          "date": "2027-09"
-        }
-      ],
-      "previews": [
-        {
-          "id": "563172",
-          "title": "Public Preview: Deployment Templates support packaging deployment configurations in registries for curated deployment",
-          "url": "https://azure.microsoft.com/updates?id=563172",
-          "date": "2026-06"
-        },
-        {
-          "id": "563187",
-          "title": "Public Preview: CLI and SDK support for Deployment Templates",
-          "url": "https://azure.microsoft.com/updates?id=563187",
-          "date": "2026-06"
-        }
-      ],
-      "launched": []
-    },
     "servicebus": {
       "retirements": [],
       "previews": [],
       "launched": [
         {
-          "id": "561942",
-          "title": "Generally Available: Confidential computing for Azure Service Bus Premium",
-          "url": "https://azure.microsoft.com/updates?id=561942",
-          "date": "2026-05"
-        },
-        {
           "id": "561947",
           "title": "Update: 99.99% uptime for all Azure Service Bus Premium namespaces in Availability Zone regions",
           "url": "https://azure.microsoft.com/updates?id=561947",
+          "date": "2026-05"
+        },
+        {
+          "id": "561942",
+          "title": "Generally Available: Confidential computing for Azure Service Bus Premium",
+          "url": "https://azure.microsoft.com/updates?id=561942",
           "date": "2026-05"
         },
         {
@@ -1773,15 +1679,15 @@
       ],
       "previews": [
         {
-          "id": "563142",
-          "title": "Public Preview: Azure SQL updates for early-June",
-          "url": "https://azure.microsoft.com/updates?id=563142",
-          "date": "2026-06"
-        },
-        {
           "id": "563122",
           "title": "Public Preview: Azure SQL Database provisioning in the MSSQL extension",
           "url": "https://azure.microsoft.com/updates?id=563122",
+          "date": "2026-06"
+        },
+        {
+          "id": "563142",
+          "title": "Public Preview: Azure SQL updates for early-June",
+          "url": "https://azure.microsoft.com/updates?id=563142",
           "date": "2026-06"
         },
         {
@@ -1791,21 +1697,21 @@
           "date": "2026-05"
         },
         {
-          "id": "558884",
-          "title": "Public Preview: Azure SQL Managed Instance change event streaming ",
-          "url": "https://azure.microsoft.com/updates?id=558884",
+          "id": "558155",
+          "title": "Public Preview: Database DevOps in SSMS powered by SQL projects ",
+          "url": "https://azure.microsoft.com/updates?id=558155",
           "date": "2026-03"
         },
         {
-          "id": "558178",
-          "title": "Public Preview: Data API builder with built-in GitHub Copilot in MSSQL extension ",
-          "url": "https://azure.microsoft.com/updates?id=558178",
+          "id": "558150",
+          "title": "Public Preview: SQL MCP Server",
+          "url": "https://azure.microsoft.com/updates?id=558150",
           "date": "2026-03"
         },
         {
-          "id": "558169",
-          "title": "Public preview: GitHub Copilot integration in Schema Designer for the MSSQL extension ",
-          "url": "https://azure.microsoft.com/updates?id=558169",
+          "id": "558116",
+          "title": "Public Preview: Azure SQL updates for mid-March 2026",
+          "url": "https://azure.microsoft.com/updates?id=558116",
           "date": "2026-03"
         }
       ],
@@ -1815,18 +1721,6 @@
           "title": "Generally Available: Automated Patching retirement and replacement with Azure Update Manager",
           "url": "https://azure.microsoft.com/updates?id=automated-patching-deprecation-and-replacement-with-azure-update-manager",
           "date": "2027-09"
-        },
-        {
-          "id": "564734",
-          "title": "Generally Available: SQL MCP Server",
-          "url": "https://azure.microsoft.com/updates?id=564734",
-          "date": "2026-06"
-        },
-        {
-          "id": "563137",
-          "title": "Generally Available: Azure SQL updates for June",
-          "url": "https://azure.microsoft.com/updates?id=563137",
-          "date": "2026-06"
         },
         {
           "id": "563132",
@@ -1841,9 +1735,21 @@
           "date": "2026-06"
         },
         {
+          "id": "563137",
+          "title": "Generally Available: Azure SQL updates for June",
+          "url": "https://azure.microsoft.com/updates?id=563137",
+          "date": "2026-06"
+        },
+        {
           "id": "565154",
           "title": "Generally Available: Microsoft Entra server principals on Azure SQL Database ",
           "url": "https://azure.microsoft.com/updates?id=565154",
+          "date": "2026-06"
+        },
+        {
+          "id": "564734",
+          "title": "Generally Available: SQL MCP Server",
+          "url": "https://azure.microsoft.com/updates?id=564734",
           "date": "2026-06"
         }
       ]
@@ -1857,15 +1763,15 @@
           "date": "2026-09"
         },
         {
-          "id": "496964",
-          "title": "Retirement: General Purpose v1 (GPv1) and legacy blob storage accounts  ",
-          "url": "https://azure.microsoft.com/updates?id=496964",
-          "date": "2026-10"
-        },
-        {
           "id": "564441",
           "title": "Retirement: GPv1 and Legacy Blob storage account creation",
           "url": "https://azure.microsoft.com/updates?id=564441",
+          "date": "2026-10"
+        },
+        {
+          "id": "496964",
+          "title": "Retirement: General Purpose v1 (GPv1) and legacy blob storage accounts  ",
+          "url": "https://azure.microsoft.com/updates?id=496964",
           "date": "2026-10"
         },
         {
@@ -1895,15 +1801,15 @@
           "date": "2026-03"
         },
         {
-          "id": "559504",
-          "title": "Public Preview: Azure NetApp Files storage with cool access enhancement ",
-          "url": "https://azure.microsoft.com/updates?id=559504",
-          "date": "2026-03"
-        },
-        {
           "id": "558662",
           "title": "Public Preview: Entra ID-Based Access for Azure Blob Storage SFTP",
           "url": "https://azure.microsoft.com/updates?id=558662",
+          "date": "2026-03"
+        },
+        {
+          "id": "559504",
+          "title": "Public Preview: Azure NetApp Files storage with cool access enhancement ",
+          "url": "https://azure.microsoft.com/updates?id=559504",
           "date": "2026-03"
         },
         {
@@ -1921,9 +1827,15 @@
           "date": "2026-06"
         },
         {
-          "id": "565062",
-          "title": "Generally Available: File share centric management model (Microsoft.FileShares) for Azure Files",
-          "url": "https://azure.microsoft.com/updates?id=565062",
+          "id": "562254",
+          "title": "Generally Available: Azure NetApp Files object REST API ",
+          "url": "https://azure.microsoft.com/updates?id=562254",
+          "date": "2026-05"
+        },
+        {
+          "id": "562259",
+          "title": "Generally Available: Azure NetApp Files cache volumes ",
+          "url": "https://azure.microsoft.com/updates?id=562259",
           "date": "2026-05"
         },
         {
@@ -1939,15 +1851,9 @@
           "date": "2026-05"
         },
         {
-          "id": "562254",
-          "title": "Generally Available: Azure NetApp Files object REST API ",
-          "url": "https://azure.microsoft.com/updates?id=562254",
-          "date": "2026-05"
-        },
-        {
-          "id": "562753",
-          "title": "Generally Available: Azure Storage Mover Blob-to-Blob migration",
-          "url": "https://azure.microsoft.com/updates?id=562753",
+          "id": "565062",
+          "title": "Generally Available: File share centric management model (Microsoft.FileShares) for Azure Files",
+          "url": "https://azure.microsoft.com/updates?id=565062",
           "date": "2026-05"
         }
       ]
@@ -1979,15 +1885,15 @@
           "date": "2026-07"
         },
         {
-          "id": "548497",
-          "title": "Retirement: NP-series Azure Virtual Machines will be retired on May 31, 2027 ",
-          "url": "https://azure.microsoft.com/updates?id=548497",
-          "date": "2027-05"
-        },
-        {
           "id": "548525",
           "title": "Retirement: HBv2-series Azure Virtual Machines will be retired on May 31, 2027",
           "url": "https://azure.microsoft.com/updates?id=548525",
+          "date": "2027-05"
+        },
+        {
+          "id": "548497",
+          "title": "Retirement: NP-series Azure Virtual Machines will be retired on May 31, 2027 ",
+          "url": "https://azure.microsoft.com/updates?id=548497",
           "date": "2027-05"
         },
         {
@@ -2023,9 +1929,9 @@
           "date": "2026-01"
         },
         {
-          "id": "529416",
-          "title": "Public Preview: Industry-leading storage performance Ebsv6 VM series",
-          "url": "https://azure.microsoft.com/updates?id=529416",
+          "id": "543994",
+          "title": "Public Preview: Azure Command Launcher for Java",
+          "url": "https://azure.microsoft.com/updates?id=543994",
           "date": "2025-11"
         },
         {
@@ -2035,9 +1941,9 @@
           "date": "2025-11"
         },
         {
-          "id": "543994",
-          "title": "Public Preview: Azure Command Launcher for Java",
-          "url": "https://azure.microsoft.com/updates?id=543994",
+          "id": "529416",
+          "title": "Public Preview: Industry-leading storage performance Ebsv6 VM series",
+          "url": "https://azure.microsoft.com/updates?id=529416",
           "date": "2025-11"
         }
       ],
@@ -2128,18 +2034,6 @@
           "date": "2026-04"
         },
         {
-          "id": "526145",
-          "title": "Generally Available: Azure Virtual Network Manager UseExisting Mode for UDR management ",
-          "url": "https://azure.microsoft.com/updates?id=526145",
-          "date": "2025-11"
-        },
-        {
-          "id": "526155",
-          "title": "Generally Available: Azure Virtual Network Manager peering compliance ",
-          "url": "https://azure.microsoft.com/updates?id=526155",
-          "date": "2025-11"
-        },
-        {
           "id": "526160",
           "title": "Generally Available: Azure Virtual Network Manager IP Address Management Pool Association Recommendation",
           "url": "https://azure.microsoft.com/updates?id=526160",
@@ -2149,6 +2043,18 @@
           "id": "526169",
           "title": "Generally Available: Azure Virtual Network Manager address overlap prevention in mesh ",
           "url": "https://azure.microsoft.com/updates?id=526169",
+          "date": "2025-11"
+        },
+        {
+          "id": "526145",
+          "title": "Generally Available: Azure Virtual Network Manager UseExisting Mode for UDR management ",
+          "url": "https://azure.microsoft.com/updates?id=526145",
+          "date": "2025-11"
+        },
+        {
+          "id": "526155",
+          "title": "Generally Available: Azure Virtual Network Manager peering compliance ",
+          "url": "https://azure.microsoft.com/updates?id=526155",
           "date": "2025-11"
         }
       ]

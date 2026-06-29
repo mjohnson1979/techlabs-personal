@@ -203,7 +203,7 @@
       notes.push(
         el("div", { class: "card-attention card-attention-retire", title: life.retirements[0].title }, [
           el("span", { class: "card-attention-icon", text: "\u26A0", "aria-hidden": "true" }),
-          el("span", { text: n + " Azure retirement" + (n > 1 ? "s" : "") + " affecting this use case" }),
+          el("span", { text: n + " upcoming retirement" + (n > 1 ? "s" : "") + " for this use case's services" }),
         ])
       );
     }

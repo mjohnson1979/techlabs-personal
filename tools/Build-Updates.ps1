@@ -69,8 +69,16 @@ function ConvertTo-MonthNumber {
 # cost-meter serviceNames (via AzureIcons.keyForService) with no extra mapping.
 # Matching is case-insensitive substring: the first alias found in a product
 # name wins, so order longer/more-specific aliases first within a key.
+#
+# IMPORTANT - keep these aliases PRECISE. Each key must match only the product(s)
+# a catalog use case actually deploys. Broad family names (e.g. "cognitive
+# services", "azure ai services", "azure machine learning") pull in retirements
+# for unrelated products (Document Intelligence, Vision, AML SDK, ...) that the
+# use case never provisions, which inflates and falsifies the per-use-case
+# retirement count. The openai key therefore matches only the Azure OpenAI /
+# Foundry models surface, not the whole Azure AI umbrella.
 $ProductAliases = [ordered]@{
-    openai         = @('azure openai', 'azure ai services', 'cognitive services', 'azure ai foundry', 'azure machine learning')
+    openai         = @('azure openai', 'azure ai foundry')
     search         = @('azure ai search', 'cognitive search', 'azure search')
     cosmos         = @('cosmos db')
     sql            = @('sql database', 'sql managed instance', 'azure sql', 'sql server on azure')
