@@ -70,3 +70,32 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+      # Enable the in-app Terraform deploy engine on the live host. These settings
+      # let the app provision a pinned terraform binary on first boot and deploy
+      # with its managed identity (ARM_USE_MSI). The in-app option stays hidden
+      # until the binary is present; the Terraform CLI snippet is always shown.
+      # Tenant/subscription reuse the same repo vars/secrets as the OIDC login,
+      # so no new configuration is required.
+      - name: Enable Terraform engine (app settings)
+        shell: bash
+        env:
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_TENANT_ID }}
+        run: |
+          set -euo pipefail
+          rg=$(az webapp list --query "[?name=='${AZURE_WEBAPP_NAME}'].resourceGroup | [0]" -o tsv)
+          if [ -z "$rg" ]; then
+            echo "Could not resolve resource group for ${AZURE_WEBAPP_NAME}" >&2
+            exit 1
+          fi
+          echo "Resolved resource group: $rg"
+          az webapp config appsettings set \
+            --name "${AZURE_WEBAPP_NAME}" \
+            --resource-group "$rg" \
+            --settings \
+              GALLERY_TERRAFORM_AUTO_INSTALL=true \
+              ARM_USE_MSI=true \
+              ARM_SUBSCRIPTION_ID="${ARM_SUBSCRIPTION_ID}" \
+              ARM_TENANT_ID="${ARM_TENANT_ID}" \
+            -o none
