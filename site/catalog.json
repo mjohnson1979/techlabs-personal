@@ -330,9 +330,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/aks-secure-baseline/terraform"
                   },
                   {
                       "name":  "api-management-gateway",
@@ -430,9 +431,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/api-management-gateway/terraform"
                   },
                   {
                       "name":  "avd-hostpool",
@@ -547,9 +549,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/avd-hostpool/terraform"
                   },
                   {
                       "name":  "azure-virtual-desktop-enterprise",
@@ -669,9 +672,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/azure-virtual-desktop-enterprise/terraform"
                   },
                   {
                       "name":  "azure-vmware-solution-enterprise",
@@ -789,9 +793,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/azure-vmware-solution-enterprise/terraform"
                   },
                   {
                       "name":  "container-app",
@@ -1027,9 +1032,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/data-lakehouse/terraform"
                   },
                   {
                       "name":  "enterprise-rag",
@@ -1200,9 +1206,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/enterprise-rag/terraform"
                   },
                   {
                       "name":  "event-streaming-analytics",
@@ -1332,9 +1339,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/event-streaming-analytics/terraform"
                   },
                   {
                       "name":  "hub-spoke-network",
@@ -1454,9 +1462,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/hub-spoke-network/terraform"
                   },
                   {
                       "name":  "integration-workflow",
@@ -1566,9 +1575,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/integration-workflow/terraform"
                   },
                   {
                       "name":  "landing-zone-ai",
@@ -1676,9 +1686,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/landing-zone/ai/terraform"
                   },
                   {
                       "name":  "landing-zone-core",
@@ -1776,9 +1787,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/landing-zone/core/terraform"
                   },
                   {
                       "name":  "microservices-aca",
@@ -1897,9 +1909,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/microservices-aca/terraform"
                   },
                   {
                       "name":  "multiregion-web",
@@ -2021,9 +2034,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/multiregion-web/terraform"
                   },
                   {
                       "name":  "secure-web-app",
@@ -2154,9 +2168,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/secure-web-app/terraform"
                   },
                   {
                       "name":  "sql-data-api",
