@@ -724,6 +724,13 @@ a:hover {
   font-size: 0.9rem;
 }
 
+.deploy-overrides {
+  min-height: 84px;
+  resize: vertical;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.84rem;
+}
+
 .deploy-note {
   margin: 2px 0 0;
   color: var(--muted);

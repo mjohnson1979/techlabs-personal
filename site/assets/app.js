@@ -454,6 +454,13 @@
     return { select: select, note: note };
   }
 
+  function parseOverrides(raw) {
+    return String(raw || "")
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#") && !line.startsWith("//") && line.includes("="));
+  }
+
   function deployBlock(it) {
     const me = state.me;
     const maxHours = me && me.maxLifetimeHours ? me.maxLifetimeHours : 48;
@@ -472,6 +479,20 @@
       el("option", { value: "bicep", text: "Bicep (ARM)" }),
     ]);
     if (hasTerraform) engineSelect.appendChild(el("option", { value: "terraform", text: "Terraform" }));
+
+    const rgInput = el("input", {
+      type: "text",
+      class: "deploy-input",
+      id: "deploy-rg",
+      value: `rg-techlabs-${it.path}`,
+      placeholder: "rg-techlabs",
+    });
+
+    const overrideInput = el("textarea", {
+      class: "deploy-input deploy-overrides",
+      id: "deploy-overrides",
+      placeholder: "Optional parameter overrides, one per line\nexample:\nprefix=contoso\nenvironment=mvp",
+    });
 
     const region = deployRegionField(it);
 
@@ -552,6 +573,10 @@
       el("label", { class: "deploy-label", text: "IaC engine" }),
       engineSelect,
       engineHint,
+      el("label", { class: "deploy-label", text: "Resource group" }),
+      rgInput,
+      el("label", { class: "deploy-label", text: "Template parameter overrides" }),
+      overrideInput,
       el("label", { class: "deploy-label", text: "End time (auto-cleanup)" }),
       endInput,
       el("p", { class: "deploy-note", text: lifeNote }),
@@ -560,28 +585,52 @@
     ]);
 
     function manualSnippet(engine) {
+      const env = envSelect.value;
+      const location = region.select.value;
+      const rg = (rgInput.value || "rg-techlabs").trim();
+      const overrides = parseOverrides(overrideInput.value);
+
       if (engine === "terraform") {
-        return (
-          `cd catalog/${it.path}/terraform\n` +
-          "terraform init\n" +
-          "terraform apply `\n" +
-          "  -var-file=dev.tfvars `\n" +
-          "  -var resource_group_name=rg-techlabs `\n" +
-          "  -var location=centralus"
-        );
+        const tfArgs = [
+          `-var-file=${env}.tfvars`,
+          `-var resource_group_name=${rg}`,
+          `-var location=${location}`,
+        ];
+        overrides.forEach((line) => {
+          const i = line.indexOf("=");
+          if (i < 1) return;
+          const key = line.slice(0, i).trim();
+          const value = line.slice(i + 1).trim();
+          if (!key || !value) return;
+          tfArgs.push(`-var ${key}=${value}`);
+        });
+        return [
+          `cd catalog/${it.path}/terraform`,
+          "terraform init",
+          "terraform apply `\n  " + tfArgs.join(" `\n  "),
+        ].join("\n");
       }
-      return (
-        "az group create --name rg-techlabs --location centralus\n" +
-        "az deployment group create `\n" +
-        "  --resource-group rg-techlabs `\n" +
-        `  --template-file ${it.template} \`\n` +
-        `  --parameters catalog/${it.path}/parameters/dev.bicepparam`
-      );
+
+      const bicepArgs = [
+        `--resource-group ${rg}`,
+        `--template-file ${it.template}`,
+        `--parameters catalog/${it.path}/parameters/${env}.bicepparam`,
+      ];
+      if (overrides.length) {
+        bicepArgs.push(`--parameters ${overrides.join(" ")}`);
+      }
+      return [
+        `az group create --name ${rg} --location ${location}`,
+        "az deployment group create `\n  " + bicepArgs.join(" `\n  "),
+      ].join("\n");
     }
 
     const manualCode = el("div", { class: "code", text: manualSnippet(engineSelect.value) });
     const manualSummary = el("summary", { text: "Or deploy manually with the CLI" });
-    engineSelect.addEventListener("change", syncEngine);
+    [engineSelect, envSelect, region.select, rgInput, overrideInput].forEach((control) => {
+      control.addEventListener("change", syncEngine);
+      control.addEventListener("input", syncEngine);
+    });
     syncEngine();
     const manual = el("details", { class: "deploy-manual" }, [manualSummary, manualCode]);
 
