@@ -13,7 +13,9 @@
 - [identity.py](identity.py): Resolves the caller's identity + role for `/api/*` routes; fails closed.
 - [api.py](api.py): `/api/*` JSON endpoints (deployments, users, telemetry).
 - [db.py](db.py): All persistence — SQLite schema plus every read/write helper.
-- [azure_deploy.py](azure_deploy.py): In-process executor that provisions/destroys Azure resources with the app's managed identity.
+- [azure_deploy.py](azure_deploy.py): In-process executor that provisions/destroys Azure resources with the app's managed identity; branches on the deployment `engine`.
+- [terraform_exec.py](terraform_exec.py): Terraform engine — runs a use case's Terraform module (`_tf/<use_case>/`) with the managed identity (azurerm + `ARM_USE_MSI`) instead of submitting ARM JSON.
+- [terraform_bootstrap.py](terraform_bootstrap.py): Opt-in, best-effort provisioning of the `terraform` binary into the persistent `/home` share on startup (pinned release, SHA256-verified).
 - [scheduler.py](scheduler.py): Background asyncio task that tears down deployments past their end time.
 
 ## Database
@@ -25,7 +27,7 @@
 ## Schema (see SCHEMA in db.py)
 
 - `users`: one row per signed-in user. `oid` (Entra object ID) PK, `upn`, `name`, `role` ('admin'|'guest'), `created_at`, `last_seen`. First-ever sign-in is bootstrapped to `admin`. Admin pre-assignments are placeholder rows keyed `upn:<upn>` and reconciled on first sign-in.
-- `deployments`: one row per provisioning request. `id` PK, `use_case`, `environment`, `user_oid`/`user_upn`/`user_name`, `subscription_id`, `resource_group`, `status` (requested|deploying|active|expiring|destroying|destroyed|failed), `created_at`, `end_at`, `destroyed_at`, `gh_run_url`, `detail`, `params_json`. Indexed by user, status, end_at.
+- `deployments`: one row per provisioning request. `id` PK, `use_case`, `environment`, `engine` ('bicep'|'terraform'), `user_oid`/`user_upn`/`user_name`, `subscription_id`, `resource_group`, `status` (requested|deploying|active|expiring|destroying|destroyed|failed), `created_at`, `end_at`, `destroyed_at`, `gh_run_url`, `detail`, `params_json`. Indexed by user, status, end_at.
 - `events`: append-only telemetry. `id` PK, `ts`, `type` (view|signin|deploy_requested|deploy_succeeded|cleanup_triggered|…), `user_oid`/`user_upn`, `use_case`, `deployment_id`, `meta_json`. Indexed by ts, type, user.
 
 ## Access helpers (db.py)
@@ -43,6 +45,7 @@
 ## Configuration
 
 - See [.env.example](.env.example): `GALLERY_ENTRA_TENANT_ID`, `GALLERY_ENTRA_CLIENT_ID`, `GALLERY_SUBSCRIPTION_ID`, `GALLERY_DEPLOY_LOCATION`, `GALLERY_HTTPS`, `GALLERY_CLEANUP_INTERVAL_SECONDS`, `GALLERY_DB_PATH`.
+- Deployment engines: every use case ships both a Bicep and a Terraform module. Bicep needs no extra config. In-app Terraform deploys are capability-gated (`GET /api/me` -> `terraformExecAvailable`) and the deploy modal always shows the Terraform CLI snippet, so leaving Terraform unconfigured is safe. To enable in-app Terraform on App Service set app settings `GALLERY_TERRAFORM_AUTO_INSTALL=true` (or pre-stage `GALLERY_TERRAFORM_BIN`), `ARM_USE_MSI=true`, `ARM_SUBSCRIPTION_ID`, `ARM_TENANT_ID`. Local state on `/home` needs no new role (same MI that deploys Bicep); an azurerm remote backend (`GALLERY_TF_STATE_STORAGE`) needs Storage Blob Data Contributor on the state account.
 
 ## Run locally
 

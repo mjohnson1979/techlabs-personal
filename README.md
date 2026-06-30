@@ -1,16 +1,17 @@
 # SME&C TechLabs
 
-A catalog of templatized Azure use cases as Infrastructure as Code (Bicep), plus
-a self-hosted gallery for browsing, costing, and deploying them. Every use case
-is resilient by design, mapped to the Azure Well-Architected Framework, ships
-with `dev` and `prod` parameter profiles, and carries machine-readable cost
-metadata that is priced live against the public Azure Retail Prices API.
+A catalog of templatized Azure use cases as Infrastructure as Code (**Bicep and
+Terraform**), plus a self-hosted gallery for browsing, costing, and deploying them.
+Every use case is resilient by design, mapped to the Azure Well-Architected
+Framework, ships with `dev` and `prod` parameter profiles, and carries
+machine-readable cost metadata that is priced live against the public Azure Retail
+Prices API.
 
 ## Repository layout
 
 | Path | What's there |
 | --- | --- |
-| `catalog/` | One folder per use case: `main.bicep`, `parameters/*.bicepparam`, `metadata.json`, `README.md`. Landing zones are nested (e.g. `catalog/landing-zone/core`). |
+| `catalog/` | One folder per use case: `main.bicep`, `parameters/*.bicepparam`, a parallel `terraform/` module, `metadata.json`, `README.md`. Landing zones are nested (e.g. `catalog/landing-zone/core`). |
 | `modules/` | Shared Bicep building blocks referenced by templates (Log Analytics, App Insights, Storage, Key Vault, private endpoints). |
 | `site/` | The static gallery (`index.html` + `assets/`) that loads `site/catalog.json`, plus the `site/capacity.json` and `site/updates.json` signal snapshots. |
 | `site/server/` | FastAPI backend that gates the gallery behind Entra ID and acts as the deploy control plane. See [site/server/README.md](site/server/README.md). |
@@ -21,6 +22,10 @@ metadata that is priced live against the public Azure Retail Prices API.
 
 - Each use case lives under `catalog/<use-case>/` and contains a deployable
   `main.bicep`, `dev`/`prod` parameter files, a `metadata.json` contract, and a `README.md`.
+- It also ships a parallel **Terraform** module in `catalog/<use-case>/terraform/`
+  (`main.tf`, `variables.tf`, `outputs.tf`, `providers.tf`, `dev.tfvars`,
+  `prod.tfvars`) that provisions the same resources. The gallery surfaces both
+  engines; see [site/server/README.md](site/server/README.md#deployment-engines-bicep-and-terraform).
 - `metadata.json` is the contract: `what`, `why`, `potentialUseCases`, `category`,
   `industries`, `compliance`, `wellArchitected` (5 pillars), and `cost.components`
   (each `fixed` or `usage`). The gallery and the cost tooling both read it.
@@ -69,8 +74,12 @@ fully static:
 
 - `.github/workflows/bicep-validate.yml` builds and lints every `main.bicep`,
   module, and `.bicepparam` on PR/push.
+- `.github/workflows/terraform-validate.yml` runs `terraform fmt -check` and
+  `terraform validate` on every `catalog/**/terraform` module on PR/push.
 - Locally: `az bicep build --file <template>` and
-  `az bicep build-params --file <paramfile>`, or `tools/Test-Catalog.ps1`.
+  `az bicep build-params --file <paramfile>`, or `tools/Test-Catalog.ps1`. For
+  Terraform: `terraform fmt` then `terraform init -backend=false` + `terraform
+  validate` inside a module folder.
 
 ## Deployment
 
