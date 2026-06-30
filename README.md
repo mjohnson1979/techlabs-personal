@@ -7,6 +7,60 @@ Framework, ships with `dev` and `prod` parameter profiles, and carries
 machine-readable cost metadata that is priced live against the public Azure Retail
 Prices API.
 
+## Why Tech Labs exists
+
+**The problem.** Cloud value is realized at the moment a workload runs in
+production — yet most of the elapsed time between "we've decided to build on Azure"
+and "it's live" is spent not building, but re-deciding. Every team rediscovers the
+same architecture, re-estimates the same costs, re-litigates the same security and
+compliance posture, and rebuilds the same deployment plumbing. That effort is
+duplicated across engagements, rarely captured, and inconsistently aligned to Azure
+best practice. The result is slow time-to-value, uneven quality, and unpredictable
+spend — the friction that keeps pipeline from converting into consumption.
+
+**The approach.** Tech Labs is a curated catalog of **production-shaped Azure use
+cases** — reference workloads that are architected, costed, and ready to deploy.
+Each one encodes the decisions a team would otherwise make from scratch, so the
+starting point is already resilient, compliant, and priced. It converts
+institutional knowledge into reusable, governed assets instead of one-off scripts
+that leave with the people who wrote them.
+
+**The outcome.** Teams move from intent to a running, well-architected footprint in
+the same day rather than over weeks — with cost known up front, best practice built
+in, and a consistent baseline every project inherits.
+
+### Business value
+
+- **Faster time-to-value.** Compress weeks of design, estimation, and scaffolding
+  into a same-day deployment — accelerating proofs of concept and shortening the
+  path from decision to production consumption.
+- **Lower delivery risk.** Every workload is resilient by design and mapped to the
+  five pillars of the Azure **Well-Architected Framework**, so reliability,
+  security, operations, and performance are the default — not a post-hoc remediation.
+- **Cost certainty.** Live pricing from the public Azure Retail Prices API and
+  portfolio roll-ups put a defensible monthly estimate in front of stakeholders
+  *before* the first resource is created, with separate `dev`/`prod` profiles.
+- **Governance and consistency at scale.** Best practice is codified once and
+  reused everywhere, so quality no longer depends on which individual built it.
+  Use cases carry category, industry, and compliance context, plus live region
+  capacity/quota and Azure service-lifecycle signals — so what you choose will
+  actually deploy where you need it.
+- **Standardization without lock-in.** Every use case ships both **Bicep** and
+  **Terraform**, so organizations adopt Tech Labs on the IaC standard they already run.
+
+### How it accelerates workloads to Azure
+
+- **Browse to deployed, securely.** A self-hosted, Entra ID–gated gallery deploys a
+  use case with its own managed identity — no secrets, no hand-built scripts — or
+  hands teams the exact `az`/`terraform` CLI to run in their own pipelines.
+- **A launchpad, not a demo.** Templates are parameterized, documented, and meant to
+  be extended into real solutions — so the first deployment is the foundation of the
+  build, not throwaway scaffolding.
+- **Compounding leverage.** Each engagement that starts from Tech Labs reinforces the
+  same resilient, compliant, cost-aware baseline — shrinking the distance from idea to
+  a supported Azure footprint and helping customers land workloads faster, repeatably,
+  and with confidence.
+
 ## Repository layout
 
 | Path | What's there |
