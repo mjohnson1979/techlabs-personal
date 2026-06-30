@@ -184,8 +184,9 @@
     ]);
   }
 
-  // Small badge on cards whose services may be quota/capacity constrained,
-  // or that include a service with an upcoming Azure retirement.
+  // Small badge on cards whose services may be quota/capacity constrained.
+  // Retirement notices are intentionally NOT shown on cards (they live in the
+  // use-case modal and on the dedicated Roadmap & retirements page).
   function cardAttention(it) {
     const notes = [];
     const reqs = it.quota && it.quota.requirements;
@@ -194,16 +195,6 @@
         el("div", { class: "card-attention", title: it.quota.summary || "" }, [
           el("span", { class: "card-attention-icon", text: "\u26A0", "aria-hidden": "true" }),
           el("span", { text: "Quota-sensitive \u2014 check region capacity" }),
-        ])
-      );
-    }
-    const life = lifecycleForUseCase(it);
-    if (life.retirements.length) {
-      const n = life.retirements.length;
-      notes.push(
-        el("div", { class: "card-attention card-attention-retire", title: life.retirements[0].title }, [
-          el("span", { class: "card-attention-icon", text: "\u26A0", "aria-hidden": "true" }),
-          el("span", { text: n + " upcoming retirement" + (n > 1 ? "s" : "") + " for this use case's services" }),
         ])
       );
     }

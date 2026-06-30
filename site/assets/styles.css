@@ -1188,13 +1188,6 @@ a:hover {
   margin: 0;
 }
 
-/* Retirement notice on a card uses the danger palette. */
-.card-attention-retire {
-  border-color: rgba(255, 138, 138, 0.4);
-  background: rgba(255, 138, 138, 0.08);
-  color: var(--danger);
-}
-
 /* Roadmap & retirements section inside the use-case modal. */
 .lifecycle-summary {
   display: flex;
