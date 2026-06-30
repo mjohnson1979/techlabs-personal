@@ -1307,6 +1307,163 @@ a:hover {
   }
 }
 
+/* Link from the per-use-case modal to the full roadmap page. */
+.lifecycle-roadmap-link {
+  margin-top: 12px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lifecycle-roadmap-link:hover {
+  text-decoration: underline;
+}
+
+/* ---------------------------------------- Azure roadmap & retirements page */
+.roadmap-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 18px;
+}
+.roadmap-search {
+  flex: 1 1 280px;
+  min-width: 220px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+.roadmap-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.roadmap-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.roadmap-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.12s ease, border-color 0.12s ease;
+}
+.roadmap-chip.roadmap-chip-on {
+  opacity: 1;
+}
+.roadmap-chip.roadmap-chip-on.lc-retire {
+  color: var(--danger);
+  border-color: rgba(255, 138, 138, 0.5);
+  background: rgba(255, 138, 138, 0.12);
+}
+.roadmap-chip.roadmap-chip-on.lc-preview {
+  color: var(--accent);
+  border-color: rgba(78, 161, 255, 0.5);
+  background: rgba(78, 161, 255, 0.12);
+}
+.roadmap-chip.roadmap-chip-on.lc-ga {
+  color: var(--accent-2);
+  border-color: rgba(110, 231, 183, 0.5);
+  background: rgba(110, 231, 183, 0.12);
+}
+.roadmap-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.roadmap-svc {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.roadmap-svc-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+.roadmap-svc-summary::-webkit-details-marker {
+  display: none;
+}
+.roadmap-svc-summary::after {
+  content: "\25B6";
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+.roadmap-svc[open] .roadmap-svc-summary::after {
+  transform: rotate(90deg);
+}
+.roadmap-svc-icon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+.roadmap-svc-icon svg {
+  width: 100%;
+  height: 100%;
+}
+.roadmap-svc-name {
+  font-weight: 600;
+  color: var(--text);
+}
+.roadmap-svc-counts {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.roadmap-count {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.roadmap-count.lc-retire {
+  color: var(--danger);
+  background: rgba(255, 138, 138, 0.12);
+}
+.roadmap-count.lc-preview {
+  color: var(--accent);
+  background: rgba(78, 161, 255, 0.12);
+}
+.roadmap-count.lc-ga {
+  color: var(--accent-2);
+  background: rgba(110, 231, 183, 0.12);
+}
+.roadmap-svc .lifecycle-list {
+  padding: 0 14px 14px;
+}
+.roadmap-empty {
+  color: var(--muted);
+  padding: 24px 4px;
+  text-align: center;
+}
+@media (max-width: 560px) {
+  .roadmap-svc-summary::after {
+    display: none;
+  }
+}
+
 /* Region picker border reflects the selected region's rolled-up status. */
 .deploy-region[data-status="green"] {
   border-color: var(--accent-2);

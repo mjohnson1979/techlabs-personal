@@ -262,6 +262,43 @@
     if (!name) return icons["default"];
     return iconFor(byService[String(name).toLowerCase().trim()]);
   }
+  // Human-friendly product names for icon keys (shared vocabulary with
+  // updates.json's services map). Falls back to the key itself, title-cased.
+  var keyLabels = {
+    acr: "Container Registry",
+    aks: "Azure Kubernetes Service",
+    apim: "API Management",
+    appgateway: "Application Gateway",
+    appservice: "App Service",
+    avs: "Azure VMware Solution",
+    bastion: "Azure Bastion",
+    containerapps: "Container Apps",
+    cosmos: "Azure Cosmos DB",
+    databricks: "Azure Databricks",
+    datafactory: "Data Factory",
+    eventhubs: "Event Hubs",
+    expressroute: "ExpressRoute",
+    firewall: "Azure Firewall",
+    frontdoor: "Azure Front Door",
+    functions: "Azure Functions",
+    keyvault: "Key Vault",
+    loganalytics: "Log Analytics",
+    logicapps: "Logic Apps",
+    monitor: "Azure Monitor",
+    openai: "Azure OpenAI",
+    search: "Azure AI Search",
+    servicebus: "Service Bus",
+    sql: "Azure SQL Database",
+    storage: "Azure Storage",
+    streamanalytics: "Stream Analytics",
+    vm: "Virtual Machines",
+    vnet: "Virtual Network",
+  };
+  function labelForKey(key) {
+    if (!key) return "";
+    if (keyLabels[key]) return keyLabels[key];
+    return String(key).replace(/(^|\s)\S/g, function (c) { return c.toUpperCase(); });
+  }
   // Icon key for an Azure cost-meter serviceName (e.g. "appservice").
   function keyForService(name) {
     if (!name) return "default";
@@ -291,6 +328,7 @@
     iconFor: iconFor,
     iconForService: iconForService,
     keyForService: keyForService,
+    labelForKey: labelForKey,
     tierForService: tierForService,
   };
 })();

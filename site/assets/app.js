@@ -728,51 +728,57 @@
     return d.toLocaleDateString(undefined, { month: "short", year: "numeric" });
   }
 
-  // Boxed modal section listing Azure roadmap signals for this use case's
-  // services: upcoming retirements first (action needed), then new previews
-  // and recent GA so architectures can be kept current.
+  // Boxed modal section focused on what matters for THIS use case: the upcoming
+  // Azure retirements affecting its services (the actionable signal). The count
+  // always equals the items listed, so it stays consistent. Previews / recent
+  // GA and the full per-service catalog live on the Roadmap page, linked below.
   function lifecycleBlock(it) {
     const life = lifecycleForUseCase(it);
-    const total = life.retirements.length + life.previews.length + life.launched.length;
-    if (!total) return null;
+    const retire = sortedBucket("retirements", life.retirements);
+    const hasOther = life.previews.length + life.launched.length > 0;
+    if (!retire.length && !hasOther) return null;
 
+    const n = retire.length;
     const wrap = el("details", { class: "modal-section modal-card lifecycle-block" }, [
       el("summary", { class: "lifecycle-summary" }, [
-        el("h3", { text: "Azure roadmap & retirements" }),
-        el("span", { class: "lifecycle-count", text: String(total) }),
+        el("h3", { text: "Azure retirements for this use case" }),
+        el("span", { class: "lifecycle-count", text: String(n) }),
       ]),
     ]);
     wrap.appendChild(
       el("p", {
         class: "lifecycle-sub",
-        text: "Lifecycle changes for the Azure services this use case uses. Review retirements before they take effect.",
+        text: n
+          ? "Upcoming retirements affecting the Azure services this use case provisions. Review them before they take effect."
+          : "No upcoming retirements affect this use case's services right now.",
       })
     );
 
-    const groups = [
-      ["retirements", "Retiring", "lc-retire", "\u26A0"],
-      ["previews", "In preview", "lc-preview", "\u2728"],
-      ["launched", "Recently GA", "lc-ga", "\u2714"],
-    ];
-    groups.forEach(([bucket, label, cls, glyph]) => {
-      const items = life[bucket];
-      if (!items.length) return;
+    if (n) {
       const list = el("ul", { class: "lifecycle-list" });
-      items.slice(0, 6).forEach((e) => {
+      retire.forEach((e) => {
         const when = fmtMonth(e.date);
         list.appendChild(
-          el("li", { class: "lifecycle-item " + cls }, [
-            el("span", { class: "lifecycle-badge " + cls }, [
-              el("span", { class: "lifecycle-badge-icon", text: glyph, "aria-hidden": "true" }),
-              el("span", { text: label }),
+          el("li", { class: "lifecycle-item lc-retire" }, [
+            el("span", { class: "lifecycle-badge lc-retire" }, [
+              el("span", { class: "lifecycle-badge-icon", text: "\u26A0", "aria-hidden": "true" }),
+              el("span", { text: "Retiring" }),
             ]),
-            el("a", { class: "lifecycle-title", href: e.url, target: "_blank", rel: "noopener", text: e.title }),
+            el("a", { class: "lifecycle-title", href: e.url, target: "_blank", rel: "noopener", text: (e.title || "").trim() }),
             when ? el("span", { class: "lifecycle-date", text: when }) : null,
           ])
         );
       });
       wrap.appendChild(list);
+    }
+
+    const link = el("button", {
+      type: "button",
+      class: "lifecycle-roadmap-link",
+      text: "Browse the full Azure roadmap & retirements \u2192",
     });
+    link.addEventListener("click", openRoadmapPanel);
+    wrap.appendChild(link);
     return wrap;
   }
 
@@ -897,6 +903,178 @@
           e("table", { class: "cap-table" }, [e("thead", {}, headRow), e("tbody", {}, rows)]),
         ])
       );
+    });
+  }
+
+  // ------------------------------------------------ Azure roadmap & retirements
+  // Full-page browser for every Azure service lifecycle signal in updates.json:
+  // search by service, collapsible per-service sections, grouped into upcoming
+  // retirements (action needed), public previews, and recent GA. This is the
+  // canonical, consistent place for the "big" lists; the per-use-case modal
+  // only surfaces the retirements relevant to that use case and links here.
+  var ROADMAP_GROUPS = [
+    ["retirements", "Retiring", "lc-retire", "\u26A0"],
+    ["previews", "In preview", "lc-preview", "\u2728"],
+    ["launched", "Recently GA", "lc-ga", "\u2714"],
+  ];
+
+  function sortedBucket(bucket, items) {
+    var arr = (items || []).slice();
+    // Retirements: soonest first (act on these). Previews/GA: newest first.
+    var asc = bucket === "retirements";
+    arr.sort(function (a, b) {
+      var da = a.date || "", db = b.date || "";
+      if (da === db) return 0;
+      return (da < db ? -1 : 1) * (asc ? 1 : -1);
+    });
+    return arr;
+  }
+
+  function openRoadmapPanel() {
+    if (!window.TechlabsPanel) return;
+    closeModal();
+    var icons = window.AzureIcons;
+    window.TechlabsPanel.open(function (bodyEl, e) {
+      bodyEl.appendChild(e("h2", { text: "Azure roadmap & retirements" }));
+
+      var up = state.updates;
+      if (!up || !up.services) {
+        bodyEl.appendChild(
+          e("p", { text: "Roadmap data is not available yet. It is refreshed daily by tools/Build-Updates.ps1." })
+        );
+        return;
+      }
+
+      // Flatten the services map into a sortable list with per-bucket counts.
+      var services = Object.keys(up.services).map(function (key) {
+        var svc = up.services[key] || {};
+        var buckets = {};
+        var counts = {};
+        var total = 0;
+        ROADMAP_GROUPS.forEach(function (g) {
+          var b = sortedBucket(g[0], svc[g[0]]);
+          buckets[g[0]] = b;
+          counts[g[0]] = b.length;
+          total += b.length;
+        });
+        return {
+          key: key,
+          label: (icons && icons.labelForKey ? icons.labelForKey(key) : key),
+          buckets: buckets,
+          counts: counts,
+          total: total,
+        };
+      }).filter(function (s) { return s.total > 0; });
+
+      // Services with upcoming retirements float to the top (most retirements
+      // first); the rest sort alphabetically for findability.
+      services.sort(function (a, b) {
+        if (a.counts.retirements !== b.counts.retirements) {
+          return b.counts.retirements - a.counts.retirements;
+        }
+        return a.label.localeCompare(b.label);
+      });
+
+      var totalRetire = services.reduce(function (n, s) { return n + s.counts.retirements; }, 0);
+
+      bodyEl.appendChild(
+        e("p", {
+          class: "cap-generated",
+          text:
+            services.length + " services with lifecycle changes \u00B7 " + totalRetire +
+            " upcoming retirements. Sourced from Azure Updates, last refreshed " +
+            (up.generated ? new Date(up.generated).toLocaleString() : "recently") + ".",
+        })
+      );
+
+      // Controls: free-text search + group toggle chips.
+      var search = e("input", {
+        type: "search", class: "roadmap-search",
+        placeholder: "Search by service (e.g. AKS, Storage, Functions)\u2026",
+        "aria-label": "Search services",
+      });
+      var active = { retirements: true, previews: true, launched: true };
+      var chipRow = e("div", { class: "roadmap-chips" });
+      var chips = {};
+      ROADMAP_GROUPS.forEach(function (g) {
+        var chip = e("button", {
+          type: "button", class: "roadmap-chip roadmap-chip-on " + g[2],
+          text: g[1],
+        });
+        chips[g[0]] = chip;
+        chip.addEventListener("click", function () {
+          active[g[0]] = !active[g[0]];
+          chip.classList.toggle("roadmap-chip-on", active[g[0]]);
+          draw();
+        });
+        chipRow.appendChild(chip);
+      });
+      bodyEl.appendChild(e("div", { class: "roadmap-controls" }, [search, chipRow]));
+
+      var listWrap = e("div", { class: "roadmap-list" });
+      bodyEl.appendChild(listWrap);
+
+      function draw() {
+        listWrap.innerHTML = "";
+        var q = search.value.trim().toLowerCase();
+        var anyGroup = active.retirements || active.previews || active.launched;
+        var shown = 0;
+        services.forEach(function (s) {
+          if (q && s.label.toLowerCase().indexOf(q) === -1 && s.key.indexOf(q) === -1) return;
+          // Which groups will actually render for this service?
+          var visibleGroups = ROADMAP_GROUPS.filter(function (g) {
+            return active[g[0]] && s.counts[g[0]] > 0;
+          });
+          if (!visibleGroups.length) return;
+          shown += 1;
+
+          var countChips = visibleGroups.map(function (g) {
+            return e("span", { class: "roadmap-count " + g[2], text: s.counts[g[0]] + " " + g[1].toLowerCase() });
+          });
+          var summary = e("summary", { class: "roadmap-svc-summary" }, [
+            e("span", { class: "roadmap-svc-icon", html: (icons && icons.iconFor ? icons.iconFor(s.key) : ""), "aria-hidden": "true" }),
+            e("span", { class: "roadmap-svc-name", text: s.label }),
+            e("span", { class: "roadmap-svc-counts" }, countChips),
+          ]);
+          var details = e("details", { class: "roadmap-svc" }, [summary]);
+          // Open the first few (those with retirements) by default.
+          if (s.counts.retirements > 0 && shown <= 4) details.setAttribute("open", "");
+
+          visibleGroups.forEach(function (g) {
+            var list = e("ul", { class: "lifecycle-list" });
+            s.buckets[g[0]].forEach(function (item) {
+              var when = fmtMonth(item.date);
+              list.appendChild(
+                e("li", { class: "lifecycle-item " + g[2] }, [
+                  e("span", { class: "lifecycle-badge " + g[2] }, [
+                    e("span", { class: "lifecycle-badge-icon", text: g[3], "aria-hidden": "true" }),
+                    e("span", { text: g[1] }),
+                  ]),
+                  e("a", {
+                    class: "lifecycle-title", href: item.url, target: "_blank",
+                    rel: "noopener", text: (item.title || "").trim(),
+                  }),
+                  when ? e("span", { class: "lifecycle-date", text: when }) : null,
+                ])
+              );
+            });
+            details.appendChild(list);
+          });
+          listWrap.appendChild(details);
+        });
+
+        if (!shown) {
+          listWrap.appendChild(
+            e("p", {
+              class: "roadmap-empty",
+              text: anyGroup ? "No services match your search." : "Select at least one category above.",
+            })
+          );
+        }
+      }
+
+      search.addEventListener("input", draw);
+      draw();
     });
   }
 
@@ -1051,6 +1229,8 @@
   function wireCapacityNav() {
     const btn = $("#nav-capacity");
     if (btn) btn.addEventListener("click", openCapacityPanel);
+    const rm = $("#nav-roadmap");
+    if (rm) rm.addEventListener("click", openRoadmapPanel);
   }
 
   function loadIdentity() {
