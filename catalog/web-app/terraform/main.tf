@@ -66,6 +66,8 @@ resource "azurerm_linux_web_app" "this" {
     http2_enabled       = true
     health_check_path   = var.health_check_path
 
+    health_check_eviction_time_in_min = 2
+
     application_stack {
       dotnet_version = var.dotnet_version
     }

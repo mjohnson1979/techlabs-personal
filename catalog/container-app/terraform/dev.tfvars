@@ -1,0 +1,9 @@
+environment     = "dev"
+prefix          = "techlabs"
+container_image = "mcr.microsoft.com/k8se/quickstart:latest"
+cpu             = 0.5
+memory          = "1.0Gi"
+min_replicas    = 0
+max_replicas    = 3
+zone_redundant  = false
+target_port     = 80

@@ -204,9 +204,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/ai-chat/terraform"
                   },
                   {
                       "name":  "aks-secure-baseline",
@@ -901,9 +902,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/container-app/terraform"
                   },
                   {
                       "name":  "data-lakehouse",
@@ -2253,9 +2255,10 @@
                                    "pricedAt":  "2026-06-29"
                                },
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
-                      "templateTf":  null
+                      "templateTf":  "catalog/sql-data-api/terraform"
                   },
                   {
                       "name":  "web-app",
