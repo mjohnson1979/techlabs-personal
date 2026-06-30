@@ -2,7 +2,7 @@ name: Publish site
 
 on:
   push:
-    branches: [main]
+    branches: [templatecustome]
     paths:
       - "catalog/**"
       - "site/**"
