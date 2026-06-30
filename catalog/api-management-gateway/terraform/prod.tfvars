@@ -1,0 +1,10 @@
+environment                 = "prod"
+name_prefix                 = "apigwprd"
+apim_sku                    = "Premium"
+apim_capacity               = 2
+apim_publisher_email        = "platform@contoso.com"
+apim_publisher_name         = "Contoso Platform"
+backend_sku                 = "P1v3"
+zone_redundant              = true
+rate_limit_calls_per_minute = 600
+retention_in_days           = 90
