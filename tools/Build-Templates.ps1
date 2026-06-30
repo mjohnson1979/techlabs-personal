@@ -28,6 +28,18 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 if (-not $CatalogDir) { $CatalogDir = Join-Path $RepoRoot 'catalog' }
 if (-not $OutDir) { $OutDir = Join-Path $RepoRoot 'site/server/_templates' }
 
+# Relative path of a descendant under a base directory, with forward slashes.
+# [IO.Path]::GetRelativePath is .NET Core only, so it is unavailable in Windows
+# PowerShell 5.1; this works there and in pwsh 7 alike.
+function Get-RelativeUnder {
+    param([string]$Base, [string]$Full)
+    $trimmedBase = $Base.TrimEnd('\', '/')
+    if ($Full.StartsWith($trimmedBase, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $Full.Substring($trimmedBase.Length).TrimStart('\', '/').Replace('\', '/')
+    }
+    return (Split-Path -Leaf $Full)
+}
+
 # Resolve how to invoke Bicep: prefer the standalone CLI, fall back to az bicep.
 $bicepMode = $null
 if (Get-Command bicep -ErrorAction SilentlyContinue) { $bicepMode = 'bicep' }
@@ -60,7 +72,7 @@ $count = 0
 foreach ($pf in $paramFiles) {
     $envName = [IO.Path]::GetFileNameWithoutExtension($pf.Name)   # dev / prod
     $useCaseDir = Split-Path -Parent $pf.DirectoryName            # .../catalog/<use_case>
-    $rel = [IO.Path]::GetRelativePath($CatalogDir, $useCaseDir).Replace('\', '/')
+    $rel = Get-RelativeUnder -Base $CatalogDir -Full $useCaseDir
 
     $doc = Get-CompiledParams -ParamFile $pf.FullName
     if (-not $doc.templateJson -or -not $doc.parametersJson) {
@@ -97,7 +109,7 @@ $tfCount = 0
 
 foreach ($tf in $tfDirs) {
     $useCaseDir = Split-Path -Parent $tf.FullName             # .../catalog/<use_case>
-    $rel = [IO.Path]::GetRelativePath($CatalogDir, $useCaseDir).Replace('\', '/')
+    $rel = Get-RelativeUnder -Base $CatalogDir -Full $useCaseDir
     $destDir = Join-Path $TfOutDir $rel
     New-Item -ItemType Directory -Force -Path $destDir | Out-Null
     Get-ChildItem -Path $tf.FullName -File |

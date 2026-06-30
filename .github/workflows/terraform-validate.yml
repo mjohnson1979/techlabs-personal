@@ -35,7 +35,7 @@ jobs:
         run: |
           set -euo pipefail
           failed=0
-          for dir in catalog/*/terraform; do
+          while IFS= read -r dir; do
             [ -f "$dir/main.tf" ] || continue
             echo "::group::terraform validate $dir"
             if ! (cd "$dir" && terraform init -backend=false -input=false -no-color >/dev/null && terraform validate -no-color); then
@@ -43,5 +43,5 @@ jobs:
               failed=1
             fi
             echo "::endgroup::"
-          done
+          done < <(find catalog -type d -name terraform | sort)
           exit $failed

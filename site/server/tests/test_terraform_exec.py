@@ -121,3 +121,30 @@ def test_var_file_args_select_prod(staged):
     work, _ = terraform_exec._prepare_workdir(_dep(environment="prod"))
     args = terraform_exec._var_file_args(_dep(environment="prod"), work)
     assert args == ["-var-file=prod.tfvars"]
+
+
+def test_source_dir_preserves_nested_use_case(tmp_path, monkeypatch):
+    tf_dir = tmp_path / "_tf"
+    _make_module(tf_dir / "landing-zone", "core")
+    monkeypatch.setattr(terraform_exec, "TF_DIR", tf_dir)
+
+    src = terraform_exec._source_dir("landing-zone/core")
+
+    assert src == tf_dir / "landing-zone" / "core"
+    assert (src / "main.tf").exists()
+
+
+def test_prepare_workdir_resolves_nested_landing_zone(tmp_path, monkeypatch):
+    tf_dir = tmp_path / "_tf"
+    work_dir = tmp_path / "work"
+    _make_module(tf_dir / "landing-zone", "core")
+    monkeypatch.setattr(terraform_exec, "TF_DIR", tf_dir)
+    monkeypatch.setenv("GALLERY_TF_WORK", str(work_dir))
+    monkeypatch.delenv("GALLERY_TF_STATE_STORAGE", raising=False)
+
+    dep = _dep(use_case="landing-zone/core", resource_group="rg-techlabs-landing-zone-core-dev")
+    work, remote = terraform_exec._prepare_workdir(dep)
+
+    assert remote is False
+    assert (work / "main.tf").exists()
+

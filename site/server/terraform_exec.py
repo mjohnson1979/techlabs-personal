@@ -58,8 +58,15 @@ def _terraform_bin() -> str | None:
 
 
 def _source_dir(use_case: str) -> Path:
-    safe = re.sub(r"[^a-z0-9-]", "", use_case.lower())
-    return TF_DIR / safe
+    # use_case mirrors the catalog path (e.g. "web-app" or "landing-zone/core").
+    # Sanitize each segment but keep the nested structure so the module staged by
+    # Build-Templates at _tf/<path> is found. Empty/traversal segments are dropped;
+    # use_case is already validated against the catalog by the API layer.
+    segments = [re.sub(r"[^a-z0-9-]", "", seg.lower()) for seg in use_case.split("/")]
+    segments = [seg for seg in segments if seg]
+    if not segments:
+        return TF_DIR / "__invalid__"
+    return TF_DIR.joinpath(*segments)
 
 
 def _work_root() -> Path:
