@@ -14,7 +14,7 @@ metadata that is priced live against the public Azure Retail Prices API.
 | `modules/` | Shared Bicep building blocks referenced by templates (Log Analytics, App Insights, Storage, Key Vault, private endpoints). |
 | `site/` | The static gallery (`index.html` + `assets/`) that loads `site/catalog.json`, plus the `site/capacity.json` and `site/updates.json` signal snapshots. |
 | `site/server/` | FastAPI backend that gates the gallery behind Entra ID and acts as the deploy control plane. See [site/server/README.md](site/server/README.md). |
-| `tools/` | PowerShell utilities — `Build-Catalog.ps1` (regenerates `catalog.json` with live prices), `Get-CatalogCost.ps1` (per-use-case / portfolio cost), `Test-Catalog.ps1` (validation), `Build-Capacity.ps1` (region capacity snapshot), `Build-Updates.ps1` (Azure service lifecycle snapshot). Plus `new_use_case_from_issue.py`, which scaffolds a catalog entry from a submission issue. |
+| `tools/` | PowerShell utilities — `Build-Catalog.ps1` (regenerates `catalog.json` with live prices), `Get-CatalogCost.ps1` (per-use-case / portfolio cost), `Test-Catalog.ps1` (validation), `Build-Capacity.ps1` (region capacity snapshot), `Build-Updates.ps1` (Azure service lifecycle snapshot), `Build-Templates.ps1` (compiles catalog templates for deploy). |
 | `llms.txt` | Machine-readable overview of the catalog for LLM tooling. |
 
 ## How the catalog is organized
@@ -58,10 +58,12 @@ fully static:
 - **Service lifecycle** — `tools/Build-Updates.ps1` reads the public Microsoft
   Release Communications feed behind [azure.microsoft.com/updates](https://azure.microsoft.com/updates)
   (no Azure auth), maps each update's products onto the services a use case
-  provisions, and writes `site/updates.json`. The modal's **"Azure roadmap &
-  retirements"** section lists upcoming retirements, new previews, and recent GA,
-  and cards flag use cases with an upcoming retirement. Refreshed weekly by
-  `.github/workflows/updates.yml` (no secrets required).
+  provisions, and writes `site/updates.json`. A dedicated **Roadmap &
+  retirements** page (header nav) lets you search by service and expand
+  collapsible per-service lists of upcoming retirements, new previews, and recent
+  GA — with counts that always match the items shown. A use case's detail modal
+  surfaces only the retirements affecting *its* services and links to the full
+  page. Refreshed weekly by `.github/workflows/updates.yml` (no secrets required).
 
 ## Validation
 
@@ -81,25 +83,29 @@ fully static:
 
 ## Submitting a use case
 
-Anyone can propose a use case straight from the gallery — no code required:
+The gallery's **"+ Submit a use case"** panel accepts a **zip upload** of a
+ready-to-deploy template — the submitter brings working Bicep, so what lands is
+deployable, not a stub:
 
-1. Click **"+ Submit a use case"** on the site and describe the scenario in plain
-   English (optionally give it a name). The form opens a pre-filled GitHub issue
-   (the `.github/ISSUE_TEMPLATE/use-case-submission.yml` form); you review and
-   submit it on GitHub. The gallery stores **no** GitHub credential.
-2. `.github/workflows/use-case-intake.yml` picks up the labelled issue and uses
-   **GitHub Models** (`actions/ai-inference`, prompt in
-   `.github/prompts/use-case.prompt.yml`) to structure the free-form description
-   into catalog fields. It then runs `tools/new_use_case_from_issue.py` to
-   scaffold `catalog/<slug>/metadata.json` (+ `README.md` and a `main.bicep`
-   stub), regenerates `site/catalog.json`, and opens a **draft pull request**. It
-   is secretless — only the built-in `GITHUB_TOKEN` plus the `models: read`
-   permission.
-3. A maintainer confirms the AI-structured metadata matches the submitter's
-   intent, authors the Bicep and parameters, fills in the Well-Architected
-   pillars / quota / priced cost components, and merges. The deploy workflow then
-   publishes the new use case to the gallery.
+1. Upload a `.zip` containing `main.bicep` at the root and at least one
+   `parameters/<env>.bicepparam` (optional `metadata.json` / `README.md`).
+2. `POST /api/use-cases/upload` validates the archive (zip-slip guard, size and
+   decompression-bomb limits, allowed extensions, required files present),
+   normalizes it into the `catalog/<slug>/` layout — synthesizing
+   `metadata.json` / `README.md` when absent — and stages it server-side.
+3. When a `GALLERY_GITHUB_TOKEN` (with `contents: write`) is configured, the
+   backend creates a review **branch** and commits the bundle via the GitHub Git
+   Data API; otherwise the submission stays staged for manual download. Either
+   way it appears in the admin **Submissions** tab.
+4. A maintainer reviews the staged entry, opens the pull request via the
+   pre-filled **compare link** (org policy blocks Actions from opening PRs
+   directly), and merges. The deploy workflow then publishes the new use case.
 
+A natural-language path that produces *deployable* templates (compose from Azure
+Verified Modules, match to an existing template, or a build/lint/what-if auto-fix
+loop) is tracked in [issue #7](https://github.com/mcaps-microsoft/TechLabs/issues/7).
+The earlier AI-drafted-prose flow was parked because its Bicep was not deployable
+without a maintainer authoring the real infrastructure.
 
 ## Tailoring for regulated industries
 
