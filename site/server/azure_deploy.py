@@ -313,9 +313,37 @@ def _do_destroy(dep: dict[str, Any]) -> None:
 # --------------------------------------------------------------------------- #
 # Async orchestration
 # --------------------------------------------------------------------------- #
+def _engine(dep: dict[str, Any]) -> str:
+    return (dep.get("engine") or "bicep").strip().lower()
+
+
 async def run_deploy(dep: dict[str, Any]) -> None:
     dep_id = dep["id"]
     try:
+        if _engine(dep) == "terraform":
+            import terraform_exec
+
+            ok, reason = terraform_exec.terraform_available()
+            if not ok:
+                raise RuntimeError(reason)
+            db.update_deployment(
+                dep_id,
+                status="deploying",
+                gh_run_url=portal_rg_url(dep["subscription_id"], dep["resource_group"]),
+                detail="running terraform apply",
+            )
+            # tf_apply streams its own progress into the deployment detail.
+            await asyncio.to_thread(terraform_exec.tf_apply, dep)
+            db.update_deployment(dep_id, status="active", detail="deployment succeeded")
+            db.record_event(
+                type="deploy_active",
+                user_oid=dep["user_oid"],
+                user_upn=dep["user_upn"],
+                use_case=dep["use_case"],
+                deployment_id=dep_id,
+            )
+            return
+
         ok, reason = executor_available()
         if not ok:
             raise RuntimeError(reason)
@@ -362,6 +390,29 @@ async def run_deploy(dep: dict[str, Any]) -> None:
 async def run_destroy(dep: dict[str, Any]) -> None:
     dep_id = dep["id"]
     try:
+        if _engine(dep) == "terraform":
+            import terraform_exec
+
+            ok, reason = terraform_exec.terraform_available()
+            if not ok:
+                raise RuntimeError(reason)
+            db.update_deployment(dep_id, status="destroying", detail="running terraform destroy")
+            await asyncio.to_thread(terraform_exec.tf_destroy, dep)
+            db.update_deployment(
+                dep_id,
+                status="destroyed",
+                destroyed_at=time.time(),
+                detail="terraform destroy complete",
+            )
+            db.record_event(
+                type="destroy_succeeded",
+                user_oid=dep["user_oid"],
+                user_upn=dep["user_upn"],
+                use_case=dep["use_case"],
+                deployment_id=dep_id,
+            )
+            return
+
         ok, reason = executor_available()
         if not ok:
             raise RuntimeError(reason)

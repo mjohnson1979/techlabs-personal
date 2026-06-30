@@ -251,3 +251,11 @@ tests/stress_perf_rn/**/Generated Files/
 applog/
 applog.zip
 site_deploy.zip
+
+# Terraform working artifacts (catalog modules are source; these are generated)
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+**/injected.auto.tfvars.json

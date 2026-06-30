@@ -151,6 +151,9 @@
   function card(it) {
     const chips = [el("span", { class: "chip", text: it.path })];
     if (it.hasProd) chips.push(el("span", { class: "chip prod", text: "dev + prod" }));
+    if (Array.isArray(it.engines) && it.engines.indexOf("terraform") !== -1) {
+      chips.push(el("span", { class: "chip iac", text: "Bicep + Terraform" }));
+    }
     (it.industries || []).slice(0, 2).forEach((i) => chips.push(el("span", { class: "chip", text: i })));
 
     const node = el("article", { class: "card", tabindex: "0" }, [
@@ -463,6 +466,13 @@
     ]);
     if (it.hasProd) envSelect.appendChild(el("option", { value: "prod", text: "prod" }));
 
+    const engines = Array.isArray(it.engines) && it.engines.length ? it.engines : ["bicep"];
+    const hasTerraform = engines.indexOf("terraform") !== -1;
+    const engineSelect = el("select", { class: "deploy-input", id: "deploy-engine" }, [
+      el("option", { value: "bicep", text: "Bicep (ARM)" }),
+    ]);
+    if (hasTerraform) engineSelect.appendChild(el("option", { value: "terraform", text: "Terraform" }));
+
     const region = deployRegionField(it);
 
     const endInput = el("input", {
@@ -481,6 +491,24 @@
       ? "As an admin you can set any end time. Resources are auto-deleted at the end time."
       : `Pick when this should be torn down (max ${maxHours}h). Resources are auto-deleted at the end time.`;
 
+    const tfExec = !!(me && me.terraformExecAvailable);
+    const engineHint = el("p", { class: "deploy-note deploy-engine-hint", text: "" });
+
+    function syncEngine() {
+      manualCode.textContent = manualSnippet(engineSelect.value);
+      if (!me) return;
+      if (engineSelect.value === "terraform" && !tfExec) {
+        btn.disabled = true;
+        engineHint.textContent =
+          "In-app Terraform deploy isn't enabled on this server yet - copy the CLI below to run it locally.";
+        engineHint.style.display = "";
+      } else {
+        btn.disabled = false;
+        engineHint.textContent = "";
+        engineHint.style.display = "none";
+      }
+    }
+
     if (!me) {
       status.textContent = "Sign in to deploy from the gallery.";
       btn.disabled = true;
@@ -497,6 +525,7 @@
       const payload = {
         useCase: it.path,
         environment: envSelect.value,
+        engine: engineSelect.value,
         location: region.select.value,
         endAt: new Date(endVal).toISOString(),
       };
@@ -520,6 +549,9 @@
       region.note,
       el("label", { class: "deploy-label", text: "Environment" }),
       envSelect,
+      el("label", { class: "deploy-label", text: "IaC engine" }),
+      engineSelect,
+      engineHint,
       el("label", { class: "deploy-label", text: "End time (auto-cleanup)" }),
       endInput,
       el("p", { class: "deploy-note", text: lifeNote }),
@@ -527,13 +559,31 @@
       status,
     ]);
 
-    const manual = el("details", { class: "deploy-manual" }, [
-      el("summary", { text: "Or deploy manually with the Azure CLI" }),
-      el("div", {
-        class: "code",
-        text: `az group create --name rg-techlabs --location centralus\naz deployment group create \`\n  --resource-group rg-techlabs \`\n  --template-file ${it.template} \`\n  --parameters catalog/${it.path}/parameters/dev.bicepparam`,
-      }),
-    ]);
+    function manualSnippet(engine) {
+      if (engine === "terraform") {
+        return (
+          `cd catalog/${it.path}/terraform\n` +
+          "terraform init\n" +
+          "terraform apply `\n" +
+          "  -var-file=dev.tfvars `\n" +
+          "  -var resource_group_name=rg-techlabs `\n" +
+          "  -var location=centralus"
+        );
+      }
+      return (
+        "az group create --name rg-techlabs --location centralus\n" +
+        "az deployment group create `\n" +
+        "  --resource-group rg-techlabs `\n" +
+        `  --template-file ${it.template} \`\n` +
+        `  --parameters catalog/${it.path}/parameters/dev.bicepparam`
+      );
+    }
+
+    const manualCode = el("div", { class: "code", text: manualSnippet(engineSelect.value) });
+    const manualSummary = el("summary", { text: "Or deploy manually with the CLI" });
+    engineSelect.addEventListener("change", syncEngine);
+    syncEngine();
+    const manual = el("details", { class: "deploy-manual" }, [manualSummary, manualCode]);
 
     return el("div", { class: "modal-section modal-card" }, [el("h3", { text: "Deploy" }), form, manual]);
   }

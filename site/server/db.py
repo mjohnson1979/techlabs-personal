@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS deployments (
     subscription_id TEXT NOT NULL DEFAULT '',
     resource_group  TEXT NOT NULL,
     status          TEXT NOT NULL,  -- requested|deploying|active|expiring|destroying|destroyed|failed
+    engine          TEXT NOT NULL DEFAULT 'bicep',  -- bicep | terraform
     created_at      REAL NOT NULL,
     end_at          REAL NOT NULL,
     destroyed_at    REAL,
@@ -136,6 +137,11 @@ def _migrate(conn: sqlite3.Connection) -> None:
             conn.execute(
                 f"ALTER TABLE submissions ADD COLUMN {col} TEXT NOT NULL DEFAULT ''"
             )
+    dep_cols = {r["name"] for r in conn.execute("PRAGMA table_info(deployments)").fetchall()}
+    if "engine" not in dep_cols:
+        conn.execute(
+            "ALTER TABLE deployments ADD COLUMN engine TEXT NOT NULL DEFAULT 'bicep'"
+        )
 
 
 def _conn() -> sqlite3.Connection:
@@ -293,6 +299,7 @@ def create_deployment(
     subscription_id: str,
     resource_group: str,
     end_at: float,
+    engine: str = "bicep",
     params: dict[str, Any] | None = None,
 ) -> None:
     now = time.time()
@@ -300,9 +307,9 @@ def create_deployment(
         conn = _conn()
         conn.execute(
             "INSERT INTO deployments(id, use_case, environment, user_oid, user_upn,"
-            " user_name, subscription_id, resource_group, status, created_at, end_at,"
+            " user_name, subscription_id, resource_group, status, engine, created_at, end_at,"
             " destroyed_at, gh_run_url, detail, params_json)"
-            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 deployment_id,
                 use_case,
@@ -313,6 +320,7 @@ def create_deployment(
                 subscription_id,
                 resource_group,
                 "requested",
+                engine,
                 now,
                 end_at,
                 None,

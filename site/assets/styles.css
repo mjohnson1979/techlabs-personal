@@ -381,6 +381,11 @@ a:hover {
   border-color: rgba(110, 231, 183, 0.4);
 }
 
+.chip.iac {
+  color: #a78bfa;
+  border-color: rgba(167, 139, 250, 0.4);
+}
+
 /* Card cost line */
 .card-cost {
   display: flex;

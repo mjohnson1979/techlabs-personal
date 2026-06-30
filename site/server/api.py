@@ -98,6 +98,7 @@ def _deployment_view(d: dict[str, Any]) -> dict[str, Any]:
         "destroyedAt": _iso(d.get("destroyed_at")),
         "ghRunUrl": d["gh_run_url"],
         "detail": d["detail"],
+        "engine": d.get("engine", "bicep"),
     }
 
 
@@ -130,6 +131,8 @@ class EventIn(BaseModel):
 class DeployIn(BaseModel):
     useCase: str
     environment: str = "dev"
+    # IaC engine to deploy with: "bicep" (ARM) or "terraform".
+    engine: str = "bicep"
     # Azure region to deploy into (e.g. "centralus"). Empty falls back to the
     # server default (GALLERY_DEPLOY_LOCATION).
     location: str = ""
@@ -141,6 +144,19 @@ class DeployIn(BaseModel):
 class RoleIn(BaseModel):
     upn: str
     role: str  # 'admin' | 'guest'
+
+
+def _terraform_exec_available() -> bool:
+    """Whether the server can run Terraform in-app (binary resolvable). The
+    manual CLI snippet is always offered; only the one-click deploy depends on
+    this, so the UI can degrade to copy-the-CLI until the host is provisioned."""
+    try:
+        import terraform_exec
+
+        ok, _ = terraform_exec.terraform_available()
+        return ok
+    except Exception:
+        return False
 
 
 def build_api_router() -> APIRouter:
@@ -163,6 +179,7 @@ def build_api_router() -> APIRouter:
             "deploymentCount": len(mine),
             "activeDeployments": active,
             "maxLifetimeHours": DEFAULT_MAX_LIFETIME_HOURS,
+            "terraformExecAvailable": _terraform_exec_available(),
         }
 
     # -------------------------------------------------------------- events ---
@@ -206,6 +223,19 @@ def build_api_router() -> APIRouter:
                 status_code=400, detail="this use case has no prod parameters"
             )
 
+        engine = body.engine.lower().strip() or "bicep"
+        if engine not in ("bicep", "terraform"):
+            raise HTTPException(status_code=400, detail="engine must be bicep or terraform")
+        if engine == "terraform" and "terraform" not in (item.get("engines") or ["bicep"]):
+            raise HTTPException(
+                status_code=400, detail="this use case has no Terraform module"
+            )
+        if engine == "terraform" and not _terraform_exec_available():
+            raise HTTPException(
+                status_code=400,
+                detail="in-app Terraform execution is not enabled on this server; use the CLI",
+            )
+
         now = time.time()
         end_at = _resolve_end_at(body, now, user)
 
@@ -226,6 +256,7 @@ def build_api_router() -> APIRouter:
             subscription_id=DEFAULT_SUBSCRIPTION,
             resource_group=rg,
             end_at=end_at,
+            engine=engine,
             params={"template": item.get("template", ""), "location": location},
         )
         db.record_event(
@@ -234,7 +265,7 @@ def build_api_router() -> APIRouter:
             user_upn=user.upn,
             use_case=body.useCase,
             deployment_id=dep_id,
-            meta={"environment": env, "resourceGroup": rg},
+            meta={"environment": env, "resourceGroup": rg, "engine": engine},
         )
 
         dep = db.get_deployment(dep_id)

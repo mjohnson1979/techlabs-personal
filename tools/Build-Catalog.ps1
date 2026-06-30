@@ -172,6 +172,10 @@ foreach ($mf in $metaFiles) {
 
     $componentCount = if ($meta.cost -and $meta.cost.components) { @($meta.cost.components).Count } else { 0 }
     $hasProd = Test-Path (Join-Path $mf.DirectoryName 'parameters/prod.bicepparam')
+    $hasTerraform = Test-Path (Join-Path $mf.DirectoryName 'terraform/main.tf')
+    $engines = New-Object System.Collections.Generic.List[string]
+    $engines.Add('bicep')
+    if ($hasTerraform) { $engines.Add('terraform') }
     $costObj = if ($meta.cost) { Get-PricedCost -Cost $meta.cost } else { $null }
     if ($costObj) { Write-Host ("  priced {0}: {1} {2}/mo" -f $rel, $costObj.currency, $costObj.totalMonthly) -ForegroundColor DarkGray }
 
@@ -191,6 +195,8 @@ foreach ($mf in $metaFiles) {
         path             = $rel
         readme           = "catalog/$rel/README.md"
         template         = "catalog/$rel/main.bicep"
+        templateTf       = if ($hasTerraform) { "catalog/$rel/terraform" } else { $null }
+        engines          = $engines.ToArray()
         hasProd          = $hasProd
         componentCount   = $componentCount
         costProfile      = if ($meta.cost) { $meta.cost.profile } else { $null }

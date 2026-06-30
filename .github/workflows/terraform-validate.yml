@@ -1,0 +1,47 @@
+name: terraform-validate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'catalog/**/terraform/**'
+      - '.github/workflows/terraform-validate.yml'
+  pull_request:
+    paths:
+      - 'catalog/**/terraform/**'
+      - '.github/workflows/terraform-validate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: fmt & validate Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: terraform fmt (check)
+        run: terraform fmt -check -recursive catalog
+
+      - name: terraform validate (per use case)
+        run: |
+          set -euo pipefail
+          failed=0
+          for dir in catalog/*/terraform; do
+            [ -f "$dir/main.tf" ] || continue
+            echo "::group::terraform validate $dir"
+            if ! (cd "$dir" && terraform init -backend=false -input=false -no-color >/dev/null && terraform validate -no-color); then
+              echo "::error file=$dir::terraform validate failed"
+              failed=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $failed

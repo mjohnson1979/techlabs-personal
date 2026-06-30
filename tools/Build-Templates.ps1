@@ -80,3 +80,32 @@ foreach ($pf in $paramFiles) {
 }
 
 Write-Host "Built $count compiled template(s) into $OutDir"
+
+# --------------------------------------------------------------------------- #
+# Terraform: the runtime app tree has no catalog/, so materialize each use
+# case's terraform/ module under site/server/_tf/<use_case>/ for the executor.
+# (Bicep is precompiled to ARM JSON above; Terraform ships as-is and runs via
+# the terraform CLI at deploy time.)
+# --------------------------------------------------------------------------- #
+$TfOutDir = Join-Path $RepoRoot 'site/server/_tf'
+if (Test-Path $TfOutDir) { Remove-Item -Recurse -Force $TfOutDir }
+
+$tfDirs = Get-ChildItem -Path $CatalogDir -Recurse -Directory -Filter 'terraform' |
+    Where-Object { Test-Path (Join-Path $_.FullName 'main.tf') } |
+    Sort-Object FullName
+$tfCount = 0
+
+foreach ($tf in $tfDirs) {
+    $useCaseDir = Split-Path -Parent $tf.FullName             # .../catalog/<use_case>
+    $rel = [IO.Path]::GetRelativePath($CatalogDir, $useCaseDir).Replace('\', '/')
+    $destDir = Join-Path $TfOutDir $rel
+    New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+    Get-ChildItem -Path $tf.FullName -File |
+        Where-Object { $_.Extension -in '.tf', '.tfvars', '.json' } |
+        ForEach-Object { Copy-Item $_.FullName (Join-Path $destDir $_.Name) -Force }
+    Write-Host "  staged $rel/terraform"
+    $tfCount++
+}
+
+Write-Host "Staged $tfCount Terraform module(s) into $TfOutDir"
+
