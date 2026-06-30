@@ -26,6 +26,7 @@ from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 import db
 from api import build_api_router
 from scheduler import run_scheduler
+from terraform_bootstrap import ensure_terraform
 from entra_auth import (
     COOKIE_NAME,
     EntraClient,
@@ -83,6 +84,10 @@ PUBLIC_PATHS = {"/favicon.ico", "/healthz"}
 async def lifespan(app: FastAPI):
     """Initialise the database and run the cleanup scheduler for the app's life."""
     db.init_db()
+    # Best-effort, opt-in Terraform binary provisioning. Run off the event loop
+    # and do not await it: boot must not block on a network download, and the UI
+    # hides in-app Terraform deploys until the binary is present anyway.
+    asyncio.create_task(asyncio.to_thread(ensure_terraform))
     stop = asyncio.Event()
     task = asyncio.create_task(run_scheduler(stop))
     try:
