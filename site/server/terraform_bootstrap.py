@@ -115,14 +115,21 @@ def ensure_terraform() -> str | None:
                 if member not in zf.namelist():
                     log.error("terraform bootstrap: zip missing 'terraform' entry")
                     return None
-                staged = Path(tmp) / "terraform"
-                with zf.open(member) as src, open(staged, "wb") as dst:
-                    dst.write(src.read())
+                # Stage the extracted binary inside the *target* directory so the
+                # final rename is same-filesystem. On App Service Linux, /tmp and
+                # /home are separate mounts, so renaming across them raises
+                # OSError (cross-device link) and the install would silently fail.
+                staged = target.parent / f".terraform.tmp-{os.getpid()}"
+                try:
+                    with zf.open(member) as src, open(staged, "wb") as dst:
+                        dst.write(src.read())
+                    mode = staged.stat().st_mode
+                    staged.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+                    os.replace(staged, target)
+                finally:
+                    if staged.exists():
+                        staged.unlink()
 
-            staged.replace(target)
-
-        mode = target.stat().st_mode
-        target.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         os.environ["GALLERY_TERRAFORM_BIN"] = str(target)
         log.info("terraform bootstrap: installed %s at %s", _TF_VERSION, target)
         return str(target)

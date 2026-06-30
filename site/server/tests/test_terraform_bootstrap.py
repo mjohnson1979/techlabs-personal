@@ -78,3 +78,61 @@ def test_failed_install_never_raises(tmp_path, monkeypatch):
     monkeypatch.setattr(terraform_bootstrap.urllib.request, "urlopen", _explode)
 
     assert terraform_bootstrap.ensure_terraform() is None
+
+
+class _FakeResponse:
+    def __init__(self, data: bytes):
+        self._data = data
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_exc):
+        return False
+
+    def read(self) -> bytes:
+        return self._data
+
+
+def _make_terraform_zip() -> bytes:
+    import io
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("terraform", b"#!/bin/sh\necho 1.9.8\n")
+    return buf.getvalue()
+
+
+def test_install_places_executable_in_home(tmp_path, monkeypatch):
+    """Full install path: download + checksum verify + same-filesystem placement.
+
+    Regression guard for the App Service cross-device bug, where staging in /tmp
+    and renaming into /home raised OSError and the install silently no-op'd."""
+    import hashlib
+
+    home = tmp_path / "bin"
+    zip_bytes = _make_terraform_zip()
+    digest = hashlib.sha256(zip_bytes).hexdigest()
+    zip_name = f"terraform_{terraform_bootstrap._TF_VERSION}_{terraform_bootstrap._TF_PLATFORM}.zip"
+    sums = f"{digest}  {zip_name}\n".encode("utf-8")
+
+    def fake_urlopen(url, *_args, **_kwargs):
+        if url.endswith("SHA256SUMS"):
+            return _FakeResponse(sums)
+        return _FakeResponse(zip_bytes)
+
+    monkeypatch.setenv("GALLERY_TERRAFORM_HOME", str(home))
+    monkeypatch.setenv("GALLERY_TERRAFORM_AUTO_INSTALL", "true")
+    monkeypatch.setattr(terraform_bootstrap.urllib.request, "urlopen", fake_urlopen)
+
+    result = terraform_bootstrap.ensure_terraform()
+
+    target = home / "terraform"
+    assert result == str(target)
+    assert target.is_file()
+    assert os.access(target, os.X_OK)
+    assert os.environ["GALLERY_TERRAFORM_BIN"] == str(target)
+    leftovers = list(home.glob(".terraform.tmp-*"))
+    assert leftovers == []
+
