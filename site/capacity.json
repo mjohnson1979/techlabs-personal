@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-01T07:36:02Z",
+  "generated": "2026-07-02T07:13:15Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -19,23 +19,23 @@
       "byRegion": {
         "eastus": {
           "status": "green",
-          "detail": "970 K TPM available",
-          "value": 970
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "eastus2": {
           "status": "green",
-          "detail": "970 K TPM available",
-          "value": 970
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "centralus": {
           "status": "green",
-          "detail": "970 K TPM available",
-          "value": 970
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "southcentralus": {
           "status": "green",
-          "detail": "970 K TPM available",
-          "value": 970
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "westus2": {
           "status": "red",
@@ -44,8 +44,8 @@
         },
         "westus3": {
           "status": "green",
-          "detail": "970 K TPM available",
-          "value": 970
+          "detail": "1000 K TPM available",
+          "value": 1000
         }
       }
     },
