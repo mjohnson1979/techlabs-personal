@@ -19,7 +19,8 @@ best practice. The result is slow time-to-value, uneven quality, and unpredictab
 spend — the friction that keeps pipeline from converting into consumption.
 
 **The approach.** Tech Labs is a curated catalog of **production-shaped Azure use
-cases** — reference workloads that are architected, costed, and ready to deploy.
+cases** — reference workloads that are architected, costed, and ready to deploy and validated
+by the CSA team.
 Each one encodes the decisions a team would otherwise make from scratch, so the
 starting point is already resilient, compliant, and priced. It converts
 institutional knowledge into reusable, governed assets instead of one-off scripts
