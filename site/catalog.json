@@ -1,8 +1,8 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-07-08T14:05:02Z",
-    "count":  19,
+    "generated":  "2026-07-08T14:30:18Z",
+    "count":  22,
     "items":  [
                   {
                       "name":  "ai-chat",
@@ -138,9 +138,10 @@
                       "path":  "ai-chat",
                       "readme":  "catalog/ai-chat/README.md",
                       "template":  "catalog/ai-chat/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/ai-chat/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  5,
@@ -273,9 +274,10 @@
                       "path":  "aks-secure-baseline",
                       "readme":  "catalog/aks-secure-baseline/README.md",
                       "template":  "catalog/aks-secure-baseline/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/aks-secure-baseline/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  4,
@@ -393,9 +395,10 @@
                       "path":  "api-management-gateway",
                       "readme":  "catalog/api-management-gateway/README.md",
                       "template":  "catalog/api-management-gateway/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/api-management-gateway/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  2,
@@ -493,14 +496,27 @@
                                                                             "Breadth-first balancing spreads load during peak"
                                                                         ]
                                           },
-                      "quota":  null,
+                      "quota":  {
+                                    "summary":  "Session-host VMs require regional vCPU (compute) quota for the chosen VM size. The host pool/app group control plane is free, but adding session hosts needs Compute cores quota in the region.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Virtual Machines (session hosts)",
+                                                             "provider":  "Microsoft.Compute/virtualMachines",
+                                                             "kind":  "compute",
+                                                             "sku":  "Dav4 / Dsv5 family (per session-host size)",
+                                                             "detail":  "Each session host consumes regional vCPU quota for its VM family. Size x host count must fit the subscription\u0027s Compute cores limit in the region.",
+                                                             "checkUrl":  "https://aka.ms/antquotahelp"
+                                                         }
+                                                     ]
+                                },
                       "architecture":  null,
                       "path":  "avd-hostpool",
                       "readme":  "catalog/avd-hostpool/README.md",
                       "template":  "catalog/avd-hostpool/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/avd-hostpool/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  2,
@@ -527,14 +543,137 @@
                                                           "unitOfMeasure":  "1/Month",
                                                           "quantityPerMonth":  2,
                                                           "notes":  "One OS disk per session host.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  19.71,
+                                                          "monthly":  39.42
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
-                                   "usageMonthly":  280.32,
-                                   "totalMonthly":  280.32,
-                                   "complete":  false,
+                                   "usageMonthly":  319.74,
+                                   "totalMonthly":  319.74,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-07-08"
+                               }
+                  },
+                  {
+                      "name":  "azure-virtual-desktop-enterprise",
+                      "displayName":  "Azure Virtual Desktop Enterprise",
+                      "category":  "End-User Computing",
+                      "description":  "Enterprise Azure Virtual Desktop baseline with pooled host pool, FSLogix profile storage, landing network, Key Vault and NSG baseline, and centralized monitoring.",
+                      "what":  "A starter AVD landing zone that provisions the core building blocks for pooled desktops in Azure: a host pool with application group and workspace, an optional scaling plan, FSLogix profile storage on Azure Files, a landing virtual network with session-host and private-endpoint subnets, baseline security controls, and centralized monitoring in Azure Monitor.",
+                      "why":  "Organizations standardizing remote and hybrid work need a governed, repeatable way to stand up AVD with profile persistence, secure networking, and observability from day one. Composing the host pool, FSLogix storage, landing network, secret management, and diagnostics into one template accelerates rollout while preserving operational consistency across environments.",
+                      "potentialUseCases":  [
+                                                "Pooled desktops for knowledge workers and contractors",
+                                                "Secure access to corporate apps for unmanaged or BYO devices",
+                                                "Seasonal or burst capacity for call centers and task workers",
+                                                "Standardized desktop estate during mergers, acquisitions, or datacenter exits"
+                                            ],
+                      "industries":  [
+                                         "Banking",
+                                         "Insurance",
+                                         "Health Provider",
+                                         "Central, Federal and Regional Government",
+                                         "Retailers",
+                                         "Education",
+                                         "Cross-industry"
+                                     ],
+                      "compliance":  [
+                                         "Baseline",
+                                         "SOC 2",
+                                         "ISO 27001",
+                                         "GDPR"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Pooled host pool with breadth-first load balancing across session hosts",
+                                                                  "FSLogix profile containers on Azure Files for stateless, roaming user profiles",
+                                                                  "Environment-specific parameterization for controlled dev/prod rollout"
+                                                              ],
+                                              "security":  [
+                                                               "RBAC-enabled Key Vault baseline for secret management",
+                                                               "Network segmentation with dedicated session-host and private-endpoint subnets plus NSG",
+                                                               "Storage hardened with TLS 1.2, HTTPS-only, and no public blob access"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Optional scaling plan ramps session hosts down off-peak to cut compute spend",
+                                                                       "Start-VM-on-connect avoids running idle session hosts",
+                                                                       "Use the dev profile for early validation before production scale"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Infrastructure as Code modules for repeatable deployment",
+                                                                            "Unified logging via Log Analytics and Application Insights",
+                                                                            "dev/prod parameter files for promotion across environments"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Tunable max session limit per host to balance density and experience",
+                                                                            "Breadth-first load balancing spreads users for consistent performance",
+                                                                            "TransactionOptimized Azure Files tier for responsive profile I/O"
+                                                                        ]
+                                          },
+                      "quota":  {
+                                    "summary":  "Session-host VMs require significant regional vCPU (compute) quota for the chosen VM size and host count. This is the most common blocker for AVD at scale — confirm Compute cores quota in the region before deploying.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Virtual Machines (session hosts)",
+                                                             "provider":  "Microsoft.Compute/virtualMachines",
+                                                             "kind":  "compute",
+                                                             "sku":  "Dsv5 / Dav4 family (per session-host size)",
+                                                             "detail":  "VM size x session-host count must fit the subscription\u0027s regional Compute cores quota. Enterprise host counts can require a quota increase.",
+                                                             "checkUrl":  "https://aka.ms/antquotahelp"
+                                                         }
+                                                     ]
+                                },
+                      "architecture":  null,
+                      "path":  "azure-virtual-desktop-enterprise",
+                      "readme":  "catalog/azure-virtual-desktop-enterprise/README.md",
+                      "template":  "catalog/azure-virtual-desktop-enterprise/main.bicep",
+                      "templateTf":  "catalog/azure-virtual-desktop-enterprise/terraform",
+                      "engines":  [
+                                      "bicep",
+                                      "terraform"
+                                  ],
+                      "hasProd":  true,
+                      "componentCount":  3,
+                      "costProfile":  "prod",
+                      "cost":  {
+                                   "currency":  "USD",
+                                   "region":  "eastus",
+                                   "profile":  "prod",
+                                   "components":  [
+                                                      {
+                                                          "name":  "Session host VMs (D4s v5) x5",
+                                                          "billing":  "usage",
+                                                          "serviceName":  "Virtual Machines",
+                                                          "unitOfMeasure":  "1 Hour",
+                                                          "quantityPerMonth":  3650,
+                                                          "notes":  "Example assumes 5 session hosts x 730 hours. A scaling plan reduces this materially; replace with your host count and schedule.",
+                                                          "unitPrice":  0.376,
+                                                          "monthly":  1372.40
+                                                      },
+                                                      {
+                                                          "name":  "FSLogix profile storage (Azure Files)",
+                                                          "billing":  "usage",
+                                                          "serviceName":  "Storage",
+                                                          "unitOfMeasure":  "1 GB/Month",
+                                                          "quantityPerMonth":  500,
+                                                          "notes":  "Example assumes ~500 GB of pooled user profiles.",
+                                                          "unitPrice":  0.06,
+                                                          "monthly":  30.00
+                                                      },
+                                                      {
+                                                          "name":  "Log Analytics ingestion",
+                                                          "billing":  "usage",
+                                                          "serviceName":  "Log Analytics",
+                                                          "unitOfMeasure":  "1 GB",
+                                                          "quantityPerMonth":  20,
+                                                          "notes":  "Example monthly diagnostic and platform telemetry ingestion.",
+                                                          "unitPrice":  2.3,
+                                                          "monthly":  46.0
+                                                      }
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  1448.40,
+                                   "totalMonthly":  1448.40,
+                                   "complete":  true,
                                    "pricedAt":  "2026-07-08"
                                }
                   },
@@ -591,14 +730,27 @@
                                                                             "Scalable AVS cluster size parameter to match workload demand"
                                                                         ]
                                           },
-                      "quota":  null,
+                      "quota":  {
+                                    "summary":  "Azure VMware Solution requires dedicated bare-metal host quota in the region, which is NOT enabled by default — it must be requested via a support/quota request before deployment. AVS hosts are also region- and SKU-limited.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Azure VMware Solution",
+                                                             "provider":  "Microsoft.AVS/privateClouds",
+                                                             "kind":  "dedicated-host",
+                                                             "sku":  "AV36 / AV36P / AV52 (per region availability)",
+                                                             "detail":  "AVS dedicated hosts require an explicit host quota grant per region and host SKU. New subscriptions start at 0 and must request quota before the cluster can be created.",
+                                                             "checkUrl":  "https://learn.microsoft.com/azure/azure-vmware/request-host-quota-azure-vmware"
+                                                         }
+                                                     ]
+                                },
                       "architecture":  null,
                       "path":  "azure-vmware-solution-enterprise",
                       "readme":  "catalog/azure-vmware-solution-enterprise/README.md",
                       "template":  "catalog/azure-vmware-solution-enterprise/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/azure-vmware-solution-enterprise/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  3,
@@ -692,14 +844,27 @@
                                                                             "Scales out to maxReplicas under load"
                                                                         ]
                                           },
-                      "quota":  null,
+                      "quota":  {
+                                    "summary":  "Needs Container Apps managed-environment (vCPU/memory) quota in the target region. New regions or constrained subscriptions can hit per-region Container Apps quota at preflight.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Azure Container Apps",
+                                                             "provider":  "Microsoft.App/managedEnvironments",
+                                                             "kind":  "compute",
+                                                             "sku":  "Consumption",
+                                                             "detail":  "The managed environment needs available vCPU/memory quota for the requested replica sizing in the region.",
+                                                             "checkUrl":  "https://learn.microsoft.com/azure/container-apps/quotas"
+                                                         }
+                                                     ]
+                                },
                       "architecture":  null,
                       "path":  "container-app",
                       "readme":  "catalog/container-app/README.md",
                       "template":  "catalog/container-app/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/container-app/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  3,
@@ -732,18 +897,18 @@
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
                                                           "billing":  "usage",
-                                                          "serviceName":  "Azure Monitor",
+                                                          "serviceName":  "Log Analytics",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month container logs.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  2.3,
+                                                          "monthly":  11.5
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
-                                   "usageMonthly":  157.68,
-                                   "totalMonthly":  157.68,
-                                   "complete":  false,
+                                   "usageMonthly":  169.18,
+                                   "totalMonthly":  169.18,
+                                   "complete":  true,
                                    "pricedAt":  "2026-07-08"
                                }
                   },
@@ -811,9 +976,10 @@
                       "path":  "data-lakehouse",
                       "readme":  "catalog/data-lakehouse/README.md",
                       "template":  "catalog/data-lakehouse/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/data-lakehouse/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  4,
@@ -964,9 +1130,10 @@
                       "path":  "enterprise-rag",
                       "readme":  "catalog/enterprise-rag/README.md",
                       "template":  "catalog/enterprise-rag/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/enterprise-rag/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  6,
@@ -1106,9 +1273,10 @@
                       "path":  "event-streaming-analytics",
                       "readme":  "catalog/event-streaming-analytics/README.md",
                       "template":  "catalog/event-streaming-analytics/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/event-streaming-analytics/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  5,
@@ -1155,8 +1323,8 @@
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  50,
                                                           "notes":  "Assumes ~50M serverless request units/month.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.25,
+                                                          "monthly":  12.50
                                                       },
                                                       {
                                                           "name":  "Curated lake storage (ZRS)",
@@ -1170,8 +1338,8 @@
                                                       }
                                                   ],
                                    "fixedMonthly":  1981.22,
-                                   "usageMonthly":  4.00,
-                                   "totalMonthly":  1985.22,
+                                   "usageMonthly":  16.50,
+                                   "totalMonthly":  1997.72,
                                    "complete":  false,
                                    "pricedAt":  "2026-07-08"
                                }
@@ -1303,9 +1471,10 @@
                       "path":  "hub-spoke-network",
                       "readme":  "catalog/hub-spoke-network/README.md",
                       "template":  "catalog/hub-spoke-network/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/hub-spoke-network/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  4,
@@ -1425,9 +1594,10 @@
                       "path":  "integration-workflow",
                       "readme":  "catalog/integration-workflow/README.md",
                       "template":  "catalog/integration-workflow/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/integration-workflow/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  3,
@@ -1535,9 +1705,10 @@
                       "path":  "landing-zone/ai",
                       "readme":  "catalog/landing-zone/ai/README.md",
                       "template":  "catalog/landing-zone/ai/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/landing-zone/ai/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  3,
@@ -1553,9 +1724,9 @@
                                                           "serviceName":  "Azure Cognitive Search",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "3 search units (replicas) x 730 hours. Meter naming varies - verify.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "notes":  "3 search units (replicas) x 730 hours.",
+                                                          "unitPrice":  0.336,
+                                                          "monthly":  735.84
                                                       },
                                                       {
                                                           "name":  "Blob storage (hot ZRS)",
@@ -1570,18 +1741,18 @@
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
                                                           "billing":  "usage",
-                                                          "serviceName":  "Azure Monitor",
+                                                          "serviceName":  "Log Analytics",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month telemetry. Model token usage is billed per AI use case.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  2.3,
+                                                          "monthly":  11.5
                                                       }
                                                   ],
-                                   "fixedMonthly":  0,
-                                   "usageMonthly":  4.78,
-                                   "totalMonthly":  4.78,
-                                   "complete":  false,
+                                   "fixedMonthly":  735.84,
+                                   "usageMonthly":  16.28,
+                                   "totalMonthly":  752.12,
+                                   "complete":  true,
                                    "pricedAt":  "2026-07-08"
                                }
                   },
@@ -1635,9 +1806,10 @@
                       "path":  "landing-zone/core",
                       "readme":  "catalog/landing-zone/core/README.md",
                       "template":  "catalog/landing-zone/core/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/landing-zone/core/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  3,
@@ -1650,12 +1822,12 @@
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
                                                           "billing":  "usage",
-                                                          "serviceName":  "Azure Monitor",
+                                                          "serviceName":  "Log Analytics",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month platform logs.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  2.3,
+                                                          "monthly":  11.5
                                                       },
                                                       {
                                                           "name":  "Blob storage (hot LRS)",
@@ -1679,9 +1851,9 @@
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
-                                   "usageMonthly":  2.06,
-                                   "totalMonthly":  2.06,
-                                   "complete":  false,
+                                   "usageMonthly":  13.56,
+                                   "totalMonthly":  13.56,
+                                   "complete":  true,
                                    "pricedAt":  "2026-07-08"
                                }
                   },
@@ -1746,9 +1918,10 @@
                       "path":  "microservices-aca",
                       "readme":  "catalog/microservices-aca/README.md",
                       "template":  "catalog/microservices-aca/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/microservices-aca/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  4,
@@ -1795,14 +1968,14 @@
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  25,
                                                           "notes":  "Assumes ~25M serverless request units/month.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.25,
+                                                          "monthly":  6.25
                                                       }
                                                   ],
                                    "fixedMonthly":  677.08,
-                                   "usageMonthly":  157.68,
-                                   "totalMonthly":  834.76,
-                                   "complete":  false,
+                                   "usageMonthly":  163.93,
+                                   "totalMonthly":  841.01,
+                                   "complete":  true,
                                    "pricedAt":  "2026-07-08"
                                }
                   },
@@ -1870,9 +2043,10 @@
                       "path":  "multiregion-web",
                       "readme":  "catalog/multiregion-web/README.md",
                       "template":  "catalog/multiregion-web/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/multiregion-web/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  4,
@@ -1929,6 +2103,136 @@
                                    "complete":  false,
                                    "pricedAt":  "2026-07-08"
                                }
+                  },
+                  {
+                      "name":  "power-bi-dedicated",
+                      "displayName":  "Power BI Dedicated Capacity",
+                      "category":  "Data \u0026 Analytics",
+                      "description":  "Deploys an Azure Power BI Dedicated capacity using the AVM-backed module.",
+                      "what":  "A Power BI Dedicated capacity resource (Microsoft.PowerBIDedicated/capacities) for reserved analytics compute with configurable SKU and admin membership.",
+                      "why":  "Teams that need predictable, dedicated Power BI compute can provision a governed capacity consistently across environments with IaC.",
+                      "potentialUseCases":  [
+                                                "Provisioning a dedicated Power BI capacity for departmental BI workloads",
+                                                "Standing up production-grade Power BI compute with repeatable IaC",
+                                                "Separating dev and prod BI capacity profiles using parameter files"
+                                            ],
+                      "industries":  [
+                                         "Cross-industry"
+                                     ],
+                      "compliance":  [
+                                         "Baseline"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Repeatable AVM-backed deployment pattern",
+                                                                  "Consistent resource provisioning via environment parameters"
+                                                              ],
+                                              "security":  [
+                                                               "Admin member identities are explicit and parameterized",
+                                                               "No embedded credentials in template code"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "SKU and capacity units are configurable",
+                                                                       "Dev and prod parameters separate sizing choices"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Single deployment template with standard outputs",
+                                                                            "Tagging supports inventory and governance"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Scale SKU tiers from A1 to A6 based on demand",
+                                                                            "Adjust capacity units without template rewrites"
+                                                                        ]
+                                          },
+                      "quota":  {
+                                    "summary":  "Power BI Dedicated capacity availability and quota vary by subscription and region.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Power BI Dedicated",
+                                                             "provider":  "Microsoft.PowerBIDedicated/capacities",
+                                                             "kind":  "compute",
+                                                             "sku":  "A1-A6",
+                                                             "detail":  "Ensure your subscription can create the requested Power BI Dedicated SKU in the target region."
+                                                         }
+                                                     ]
+                                },
+                      "architecture":  null,
+                      "path":  "power-bi-dedicated",
+                      "readme":  "catalog/power-bi-dedicated/README.md",
+                      "template":  "catalog/power-bi-dedicated/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
+                      "hasProd":  true,
+                      "componentCount":  0,
+                      "costProfile":  null,
+                      "cost":  null
+                  },
+                  {
+                      "name":  "purview",
+                      "displayName":  "Microsoft Purview Account",
+                      "category":  "Data \u0026 Analytics",
+                      "description":  "Deploys a Microsoft Purview account using the AVM-backed module with environment-aware parameters.",
+                      "what":  "A Microsoft Purview account (Microsoft.Purview/accounts) that supports data governance and catalog workloads with configurable network posture.",
+                      "why":  "Organizations implementing data governance need a repeatable way to provision Purview accounts with consistent baseline configuration across environments.",
+                      "potentialUseCases":  [
+                                                "Standing up an initial Purview governance environment",
+                                                "Provisioning separate dev and prod Purview accounts",
+                                                "Applying consistent network settings to Purview deployments"
+                                            ],
+                      "industries":  [
+                                         "Cross-industry"
+                                     ],
+                      "compliance":  [
+                                         "Baseline"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Purview account deployments are repeatable via IaC",
+                                                                  "Environment-specific parameters reduce manual drift"
+                                                              ],
+                                              "security":  [
+                                                               "Network access posture is explicitly parameterized",
+                                                               "No hardcoded credentials in deployment templates"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Dev and prod parameter profiles support staged adoption",
+                                                                       "Single module wrapper avoids duplicated template maintenance"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Standardized outputs expose account and managed resource details",
+                                                                            "Consistent tagging model aids governance"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "Deploy Purview in supported region with configurable settings",
+                                                                            "Scalable governance foundation without template rewrites"
+                                                                        ]
+                                          },
+                      "quota":  {
+                                    "summary":  "Purview account availability and features can vary by region and subscription.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Microsoft Purview",
+                                                             "provider":  "Microsoft.Purview/accounts",
+                                                             "kind":  "data-governance",
+                                                             "sku":  "N/A",
+                                                             "detail":  "Confirm Purview account creation is enabled for your subscription in the chosen region."
+                                                         }
+                                                     ]
+                                },
+                      "architecture":  null,
+                      "path":  "purview",
+                      "readme":  "catalog/purview/README.md",
+                      "template":  "catalog/purview/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
+                      "hasProd":  true,
+                      "componentCount":  0,
+                      "costProfile":  null,
+                      "cost":  null
                   },
                   {
                       "name":  "secure-web-app",
@@ -1993,9 +2297,10 @@
                       "path":  "secure-web-app",
                       "readme":  "catalog/secure-web-app/README.md",
                       "template":  "catalog/secure-web-app/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/secure-web-app/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  5,
@@ -2022,8 +2327,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
                                                           "notes":  "Fixed gateway hours; capacity units billed separately.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.36,
+                                                          "monthly":  262.80
                                                       },
                                                       {
                                                           "name":  "Application Gateway capacity units",
@@ -2032,8 +2337,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "Assumes ~2 capacity units sustained.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "unitPrice":  0.0144,
+                                                          "monthly":  21.02
                                                       },
                                                       {
                                                           "name":  "Azure SQL (GP_Gen5_2)",
@@ -2041,9 +2346,9 @@
                                                           "serviceName":  "SQL Database",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "2 vCores x 730 hours, General Purpose provisioned.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "notes":  "2 vCores x 730 hours, General Purpose provisioned. Priced per vCore-hour.",
+                                                          "unitPrice":  0.15222,
+                                                          "monthly":  222.24
                                                       },
                                                       {
                                                           "name":  "Private Endpoints (SQL + Key Vault)",
@@ -2056,10 +2361,10 @@
                                                           "monthly":  14.60
                                                       }
                                                   ],
-                                   "fixedMonthly":  354.05,
-                                   "usageMonthly":  0,
-                                   "totalMonthly":  354.05,
-                                   "complete":  false,
+                                   "fixedMonthly":  839.09,
+                                   "usageMonthly":  21.02,
+                                   "totalMonthly":  860.11,
+                                   "complete":  true,
                                    "pricedAt":  "2026-07-08"
                                }
                   },
@@ -2114,9 +2419,10 @@
                       "path":  "sql-data-api",
                       "readme":  "catalog/sql-data-api/README.md",
                       "template":  "catalog/sql-data-api/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/sql-data-api/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  3,
@@ -2142,9 +2448,9 @@
                                                           "serviceName":  "SQL Database",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "2 vCores x 730 hours. Meter matching is approximate - verify against your bill.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "notes":  "2 vCores x 730 hours, General Purpose provisioned. Priced per vCore-hour.",
+                                                          "unitPrice":  0.15222,
+                                                          "monthly":  222.24
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
@@ -2157,10 +2463,10 @@
                                                           "monthly":  0.50
                                                       }
                                                   ],
-                                   "fixedMonthly":  339.45,
+                                   "fixedMonthly":  561.69,
                                    "usageMonthly":  0.50,
-                                   "totalMonthly":  339.95,
-                                   "complete":  false,
+                                   "totalMonthly":  562.19,
+                                   "complete":  true,
                                    "pricedAt":  "2026-07-08"
                                }
                   },
@@ -2227,9 +2533,10 @@
                       "path":  "web-app",
                       "readme":  "catalog/web-app/README.md",
                       "template":  "catalog/web-app/main.bicep",
-                      "templateTf":  null,
+                      "templateTf":  "catalog/web-app/terraform",
                       "engines":  [
-                                      "bicep"
+                                      "bicep",
+                                      "terraform"
                                   ],
                       "hasProd":  true,
                       "componentCount":  3,
