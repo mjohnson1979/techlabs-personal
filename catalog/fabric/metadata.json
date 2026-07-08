@@ -1,0 +1,49 @@
+{
+  "name": "fabric",
+  "displayName": "Microsoft Fabric Capacity",
+  "category": "Data & Analytics",
+  "description": "Deploys a Microsoft Fabric capacity with configurable SKU and admin membership.",
+  "what": "A Microsoft Fabric capacity resource (Microsoft.Fabric/capacities) that provides dedicated compute for Fabric workloads. The template configures SKU size and required admin members.",
+  "why": "Organizations using Fabric need a repeatable way to provision dedicated capacity for pilots, MVPs, and production analytics workloads with clear environment tagging.",
+  "potentialUseCases": [
+    "Standing up a Fabric sandbox for analytics experimentation",
+    "Provisioning dedicated Fabric compute for a BI team",
+    "Establishing a production Fabric capacity with IaC"
+  ],
+  "industries": ["Cross-industry"],
+  "compliance": ["Baseline"],
+  "wellArchitected": {
+    "reliability": [
+      "Infrastructure is repeatable and redeployable through Bicep",
+      "Environment tagging supports operational governance"
+    ],
+    "security": [
+      "Admin membership is explicit and parameterized",
+      "No secrets are embedded in the template"
+    ],
+    "costOptimization": [
+      "Capacity SKU is parameterized from small (F2) to large tiers",
+      "Dev and prod parameter files separate cost profiles"
+    ],
+    "operationalExcellence": [
+      "Single template and parameters support consistent deployments",
+      "Standard outputs expose deployed capacity identifiers"
+    ],
+    "performanceEfficiency": [
+      "SKU can be tuned to workload demand",
+      "Higher production tiers can be selected without template rewrites"
+    ]
+  },
+  "quota": {
+    "summary": "Fabric capacity availability and quota can vary by region and tenant. Validate service availability and entitlement before deployment.",
+    "requirements": [
+      {
+        "service": "Microsoft Fabric",
+        "provider": "Microsoft.Fabric/capacities",
+        "kind": "compute",
+        "sku": "F2-F2048",
+        "detail": "Your tenant/subscription must be allowed to create Fabric capacities in the target region."
+      }
+    ]
+  }
+}

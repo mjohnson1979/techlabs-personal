@@ -1,7 +1,7 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-06-29T15:05:43Z",
+    "generated":  "2026-07-08T14:05:02Z",
     "count":  19,
     "items":  [
                   {
@@ -138,6 +138,10 @@
                       "path":  "ai-chat",
                       "readme":  "catalog/ai-chat/README.md",
                       "template":  "catalog/ai-chat/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  5,
                       "costProfile":  "prod",
@@ -164,7 +168,7 @@
                                                           "quantityPerMonth":  20,
                                                           "notes":  "Assumes ~20M input tokens/month on GlobalStandard. Meter naming varies - verify.",
                                                           "unitPrice":  0.25,
-                                                          "monthly":  5.0
+                                                          "monthly":  5.00
                                                       },
                                                       {
                                                           "name":  "Azure OpenAI gpt-5-mini output tokens",
@@ -184,7 +188,7 @@
                                                           "quantityPerMonth":  50,
                                                           "notes":  "Assumes ~50M RUs/month.",
                                                           "unitPrice":  0.25,
-                                                          "monthly":  12.5
+                                                          "monthly":  12.50
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
@@ -194,20 +198,15 @@
                                                           "quantityPerMonth":  10,
                                                           "notes":  "Assumes ~10 GB/month telemetry.",
                                                           "unitPrice":  0.05,
-                                                          "monthly":  0.5
+                                                          "monthly":  0.50
                                                       }
                                                   ],
                                    "fixedMonthly":  339.45,
-                                   "usageMonthly":  28.0,
+                                   "usageMonthly":  28.00,
                                    "totalMonthly":  367.45,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/ai-chat/terraform"
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "aks-secure-baseline",
@@ -274,6 +273,10 @@
                       "path":  "aks-secure-baseline",
                       "readme":  "catalog/aks-secure-baseline/README.md",
                       "template":  "catalog/aks-secure-baseline/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  4,
                       "costProfile":  "Prod profile: Standard tier control plane, 3x D4s_v5 nodes, Premium ACR.",
@@ -310,7 +313,7 @@
                                                           "quantityPerMonth":  30,
                                                           "notes":  "Premium registry daily charge.",
                                                           "unitPrice":  1.6666,
-                                                          "monthly":  50.0
+                                                          "monthly":  50.00
                                                       },
                                                       {
                                                           "name":  "Container Insights ingestion",
@@ -320,20 +323,15 @@
                                                           "quantityPerMonth":  100,
                                                           "notes":  "Assumes ~100 GB/month of cluster logs.",
                                                           "unitPrice":  0.05,
-                                                          "monthly":  5.0
+                                                          "monthly":  5.00
                                                       }
                                                   ],
                                    "fixedMonthly":  543.48,
-                                   "usageMonthly":  5.0,
+                                   "usageMonthly":  5.00,
                                    "totalMonthly":  548.48,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/aks-secure-baseline/terraform"
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "api-management-gateway",
@@ -395,6 +393,10 @@
                       "path":  "api-management-gateway",
                       "readme":  "catalog/api-management-gateway/README.md",
                       "template":  "catalog/api-management-gateway/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  2,
                       "costProfile":  "Prod profile: Premium APIM x2 units, P1v3 x3 backend.",
@@ -428,13 +430,8 @@
                                    "usageMonthly":  0,
                                    "totalMonthly":  5929.79,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/api-management-gateway/terraform"
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "avd-hostpool",
@@ -496,23 +493,15 @@
                                                                             "Breadth-first balancing spreads load during peak"
                                                                         ]
                                           },
-                      "quota":  {
-                                    "summary":  "Session-host VMs require regional vCPU (compute) quota for the chosen VM size. The host pool/app group control plane is free, but adding session hosts needs Compute cores quota in the region.",
-                                    "requirements":  [
-                                                         {
-                                                             "service":  "Virtual Machines (session hosts)",
-                                                             "provider":  "Microsoft.Compute/virtualMachines",
-                                                             "kind":  "compute",
-                                                             "sku":  "Dav4 / Dsv5 family (per session-host size)",
-                                                             "detail":  "Each session host consumes regional vCPU quota for its VM family. Size x host count must fit the subscription\u0027s Compute cores limit in the region.",
-                                                             "checkUrl":  "https://aka.ms/antquotahelp"
-                                                         }
-                                                     ]
-                                },
+                      "quota":  null,
                       "architecture":  null,
                       "path":  "avd-hostpool",
                       "readme":  "catalog/avd-hostpool/README.md",
                       "template":  "catalog/avd-hostpool/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  2,
                       "costProfile":  "AVD control plane is free; cost is driven by the session host VMs you join (priced separately). Prod profile assumes an autoscaling pool of session hosts.",
@@ -538,144 +527,16 @@
                                                           "unitOfMeasure":  "1/Month",
                                                           "quantityPerMonth":  2,
                                                           "notes":  "One OS disk per session host.",
-                                                          "unitPrice":  19.71,
-                                                          "monthly":  39.42
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
-                                   "usageMonthly":  319.74,
-                                   "totalMonthly":  319.74,
-                                   "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/avd-hostpool/terraform"
-                  },
-                  {
-                      "name":  "azure-virtual-desktop-enterprise",
-                      "displayName":  "Azure Virtual Desktop Enterprise",
-                      "category":  "End-User Computing",
-                      "description":  "Enterprise Azure Virtual Desktop baseline with pooled host pool, FSLogix profile storage, landing network, Key Vault and NSG baseline, and centralized monitoring.",
-                      "what":  "A starter AVD landing zone that provisions the core building blocks for pooled desktops in Azure: a host pool with application group and workspace, an optional scaling plan, FSLogix profile storage on Azure Files, a landing virtual network with session-host and private-endpoint subnets, baseline security controls, and centralized monitoring in Azure Monitor.",
-                      "why":  "Organizations standardizing remote and hybrid work need a governed, repeatable way to stand up AVD with profile persistence, secure networking, and observability from day one. Composing the host pool, FSLogix storage, landing network, secret management, and diagnostics into one template accelerates rollout while preserving operational consistency across environments.",
-                      "potentialUseCases":  [
-                                                "Pooled desktops for knowledge workers and contractors",
-                                                "Secure access to corporate apps for unmanaged or BYO devices",
-                                                "Seasonal or burst capacity for call centers and task workers",
-                                                "Standardized desktop estate during mergers, acquisitions, or datacenter exits"
-                                            ],
-                      "industries":  [
-                                         "Banking",
-                                         "Insurance",
-                                         "Health Provider",
-                                         "Central, Federal and Regional Government",
-                                         "Retailers",
-                                         "Education",
-                                         "Cross-industry"
-                                     ],
-                      "compliance":  [
-                                         "Baseline",
-                                         "SOC 2",
-                                         "ISO 27001",
-                                         "GDPR"
-                                     ],
-                      "wellArchitected":  {
-                                              "reliability":  [
-                                                                  "Pooled host pool with breadth-first load balancing across session hosts",
-                                                                  "FSLogix profile containers on Azure Files for stateless, roaming user profiles",
-                                                                  "Environment-specific parameterization for controlled dev/prod rollout"
-                                                              ],
-                                              "security":  [
-                                                               "RBAC-enabled Key Vault baseline for secret management",
-                                                               "Network segmentation with dedicated session-host and private-endpoint subnets plus NSG",
-                                                               "Storage hardened with TLS 1.2, HTTPS-only, and no public blob access"
-                                                           ],
-                                              "costOptimization":  [
-                                                                       "Optional scaling plan ramps session hosts down off-peak to cut compute spend",
-                                                                       "Start-VM-on-connect avoids running idle session hosts",
-                                                                       "Use the dev profile for early validation before production scale"
-                                                                   ],
-                                              "operationalExcellence":  [
-                                                                            "Infrastructure as Code modules for repeatable deployment",
-                                                                            "Unified logging via Log Analytics and Application Insights",
-                                                                            "dev/prod parameter files for promotion across environments"
-                                                                        ],
-                                              "performanceEfficiency":  [
-                                                                            "Tunable max session limit per host to balance density and experience",
-                                                                            "Breadth-first load balancing spreads users for consistent performance",
-                                                                            "TransactionOptimized Azure Files tier for responsive profile I/O"
-                                                                        ]
-                                          },
-                      "quota":  {
-                                    "summary":  "Session-host VMs require significant regional vCPU (compute) quota for the chosen VM size and host count. This is the most common blocker for AVD at scale — confirm Compute cores quota in the region before deploying.",
-                                    "requirements":  [
-                                                         {
-                                                             "service":  "Virtual Machines (session hosts)",
-                                                             "provider":  "Microsoft.Compute/virtualMachines",
-                                                             "kind":  "compute",
-                                                             "sku":  "Dsv5 / Dav4 family (per session-host size)",
-                                                             "detail":  "VM size x session-host count must fit the subscription\u0027s regional Compute cores quota. Enterprise host counts can require a quota increase.",
-                                                             "checkUrl":  "https://aka.ms/antquotahelp"
-                                                         }
-                                                     ]
-                                },
-                      "architecture":  null,
-                      "path":  "azure-virtual-desktop-enterprise",
-                      "readme":  "catalog/azure-virtual-desktop-enterprise/README.md",
-                      "template":  "catalog/azure-virtual-desktop-enterprise/main.bicep",
-                      "hasProd":  true,
-                      "componentCount":  3,
-                      "costProfile":  "prod",
-                      "cost":  {
-                                   "currency":  "USD",
-                                   "region":  "eastus",
-                                   "profile":  "prod",
-                                   "components":  [
-                                                      {
-                                                          "name":  "Session host VMs (D4s v5) x5",
-                                                          "billing":  "usage",
-                                                          "serviceName":  "Virtual Machines",
-                                                          "unitOfMeasure":  "1 Hour",
-                                                          "quantityPerMonth":  3650,
-                                                          "notes":  "Example assumes 5 session hosts x 730 hours. A scaling plan reduces this materially; replace with your host count and schedule.",
-                                                          "unitPrice":  0.376,
-                                                          "monthly":  1372.4
-                                                      },
-                                                      {
-                                                          "name":  "FSLogix profile storage (Azure Files)",
-                                                          "billing":  "usage",
-                                                          "serviceName":  "Storage",
-                                                          "unitOfMeasure":  "1 GB/Month",
-                                                          "quantityPerMonth":  500,
-                                                          "notes":  "Example assumes ~500 GB of pooled user profiles.",
-                                                          "unitPrice":  0.06,
-                                                          "monthly":  30.0
-                                                      },
-                                                      {
-                                                          "name":  "Log Analytics ingestion",
-                                                          "billing":  "usage",
-                                                          "serviceName":  "Log Analytics",
-                                                          "unitOfMeasure":  "1 GB",
-                                                          "quantityPerMonth":  20,
-                                                          "notes":  "Example monthly diagnostic and platform telemetry ingestion.",
-                                                          "unitPrice":  2.3,
-                                                          "monthly":  46.0
-                                                      }
-                                                  ],
-                                   "fixedMonthly":  0,
-                                   "usageMonthly":  1448.4,
-                                   "totalMonthly":  1448.4,
-                                   "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/azure-virtual-desktop-enterprise/terraform"
+                                   "usageMonthly":  280.32,
+                                   "totalMonthly":  280.32,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "azure-vmware-solution-enterprise",
@@ -730,23 +591,15 @@
                                                                             "Scalable AVS cluster size parameter to match workload demand"
                                                                         ]
                                           },
-                      "quota":  {
-                                    "summary":  "Azure VMware Solution requires dedicated bare-metal host quota in the region, which is NOT enabled by default — it must be requested via a support/quota request before deployment. AVS hosts are also region- and SKU-limited.",
-                                    "requirements":  [
-                                                         {
-                                                             "service":  "Azure VMware Solution",
-                                                             "provider":  "Microsoft.AVS/privateClouds",
-                                                             "kind":  "dedicated-host",
-                                                             "sku":  "AV36 / AV36P / AV52 (per region availability)",
-                                                             "detail":  "AVS dedicated hosts require an explicit host quota grant per region and host SKU. New subscriptions start at 0 and must request quota before the cluster can be created.",
-                                                             "checkUrl":  "https://learn.microsoft.com/azure/azure-vmware/request-host-quota-azure-vmware"
-                                                         }
-                                                     ]
-                                },
+                      "quota":  null,
                       "architecture":  null,
                       "path":  "azure-vmware-solution-enterprise",
                       "readme":  "catalog/azure-vmware-solution-enterprise/README.md",
                       "template":  "catalog/azure-vmware-solution-enterprise/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  3,
                       "costProfile":  "prod",
@@ -790,13 +643,8 @@
                                    "usageMonthly":  16610.67,
                                    "totalMonthly":  16610.67,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/azure-vmware-solution-enterprise/terraform"
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "container-app",
@@ -844,23 +692,15 @@
                                                                             "Scales out to maxReplicas under load"
                                                                         ]
                                           },
-                      "quota":  {
-                                    "summary":  "Needs Container Apps managed-environment (vCPU/memory) quota in the target region. New regions or constrained subscriptions can hit per-region Container Apps quota at preflight.",
-                                    "requirements":  [
-                                                         {
-                                                             "service":  "Azure Container Apps",
-                                                             "provider":  "Microsoft.App/managedEnvironments",
-                                                             "kind":  "compute",
-                                                             "sku":  "Consumption",
-                                                             "detail":  "The managed environment needs available vCPU/memory quota for the requested replica sizing in the region.",
-                                                             "checkUrl":  "https://learn.microsoft.com/azure/container-apps/quotas"
-                                                         }
-                                                     ]
-                                },
+                      "quota":  null,
                       "architecture":  null,
                       "path":  "container-app",
                       "readme":  "catalog/container-app/README.md",
                       "template":  "catalog/container-app/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  3,
                       "costProfile":  "prod",
@@ -876,7 +716,7 @@
                                                           "unitOfMeasure":  "1 Second",
                                                           "quantityPerMonth":  5256000,
                                                           "notes":  "2 warm replicas x 1 vCPU x 730h x 3600s. Active rate (resource-allocated).",
-                                                          "unitPrice":  2E-05,
+                                                          "unitPrice":  0.00002,
                                                           "monthly":  126.14
                                                       },
                                                       {
@@ -886,31 +726,26 @@
                                                           "unitOfMeasure":  "1 GiB Second",
                                                           "quantityPerMonth":  10512000,
                                                           "notes":  "2 warm replicas x 2 GiB x 730h x 3600s.",
-                                                          "unitPrice":  0.0,
+                                                          "unitPrice":  0.00000,
                                                           "monthly":  31.54
                                                       },
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
                                                           "billing":  "usage",
-                                                          "serviceName":  "Log Analytics",
+                                                          "serviceName":  "Azure Monitor",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month container logs.",
-                                                          "unitPrice":  2.3,
-                                                          "monthly":  11.5
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
-                                   "usageMonthly":  169.18,
-                                   "totalMonthly":  169.18,
-                                   "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/container-app/terraform"
+                                   "usageMonthly":  157.68,
+                                   "totalMonthly":  157.68,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "data-lakehouse",
@@ -976,6 +811,10 @@
                       "path":  "data-lakehouse",
                       "readme":  "catalog/data-lakehouse/README.md",
                       "template":  "catalog/data-lakehouse/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  4,
                       "costProfile":  "Prod profile: ZRS lake, premium Databricks, managed-VNet Data Factory.",
@@ -992,7 +831,7 @@
                                                           "quantityPerMonth":  5000,
                                                           "notes":  "Assumes ~5 TB across bronze/silver/gold.",
                                                           "unitPrice":  0.004,
-                                                          "monthly":  20.0
+                                                          "monthly":  20.00
                                                       },
                                                       {
                                                           "name":  "Databricks (premium) DBUs",
@@ -1002,7 +841,7 @@
                                                           "quantityPerMonth":  2000,
                                                           "notes":  "Assumes ~2000 DBUs/month; VM compute billed separately.",
                                                           "unitPrice":  0.55,
-                                                          "monthly":  1100.0
+                                                          "monthly":  1100.00
                                                       },
                                                       {
                                                           "name":  "Data Factory pipeline activity runs",
@@ -1029,13 +868,8 @@
                                    "usageMonthly":  1139.22,
                                    "totalMonthly":  1139.22,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/data-lakehouse/terraform"
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "enterprise-rag",
@@ -1130,6 +964,10 @@
                       "path":  "enterprise-rag",
                       "readme":  "catalog/enterprise-rag/README.md",
                       "template":  "catalog/enterprise-rag/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  6,
                       "costProfile":  "Prod profile: gpt-5-mini @60K TPM GlobalStandard, Standard Search x3, P1v3 x3, Premium APIM.",
@@ -1146,7 +984,7 @@
                                                           "quantityPerMonth":  50,
                                                           "notes":  "Assumes ~50M input tokens/month on GlobalStandard.",
                                                           "unitPrice":  0.25,
-                                                          "monthly":  12.5
+                                                          "monthly":  12.50
                                                       },
                                                       {
                                                           "name":  "Azure OpenAI - gpt-5-mini output",
@@ -1200,16 +1038,11 @@
                                                       }
                                                   ],
                                    "fixedMonthly":  3870.46,
-                                   "usageMonthly":  42.5,
+                                   "usageMonthly":  42.50,
                                    "totalMonthly":  3912.96,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/enterprise-rag/terraform"
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "event-streaming-analytics",
@@ -1273,6 +1106,10 @@
                       "path":  "event-streaming-analytics",
                       "readme":  "catalog/event-streaming-analytics/README.md",
                       "template":  "catalog/event-streaming-analytics/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  5,
                       "costProfile":  "Prod profile: Premium Event Hubs, 6 SU Stream Analytics, EP1 Functions.",
@@ -1299,7 +1136,7 @@
                                                           "quantityPerMonth":  4380,
                                                           "notes":  "Six streaming units x 730 hours.",
                                                           "unitPrice":  0.11,
-                                                          "monthly":  481.8
+                                                          "monthly":  481.80
                                                       },
                                                       {
                                                           "name":  "Functions (Elastic Premium EP1)",
@@ -1318,8 +1155,8 @@
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  50,
                                                           "notes":  "Assumes ~50M serverless request units/month.",
-                                                          "unitPrice":  0.25,
-                                                          "monthly":  12.5
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Curated lake storage (ZRS)",
@@ -1329,20 +1166,80 @@
                                                           "quantityPerMonth":  1000,
                                                           "notes":  "Assumes ~1 TB curated Parquet retained.",
                                                           "unitPrice":  0.004,
-                                                          "monthly":  4.0
+                                                          "monthly":  4.00
                                                       }
                                                   ],
                                    "fixedMonthly":  1981.22,
-                                   "usageMonthly":  16.5,
-                                   "totalMonthly":  1997.72,
+                                   "usageMonthly":  4.00,
+                                   "totalMonthly":  1985.22,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-29"
-                               },
+                                   "pricedAt":  "2026-07-08"
+                               }
+                  },
+                  {
+                      "name":  "fabric",
+                      "displayName":  "Microsoft Fabric Capacity",
+                      "category":  "Data \u0026 Analytics",
+                      "description":  "Deploys a Microsoft Fabric capacity with configurable SKU and admin membership.",
+                      "what":  "A Microsoft Fabric capacity resource (Microsoft.Fabric/capacities) that provides dedicated compute for Fabric workloads. The template configures SKU size and required admin members.",
+                      "why":  "Organizations using Fabric need a repeatable way to provision dedicated capacity for pilots, MVPs, and production analytics workloads with clear environment tagging.",
+                      "potentialUseCases":  [
+                                                "Standing up a Fabric sandbox for analytics experimentation",
+                                                "Provisioning dedicated Fabric compute for a BI team",
+                                                "Establishing a production Fabric capacity with IaC"
+                                            ],
+                      "industries":  [
+                                         "Cross-industry"
+                                     ],
+                      "compliance":  [
+                                         "Baseline"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Infrastructure is repeatable and redeployable through Bicep",
+                                                                  "Environment tagging supports operational governance"
+                                                              ],
+                                              "security":  [
+                                                               "Admin membership is explicit and parameterized",
+                                                               "No secrets are embedded in the template"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Capacity SKU is parameterized from small (F2) to large tiers",
+                                                                       "Dev and prod parameter files separate cost profiles"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Single template and parameters support consistent deployments",
+                                                                            "Standard outputs expose deployed capacity identifiers"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "SKU can be tuned to workload demand",
+                                                                            "Higher production tiers can be selected without template rewrites"
+                                                                        ]
+                                          },
+                      "quota":  {
+                                    "summary":  "Fabric capacity availability and quota can vary by region and tenant. Validate service availability and entitlement before deployment.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Microsoft Fabric",
+                                                             "provider":  "Microsoft.Fabric/capacities",
+                                                             "kind":  "compute",
+                                                             "sku":  "F2-F2048",
+                                                             "detail":  "Your tenant/subscription must be allowed to create Fabric capacities in the target region."
+                                                         }
+                                                     ]
+                                },
+                      "architecture":  null,
+                      "path":  "fabric",
+                      "readme":  "catalog/fabric/README.md",
+                      "template":  "catalog/fabric/main.bicep",
+                      "templateTf":  null,
                       "engines":  [
-                                      "bicep",
-                                      "terraform"
+                                      "bicep"
                                   ],
-                      "templateTf":  "catalog/event-streaming-analytics/terraform"
+                      "hasProd":  true,
+                      "componentCount":  0,
+                      "costProfile":  null,
+                      "cost":  null
                   },
                   {
                       "name":  "hub-spoke-network",
@@ -1406,6 +1303,10 @@
                       "path":  "hub-spoke-network",
                       "readme":  "catalog/hub-spoke-network/README.md",
                       "template":  "catalog/hub-spoke-network/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  4,
                       "costProfile":  "Resilient hub with Premium firewall and Bastion (prod profile).",
@@ -1422,7 +1323,7 @@
                                                           "quantityPerMonth":  730,
                                                           "notes":  "Per-deployment hourly charge; data processing billed separately.",
                                                           "unitPrice":  1.75,
-                                                          "monthly":  1277.5
+                                                          "monthly":  1277.50
                                                       },
                                                       {
                                                           "name":  "Azure Firewall data processed",
@@ -1432,7 +1333,7 @@
                                                           "quantityPerMonth":  1000,
                                                           "notes":  "Assumes ~1 TB/month inspected egress.",
                                                           "unitPrice":  0.016,
-                                                          "monthly":  16.0
+                                                          "monthly":  16.00
                                                       },
                                                       {
                                                           "name":  "Azure Bastion (Standard)",
@@ -1441,8 +1342,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
                                                           "notes":  "Per-hour Bastion host charge.",
-                                                          "unitPrice":  0.05,
-                                                          "monthly":  36.5
+                                                          "unitPrice":  0.05000,
+                                                          "monthly":  36.50
                                                       },
                                                       {
                                                           "name":  "Public IP (Standard, static)",
@@ -1456,16 +1357,11 @@
                                                       }
                                                   ],
                                    "fixedMonthly":  1322.76,
-                                   "usageMonthly":  16.0,
+                                   "usageMonthly":  16.00,
                                    "totalMonthly":  1338.76,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/hub-spoke-network/terraform"
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "integration-workflow",
@@ -1529,6 +1425,10 @@
                       "path":  "integration-workflow",
                       "readme":  "catalog/integration-workflow/README.md",
                       "template":  "catalog/integration-workflow/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  3,
                       "costProfile":  "Prod profile: WS3 Workflow Standard plan, Premium Service Bus.",
@@ -1572,13 +1472,8 @@
                                    "usageMonthly":  0.05,
                                    "totalMonthly":  677.13,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/integration-workflow/terraform"
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "landing-zone-ai",
@@ -1640,6 +1535,10 @@
                       "path":  "landing-zone/ai",
                       "readme":  "catalog/landing-zone/ai/README.md",
                       "template":  "catalog/landing-zone/ai/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  3,
                       "costProfile":  "prod",
@@ -1654,9 +1553,9 @@
                                                           "serviceName":  "Azure Cognitive Search",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  2190,
-                                                          "notes":  "3 search units (replicas) x 730 hours.",
-                                                          "unitPrice":  0.336,
-                                                          "monthly":  735.84
+                                                          "notes":  "3 search units (replicas) x 730 hours. Meter naming varies - verify.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Blob storage (hot ZRS)",
@@ -1671,25 +1570,20 @@
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
                                                           "billing":  "usage",
-                                                          "serviceName":  "Log Analytics",
+                                                          "serviceName":  "Azure Monitor",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month telemetry. Model token usage is billed per AI use case.",
-                                                          "unitPrice":  2.3,
-                                                          "monthly":  11.5
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       }
                                                   ],
-                                   "fixedMonthly":  735.84,
-                                   "usageMonthly":  16.28,
-                                   "totalMonthly":  752.12,
-                                   "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/landing-zone/ai/terraform"
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  4.78,
+                                   "totalMonthly":  4.78,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "landing-zone-core",
@@ -1741,6 +1635,10 @@
                       "path":  "landing-zone/core",
                       "readme":  "catalog/landing-zone/core/README.md",
                       "template":  "catalog/landing-zone/core/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  3,
                       "costProfile":  "dev",
@@ -1752,12 +1650,12 @@
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
                                                           "billing":  "usage",
-                                                          "serviceName":  "Log Analytics",
+                                                          "serviceName":  "Azure Monitor",
                                                           "unitOfMeasure":  "1 GB",
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month platform logs.",
-                                                          "unitPrice":  2.3,
-                                                          "monthly":  11.5
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Blob storage (hot LRS)",
@@ -1781,16 +1679,11 @@
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
-                                   "usageMonthly":  13.56,
-                                   "totalMonthly":  13.56,
-                                   "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/landing-zone/core/terraform"
+                                   "usageMonthly":  2.06,
+                                   "totalMonthly":  2.06,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "microservices-aca",
@@ -1853,6 +1746,10 @@
                       "path":  "microservices-aca",
                       "readme":  "catalog/microservices-aca/README.md",
                       "template":  "catalog/microservices-aca/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  4,
                       "costProfile":  "Prod profile: zone-redundant environment, Premium Service Bus, warm replicas.",
@@ -1868,7 +1765,7 @@
                                                           "unitOfMeasure":  "1 Second",
                                                           "quantityPerMonth":  5256000,
                                                           "notes":  "~2 active vCPU-equivalents continuously (2 x 730h).",
-                                                          "unitPrice":  2E-05,
+                                                          "unitPrice":  0.00002,
                                                           "monthly":  126.14
                                                       },
                                                       {
@@ -1878,7 +1775,7 @@
                                                           "unitOfMeasure":  "1 GiB Second",
                                                           "quantityPerMonth":  10512000,
                                                           "notes":  "~4 GiB active continuously.",
-                                                          "unitPrice":  0.0,
+                                                          "unitPrice":  0.00000,
                                                           "monthly":  31.54
                                                       },
                                                       {
@@ -1898,21 +1795,16 @@
                                                           "unitOfMeasure":  "1M",
                                                           "quantityPerMonth":  25,
                                                           "notes":  "Assumes ~25M serverless request units/month.",
-                                                          "unitPrice":  0.25,
-                                                          "monthly":  6.25
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       }
                                                   ],
                                    "fixedMonthly":  677.08,
-                                   "usageMonthly":  163.93,
-                                   "totalMonthly":  841.01,
-                                   "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/microservices-aca/terraform"
+                                   "usageMonthly":  157.68,
+                                   "totalMonthly":  834.76,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "multiregion-web",
@@ -1978,6 +1870,10 @@
                       "path":  "multiregion-web",
                       "readme":  "catalog/multiregion-web/README.md",
                       "template":  "catalog/multiregion-web/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  4,
                       "costProfile":  "Prod profile: Premium Front Door, P1v3 x3 in two regions, multi-region Cosmos.",
@@ -2024,20 +1920,15 @@
                                                           "quantityPerMonth":  14600,
                                                           "notes":  "~1000 RU/s replicated across two regions (2 x 730h x 10 units).",
                                                           "unitPrice":  0.008,
-                                                          "monthly":  116.8
+                                                          "monthly":  116.80
                                                       }
                                                   ],
-                                   "fixedMonthly":  678.9,
-                                   "usageMonthly":  116.8,
-                                   "totalMonthly":  795.7,
+                                   "fixedMonthly":  678.90,
+                                   "usageMonthly":  116.80,
+                                   "totalMonthly":  795.70,
                                    "complete":  false,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/multiregion-web/terraform"
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "secure-web-app",
@@ -2102,6 +1993,10 @@
                       "path":  "secure-web-app",
                       "readme":  "catalog/secure-web-app/README.md",
                       "template":  "catalog/secure-web-app/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  5,
                       "costProfile":  "Zone-redundant prod profile: P1v3 x3, GP_Gen5_2 SQL, WAF_v2 gateway.",
@@ -2127,8 +2022,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
                                                           "notes":  "Fixed gateway hours; capacity units billed separately.",
-                                                          "unitPrice":  0.36,
-                                                          "monthly":  262.8
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Application Gateway capacity units",
@@ -2137,8 +2032,8 @@
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "Assumes ~2 capacity units sustained.",
-                                                          "unitPrice":  0.0144,
-                                                          "monthly":  21.02
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Azure SQL (GP_Gen5_2)",
@@ -2146,9 +2041,9 @@
                                                           "serviceName":  "SQL Database",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "2 vCores x 730 hours, General Purpose provisioned. Priced per vCore-hour.",
-                                                          "unitPrice":  0.15222,
-                                                          "monthly":  222.24
+                                                          "notes":  "2 vCores x 730 hours, General Purpose provisioned.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Private Endpoints (SQL + Key Vault)",
@@ -2158,20 +2053,15 @@
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "Two private endpoints x 730 hours.",
                                                           "unitPrice":  0.01,
-                                                          "monthly":  14.6
+                                                          "monthly":  14.60
                                                       }
                                                   ],
-                                   "fixedMonthly":  839.09,
-                                   "usageMonthly":  21.02,
-                                   "totalMonthly":  860.11,
-                                   "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/secure-web-app/terraform"
+                                   "fixedMonthly":  354.05,
+                                   "usageMonthly":  0,
+                                   "totalMonthly":  354.05,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "sql-data-api",
@@ -2224,6 +2114,10 @@
                       "path":  "sql-data-api",
                       "readme":  "catalog/sql-data-api/README.md",
                       "template":  "catalog/sql-data-api/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  3,
                       "costProfile":  "prod",
@@ -2248,9 +2142,9 @@
                                                           "serviceName":  "SQL Database",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "2 vCores x 730 hours, General Purpose provisioned. Priced per vCore-hour.",
-                                                          "unitPrice":  0.15222,
-                                                          "monthly":  222.24
+                                                          "notes":  "2 vCores x 730 hours. Meter matching is approximate - verify against your bill.",
+                                                          "unitPrice":  null,
+                                                          "monthly":  null
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
@@ -2260,20 +2154,15 @@
                                                           "quantityPerMonth":  10,
                                                           "notes":  "Assumes ~10 GB/month telemetry.",
                                                           "unitPrice":  0.05,
-                                                          "monthly":  0.5
+                                                          "monthly":  0.50
                                                       }
                                                   ],
-                                   "fixedMonthly":  561.69,
-                                   "usageMonthly":  0.5,
-                                   "totalMonthly":  562.19,
-                                   "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/sql-data-api/terraform"
+                                   "fixedMonthly":  339.45,
+                                   "usageMonthly":  0.50,
+                                   "totalMonthly":  339.95,
+                                   "complete":  false,
+                                   "pricedAt":  "2026-07-08"
+                               }
                   },
                   {
                       "name":  "web-app",
@@ -2338,6 +2227,10 @@
                       "path":  "web-app",
                       "readme":  "catalog/web-app/README.md",
                       "template":  "catalog/web-app/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
                       "hasProd":  true,
                       "componentCount":  3,
                       "costProfile":  "prod",
@@ -2364,7 +2257,7 @@
                                                           "quantityPerMonth":  10,
                                                           "notes":  "Assumes ~10 GB/month telemetry after sampling.",
                                                           "unitPrice":  0.05,
-                                                          "monthly":  0.5
+                                                          "monthly":  0.50
                                                       },
                                                       {
                                                           "name":  "Log Analytics analytics logs",
@@ -2378,16 +2271,11 @@
                                                       }
                                                   ],
                                    "fixedMonthly":  339.45,
-                                   "usageMonthly":  12.0,
+                                   "usageMonthly":  12.00,
                                    "totalMonthly":  351.45,
                                    "complete":  true,
-                                   "pricedAt":  "2026-06-29"
-                               },
-                      "engines":  [
-                                      "bicep",
-                                      "terraform"
-                                  ],
-                      "templateTf":  "catalog/web-app/terraform"
+                                   "pricedAt":  "2026-07-08"
+                               }
                   }
               ]
 }
