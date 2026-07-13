@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-06T06:29:17Z",
+  "generated": "2026-07-13T06:00:55Z",
   "source": "https://azure.microsoft.com/updates",
   "pagesScanned": 40,
   "updatesScanned": 4000,
@@ -503,6 +503,12 @@
       ],
       "launched": [
         {
+          "id": "566732",
+          "title": "Generally Available: Azure Red Hat OpenShift in Chile Central",
+          "url": "https://azure.microsoft.com/updates?id=566732",
+          "date": "2026-06"
+        },
+        {
           "id": "564849",
           "title": "Generally Available: Azure Red Hat OpenShift in Belgium Central",
           "url": "https://azure.microsoft.com/updates?id=564849",
@@ -515,6 +521,12 @@
           "date": "2026-06"
         },
         {
+          "id": "561135",
+          "title": "Generally Available: Microsoft Azure Red Hat OpenShift is now available in Austria East ",
+          "url": "https://azure.microsoft.com/updates?id=561135",
+          "date": "2026-04"
+        },
+        {
           "id": "560521",
           "title": "Generally Available: Configure AKS backup using a single Azure CLI command",
           "url": "https://azure.microsoft.com/updates?id=560521",
@@ -524,18 +536,6 @@
           "id": "560358",
           "title": "Generally Available: Azure Monitor for Azure Arc-enabled Kubernetes with OpenShift and Azure Red Hat OpenShift",
           "url": "https://azure.microsoft.com/updates?id=560358",
-          "date": "2026-04"
-        },
-        {
-          "id": "560015",
-          "title": "Generally Available: WireGuard In‑Transit Encryption for Azure Kubernetes Service (AKS)",
-          "url": "https://azure.microsoft.com/updates?id=560015",
-          "date": "2026-04"
-        },
-        {
-          "id": "557857",
-          "title": "Generally Available: Disable HTTP proxy in AKS ",
-          "url": "https://azure.microsoft.com/updates?id=557857",
           "date": "2026-04"
         }
       ]
@@ -617,6 +617,12 @@
       "retirements": [],
       "previews": [
         {
+          "id": "567218",
+          "title": "Public Preview: Exceptions in WAF for Azure Application Gateway and Azure Front Door",
+          "url": "https://azure.microsoft.com/updates?id=567218",
+          "date": "2026-07"
+        },
+        {
           "id": "566516",
           "title": "Public Preview: Application Gateway for Containers – Inference gateway",
           "url": "https://azure.microsoft.com/updates?id=566516",
@@ -644,12 +650,6 @@
           "id": "488990",
           "title": "Generally Available: Azure Application Gateway mTLS passthrough support",
           "url": "https://azure.microsoft.com/updates?id=488990",
-          "date": "2025-11"
-        },
-        {
-          "id": "489855",
-          "title": "Public Preview: JWT Validation in Azure Application Gateway",
-          "url": "https://azure.microsoft.com/updates?id=489855",
           "date": "2025-11"
         }
       ],
@@ -733,6 +733,12 @@
       ],
       "previews": [
         {
+          "id": "567218",
+          "title": "Public Preview: Exceptions in WAF for Azure Application Gateway and Azure Front Door",
+          "url": "https://azure.microsoft.com/updates?id=567218",
+          "date": "2026-07"
+        },
+        {
           "id": "561148",
           "title": "Public Preview: Microsoft HTTP DDoS Ruleset for Azure WAF on Azure Front Door Premium",
           "url": "https://azure.microsoft.com/updates?id=561148",
@@ -760,12 +766,6 @@
           "id": "530609",
           "title": "Public Preview: Microsoft HTTP DDoS Ruleset 1.0 on Application Gateway WAF v2",
           "url": "https://azure.microsoft.com/updates?id=530609",
-          "date": "2025-11"
-        },
-        {
-          "id": "543994",
-          "title": "Public Preview: Azure Command Launcher for Java",
-          "url": "https://azure.microsoft.com/updates?id=543994",
           "date": "2025-11"
         }
       ],
@@ -1076,6 +1076,12 @@
           "date": "2026-07"
         },
         {
+          "id": "567431",
+          "title": "Generally Available: Open AI GPT-5.6 on Azure Databricks ",
+          "url": "https://azure.microsoft.com/updates?id=567431",
+          "date": "2026-07"
+        },
+        {
           "id": "565733",
           "title": "Generally Available: Azure Databricks native read access to Microsoft OneLake ",
           "url": "https://azure.microsoft.com/updates?id=565733",
@@ -1098,12 +1104,6 @@
           "title": "Generally Available: Azure Databricks update workspace network configuration",
           "url": "https://azure.microsoft.com/updates?id=558060",
           "date": "2026-03"
-        },
-        {
-          "id": "558810",
-          "title": "Generally Available: Lakeflow Connect Free Tier now available in Azure Databricks  ",
-          "url": "https://azure.microsoft.com/updates?id=558810",
-          "date": "2026-03"
         }
       ]
     },
@@ -1111,6 +1111,18 @@
       "retirements": [],
       "previews": [],
       "launched": []
+    },
+    "eventhubs": {
+      "retirements": [],
+      "previews": [],
+      "launched": [
+        {
+          "id": "567212",
+          "title": "Generally Available: Confidential Computing support for Azure Event Hubs Dedicated",
+          "url": "https://azure.microsoft.com/updates?id=567212",
+          "date": "2026-05"
+        }
+      ]
     },
     "expressroute": {
       "retirements": [],
@@ -1146,6 +1158,12 @@
     "firewall": {
       "retirements": [],
       "previews": [
+        {
+          "id": "567218",
+          "title": "Public Preview: Exceptions in WAF for Azure Application Gateway and Azure Front Door",
+          "url": "https://azure.microsoft.com/updates?id=567218",
+          "date": "2026-07"
+        },
         {
           "id": "561148",
           "title": "Public Preview: Microsoft HTTP DDoS Ruleset for Azure WAF on Azure Front Door Premium",
@@ -1226,6 +1244,12 @@
         }
       ],
       "previews": [
+        {
+          "id": "567218",
+          "title": "Public Preview: Exceptions in WAF for Azure Application Gateway and Azure Front Door",
+          "url": "https://azure.microsoft.com/updates?id=567218",
+          "date": "2026-07"
+        },
         {
           "id": "561148",
           "title": "Public Preview: Microsoft HTTP DDoS Ruleset for Azure WAF on Azure Front Door Premium",
@@ -1521,6 +1545,12 @@
       ],
       "previews": [
         {
+          "id": "566591",
+          "title": "Public Preview: Export historical data from Log Analytics workspace with Export jobs ",
+          "url": "https://azure.microsoft.com/updates?id=566591",
+          "date": "2026-07"
+        },
+        {
           "id": "565286",
           "title": "Public Preview: Ingestion Volume Change dashboard in Metrics Usage Insights",
           "url": "https://azure.microsoft.com/updates?id=565286",
@@ -1548,12 +1578,6 @@
           "id": "565090",
           "title": "Generally Available: Ingest OTLP signals into Azure Monitor with the OpenTelemetry Collector",
           "url": "https://azure.microsoft.com/updates?id=565090",
-          "date": "2026-03"
-        },
-        {
-          "id": "559273",
-          "title": "Public Preview: Ingest OTLP data into Azure Monitor with the OpenTelemetry Collector",
-          "url": "https://azure.microsoft.com/updates?id=559273",
           "date": "2026-03"
         }
       ],
@@ -1779,9 +1803,9 @@
       ],
       "launched": [
         {
-          "id": "566895",
-          "title": "Generally Available: Client-side data integrity protections in Azure Blob Storage",
-          "url": "https://azure.microsoft.com/updates?id=566895",
+          "id": "567085",
+          "title": "Generally Available: Microsoft Entra ID-based access for Azure Blob Storage SFTP",
+          "url": "https://azure.microsoft.com/updates?id=567085",
           "date": "2026-06"
         },
         {
@@ -1791,27 +1815,27 @@
           "date": "2026-06"
         },
         {
-          "id": "559494",
-          "title": "Generally Available: Mock runs for Azure Storage Actions – Validate before you execute",
-          "url": "https://azure.microsoft.com/updates?id=559494",
+          "id": "566895",
+          "title": "Generally Available: Client-side data integrity protections in Azure Blob Storage",
+          "url": "https://azure.microsoft.com/updates?id=566895",
+          "date": "2026-06"
+        },
+        {
+          "id": "562622",
+          "title": "Generally Available: Schedule one-time or recurring migrations with Azure Storage Mover",
+          "url": "https://azure.microsoft.com/updates?id=562622",
           "date": "2026-05"
         },
         {
-          "id": "562254",
-          "title": "Generally Available: Azure NetApp Files object REST API ",
-          "url": "https://azure.microsoft.com/updates?id=562254",
+          "id": "562516",
+          "title": "Generally Available: Azure Blob Storage SDK for Rust",
+          "url": "https://azure.microsoft.com/updates?id=562516",
           "date": "2026-05"
         },
         {
-          "id": "562259",
-          "title": "Generally Available: Azure NetApp Files cache volumes ",
-          "url": "https://azure.microsoft.com/updates?id=562259",
-          "date": "2026-05"
-        },
-        {
-          "id": "561722",
-          "title": "Generally Available: Support for workloads with large files in Azure NetApp Files ",
-          "url": "https://azure.microsoft.com/updates?id=561722",
+          "id": "562359",
+          "title": "Generally Available: Entra-only identities with Azure Files",
+          "url": "https://azure.microsoft.com/updates?id=562359",
           "date": "2026-05"
         }
       ]
