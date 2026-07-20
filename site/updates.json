@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-13T06:00:55Z",
+  "generated": "2026-07-20T06:01:00Z",
   "source": "https://azure.microsoft.com/updates",
   "pagesScanned": 40,
   "updatesScanned": 4000,
@@ -1082,6 +1082,12 @@
           "date": "2026-07"
         },
         {
+          "id": "567444",
+          "title": "Generally Available: Azure Databricks SQL Serverless in UK West  ",
+          "url": "https://azure.microsoft.com/updates?id=567444",
+          "date": "2026-07"
+        },
+        {
           "id": "565733",
           "title": "Generally Available: Azure Databricks native read access to Microsoft OneLake ",
           "url": "https://azure.microsoft.com/updates?id=565733",
@@ -1097,12 +1103,6 @@
           "id": "557991",
           "title": "Generally Available: Azure Databricks Lakebase ",
           "url": "https://azure.microsoft.com/updates?id=557991",
-          "date": "2026-03"
-        },
-        {
-          "id": "558060",
-          "title": "Generally Available: Azure Databricks update workspace network configuration",
-          "url": "https://azure.microsoft.com/updates?id=558060",
           "date": "2026-03"
         }
       ]
@@ -1251,6 +1251,12 @@
           "date": "2026-07"
         },
         {
+          "id": "567402",
+          "title": "Public Preview: Azure Front Door edge actions",
+          "url": "https://azure.microsoft.com/updates?id=567402",
+          "date": "2026-07"
+        },
+        {
           "id": "561148",
           "title": "Public Preview: Microsoft HTTP DDoS Ruleset for Azure WAF on Azure Front Door Premium",
           "url": "https://azure.microsoft.com/updates?id=561148",
@@ -1325,21 +1331,15 @@
       ],
       "previews": [
         {
-          "id": "562442",
-          "title": "Public Preview: Azure Functions now includes managed connectors to integrate with 1400+ of your favorite systems ",
-          "url": "https://azure.microsoft.com/updates?id=562442",
-          "date": "2026-06"
+          "id": "567651",
+          "title": "Public Preview: Azure Functions Support for PowerShell 7.6 ",
+          "url": "https://azure.microsoft.com/updates?id=567651",
+          "date": "2026-07"
         },
         {
-          "id": "562482",
-          "title": "Public Preview: Serverless agents runtime for Azure Functions",
-          "url": "https://azure.microsoft.com/updates?id=562482",
-          "date": "2026-06"
-        },
-        {
-          "id": "562487",
-          "title": "Public Preview: Copilot-assisted coding & agent skills to build, deploy, and run Azure Functions faster in VS Code, CLI, and azd",
-          "url": "https://azure.microsoft.com/updates?id=562487",
+          "id": "562502",
+          "title": "Public Preview: Go language support on Azure Functions",
+          "url": "https://azure.microsoft.com/updates?id=562502",
           "date": "2026-06"
         },
         {
@@ -1349,29 +1349,41 @@
           "date": "2026-06"
         },
         {
-          "id": "562502",
-          "title": "Public Preview: Go language support on Azure Functions",
-          "url": "https://azure.microsoft.com/updates?id=562502",
+          "id": "562487",
+          "title": "Public Preview: Copilot-assisted coding & agent skills to build, deploy, and run Azure Functions faster in VS Code, CLI, and azd",
+          "url": "https://azure.microsoft.com/updates?id=562487",
           "date": "2026-06"
         },
         {
-          "id": "562808",
-          "title": "Public Preview: TLS/SSL certificate support for Azure Functions Flex Consumption ",
-          "url": "https://azure.microsoft.com/updates?id=562808",
-          "date": "2026-05"
+          "id": "562482",
+          "title": "Public Preview: Serverless agents runtime for Azure Functions",
+          "url": "https://azure.microsoft.com/updates?id=562482",
+          "date": "2026-06"
+        },
+        {
+          "id": "562442",
+          "title": "Public Preview: Azure Functions now includes managed connectors to integrate with 1400+ of your favorite systems ",
+          "url": "https://azure.microsoft.com/updates?id=562442",
+          "date": "2026-06"
         }
       ],
       "launched": [
         {
-          "id": "562365",
-          "title": "Generally Available: Rolling updates in Flex Consumption ",
-          "url": "https://azure.microsoft.com/updates?id=562365",
-          "date": "2026-06"
+          "id": "567646",
+          "title": "Generally Available: Azure Functions support for Python 3.14",
+          "url": "https://azure.microsoft.com/updates?id=567646",
+          "date": "2026-07"
         },
         {
           "id": "562492",
           "title": "Generally Available: Built-in Grafana dashboards for Azure Functions",
           "url": "https://azure.microsoft.com/updates?id=562492",
+          "date": "2026-06"
+        },
+        {
+          "id": "562365",
+          "title": "Generally Available: Rolling updates in Flex Consumption ",
+          "url": "https://azure.microsoft.com/updates?id=562365",
           "date": "2026-06"
         },
         {
@@ -1391,12 +1403,6 @@
           "title": "Generally Available: Azure Functions support for Java 25",
           "url": "https://azure.microsoft.com/updates?id=560879",
           "date": "2026-04"
-        },
-        {
-          "id": "559981",
-          "title": "Generally Available: Azure Functions now supports MCP resource triggers",
-          "url": "https://azure.microsoft.com/updates?id=559981",
-          "date": "2026-03"
         }
       ]
     },
@@ -1545,6 +1551,12 @@
       ],
       "previews": [
         {
+          "id": "567726",
+          "title": "Public Preview: Advanced platform metrics in Azure Monitor",
+          "url": "https://azure.microsoft.com/updates?id=567726",
+          "date": "2026-07"
+        },
+        {
           "id": "566591",
           "title": "Public Preview: Export historical data from Log Analytics workspace with Export jobs ",
           "url": "https://azure.microsoft.com/updates?id=566591",
@@ -1573,12 +1585,6 @@
           "title": "Public Preview: Monitor AKS applications with OpenTelemetry and Azure Monitor ",
           "url": "https://azure.microsoft.com/updates?id=560119",
           "date": "2026-04"
-        },
-        {
-          "id": "565090",
-          "title": "Generally Available: Ingest OTLP signals into Azure Monitor with the OpenTelemetry Collector",
-          "url": "https://azure.microsoft.com/updates?id=565090",
-          "date": "2026-03"
         }
       ],
       "launched": [
@@ -1661,15 +1667,21 @@
       ],
       "previews": [
         {
-          "id": "563142",
-          "title": "Public Preview: Azure SQL updates for early-June",
-          "url": "https://azure.microsoft.com/updates?id=563142",
-          "date": "2026-06"
+          "id": "567426",
+          "title": "Public Preview: Azure SQL updates for mid-July 2026 ",
+          "url": "https://azure.microsoft.com/updates?id=567426",
+          "date": "2026-07"
         },
         {
           "id": "563122",
           "title": "Public Preview: Azure SQL Database provisioning in the MSSQL extension",
           "url": "https://azure.microsoft.com/updates?id=563122",
+          "date": "2026-06"
+        },
+        {
+          "id": "563142",
+          "title": "Public Preview: Azure SQL updates for early-June",
+          "url": "https://azure.microsoft.com/updates?id=563142",
           "date": "2026-06"
         },
         {
@@ -1689,12 +1701,6 @@
           "title": "Public Preview: Data API builder with built-in GitHub Copilot in MSSQL extension ",
           "url": "https://azure.microsoft.com/updates?id=558178",
           "date": "2026-03"
-        },
-        {
-          "id": "558169",
-          "title": "Public preview: GitHub Copilot integration in Schema Designer for the MSSQL extension ",
-          "url": "https://azure.microsoft.com/updates?id=558169",
-          "date": "2026-03"
         }
       ],
       "launched": [
@@ -1703,6 +1709,18 @@
           "title": "Generally Available: Automated Patching retirement and replacement with Azure Update Manager",
           "url": "https://azure.microsoft.com/updates?id=automated-patching-deprecation-and-replacement-with-azure-update-manager",
           "date": "2027-09"
+        },
+        {
+          "id": "567362",
+          "title": "Generally Available: Expanding Azure Arc SQL Migration with SQL Server on Azure Virtual Machines ",
+          "url": "https://azure.microsoft.com/updates?id=567362",
+          "date": "2026-07"
+        },
+        {
+          "id": "565154",
+          "title": "Generally Available: Microsoft Entra server principals on Azure SQL Database ",
+          "url": "https://azure.microsoft.com/updates?id=565154",
+          "date": "2026-06"
         },
         {
           "id": "564734",
@@ -1720,18 +1738,6 @@
           "id": "563132",
           "title": "Generally Available: GitHub Copilot integration in Schema Designer for the MSSQL extension",
           "url": "https://azure.microsoft.com/updates?id=563132",
-          "date": "2026-06"
-        },
-        {
-          "id": "563127",
-          "title": "Generally Available: Data API builder with built-in GitHub Copilot in MSSQL extension",
-          "url": "https://azure.microsoft.com/updates?id=563127",
-          "date": "2026-06"
-        },
-        {
-          "id": "565154",
-          "title": "Generally Available: Microsoft Entra server principals on Azure SQL Database ",
-          "url": "https://azure.microsoft.com/updates?id=565154",
           "date": "2026-06"
         }
       ]
@@ -1765,10 +1771,10 @@
       ],
       "previews": [
         {
-          "id": "566948",
-          "title": "Public Preview: Azure Storage Mover now supports migration from Google Cloud Storage (GCS)",
-          "url": "https://azure.microsoft.com/updates?id=566948",
-          "date": "2026-06"
+          "id": "567726",
+          "title": "Public Preview: Advanced platform metrics in Azure Monitor",
+          "url": "https://azure.microsoft.com/updates?id=567726",
+          "date": "2026-07"
         },
         {
           "id": "565073",
@@ -1777,16 +1783,16 @@
           "date": "2026-06"
         },
         {
+          "id": "566948",
+          "title": "Public Preview: Azure Storage Mover now supports migration from Google Cloud Storage (GCS)",
+          "url": "https://azure.microsoft.com/updates?id=566948",
+          "date": "2026-06"
+        },
+        {
           "id": "560668",
           "title": "Public Preview: Azure NetApp Files enable backup by default ",
           "url": "https://azure.microsoft.com/updates?id=560668",
           "date": "2026-04"
-        },
-        {
-          "id": "559504",
-          "title": "Public Preview: Azure NetApp Files storage with cool access enhancement ",
-          "url": "https://azure.microsoft.com/updates?id=559504",
-          "date": "2026-03"
         },
         {
           "id": "558662",
@@ -1937,6 +1943,12 @@
           "date": "2027-09"
         },
         {
+          "id": "567362",
+          "title": "Generally Available: Expanding Azure Arc SQL Migration with SQL Server on Azure Virtual Machines ",
+          "url": "https://azure.microsoft.com/updates?id=567362",
+          "date": "2026-07"
+        },
+        {
           "id": "564537",
           "title": "Azure Container Linux (ACL) now generally available on Azure Kubernetes Service (AKS)",
           "url": "https://azure.microsoft.com/updates?id=564537",
@@ -1958,12 +1970,6 @@
           "id": "559526",
           "title": "Generally Available: Azure Premium SSD v2 Disk is now available in South India",
           "url": "https://azure.microsoft.com/updates?id=559526",
-          "date": "2026-03"
-        },
-        {
-          "id": "559677",
-          "title": "Generally Available: Azure Premium SSD v2 Disk is now available in US Gov Arizona",
-          "url": "https://azure.microsoft.com/updates?id=559677",
           "date": "2026-03"
         }
       ]
