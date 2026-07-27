@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-20T06:01:00Z",
+  "generated": "2026-07-27T06:07:15Z",
   "source": "https://azure.microsoft.com/updates",
   "pagesScanned": 40,
   "updatesScanned": 4000,
@@ -1563,6 +1563,12 @@
           "date": "2026-07"
         },
         {
+          "id": "567594",
+          "title": "Public Preview: Protect sensitive generative AI telemetry in Application Insights and Microsoft Foundry",
+          "url": "https://azure.microsoft.com/updates?id=567594",
+          "date": "2026-07"
+        },
+        {
           "id": "565286",
           "title": "Public Preview: Ingestion Volume Change dashboard in Metrics Usage Insights",
           "url": "https://azure.microsoft.com/updates?id=565286",
@@ -1578,12 +1584,6 @@
           "id": "560530",
           "title": "Public Preview: Azure Monitor supports native OTLP ingestion using the Azure Monitor Agent ",
           "url": "https://azure.microsoft.com/updates?id=560530",
-          "date": "2026-04"
-        },
-        {
-          "id": "560119",
-          "title": "Public Preview: Monitor AKS applications with OpenTelemetry and Azure Monitor ",
-          "url": "https://azure.microsoft.com/updates?id=560119",
           "date": "2026-04"
         }
       ],
@@ -1625,6 +1625,18 @@
           "date": "2026-03"
         }
       ]
+    },
+    "openai": {
+      "retirements": [],
+      "previews": [
+        {
+          "id": "567594",
+          "title": "Public Preview: Protect sensitive generative AI telemetry in Application Insights and Microsoft Foundry",
+          "url": "https://azure.microsoft.com/updates?id=567594",
+          "date": "2026-07"
+        }
+      ],
+      "launched": []
     },
     "servicebus": {
       "retirements": [],
