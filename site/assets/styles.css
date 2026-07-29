@@ -283,12 +283,50 @@ a:hover {
   margin-bottom: 20px;
 }
 
+.filter-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  padding: 4px 0;
+}
+
+.filter-summary::-webkit-details-marker {
+  display: none;
+}
+
 .filter-group h3 {
   margin: 0 0 10px;
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
+}
+
+.filter-summary h3 {
+  margin: 0;
+}
+
+/* Shared disclosure caret for collapsible sections. */
+.collapse-caret {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+}
+
+details[open] > .filter-summary .collapse-caret,
+details[open] > .collapse-summary .collapse-caret {
+  transform: rotate(-135deg);
+}
+
+.filter-options {
+  margin-top: 8px;
 }
 
 .filter-options label {
@@ -701,11 +739,127 @@ a:hover {
   }
 }
 
+/* Collapsible modal cards (Well-Architected, Cost estimate). */
+.collapsible-card > .collapse-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.collapsible-card > .collapse-summary::-webkit-details-marker {
+  display: none;
+}
+
+.collapse-summary h3 {
+  margin: 0;
+}
+
+.collapsible-card[open] > .collapse-summary {
+  margin-bottom: 16px;
+}
+
 /* Deploy form inside the use-case modal */
+.deploy-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.deploy-card.is-open > .deploy-head .collapse-caret {
+  transform: rotate(-135deg);
+}
+
+.deploy-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.deploy-advanced {
+  margin-top: 12px;
+}
+
 .deploy-form {
   display: grid;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+.deploy-form[hidden] {
+  display: none;
+}
+
+.deploy-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Collapsed deploy: a compact header strip - fields in a row + button. */
+.deploy-card:not(.is-open) {
+  padding: 14px 18px;
+}
+
+.deploy-card:not(.is-open) .deploy-head {
+  margin-bottom: 10px;
+}
+
+.deploy-card:not(.is-open) .deploy-head h3 {
+  font-size: 1rem;
+}
+
+.deploy-card:not(.is-open) .deploy-form:not(.deploy-advanced-form) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+.deploy-card:not(.is-open) .deploy-field {
+  flex: 1 1 140px;
+  min-width: 120px;
+  gap: 4px;
+}
+
+.deploy-card:not(.is-open) .deploy-label {
+  font-size: 0.74rem;
+}
+
+.deploy-card:not(.is-open) .deploy-input {
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+
+.deploy-card:not(.is-open) .deploy-region-note,
+.deploy-card:not(.is-open) .deploy-engine-hint {
+  display: none;
+}
+
+.deploy-card:not(.is-open) .deploy-foot {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.deploy-card:not(.is-open) .deploy-btn {
+  margin-top: 0;
+  padding: 7px 14px;
+}
+
+/* Expanded deploy: a larger box with the full vertical form. */
+.deploy-card.is-open {
+  padding: 26px 28px;
 }
 
 .deploy-label {
