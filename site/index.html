@@ -73,18 +73,27 @@
 
   <main class="wrap layout">
     <aside class="filters" aria-label="Filters">
-      <div class="filter-group">
-        <h3>Category</h3>
+      <details class="filter-group" data-filter-key="category">
+        <summary class="filter-summary">
+          <span class="collapse-title" role="heading" aria-level="3">Category</span>
+          <span class="collapse-caret" aria-hidden="true"></span>
+        </summary>
         <div id="filter-category" class="filter-options"></div>
-      </div>
-      <div class="filter-group">
-        <h3>Industry</h3>
+      </details>
+      <details class="filter-group" data-filter-key="industry">
+        <summary class="filter-summary">
+          <span class="collapse-title" role="heading" aria-level="3">Industry</span>
+          <span class="collapse-caret" aria-hidden="true"></span>
+        </summary>
         <div id="filter-industry" class="filter-options"></div>
-      </div>
-      <div class="filter-group">
-        <h3>Compliance</h3>
+      </details>
+      <details class="filter-group" data-filter-key="compliance">
+        <summary class="filter-summary">
+          <span class="collapse-title" role="heading" aria-level="3">Compliance</span>
+          <span class="collapse-caret" aria-hidden="true"></span>
+        </summary>
         <div id="filter-compliance" class="filter-options"></div>
-      </div>
+      </details>
       <button id="clear-filters" class="clear-btn" type="button">Clear filters</button>
     </aside>
 

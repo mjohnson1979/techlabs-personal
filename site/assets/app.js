@@ -135,6 +135,26 @@
     });
   }
 
+  // Persist a <details> open/closed state for the current tab session.
+  // Groups default to collapsed (no `open` in markup) until the user toggles them.
+  function persistDetails(detailsEl, key) {
+    let saved = null;
+    try {
+      saved = sessionStorage.getItem(key);
+    } catch (e) {
+      saved = null;
+    }
+    if (saved === "open") detailsEl.open = true;
+    else if (saved === "closed") detailsEl.open = false;
+    detailsEl.addEventListener("toggle", () => {
+      try {
+        sessionStorage.setItem(key, detailsEl.open ? "open" : "closed");
+      } catch (e) {
+        /* sessionStorage unavailable (private mode) - non-fatal */
+      }
+    });
+  }
+
   function matches(it) {
     if (state.q) {
       const hay = [it.displayName, it.description, it.what, it.why, (it.potentialUseCases || []).join(" ")]
@@ -216,6 +236,20 @@
     }
   }
 
+  // A <details> "card" used for collapsible modal sections. Defaults to
+  // collapsed; pass open=true to start expanded.
+  function collapsibleCard(titleText, content, open) {
+    const details = el("details", { class: "modal-section modal-card collapsible-card" }, [
+      el("summary", { class: "collapse-summary" }, [
+        el("span", { class: "collapse-title", role: "heading", "aria-level": "3", text: titleText }),
+        el("span", { class: "collapse-caret", "aria-hidden": "true" }),
+      ]),
+    ]);
+    if (open) details.setAttribute("open", "");
+    (Array.isArray(content) ? content : [content]).forEach((n) => n && details.appendChild(n));
+    return details;
+  }
+
   function pillarBlock(wa) {
     if (!wa) return null;
     const labels = {
@@ -243,7 +277,12 @@
     const cost = it.cost;
     if (!cost) return null;
 
-    const wrap = el("div", { class: "modal-section modal-card" }, [el("h3", { text: "Cost estimate" })]);
+    const wrap = el("details", { class: "modal-section modal-card collapsible-card" }, [
+      el("summary", { class: "collapse-summary" }, [
+        el("span", { class: "collapse-title", role: "heading", "aria-level": "3", text: "Cost estimate" }),
+        el("span", { class: "collapse-caret", "aria-hidden": "true" }),
+      ]),
+    ]);
 
     if (cost.profile) {
       wrap.appendChild(el("p", { text: cost.profile }));
@@ -564,24 +603,26 @@
         });
     });
 
+    const deployField = (labelText, control, extra) =>
+      el("div", { class: "deploy-field" }, [
+        el("label", { class: "deploy-label", for: control.id, text: labelText }),
+        control,
+        extra || null,
+      ]);
+
     const form = el("div", { class: "deploy-form" }, [
-      el("label", { class: "deploy-label", text: "Region" }),
-      region.select,
-      region.note,
-      el("label", { class: "deploy-label", text: "Environment" }),
-      envSelect,
-      el("label", { class: "deploy-label", text: "IaC engine" }),
-      engineSelect,
-      engineHint,
-      el("label", { class: "deploy-label", text: "Resource group" }),
-      rgInput,
-      el("label", { class: "deploy-label", text: "Template parameter overrides" }),
+      deployField("Region", region.select, region.note),
+      deployField("Environment", envSelect),
+      deployField("IaC engine", engineSelect, engineHint),
+      deployField("Resource group", rgInput),
+    ]);
+
+    const advancedForm = el("div", { class: "deploy-form deploy-advanced-form" }, [
+      el("label", { class: "deploy-label", for: "deploy-overrides", text: "Template parameter overrides" }),
       overrideInput,
-      el("label", { class: "deploy-label", text: "End time (auto-cleanup)" }),
+      el("label", { class: "deploy-label", for: "deploy-end", text: "End time (auto-cleanup)" }),
       endInput,
       el("p", { class: "deploy-note", text: lifeNote }),
-      btn,
-      status,
     ]);
 
     function manualSnippet(engine) {
@@ -632,16 +673,50 @@
       control.addEventListener("input", syncEngine);
     });
     syncEngine();
-    const manual = el("details", { class: "deploy-manual" }, [manualSummary, manualCode]);
+    const manual = el("details", { class: "deploy-manual", hidden: "" }, [manualSummary, manualCode]);
+    advancedForm.hidden = true;
 
-    return el("div", { class: "modal-section modal-card" }, [el("h3", { text: "Deploy" }), form, manual]);
+    const footer = el("div", { class: "deploy-foot" }, [btn, status]);
+    const card = el("div", { class: "modal-section modal-card deploy-card" });
+
+    // Collapsed shows the basic fields + deploy button; expanding reveals the
+    // parameter overrides, end time, and manual CLI (the full form).
+    const header = el(
+      "div",
+      { class: "collapse-summary deploy-head", role: "button", tabindex: "0", "aria-expanded": "false" },
+      [el("h3", { text: "Deploy" }), el("span", { class: "collapse-caret", "aria-hidden": "true" })]
+    );
+
+    let expanded = false;
+    function toggleDeploy() {
+      expanded = !expanded;
+      advancedForm.hidden = !expanded;
+      manual.hidden = !expanded;
+      header.setAttribute("aria-expanded", String(expanded));
+      card.classList.toggle("is-open", expanded);
+    }
+    header.addEventListener("click", toggleDeploy);
+    header.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleDeploy();
+      }
+    });
+
+    [header, form, advancedForm, footer, manual].forEach((n) => card.appendChild(n));
+    return card;
   }
 
   // Capacity & quota notice for the use-case detail modal.
   function quotaBlock(it) {
     const q = it.quota;
     if (!q || !(q.requirements && q.requirements.length)) return null;
-    const wrap = el("div", { class: "modal-section modal-card" }, [el("h3", { text: "Capacity & quota" })]);
+    const wrap = el("details", { class: "modal-section modal-card collapsible-card" }, [
+      el("summary", { class: "collapse-summary" }, [
+        el("span", { class: "collapse-title", role: "heading", "aria-level": "3", text: "Capacity & quota" }),
+        el("span", { class: "collapse-caret", "aria-hidden": "true" }),
+      ]),
+    ]);
     if (q.summary) wrap.appendChild(el("p", { text: q.summary }));
 
     const list = el("div", { class: "quota-list" });
@@ -897,9 +972,7 @@
 
     // Row 2: Well-Architected + Capacity & quota, side by side.
     const pillars = pillarBlock(it.wellArchitected);
-    const waCard = pillars
-      ? el("div", { class: "modal-section modal-card" }, [el("h3", { text: "Well-Architected" }), pillars])
-      : null;
+    const waCard = pillars ? collapsibleCard("Well-Architected", pillars, false) : null;
     const quota = quotaBlock(it);
     const row2 = [];
     if (waCard) row2.push(waCard);
@@ -1297,6 +1370,10 @@
     buildFilter("filter-category", uniqueScalar("category"), state.category);
     buildFilter("filter-industry", uniqueValues("industries"), state.industry);
     buildFilter("filter-compliance", uniqueValues("compliance"), state.compliance);
+
+    document.querySelectorAll(".filter-group[data-filter-key]").forEach((d) => {
+      persistDetails(d, "techlabs.filter." + d.getAttribute("data-filter-key"));
+    });
 
     $("#search").addEventListener("input", (e) => {
       state.q = e.target.value.trim().toLowerCase();
