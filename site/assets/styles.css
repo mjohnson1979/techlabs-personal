@@ -758,6 +758,23 @@ details[open] > .collapse-summary .collapse-caret {
   margin-bottom: 16px;
 }
 
+.cost-summary-lead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cost-summary-total {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-2);
+}
+
+.collapsible-card[open] .cost-summary-total {
+  display: none;
+}
+
 /* Deploy form inside the use-case modal */
 .deploy-head {
   display: flex;

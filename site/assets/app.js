@@ -277,9 +277,19 @@
     const cost = it.cost;
     if (!cost) return null;
 
+    const totalMonthly = typeof cost.totalMonthly === "number" ? cost.totalMonthly : null;
+    const totalMoney = totalMonthly !== null ? fmtMoney(totalMonthly, cost.currency) : null;
+    const summaryTotal =
+      totalMoney && totalMonthly > 0
+        ? `for the selected services: ~${totalMoney}/mo`
+        : "for the selected services: usage-based";
+
     const wrap = el("details", { class: "modal-section modal-card collapsible-card" }, [
       el("summary", { class: "collapse-summary" }, [
-        el("span", { class: "collapse-title", role: "heading", "aria-level": "3", text: "Cost estimate" }),
+        el("span", { class: "cost-summary-lead" }, [
+          el("span", { class: "collapse-title", role: "heading", "aria-level": "3", text: "Cost estimate" }),
+          el("span", { class: "cost-summary-total", text: summaryTotal }),
+        ]),
         el("span", { class: "collapse-caret", "aria-hidden": "true" }),
       ]),
     ]);
