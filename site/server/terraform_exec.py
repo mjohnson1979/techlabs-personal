@@ -86,6 +86,53 @@ def _location(dep: dict[str, Any]) -> str:
     return os.environ.get("GALLERY_DEPLOY_LOCATION", "centralus").strip() or "centralus"
 
 
+_CATALOG_PATH = SERVER_DIR.parent / "catalog.json"
+
+
+def _camel_to_snake(name: str) -> str:
+    return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name).lower()
+
+
+def _param_types(use_case: str) -> dict[str, str]:
+    try:
+        data = json.loads(_CATALOG_PATH.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        return {}
+    for it in data.get("items", []):
+        if it.get("path") == use_case:
+            return {
+                p["name"]: str(p.get("type") or "string").lower()
+                for p in (it.get("parameters") or [])
+                if isinstance(p, dict) and p.get("name")
+            }
+    return {}
+
+
+# Advanced deployment options -> Terraform variables. Bicep params are camelCase;
+# the modules declare the snake_case equivalent, so convert names and cast each
+# value to its catalog type (Terraform is strict about number/bool vs string).
+def _parameter_overrides(dep: dict[str, Any]) -> dict[str, Any]:
+    raw = (dep.get("params") or {}).get("parameterValues") or {}
+    if not raw:
+        return {}
+    types = _param_types(dep["use_case"])
+    out: dict[str, Any] = {}
+    for name, value in raw.items():
+        sval = str(value)
+        ptype = types.get(name, "string")
+        if ptype == "int":
+            try:
+                cast: Any = int(sval)
+            except ValueError:
+                continue
+        elif ptype == "bool":
+            cast = sval.strip().lower() == "true"
+        else:
+            cast = sval
+        out[_camel_to_snake(name)] = cast
+    return out
+
+
 def _injected_tags(dep: dict[str, Any]) -> dict[str, str]:
     return {
         "techlabs-managed": "true",
@@ -152,6 +199,7 @@ def _prepare_workdir(dep: dict[str, Any]) -> tuple[Path, bool]:
         "environment": dep["environment"],
         "tags": _injected_tags(dep),
     }
+    injected.update(_parameter_overrides(dep))
     (work / "injected.auto.tfvars.json").write_text(
         json.dumps(injected, indent=2), encoding="utf-8"
     )
