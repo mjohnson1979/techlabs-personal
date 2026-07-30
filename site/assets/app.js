@@ -241,7 +241,7 @@
   function collapsibleCard(titleText, content, open) {
     const details = el("details", { class: "modal-section modal-card collapsible-card" }, [
       el("summary", { class: "collapse-summary" }, [
-        el("h3", { text: titleText }),
+        el("span", { class: "collapse-title", role: "heading", "aria-level": "3", text: titleText }),
         el("span", { class: "collapse-caret", "aria-hidden": "true" }),
       ]),
     ]);
@@ -279,7 +279,7 @@
 
     const wrap = el("details", { class: "modal-section modal-card collapsible-card" }, [
       el("summary", { class: "collapse-summary" }, [
-        el("h3", { text: "Cost estimate" }),
+        el("span", { class: "collapse-title", role: "heading", "aria-level": "3", text: "Cost estimate" }),
         el("span", { class: "collapse-caret", "aria-hidden": "true" }),
       ]),
     ]);
@@ -605,7 +605,7 @@
 
     const deployField = (labelText, control, extra) =>
       el("div", { class: "deploy-field" }, [
-        el("label", { class: "deploy-label", text: labelText }),
+        el("label", { class: "deploy-label", for: control.id, text: labelText }),
         control,
         extra || null,
       ]);
@@ -618,9 +618,9 @@
     ]);
 
     const advancedForm = el("div", { class: "deploy-form deploy-advanced-form" }, [
-      el("label", { class: "deploy-label", text: "Template parameter overrides" }),
+      el("label", { class: "deploy-label", for: "deploy-overrides", text: "Template parameter overrides" }),
       overrideInput,
-      el("label", { class: "deploy-label", text: "End time (auto-cleanup)" }),
+      el("label", { class: "deploy-label", for: "deploy-end", text: "End time (auto-cleanup)" }),
       endInput,
       el("p", { class: "deploy-note", text: lifeNote }),
     ]);
@@ -713,7 +713,7 @@
     if (!q || !(q.requirements && q.requirements.length)) return null;
     const wrap = el("details", { class: "modal-section modal-card collapsible-card" }, [
       el("summary", { class: "collapse-summary" }, [
-        el("h3", { text: "Capacity & quota" }),
+        el("span", { class: "collapse-title", role: "heading", "aria-level": "3", text: "Capacity & quota" }),
         el("span", { class: "collapse-caret", "aria-hidden": "true" }),
       ]),
     ]);

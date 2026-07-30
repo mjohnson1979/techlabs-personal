@@ -297,16 +297,13 @@ a:hover {
   display: none;
 }
 
-.filter-group h3 {
-  margin: 0 0 10px;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-}
-
-.filter-summary h3 {
+.collapse-title {
   margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
 }
 
 /* Shared disclosure caret for collapsible sections. */
@@ -780,10 +777,6 @@ details[open] > .collapse-summary .collapse-caret {
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
-  margin-top: 12px;
-}
-
-.deploy-advanced {
   margin-top: 12px;
 }
 
