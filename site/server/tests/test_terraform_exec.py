@@ -63,6 +63,42 @@ def staged(tmp_path, monkeypatch):
     return tmp_path
 
 
+def test_parameter_overrides_snake_case_and_types(monkeypatch):
+    monkeypatch.setattr(
+        terraform_exec,
+        "_param_types",
+        lambda _uc: {
+            "appServiceSku": "string",
+            "appCapacity": "int",
+            "appZoneRedundant": "bool",
+            "chatModelName": "string",
+        },
+    )
+    dep = _dep(
+        use_case="ai-chat",
+        params={
+            "location": "westus2",
+            "parameterValues": {
+                "appServiceSku": "P1v3",
+                "appCapacity": "3",
+                "appZoneRedundant": "true",
+                "chatModelName": "gpt-4o",
+            },
+        },
+    )
+    out = terraform_exec._parameter_overrides(dep)
+    assert out == {
+        "app_service_sku": "P1v3",
+        "app_capacity": 3,
+        "app_zone_redundant": True,
+        "chat_model_name": "gpt-4o",
+    }
+
+
+def test_parameter_overrides_empty_when_none():
+    assert terraform_exec._parameter_overrides(_dep()) == {}
+
+
 def test_terraform_unavailable_without_binary(monkeypatch):
     monkeypatch.delenv("GALLERY_TERRAFORM_BIN", raising=False)
     monkeypatch.setattr(terraform_exec.shutil, "which", lambda _name: None)

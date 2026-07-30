@@ -124,6 +124,57 @@ finally {
 }
 
 # ---------------------------------------------------------------------------
+# Dropdown coverage (advisory): every enumerable param should become a dropdown
+# in the deploy panel, either via its own @allowed set, a registry SKU family, or
+# the model catalog. Flag any tier/SKU/size/version param that would fall back to
+# a plain text box so a new use case gets a dropdown automatically.
+Write-Host ""
+Write-Host "Dropdown coverage (advisory)"
+$registryPath = Join-Path $RepoRoot 'site/registry.json'
+$familyKeys = @()
+if (Test-Path $registryPath) {
+    $familyKeys = @((Get-Content $registryPath -Raw | ConvertFrom-Json).skus.PSObject.Properties.Name)
+}
+$aliasPatterns = @(
+    @{ Pattern = 'vm.?size|nodesize|hostsize'; Key = 'vmSize' },
+    @{ Pattern = 'k8sversion|aksversion|kubernetes'; Key = 'kubernetesVersion' },
+    @{ Pattern = 'runtimestack|linuxfx'; Key = 'linuxFxVersion' },
+    @{ Pattern = 'sql.*tier'; Key = 'sqlTier' },
+    @{ Pattern = 'sql.*sku'; Key = 'sqlSkuName' }
+)
+function Resolve-Family([string]$name) {
+    if ($familyKeys -contains $name) { return $name }
+    $low = $name.ToLower()
+    foreach ($k in ($familyKeys | Sort-Object { $_.Length } -Descending)) {
+        if ($low.Contains($k.ToLower())) { return $k }
+    }
+    foreach ($a in $aliasPatterns) {
+        if (($familyKeys -contains $a.Key) -and ($low -match $a.Pattern)) { return $a.Key }
+    }
+    return $null
+}
+$modelParams = @('chatModelName', 'chatModel', 'chatModelVersion', 'chatModelSku', 'embeddingModel', 'embeddingModelVersion')
+$catalogDoc = Get-Content $committedPath -Raw | ConvertFrom-Json
+$gaps = New-Object System.Collections.Generic.List[string]
+foreach ($it in $catalogDoc.items) {
+    foreach ($p in @($it.parameters)) {
+        if ($p.type -ne 'string') { continue }
+        if ($p.allowed -and $p.allowed.Count) { continue }
+        if ($modelParams -contains $p.name) { continue }
+        if ($p.name -notmatch 'sku|tier|version|size|kind|plan') { continue }
+        if (Resolve-Family $p.name) { continue }
+        $gaps.Add("$($it.path):$($p.name)")
+    }
+}
+if ($gaps.Count -gt 0) {
+    Write-Host "  WARN  enumerable params with no dropdown source (render as text):" -ForegroundColor Yellow
+    foreach ($g in $gaps) { Write-Host "          $g  - add @allowed in its bicep, or a family in tools/Build-Registry.ps1" -ForegroundColor Yellow }
+}
+else {
+    Pass "every enumerable param has a dropdown source (@allowed, registry family, or model catalog)"
+}
+
+# ---------------------------------------------------------------------------
 Write-Host ""
 if ($failures.Count -gt 0) {
     Write-Host "Catalog validation FAILED with $($failures.Count) issue(s)." -ForegroundColor Red

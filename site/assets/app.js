@@ -503,13 +503,6 @@
     return { select: select, note: note };
   }
 
-  function parseOverrides(raw) {
-    return String(raw || "")
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter((line) => line && !line.startsWith("#") && !line.startsWith("//") && line.includes("="));
-  }
-
   function deployBlock(it) {
     const me = state.me;
     const maxHours = me && me.maxLifetimeHours ? me.maxLifetimeHours : 48;
@@ -535,12 +528,6 @@
       id: "deploy-rg",
       value: `rg-techlabs-${it.path}`,
       placeholder: "rg-techlabs",
-    });
-
-    const overrideInput = el("textarea", {
-      class: "deploy-input deploy-overrides",
-      id: "deploy-overrides",
-      placeholder: "Optional parameter overrides, one per line\nexample:\nprefix=contoso\nenvironment=mvp",
     });
 
     const region = deployRegionField(it);
@@ -599,6 +586,8 @@
         location: region.select.value,
         endAt: new Date(endVal).toISOString(),
       };
+      const parameterValues = Object.assign({}, advValues);
+      if (Object.keys(parameterValues).length) payload.parameterValues = parameterValues;
       btn.disabled = true;
       status.textContent = "Requesting deployment…";
       window.TechlabsApi.createDeployment(payload)
@@ -612,6 +601,353 @@
           btn.disabled = false;
         });
     });
+
+    // Advanced deployment options: dynamic controls generated from the template
+    // parameters extracted into catalog.json (Build-Catalog.ps1). Selected values
+    // override the template defaults on deploy and feed the manual CLI snippet.
+    // Only scalar params are overridable; object/array/secret params are skipped.
+    const params = (Array.isArray(it.parameters) ? it.parameters : []).filter(
+      (p) => p.type === "string" || p.type === "int" || p.type === "bool"
+    );
+    const advValues = {};
+    const advOptsSummary = el("p", { class: "deploy-note deploy-advopts-summary" });
+    const advOptsBtn = el("button", {
+      class: "deploy-btn-secondary",
+      type: "button",
+      text: "Advanced deployment options",
+    });
+    advOptsBtn.addEventListener("click", openParamPanel);
+
+    function advOverridePairs() {
+      return Object.keys(advValues).map((k) => `${k}=${advValues[k]}`);
+    }
+
+    function updateAdvSummary() {
+      const n = Object.keys(advValues).length;
+      advOptsSummary.textContent = n
+        ? `${n} option${n === 1 ? "" : "s"} customized. Values apply when you deploy.`
+        : "Using recommended defaults for all template parameters.";
+    }
+
+    function paramDefaultString(p) {
+      if (p.type === "bool") return String(p.default === true);
+      return p.default === null || p.default === undefined ? "" : String(p.default);
+    }
+
+    // Registry-backed option sources (tools/Build-Registry.ps1). Models are
+    // filtered to the OpenAI format the templates actually deploy; the registry
+    // still records every provider for future provider-agnostic templates.
+    const registry = state.registry || null;
+    const CHAT_NAME_PARAMS = ["chatModelName", "chatModel"];
+    const chatNameParam = params.map((p) => p.name).find((n) => CHAT_NAME_PARAMS.indexOf(n) !== -1);
+
+    function regChatModels() {
+      if (!registry || !registry.models) return [];
+      return (registry.models.chat || []).filter((m) => m.provider === "OpenAI");
+    }
+    function regEmbedModels() {
+      if (!registry || !registry.models) return [];
+      return (registry.models.embedding || []).filter((m) => m.provider === "OpenAI");
+    }
+    function distinctNames(models) {
+      const seen = [];
+      models.forEach((m) => { if (seen.indexOf(m.name) === -1) seen.push(m.name); });
+      return seen.sort();
+    }
+    function versionsFor(models, name) {
+      return models.filter((m) => m.name === name).map((m) => m.version).filter((v) => v).sort();
+    }
+    function skusFor(models, name, version) {
+      const entry = models.find((m) => m.name === name && m.version === version)
+        || models.find((m) => m.name === name);
+      return entry && Array.isArray(entry.skus) ? entry.skus.slice() : [];
+    }
+
+    // The registry SKU family for a non-model param, or null. Params that carry
+    // a template @allowed set keep it (the compiled ARM template enforces it);
+    // params without one source options from the registry so they become dropdowns
+    // too. Matching is by convention (exact name, then the family name as a token,
+    // then aliases) so a new use case's SKU/tier/size param maps automatically.
+    function skuFamilyFor(p) {
+      if (Array.isArray(p.allowed) && p.allowed.length) return null;
+      if (!registry || !registry.skus) return null;
+      if (registry.skus[p.name]) return p.name;
+      const n = p.name.toLowerCase();
+      const keys = Object.keys(registry.skus).sort((a, b) => b.length - a.length);
+      for (let i = 0; i < keys.length; i++) {
+        if (n.indexOf(keys[i].toLowerCase()) !== -1) return keys[i];
+      }
+      const aliases = [
+        [/vm.?size|nodesize|hostsize/, "vmSize"],
+        [/k8sversion|aksversion|kubernetes/, "kubernetesVersion"],
+        [/runtimestack|linuxfx/, "linuxFxVersion"],
+        [/sql.*tier/, "sqlTier"],
+        [/sql.*sku/, "sqlSkuName"],
+      ];
+      for (let i = 0; i < aliases.length; i++) {
+        if (aliases[i][0].test(n) && registry.skus[aliases[i][1]]) return aliases[i][1];
+      }
+      return null;
+    }
+    function regSkuValues(familyKey) {
+      const fam = registry && registry.skus ? registry.skus[familyKey] : null;
+      if (!fam || !Array.isArray(fam.values) || !fam.values.length) return null;
+      const loc = region.select.value;
+      const vals = fam.values
+        .filter((v) => v.regions === "all" || !Array.isArray(v.regions) || !loc || v.regions.indexOf(loc) !== -1)
+        .map((v) => String(v.value));
+      return vals.length ? vals : null;
+    }
+
+    // The option list for a param, or null to fall back to @allowed/type input.
+    function registryOptionsFor(p) {
+      if (p.name === chatNameParam) {
+        const n = distinctNames(regChatModels());
+        return n.length ? n : null;
+      }
+      if (p.name === "embeddingModel") {
+        const n = distinctNames(regEmbedModels());
+        return n.length ? n : null;
+      }
+      if (p.name === "chatModelVersion") {
+        const sel = advValues[chatNameParam] != null ? advValues[chatNameParam] : (chatNameParam ? paramDefaultOf(chatNameParam) : null);
+        const v = versionsFor(regChatModels(), sel);
+        return v.length ? v : null;
+      }
+      if (p.name === "chatModelSku") {
+        const selName = advValues[chatNameParam] != null ? advValues[chatNameParam] : (chatNameParam ? paramDefaultOf(chatNameParam) : null);
+        const selVer = advValues["chatModelVersion"] != null ? advValues["chatModelVersion"] : paramDefaultOf("chatModelVersion");
+        const s = skusFor(regChatModels(), selName, selVer);
+        return s.length ? s : null;
+      }
+      if (p.name === "embeddingModelVersion") {
+        const sel = advValues["embeddingModel"] != null ? advValues["embeddingModel"] : paramDefaultOf("embeddingModel");
+        const v = versionsFor(regEmbedModels(), sel);
+        return v.length ? v : null;
+      }
+      const fam = skuFamilyFor(p);
+      if (fam) return regSkuValues(fam);
+      return null;
+    }
+
+    function paramDefaultOf(name) {
+      const p = params.find((x) => x.name === name);
+      return p ? paramDefaultString(p) : "";
+    }
+
+    function fillSelect(select, values, preferred) {
+      select.innerHTML = "";
+      values.forEach((v) => select.appendChild(el("option", { value: String(v), text: String(v) })));
+      if (preferred != null && values.map(String).indexOf(String(preferred)) !== -1) select.value = String(preferred);
+      else if (values.length) select.value = String(values[0]);
+    }
+
+    function openParamPanel() {
+      if (!window.TechlabsPanel || !params.length) return;
+      window.TechlabsPanel.open((bodyEl, e) => {
+        bodyEl.appendChild(e("h2", { text: "Advanced deployment options" }));
+        bodyEl.appendChild(
+          e("p", {
+            class: "deploy-note",
+            text:
+              `Customize the ${it.displayName} template parameters. Model and SKU choices ` +
+              "come from the live Azure registry when available; otherwise the template's " +
+              "own allowed values are used. Saved values apply when you deploy.",
+          })
+        );
+
+        const controls = {};
+        const formWrap = e("div", { class: "advopts-form" });
+        // Render the SQL tier above its SKU (they cascade tier -> SKU).
+        const orderedParams = params.slice();
+        const ti = orderedParams.findIndex((p) => p.name === "sqlTier");
+        const si = orderedParams.findIndex((p) => p.name === "sqlSkuName");
+        if (ti !== -1 && si !== -1 && ti > si) {
+          const tier = orderedParams.splice(ti, 1)[0];
+          orderedParams.splice(orderedParams.findIndex((p) => p.name === "sqlSkuName"), 0, tier);
+        }
+        orderedParams.forEach((p) => {
+          const fieldId = "advopt-" + p.name;
+          const current = advValues[p.name];
+          const defStr = paramDefaultString(p);
+          const regOptions = registryOptionsFor(p);
+          let control;
+          let fromRegistry = false;
+          if (regOptions) {
+            fromRegistry = true;
+            control = e("select", { class: "deploy-input", id: fieldId },
+              regOptions.map((a) => e("option", { value: String(a), text: String(a) })));
+            control.value = current != null && regOptions.map(String).indexOf(String(current)) !== -1
+              ? current
+              : (regOptions.map(String).indexOf(defStr) !== -1 ? defStr : String(regOptions[0]));
+          } else if (p.type === "bool") {
+            control = e("select", { class: "deploy-input", id: fieldId }, [
+              e("option", { value: "true", text: "true" }),
+              e("option", { value: "false", text: "false" }),
+            ]);
+            control.value = current != null ? current : defStr || "false";
+          } else if (Array.isArray(p.allowed) && p.allowed.length) {
+            control = e(
+              "select",
+              { class: "deploy-input", id: fieldId },
+              p.allowed.map((a) => e("option", { value: String(a), text: String(a) }))
+            );
+            control.value = current != null ? current : defStr || String(p.allowed[0]);
+          } else if (p.type === "int") {
+            const props = {
+              type: "number",
+              class: "deploy-input",
+              id: fieldId,
+              value: current != null ? current : defStr,
+            };
+            if (p.min !== null && p.min !== undefined) props.min = p.min;
+            if (p.max !== null && p.max !== undefined) props.max = p.max;
+            control = e("input", props);
+          } else {
+            control = e("input", {
+              type: "text",
+              class: "deploy-input",
+              id: fieldId,
+              value: current != null ? current : defStr,
+            });
+          }
+
+          const meta = [];
+          if (p.description) meta.push(e("span", { class: "advopt-desc", text: p.description }));
+          const hintBits = [];
+          if (fromRegistry) hintBits.push("live from Azure registry");
+          if (p.type === "int" && (p.min != null || p.max != null)) {
+            hintBits.push(`range ${p.min != null ? p.min : "-"}..${p.max != null ? p.max : "-"}`);
+          }
+          if (defStr !== "") hintBits.push(`default ${defStr}`);
+          if (hintBits.length) meta.push(e("span", { class: "advopt-hint", text: hintBits.join(" \u00b7 ") }));
+
+          formWrap.appendChild(
+            e(
+              "div",
+              { class: "advopt-field" },
+              [e("label", { class: "deploy-label", for: fieldId, text: p.name }), control].concat(meta)
+            )
+          );
+          controls[p.name] = { control: control, param: p };
+        });
+        bodyEl.appendChild(formWrap);
+
+        // Cascade: when a model name changes, refresh its version and SKU lists.
+        const chatCtl = chatNameParam && controls[chatNameParam];
+        const chatVerCtl = controls["chatModelVersion"];
+        const chatSkuCtl = controls["chatModelSku"];
+        function refreshChat() {
+          if (!chatCtl) return;
+          const name = chatCtl.control.value;
+          if (chatVerCtl && chatVerCtl.control.tagName === "SELECT") {
+            const vers = versionsFor(regChatModels(), name);
+            if (vers.length) fillSelect(chatVerCtl.control, vers, paramDefaultOf("chatModelVersion"));
+          }
+          if (chatSkuCtl && chatSkuCtl.control.tagName === "SELECT") {
+            const ver = chatVerCtl ? chatVerCtl.control.value : paramDefaultOf("chatModelVersion");
+            const sk = skusFor(regChatModels(), name, ver);
+            if (sk.length) fillSelect(chatSkuCtl.control, sk, paramDefaultOf("chatModelSku"));
+          }
+        }
+        if (chatCtl && chatCtl.control.tagName === "SELECT" && regChatModels().length) {
+          chatCtl.control.addEventListener("change", refreshChat);
+          if (chatVerCtl && chatVerCtl.control.tagName === "SELECT") {
+            chatVerCtl.control.addEventListener("change", () => {
+              if (chatSkuCtl && chatSkuCtl.control.tagName === "SELECT") {
+                const sk = skusFor(regChatModels(), chatCtl.control.value, chatVerCtl.control.value);
+                if (sk.length) fillSelect(chatSkuCtl.control, sk, paramDefaultOf("chatModelSku"));
+              }
+            });
+          }
+        }
+        const embedCtl = controls["embeddingModel"];
+        const embedVerCtl = controls["embeddingModelVersion"];
+        if (embedCtl && embedCtl.control.tagName === "SELECT" && regEmbedModels().length && embedVerCtl) {
+          embedCtl.control.addEventListener("change", () => {
+            const vers = versionsFor(regEmbedModels(), embedCtl.control.value);
+            if (vers.length && embedVerCtl.control.tagName === "SELECT") {
+              fillSelect(embedVerCtl.control, vers, paramDefaultOf("embeddingModelVersion"));
+            }
+          });
+        }
+
+        // Azure SQL tier and SKU are coupled (GeneralPurpose->GP_*, etc.): filter
+        // the SKU list to the selected tier so mismatched pairs can't be chosen.
+        const sqlTierCtl = controls["sqlTier"];
+        const sqlSkuCtl = controls["sqlSkuName"];
+        if (sqlTierCtl && sqlSkuCtl && sqlSkuCtl.control.tagName === "SELECT") {
+          const tierPrefix = (t) => (t === "BusinessCritical" ? "BC_" : t === "Hyperscale" ? "HS_" : "GP_");
+          const skusForTier = (t) => {
+            const all = regSkuValues("sqlSkuName") || [];
+            const f = all.filter((s) => s.indexOf(tierPrefix(t)) === 0);
+            return f.length ? f : all;
+          };
+          fillSelect(sqlSkuCtl.control, skusForTier(sqlTierCtl.control.value), advValues["sqlSkuName"] != null ? advValues["sqlSkuName"] : paramDefaultOf("sqlSkuName"));
+          if (sqlTierCtl.control.tagName === "SELECT") {
+            sqlTierCtl.control.addEventListener("change", () => {
+              fillSelect(sqlSkuCtl.control, skusForTier(sqlTierCtl.control.value), paramDefaultOf("sqlSkuName"));
+            });
+          }
+        }
+
+        // App Service zone redundancy needs a Premium v3 plan and >= 3 instances;
+        // warn live when the toggle is on but the coupled SKU/capacity don't qualify.
+        const zrParam = ["appZoneRedundant", "zoneRedundant"].find((n) => controls[n]);
+        const zrSkuParam = ["appServiceSku", "sku"].find((n) => controls[n]);
+        const zrCapParam = ["appCapacity", "appServiceCapacity", "capacity"].find((n) => controls[n]);
+        if (zrParam && (zrSkuParam || zrCapParam)) {
+          const warn = e("span", { class: "advopt-warn" });
+          const zrField = controls[zrParam].control.closest(".advopt-field");
+          if (zrField) zrField.appendChild(warn);
+          const isPremiumV3 = (v) => /^P\w*v3$/i.test(v);
+          const checkZr = () => {
+            const needs = [];
+            if (controls[zrParam].control.value === "true") {
+              if (zrSkuParam && !isPremiumV3(controls[zrSkuParam].control.value)) needs.push("a Premium v3 plan (P1v3+)");
+              if (zrCapParam && Number(controls[zrCapParam].control.value) < 3) needs.push("at least 3 instances");
+            }
+            if (needs.length) {
+              const fields = [zrSkuParam, zrCapParam].filter(Boolean).join(" / ");
+              warn.textContent = `Zone redundancy needs ${needs.join(" and ")} — update ${fields} above.`;
+              warn.style.display = "";
+            } else {
+              warn.textContent = "";
+              warn.style.display = "none";
+            }
+          };
+          controls[zrParam].control.addEventListener("change", checkZr);
+          if (zrSkuParam) controls[zrSkuParam].control.addEventListener("change", checkZr);
+          if (zrCapParam) {
+            controls[zrCapParam].control.addEventListener("change", checkZr);
+            controls[zrCapParam].control.addEventListener("input", checkZr);
+          }
+          checkZr();
+        }
+
+        const saveBtn = e("button", { class: "deploy-btn", type: "button", text: "Save options" });
+        const cancelBtn = e("button", { class: "deploy-btn-secondary", type: "button", text: "Cancel" });
+        saveBtn.addEventListener("click", () => {
+          Object.keys(controls).forEach((name) => {
+            const entry = controls[name];
+            const val = entry.control.value;
+            const defStr = paramDefaultString(entry.param);
+            if (val === null || val === undefined || val === "" || val === defStr) {
+              delete advValues[name];
+            } else {
+              advValues[name] = val;
+            }
+          });
+          updateAdvSummary();
+          syncEngine();
+          window.TechlabsPanel.close();
+        });
+        cancelBtn.addEventListener("click", () => window.TechlabsPanel.close());
+        bodyEl.appendChild(e("div", { class: "advopts-actions" }, [saveBtn, cancelBtn]));
+      });
+    }
+
+    updateAdvSummary();
 
     const deployField = (labelText, control, extra) =>
       el("div", { class: "deploy-field" }, [
@@ -628,8 +964,7 @@
     ]);
 
     const advancedForm = el("div", { class: "deploy-form deploy-advanced-form" }, [
-      el("label", { class: "deploy-label", for: "deploy-overrides", text: "Template parameter overrides" }),
-      overrideInput,
+      params.length ? el("div", { class: "deploy-advopts" }, [advOptsBtn, advOptsSummary]) : null,
       el("label", { class: "deploy-label", for: "deploy-end", text: "End time (auto-cleanup)" }),
       endInput,
       el("p", { class: "deploy-note", text: lifeNote }),
@@ -639,7 +974,7 @@
       const env = envSelect.value;
       const location = region.select.value;
       const rg = (rgInput.value || "rg-techlabs").trim();
-      const overrides = parseOverrides(overrideInput.value);
+      const overrides = advOverridePairs();
 
       if (engine === "terraform") {
         const tfArgs = [
@@ -653,7 +988,9 @@
           const key = line.slice(0, i).trim();
           const value = line.slice(i + 1).trim();
           if (!key || !value) return;
-          tfArgs.push(`-var ${key}=${value}`);
+          // Bicep params are camelCase; Terraform variables are the snake_case form.
+          const tfKey = key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+          tfArgs.push(`-var ${tfKey}=${value}`);
         });
         return [
           `cd catalog/${it.path}/terraform`,
@@ -678,7 +1015,7 @@
 
     const manualCode = el("div", { class: "code", text: manualSnippet(engineSelect.value) });
     const manualSummary = el("summary", { text: "Or deploy manually with the CLI" });
-    [engineSelect, envSelect, region.select, rgInput, overrideInput].forEach((control) => {
+    [engineSelect, envSelect, region.select, rgInput].forEach((control) => {
       control.addEventListener("change", syncEngine);
       control.addEventListener("input", syncEngine);
     });
@@ -1451,6 +1788,18 @@
     })
     .catch(() => {
       /* no updates data — gallery hides lifecycle notices */
+    });
+
+  // Live model + service SKU registry (tools/Build-Registry.ps1, refreshed every
+  // few days). Best-effort: advanced deployment options fall back to the
+  // template's own @allowed sets when it is missing.
+  fetch("registry.json")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((reg) => {
+      state.registry = reg;
+    })
+    .catch(() => {
+      /* no registry — advanced options use template defaults */
     });
 
   fetch("catalog.json")

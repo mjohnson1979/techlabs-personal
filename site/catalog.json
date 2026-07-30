@@ -1,7 +1,7 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-07-08T14:30:18Z",
+    "generated":  "2026-07-30T17:57:54Z",
     "count":  22,
     "items":  [
                   {
@@ -206,8 +206,68 @@
                                    "usageMonthly":  28.00,
                                    "totalMonthly":  367.45,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "prefix",
+                                             "type":  "string",
+                                             "default":  "techlabs",
+                                             "description":  "Resource name prefix."
+                                         },
+                                         {
+                                             "name":  "appServiceSku",
+                                             "type":  "string",
+                                             "default":  "B1",
+                                             "description":  "App Service plan SKU (P1v3+ for zone redundancy).",
+                                             "allowed":  [
+                                                             "B1",
+                                                             "S1",
+                                                             "P0v3",
+                                                             "P1v3"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "appCapacity",
+                                             "type":  "int",
+                                             "default":  1,
+                                             "description":  "App Service plan instance count.",
+                                             "min":  1,
+                                             "max":  30
+                                         },
+                                         {
+                                             "name":  "appZoneRedundant",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Zone-redundant App Service plan (requires Premium v3 and capacity \u003e= 3)."
+                                         },
+                                         {
+                                             "name":  "chatModelName",
+                                             "type":  "string",
+                                             "default":  "gpt-5-mini",
+                                             "description":  "Chat model to deploy."
+                                         },
+                                         {
+                                             "name":  "chatModelVersion",
+                                             "type":  "string",
+                                             "default":  "2025-08-07",
+                                             "description":  "Chat model version."
+                                         },
+                                         {
+                                             "name":  "chatModelSku",
+                                             "type":  "string",
+                                             "default":  "GlobalStandard",
+                                             "description":  "Model deployment SKU. GlobalStandard is the generally-available tier for current GPT-5 models."
+                                         },
+                                         {
+                                             "name":  "chatModelCapacity",
+                                             "type":  "int",
+                                             "default":  10,
+                                             "description":  "Tokens-per-minute capacity (thousands) for the model deployment.",
+                                             "min":  1,
+                                             "max":  200
+                                         }
+                                     ]
                   },
                   {
                       "name":  "aks-secure-baseline",
@@ -332,8 +392,73 @@
                                    "usageMonthly":  5.00,
                                    "totalMonthly":  548.48,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "namePrefix",
+                                             "type":  "string",
+                                             "default":  "aksbase",
+                                             "description":  "Prefix for resource names."
+                                         },
+                                         {
+                                             "name":  "tags",
+                                             "type":  "object",
+                                             "default":  {
+
+                                                         },
+                                             "description":  "Resource tags."
+                                         },
+                                         {
+                                             "name":  "kubernetesVersion",
+                                             "type":  "string",
+                                             "default":  "1.30",
+                                             "description":  "Kubernetes version."
+                                         },
+                                         {
+                                             "name":  "systemNodeVmSize",
+                                             "type":  "string",
+                                             "default":  "Standard_D4s_v5",
+                                             "description":  "System node pool VM size."
+                                         },
+                                         {
+                                             "name":  "systemNodeCount",
+                                             "type":  "int",
+                                             "default":  3,
+                                             "description":  "System node pool node count.",
+                                             "min":  1
+                                         },
+                                         {
+                                             "name":  "enableAutoScaling",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Enable cluster autoscaler on the system pool."
+                                         },
+                                         {
+                                             "name":  "maxNodeCount",
+                                             "type":  "int",
+                                             "default":  5,
+                                             "description":  "Maximum nodes when autoscaling."
+                                         },
+                                         {
+                                             "name":  "enablePrivateCluster",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Deploy the cluster as a private cluster (no public API server)."
+                                         },
+                                         {
+                                             "name":  "zoneRedundant",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Spread node pool across availability zones."
+                                         },
+                                         {
+                                             "name":  "retentionInDays",
+                                             "type":  "int",
+                                             "default":  30,
+                                             "description":  "Log Analytics retention in days."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "api-management-gateway",
@@ -433,8 +558,83 @@
                                    "usageMonthly":  0,
                                    "totalMonthly":  5929.79,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "namePrefix",
+                                             "type":  "string",
+                                             "default":  "apigw",
+                                             "description":  "Prefix for resource names."
+                                         },
+                                         {
+                                             "name":  "tags",
+                                             "type":  "object",
+                                             "default":  {
+
+                                                         },
+                                             "description":  "Resource tags."
+                                         },
+                                         {
+                                             "name":  "apimSku",
+                                             "type":  "string",
+                                             "default":  "Developer",
+                                             "description":  "API Management SKU.",
+                                             "allowed":  [
+                                                             "Developer",
+                                                             "Premium"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "apimCapacity",
+                                             "type":  "int",
+                                             "default":  1,
+                                             "description":  "API Management capacity (scale units).",
+                                             "min":  1
+                                         },
+                                         {
+                                             "name":  "apimPublisherEmail",
+                                             "type":  "string",
+                                             "default":  "platform@contoso.com",
+                                             "description":  "Publisher email for API Management."
+                                         },
+                                         {
+                                             "name":  "apimPublisherName",
+                                             "type":  "string",
+                                             "default":  "Contoso Platform",
+                                             "description":  "Publisher name for API Management."
+                                         },
+                                         {
+                                             "name":  "backendSku",
+                                             "type":  "string",
+                                             "default":  "P1v3",
+                                             "description":  "Backend App Service plan SKU.",
+                                             "allowed":  [
+                                                             "P0v3",
+                                                             "P1v3",
+                                                             "P2v3"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "zoneRedundant",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Make the backend plan zone redundant."
+                                         },
+                                         {
+                                             "name":  "rateLimitCallsPerMinute",
+                                             "type":  "int",
+                                             "default":  300,
+                                             "description":  "Requests-per-minute rate limit applied by the gateway product.",
+                                             "min":  1
+                                         },
+                                         {
+                                             "name":  "retentionInDays",
+                                             "type":  "int",
+                                             "default":  30,
+                                             "description":  "Log Analytics retention in days."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "avd-hostpool",
@@ -551,8 +751,61 @@
                                    "usageMonthly":  319.74,
                                    "totalMonthly":  319.74,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "namePrefix",
+                                             "type":  "string",
+                                             "default":  "avd",
+                                             "description":  "Prefix for resource names."
+                                         },
+                                         {
+                                             "name":  "metadataLocation",
+                                             "type":  "string",
+                                             "default":  "eastus",
+                                             "description":  "Metadata region for AVD objects (host pool, app group, workspace)."
+                                         },
+                                         {
+                                             "name":  "tags",
+                                             "type":  "object",
+                                             "default":  {
+
+                                                         },
+                                             "description":  "Resource tags."
+                                         },
+                                         {
+                                             "name":  "maxSessionLimit",
+                                             "type":  "int",
+                                             "default":  10,
+                                             "description":  "Maximum sessions per session host.",
+                                             "min":  1
+                                         },
+                                         {
+                                             "name":  "startVmOnConnect",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Start session host VMs on connect to save cost."
+                                         },
+                                         {
+                                             "name":  "enableScalingPlan",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Enable the autoscaling plan."
+                                         },
+                                         {
+                                             "name":  "scalingTimeZone",
+                                             "type":  "string",
+                                             "default":  "Eastern Standard Time",
+                                             "description":  "Time zone for the scaling plan schedule."
+                                         },
+                                         {
+                                             "name":  "retentionInDays",
+                                             "type":  "int",
+                                             "default":  30,
+                                             "description":  "Log Analytics retention in days."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "azure-virtual-desktop-enterprise",
@@ -674,8 +927,154 @@
                                    "usageMonthly":  1448.40,
                                    "totalMonthly":  1448.40,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "environmentName",
+                                             "type":  "string",
+                                             "default":  "dev",
+                                             "description":  "Environment name, used in resource names and tags."
+                                         },
+                                         {
+                                             "name":  "namePrefix",
+                                             "type":  "string",
+                                             "default":  "avd",
+                                             "description":  "Prefix for resource names."
+                                         },
+                                         {
+                                             "name":  "avdMetadataLocation",
+                                             "type":  "string",
+                                             "default":  "eastus",
+                                             "description":  "Metadata region for the AVD host pool, application group, and workspace control-plane objects."
+                                         },
+                                         {
+                                             "name":  "maxSessionLimit",
+                                             "type":  "int",
+                                             "default":  10,
+                                             "description":  "Maximum user sessions per session host VM.",
+                                             "min":  1
+                                         },
+                                         {
+                                             "name":  "startVmOnConnect",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Start stopped session host VMs when users connect."
+                                         },
+                                         {
+                                             "name":  "enableScalingPlan",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Deploy an AVD scaling plan for the host pool."
+                                         },
+                                         {
+                                             "name":  "scalingTimeZone",
+                                             "type":  "string",
+                                             "default":  "Eastern Standard Time",
+                                             "description":  "Time zone used by the AVD scaling schedule."
+                                         },
+                                         {
+                                             "name":  "vnetAddressPrefixes",
+                                             "type":  "array",
+                                             "default":  [
+                                                             "10.40.0.0/16"
+                                                         ],
+                                             "description":  "Address space for the landing virtual network."
+                                         },
+                                         {
+                                             "name":  "sessionHostsSubnetPrefix",
+                                             "type":  "string",
+                                             "default":  "10.40.1.0/24",
+                                             "description":  "Session-hosts subnet prefix."
+                                         },
+                                         {
+                                             "name":  "privateEndpointSubnetPrefix",
+                                             "type":  "string",
+                                             "default":  "10.40.2.0/24",
+                                             "description":  "Private-endpoints subnet prefix."
+                                         },
+                                         {
+                                             "name":  "enableRbacAuthorization",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Use RBAC for Key Vault data-plane access."
+                                         },
+                                         {
+                                             "name":  "fslogixProfileShareName",
+                                             "type":  "string",
+                                             "default":  "profiles",
+                                             "description":  "Name of the Azure Files share used for FSLogix profile containers."
+                                         },
+                                         {
+                                             "name":  "retentionInDays",
+                                             "type":  "int",
+                                             "default":  30,
+                                             "description":  "Log Analytics retention in days.",
+                                             "min":  30,
+                                             "max":  730
+                                         },
+                                         {
+                                             "name":  "deployStoragePrivateEndpoint",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Deploy a private endpoint and private DNS zone for the FSLogix file share."
+                                         },
+                                         {
+                                             "name":  "deploySessionHosts",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Optional: deploy session host VMs and register them with the host pool. Requires an admin password."
+                                         },
+                                         {
+                                             "name":  "sessionHostCount",
+                                             "type":  "int",
+                                             "default":  2,
+                                             "description":  "Number of session host VMs to deploy when deploySessionHosts is true.",
+                                             "min":  1,
+                                             "max":  50
+                                         },
+                                         {
+                                             "name":  "sessionHostVmSize",
+                                             "type":  "string",
+                                             "default":  "Standard_D4s_v5",
+                                             "description":  "VM size for the session hosts."
+                                         },
+                                         {
+                                             "name":  "sessionHostAdminUsername",
+                                             "type":  "string",
+                                             "default":  "avdadmin",
+                                             "description":  "Local administrator username for the session hosts."
+                                         },
+                                         {
+                                             "name":  "sessionHostAdminPassword",
+                                             "type":  "securestring",
+                                             "default":  "",
+                                             "description":  "Local administrator password for the session hosts. Required when deploySessionHosts is true."
+                                         },
+                                         {
+                                             "name":  "assignDesktopUserAccess",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Optional: grant a user or group the Desktop Virtualization User role on the application group."
+                                         },
+                                         {
+                                             "name":  "desktopUserPrincipalId",
+                                             "type":  "string",
+                                             "default":  "",
+                                             "description":  "Object ID of the user or group to grant desktop access. Required when assignDesktopUserAccess is true."
+                                         },
+                                         {
+                                             "name":  "desktopUserPrincipalType",
+                                             "type":  "string",
+                                             "default":  "Group",
+                                             "description":  "Type of the principal being granted desktop access.",
+                                             "allowed":  [
+                                                             "User",
+                                                             "Group",
+                                                             "ServicePrincipal"
+                                                         ]
+                                         }
+                                     ]
                   },
                   {
                       "name":  "azure-vmware-solution-enterprise",
@@ -795,8 +1194,93 @@
                                    "usageMonthly":  16610.67,
                                    "totalMonthly":  16610.67,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "environmentName",
+                                             "type":  "string",
+                                             "default":  "dev",
+                                             "description":  "Environment name, used in resource names and tags."
+                                         },
+                                         {
+                                             "name":  "namePrefix",
+                                             "type":  "string",
+                                             "default":  "avs",
+                                             "description":  "Prefix for resource names."
+                                         },
+                                         {
+                                             "name":  "avsSkuName",
+                                             "type":  "string",
+                                             "default":  "AV36",
+                                             "description":  "AVS private cloud SKU."
+                                         },
+                                         {
+                                             "name":  "avsClusterSize",
+                                             "type":  "int",
+                                             "default":  3,
+                                             "description":  "Number of AVS nodes in the management cluster (minimum 3).",
+                                             "min":  3
+                                         },
+                                         {
+                                             "name":  "avsNetworkBlock",
+                                             "type":  "string",
+                                             "default":  "10.250.0.0/22",
+                                             "description":  "Address block (/22) for the AVS management network."
+                                         },
+                                         {
+                                             "name":  "vnetAddressPrefixes",
+                                             "type":  "array",
+                                             "default":  [
+                                                             "10.60.0.0/16"
+                                                         ],
+                                             "description":  "Address space for the landing virtual network."
+                                         },
+                                         {
+                                             "name":  "gatewaySubnetPrefix",
+                                             "type":  "string",
+                                             "default":  "10.60.0.0/27",
+                                             "description":  "GatewaySubnet prefix for the ExpressRoute gateway."
+                                         },
+                                         {
+                                             "name":  "sharedServicesSubnetPrefix",
+                                             "type":  "string",
+                                             "default":  "10.60.1.0/24",
+                                             "description":  "Shared services / jumpbox subnet prefix."
+                                         },
+                                         {
+                                             "name":  "enableRbacAuthorization",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Use RBAC for Key Vault data-plane access."
+                                         },
+                                         {
+                                             "name":  "deployConnectivity",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Deploy the ExpressRoute gateway for hybrid connectivity."
+                                         },
+                                         {
+                                             "name":  "avsExpressRouteAuthorizationId",
+                                             "type":  "string",
+                                             "default":  "",
+                                             "description":  "AVS ExpressRoute circuit authorization ID. Leave empty to deploy the gateway without a circuit connection."
+                                         },
+                                         {
+                                             "name":  "retentionInDays",
+                                             "type":  "int",
+                                             "default":  30,
+                                             "description":  "Log Analytics retention in days.",
+                                             "min":  30,
+                                             "max":  730
+                                         },
+                                         {
+                                             "name":  "enableAvsDiagnostics",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Route AVS control-plane diagnostics to Log Analytics."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "container-app",
@@ -909,8 +1393,69 @@
                                    "usageMonthly":  169.18,
                                    "totalMonthly":  169.18,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "prefix",
+                                             "type":  "string",
+                                             "default":  "techlabs",
+                                             "description":  "Resource name prefix."
+                                         },
+                                         {
+                                             "name":  "containerImage",
+                                             "type":  "string",
+                                             "default":  "mcr.microsoft.com/k8se/quickstart:latest",
+                                             "description":  "Container image to run."
+                                         },
+                                         {
+                                             "name":  "cpu",
+                                             "type":  "string",
+                                             "default":  "0.5",
+                                             "description":  "vCPU allocated per replica.",
+                                             "allowed":  [
+                                                             "0.25",
+                                                             "0.5",
+                                                             "0.75",
+                                                             "1.0",
+                                                             "2.0"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "memory",
+                                             "type":  "string",
+                                             "default":  "1.0Gi",
+                                             "description":  "Memory allocated per replica (e.g. 1.0Gi)."
+                                         },
+                                         {
+                                             "name":  "minReplicas",
+                                             "type":  "int",
+                                             "default":  0,
+                                             "description":  "Minimum replicas. Set to 0 for scale-to-zero (dev), 1+ to avoid cold starts (prod).",
+                                             "min":  0,
+                                             "max":  30
+                                         },
+                                         {
+                                             "name":  "maxReplicas",
+                                             "type":  "int",
+                                             "default":  5,
+                                             "description":  "Maximum replicas the app can scale out to.",
+                                             "min":  1,
+                                             "max":  30
+                                         },
+                                         {
+                                             "name":  "zoneRedundant",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Make the Container Apps environment zone redundant (prod reliability)."
+                                         },
+                                         {
+                                             "name":  "targetPort",
+                                             "type":  "int",
+                                             "default":  80,
+                                             "description":  "Target port the container listens on."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "data-lakehouse",
@@ -1034,8 +1579,57 @@
                                    "usageMonthly":  1139.22,
                                    "totalMonthly":  1139.22,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "namePrefix",
+                                             "type":  "string",
+                                             "default":  "lakehs",
+                                             "description":  "Prefix for resource names."
+                                         },
+                                         {
+                                             "name":  "tags",
+                                             "type":  "object",
+                                             "default":  {
+
+                                                         },
+                                             "description":  "Resource tags."
+                                         },
+                                         {
+                                             "name":  "lakeStorageSku",
+                                             "type":  "string",
+                                             "default":  "Standard_LRS",
+                                             "description":  "Storage redundancy for the data lake.",
+                                             "allowed":  [
+                                                             "Standard_LRS",
+                                                             "Standard_ZRS",
+                                                             "Standard_GRS"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "databricksSku",
+                                             "type":  "string",
+                                             "default":  "premium",
+                                             "description":  "Databricks workspace SKU.",
+                                             "allowed":  [
+                                                             "standard",
+                                                             "premium"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "databricksNoPublicIp",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Deploy Databricks with no public IP (secure cluster connectivity)."
+                                         },
+                                         {
+                                             "name":  "retentionInDays",
+                                             "type":  "int",
+                                             "default":  30,
+                                             "description":  "Log Analytics retention in days."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "enterprise-rag",
@@ -1208,8 +1802,125 @@
                                    "usageMonthly":  42.50,
                                    "totalMonthly":  3912.96,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "namePrefix",
+                                             "type":  "string",
+                                             "default":  "entrag",
+                                             "description":  "Prefix for resource names."
+                                         },
+                                         {
+                                             "name":  "tags",
+                                             "type":  "object",
+                                             "default":  {
+
+                                                         },
+                                             "description":  "Resource tags."
+                                         },
+                                         {
+                                             "name":  "chatModel",
+                                             "type":  "string",
+                                             "default":  "gpt-5-mini",
+                                             "description":  "Chat completion model to deploy."
+                                         },
+                                         {
+                                             "name":  "chatModelVersion",
+                                             "type":  "string",
+                                             "default":  "2025-08-07",
+                                             "description":  "Chat model version."
+                                         },
+                                         {
+                                             "name":  "chatModelSku",
+                                             "type":  "string",
+                                             "default":  "GlobalStandard",
+                                             "description":  "Chat deployment SKU. GlobalStandard is the generally-available tier for current GPT-5 models."
+                                         },
+                                         {
+                                             "name":  "chatCapacity",
+                                             "type":  "int",
+                                             "default":  20,
+                                             "description":  "Chat deployment capacity (thousands of TPM).",
+                                             "min":  1
+                                         },
+                                         {
+                                             "name":  "embeddingModel",
+                                             "type":  "string",
+                                             "default":  "text-embedding-3-large",
+                                             "description":  "Embedding model to deploy."
+                                         },
+                                         {
+                                             "name":  "embeddingModelVersion",
+                                             "type":  "string",
+                                             "default":  "1",
+                                             "description":  "Embedding model version."
+                                         },
+                                         {
+                                             "name":  "searchSku",
+                                             "type":  "string",
+                                             "default":  "standard",
+                                             "description":  "Azure AI Search SKU.",
+                                             "allowed":  [
+                                                             "basic",
+                                                             "standard",
+                                                             "standard2"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "searchReplicas",
+                                             "type":  "int",
+                                             "default":  1,
+                                             "description":  "Number of Azure AI Search replicas.",
+                                             "min":  1
+                                         },
+                                         {
+                                             "name":  "appServiceSku",
+                                             "type":  "string",
+                                             "default":  "P1v3",
+                                             "description":  "App Service plan SKU.",
+                                             "allowed":  [
+                                                             "P0v3",
+                                                             "P1v3",
+                                                             "P2v3"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "zoneRedundant",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Make the App Service plan zone redundant."
+                                         },
+                                         {
+                                             "name":  "apimSku",
+                                             "type":  "string",
+                                             "default":  "Developer",
+                                             "description":  "API Management SKU.",
+                                             "allowed":  [
+                                                             "Developer",
+                                                             "Standard",
+                                                             "Premium"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "apimPublisherEmail",
+                                             "type":  "string",
+                                             "default":  "platform@contoso.com",
+                                             "description":  "Publisher email for API Management."
+                                         },
+                                         {
+                                             "name":  "apimPublisherName",
+                                             "type":  "string",
+                                             "default":  "Contoso Platform",
+                                             "description":  "Publisher name for API Management."
+                                         },
+                                         {
+                                             "name":  "retentionInDays",
+                                             "type":  "int",
+                                             "default":  30,
+                                             "description":  "Log Analytics retention in days."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "event-streaming-analytics",
@@ -1341,8 +2052,85 @@
                                    "usageMonthly":  16.50,
                                    "totalMonthly":  1997.72,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "namePrefix",
+                                             "type":  "string",
+                                             "default":  "stream",
+                                             "description":  "Prefix for resource names."
+                                         },
+                                         {
+                                             "name":  "tags",
+                                             "type":  "object",
+                                             "default":  {
+
+                                                         },
+                                             "description":  "Resource tags."
+                                         },
+                                         {
+                                             "name":  "eventHubsSku",
+                                             "type":  "string",
+                                             "default":  "Standard",
+                                             "description":  "Event Hubs namespace SKU.",
+                                             "allowed":  [
+                                                             "Standard",
+                                                             "Premium"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "throughputUnits",
+                                             "type":  "int",
+                                             "default":  1,
+                                             "description":  "Throughput units (Standard) for the Event Hubs namespace.",
+                                             "min":  1
+                                         },
+                                         {
+                                             "name":  "partitionCount",
+                                             "type":  "int",
+                                             "default":  4,
+                                             "description":  "Number of partitions on the event hub.",
+                                             "min":  2
+                                         },
+                                         {
+                                             "name":  "messageRetentionDays",
+                                             "type":  "int",
+                                             "default":  1,
+                                             "description":  "Message retention in days for the event hub.",
+                                             "min":  1
+                                         },
+                                         {
+                                             "name":  "streamingUnits",
+                                             "type":  "int",
+                                             "default":  3,
+                                             "description":  "Stream Analytics streaming units.",
+                                             "min":  1
+                                         },
+                                         {
+                                             "name":  "functionPlanSku",
+                                             "type":  "string",
+                                             "default":  "EP1",
+                                             "description":  "Function plan SKU (EP1/EP2 elastic premium, or Y1 consumption).",
+                                             "allowed":  [
+                                                             "Y1",
+                                                             "EP1",
+                                                             "EP2"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "zoneRedundant",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Make storage and Cosmos zone redundant."
+                                         },
+                                         {
+                                             "name":  "retentionInDays",
+                                             "type":  "int",
+                                             "default":  30,
+                                             "description":  "Log Analytics retention in days."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "fabric",
@@ -1407,7 +2195,42 @@
                       "hasProd":  true,
                       "componentCount":  0,
                       "costProfile":  null,
-                      "cost":  null
+                      "cost":  null,
+                      "parameters":  [
+                                         {
+                                             "name":  "prefix",
+                                             "type":  "string",
+                                             "default":  "techlabs",
+                                             "description":  "Resource name prefix."
+                                         },
+                                         {
+                                             "name":  "skuName",
+                                             "type":  "string",
+                                             "default":  "F2",
+                                             "description":  "Fabric capacity SKU size.",
+                                             "allowed":  [
+                                                             "F2",
+                                                             "F4",
+                                                             "F8",
+                                                             "F16",
+                                                             "F32",
+                                                             "F64",
+                                                             "F128",
+                                                             "F256",
+                                                             "F512",
+                                                             "F1024",
+                                                             "F2048"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "adminMembers",
+                                             "type":  "array",
+                                             "default":  [
+                                                             "fabric-admin@contoso.com"
+                                                         ],
+                                             "description":  "Fabric capacity admins (UPN/email list)."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "hub-spoke-network",
@@ -1529,8 +2352,58 @@
                                    "usageMonthly":  16.00,
                                    "totalMonthly":  1338.76,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "namePrefix",
+                                             "type":  "string",
+                                             "default":  "hubspoke",
+                                             "description":  "Prefix for resource names."
+                                         },
+                                         {
+                                             "name":  "tags",
+                                             "type":  "object",
+                                             "default":  {
+
+                                                         },
+                                             "description":  "Resource tags."
+                                         },
+                                         {
+                                             "name":  "hubAddressPrefix",
+                                             "type":  "string",
+                                             "default":  "10.0.0.0/16",
+                                             "description":  "Address space for the hub VNet."
+                                         },
+                                         {
+                                             "name":  "spokeAddressPrefix",
+                                             "type":  "string",
+                                             "default":  "10.1.0.0/16",
+                                             "description":  "Address space for the spoke (workload) VNet."
+                                         },
+                                         {
+                                             "name":  "firewallTier",
+                                             "type":  "string",
+                                             "default":  "Standard",
+                                             "description":  "Azure Firewall SKU tier.",
+                                             "allowed":  [
+                                                             "Standard",
+                                                             "Premium"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "deployBastion",
+                                             "type":  "bool",
+                                             "default":  true,
+                                             "description":  "Deploy Azure Bastion for secure RDP/SSH without public IPs on workloads."
+                                         },
+                                         {
+                                             "name":  "retentionInDays",
+                                             "type":  "int",
+                                             "default":  30,
+                                             "description":  "Log Analytics retention in days."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "integration-workflow",
@@ -1642,8 +2515,57 @@
                                    "usageMonthly":  0.05,
                                    "totalMonthly":  677.13,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "namePrefix",
+                                             "type":  "string",
+                                             "default":  "intwf",
+                                             "description":  "Prefix for resource names."
+                                         },
+                                         {
+                                             "name":  "tags",
+                                             "type":  "object",
+                                             "default":  {
+
+                                                         },
+                                             "description":  "Resource tags."
+                                         },
+                                         {
+                                             "name":  "workflowSku",
+                                             "type":  "string",
+                                             "default":  "WS1",
+                                             "description":  "Logic Apps Standard plan SKU.",
+                                             "allowed":  [
+                                                             "WS1",
+                                                             "WS2",
+                                                             "WS3"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "serviceBusSku",
+                                             "type":  "string",
+                                             "default":  "Standard",
+                                             "description":  "Service Bus SKU.",
+                                             "allowed":  [
+                                                             "Standard",
+                                                             "Premium"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "zoneRedundant",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Make the Service Bus namespace zone redundant (Premium only)."
+                                         },
+                                         {
+                                             "name":  "retentionInDays",
+                                             "type":  "int",
+                                             "default":  30,
+                                             "description":  "Log Analytics retention in days."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "landing-zone-ai",
@@ -1753,8 +2675,54 @@
                                    "usageMonthly":  16.28,
                                    "totalMonthly":  752.12,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "prefix",
+                                             "type":  "string",
+                                             "default":  "techlabs",
+                                             "description":  "Resource name prefix."
+                                         },
+                                         {
+                                             "name":  "storageSku",
+                                             "type":  "string",
+                                             "default":  "Standard_LRS",
+                                             "description":  "Storage redundancy. Use Standard_ZRS or Standard_GRS in prod.",
+                                             "allowed":  [
+                                                             "Standard_LRS",
+                                                             "Standard_ZRS",
+                                                             "Standard_GRS"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "searchSku",
+                                             "type":  "string",
+                                             "default":  "basic",
+                                             "description":  "Azure AI Search SKU. Use standard (or higher) in prod for SLA + scale.",
+                                             "allowed":  [
+                                                             "basic",
+                                                             "standard",
+                                                             "standard2"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "searchReplicas",
+                                             "type":  "int",
+                                             "default":  1,
+                                             "description":  "Number of search replicas. Use \u003e= 3 in prod for query + indexing SLA.",
+                                             "min":  1,
+                                             "max":  12
+                                         },
+                                         {
+                                             "name":  "searchPartitions",
+                                             "type":  "int",
+                                             "default":  1,
+                                             "description":  "Number of search partitions.",
+                                             "min":  1,
+                                             "max":  12
+                                         }
+                                     ]
                   },
                   {
                       "name":  "landing-zone-core",
@@ -1854,8 +2822,27 @@
                                    "usageMonthly":  13.56,
                                    "totalMonthly":  13.56,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "prefix",
+                                             "type":  "string",
+                                             "default":  "techlabs",
+                                             "description":  "Resource name prefix."
+                                         },
+                                         {
+                                             "name":  "storageSku",
+                                             "type":  "string",
+                                             "default":  "Standard_LRS",
+                                             "description":  "Storage redundancy. Use Standard_ZRS or Standard_GRS in prod for resiliency.",
+                                             "allowed":  [
+                                                             "Standard_LRS",
+                                                             "Standard_ZRS",
+                                                             "Standard_GRS"
+                                                         ]
+                                         }
+                                     ]
                   },
                   {
                       "name":  "microservices-aca",
@@ -1976,8 +2963,72 @@
                                    "usageMonthly":  163.93,
                                    "totalMonthly":  841.01,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "namePrefix",
+                                             "type":  "string",
+                                             "default":  "acamesh",
+                                             "description":  "Prefix for resource names."
+                                         },
+                                         {
+                                             "name":  "tags",
+                                             "type":  "object",
+                                             "default":  {
+
+                                                         },
+                                             "description":  "Resource tags."
+                                         },
+                                         {
+                                             "name":  "apiImage",
+                                             "type":  "string",
+                                             "default":  "mcr.microsoft.com/k8se/quickstart:latest",
+                                             "description":  "Container image for the API service."
+                                         },
+                                         {
+                                             "name":  "workerImage",
+                                             "type":  "string",
+                                             "default":  "mcr.microsoft.com/k8se/quickstart:latest",
+                                             "description":  "Container image for the worker service."
+                                         },
+                                         {
+                                             "name":  "minReplicas",
+                                             "type":  "int",
+                                             "default":  0,
+                                             "description":  "Minimum replicas per app.",
+                                             "min":  0
+                                         },
+                                         {
+                                             "name":  "maxReplicas",
+                                             "type":  "int",
+                                             "default":  10,
+                                             "description":  "Maximum replicas per app.",
+                                             "min":  1
+                                         },
+                                         {
+                                             "name":  "zoneRedundant",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Make the Container Apps environment zone redundant."
+                                         },
+                                         {
+                                             "name":  "serviceBusSku",
+                                             "type":  "string",
+                                             "default":  "Standard",
+                                             "description":  "Service Bus SKU.",
+                                             "allowed":  [
+                                                             "Standard",
+                                                             "Premium"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "retentionInDays",
+                                             "type":  "int",
+                                             "default":  30,
+                                             "description":  "Log Analytics retention in days."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "multiregion-web",
@@ -2101,8 +3152,82 @@
                                    "usageMonthly":  116.80,
                                    "totalMonthly":  795.70,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "namePrefix",
+                                             "type":  "string",
+                                             "default":  "mrweb",
+                                             "description":  "Prefix for resource names."
+                                         },
+                                         {
+                                             "name":  "primaryLocation",
+                                             "type":  "string",
+                                             "default":  "eastus",
+                                             "description":  "Primary Azure region."
+                                         },
+                                         {
+                                             "name":  "secondaryLocation",
+                                             "type":  "string",
+                                             "default":  "westus3",
+                                             "description":  "Secondary Azure region."
+                                         },
+                                         {
+                                             "name":  "tags",
+                                             "type":  "object",
+                                             "default":  {
+
+                                                         },
+                                             "description":  "Resource tags."
+                                         },
+                                         {
+                                             "name":  "appServiceSku",
+                                             "type":  "string",
+                                             "default":  "P1v3",
+                                             "description":  "App Service plan SKU.",
+                                             "allowed":  [
+                                                             "P0v3",
+                                                             "P1v3",
+                                                             "P2v3"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "appServiceCapacity",
+                                             "type":  "int",
+                                             "default":  1,
+                                             "description":  "Instances per regional App Service plan.",
+                                             "min":  1
+                                         },
+                                         {
+                                             "name":  "zoneRedundant",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Make each regional App Service plan zone redundant."
+                                         },
+                                         {
+                                             "name":  "frontDoorSku",
+                                             "type":  "string",
+                                             "default":  "Premium_AzureFrontDoor",
+                                             "description":  "Front Door SKU.",
+                                             "allowed":  [
+                                                             "Standard_AzureFrontDoor",
+                                                             "Premium_AzureFrontDoor"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "cosmosMultiRegionWrites",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Enable multi-region writes on Cosmos DB."
+                                         },
+                                         {
+                                             "name":  "retentionInDays",
+                                             "type":  "int",
+                                             "default":  30,
+                                             "description":  "Log Analytics retention in days."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "power-bi-dedicated",
@@ -2167,7 +3292,43 @@
                       "hasProd":  true,
                       "componentCount":  0,
                       "costProfile":  null,
-                      "cost":  null
+                      "cost":  null,
+                      "parameters":  [
+                                         {
+                                             "name":  "prefix",
+                                             "type":  "string",
+                                             "default":  "techlabs",
+                                             "description":  "Resource name prefix."
+                                         },
+                                         {
+                                             "name":  "members",
+                                             "type":  "array",
+                                             "default":  [
+                                                             "00000000-0000-0000-0000-000000000000"
+                                                         ],
+                                             "description":  "Power BI capacity admin member object IDs."
+                                         },
+                                         {
+                                             "name":  "skuName",
+                                             "type":  "string",
+                                             "default":  "A1",
+                                             "description":  "Power BI Dedicated capacity SKU name.",
+                                             "allowed":  [
+                                                             "A1",
+                                                             "A2",
+                                                             "A3",
+                                                             "A4",
+                                                             "A5",
+                                                             "A6"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "skuCapacity",
+                                             "type":  "int",
+                                             "default":  1,
+                                             "description":  "Power BI Dedicated capacity units."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "purview",
@@ -2232,7 +3393,37 @@
                       "hasProd":  true,
                       "componentCount":  0,
                       "costProfile":  null,
-                      "cost":  null
+                      "cost":  null,
+                      "parameters":  [
+                                         {
+                                             "name":  "prefix",
+                                             "type":  "string",
+                                             "default":  "techlabs",
+                                             "description":  "Resource name prefix."
+                                         },
+                                         {
+                                             "name":  "publicNetworkAccess",
+                                             "type":  "string",
+                                             "default":  "NotSpecified",
+                                             "description":  "Public network access setting for the Purview account.",
+                                             "allowed":  [
+                                                             "Enabled",
+                                                             "Disabled",
+                                                             "NotSpecified"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "managedResourcesPublicNetworkAccess",
+                                             "type":  "string",
+                                             "default":  "NotSpecified",
+                                             "description":  "Public network access setting for managed Purview resources.",
+                                             "allowed":  [
+                                                             "Enabled",
+                                                             "Disabled",
+                                                             "NotSpecified"
+                                                         ]
+                                         }
+                                     ]
                   },
                   {
                       "name":  "secure-web-app",
@@ -2365,8 +3556,79 @@
                                    "usageMonthly":  21.02,
                                    "totalMonthly":  860.11,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "namePrefix",
+                                             "type":  "string",
+                                             "default":  "securewa",
+                                             "description":  "Prefix for resource names."
+                                         },
+                                         {
+                                             "name":  "tags",
+                                             "type":  "object",
+                                             "default":  {
+
+                                                         },
+                                             "description":  "Resource tags."
+                                         },
+                                         {
+                                             "name":  "appServiceSku",
+                                             "type":  "string",
+                                             "default":  "P1v3",
+                                             "description":  "App Service plan SKU.",
+                                             "allowed":  [
+                                                             "P0v3",
+                                                             "P1v3",
+                                                             "P2v3"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "appServiceCapacity",
+                                             "type":  "int",
+                                             "default":  1,
+                                             "description":  "Number of App Service plan instances.",
+                                             "min":  1
+                                         },
+                                         {
+                                             "name":  "zoneRedundant",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Make the App Service plan zone redundant."
+                                         },
+                                         {
+                                             "name":  "sqlSkuName",
+                                             "type":  "string",
+                                             "default":  "GP_S_Gen5_1",
+                                             "description":  "Azure SQL database SKU name."
+                                         },
+                                         {
+                                             "name":  "sqlAdminObjectId",
+                                             "type":  "string",
+                                             "default":  null,
+                                             "description":  "Entra ID object ID of the SQL admin (user or group)."
+                                         },
+                                         {
+                                             "name":  "sqlAdminLogin",
+                                             "type":  "string",
+                                             "default":  null,
+                                             "description":  "Entra ID login name (UPN or group name) of the SQL admin."
+                                         },
+                                         {
+                                             "name":  "appGatewayMaxCapacity",
+                                             "type":  "int",
+                                             "default":  3,
+                                             "description":  "Application Gateway autoscale max capacity.",
+                                             "min":  2
+                                         },
+                                         {
+                                             "name":  "retentionInDays",
+                                             "type":  "int",
+                                             "default":  30,
+                                             "description":  "Log Analytics retention in days."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "sql-data-api",
@@ -2467,8 +3729,72 @@
                                    "usageMonthly":  0.50,
                                    "totalMonthly":  562.19,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "prefix",
+                                             "type":  "string",
+                                             "default":  "techlabs",
+                                             "description":  "Resource name prefix."
+                                         },
+                                         {
+                                             "name":  "appServiceSku",
+                                             "type":  "string",
+                                             "default":  "B1",
+                                             "description":  "App Service plan SKU (P1v3+ to allow zone redundancy).",
+                                             "allowed":  [
+                                                             "B1",
+                                                             "S1",
+                                                             "P0v3",
+                                                             "P1v3"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "appCapacity",
+                                             "type":  "int",
+                                             "default":  1,
+                                             "description":  "App Service plan instance count.",
+                                             "min":  1,
+                                             "max":  30
+                                         },
+                                         {
+                                             "name":  "appZoneRedundant",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Zone-redundant App Service plan (requires Premium v3 and capacity \u003e= 3)."
+                                         },
+                                         {
+                                             "name":  "sqlSkuName",
+                                             "type":  "string",
+                                             "default":  "GP_S_Gen5_1",
+                                             "description":  "Azure SQL database SKU name (e.g. GP_Gen5_2 for General Purpose)."
+                                         },
+                                         {
+                                             "name":  "sqlTier",
+                                             "type":  "string",
+                                             "default":  "GeneralPurpose",
+                                             "description":  "Azure SQL database tier (e.g. GeneralPurpose, BusinessCritical)."
+                                         },
+                                         {
+                                             "name":  "sqlZoneRedundant",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Make the SQL database zone redundant (prod reliability)."
+                                         },
+                                         {
+                                             "name":  "sqlAdminObjectId",
+                                             "type":  "string",
+                                             "default":  null,
+                                             "description":  "Microsoft Entra admin object id (user/group) for the SQL server. Required for Entra-only auth."
+                                         },
+                                         {
+                                             "name":  "sqlAdminLogin",
+                                             "type":  "string",
+                                             "default":  null,
+                                             "description":  "Microsoft Entra admin display name for the SQL server."
+                                         }
+                                     ]
                   },
                   {
                       "name":  "web-app",
@@ -2581,8 +3907,56 @@
                                    "usageMonthly":  12.00,
                                    "totalMonthly":  351.45,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-08"
-                               }
+                                   "pricedAt":  "2026-07-30"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "prefix",
+                                             "type":  "string",
+                                             "default":  "techlabs",
+                                             "description":  "Resource name prefix."
+                                         },
+                                         {
+                                             "name":  "sku",
+                                             "type":  "string",
+                                             "default":  "B1",
+                                             "description":  "App Service plan SKU. Use a Premium v3 SKU (P1v3+) to enable zone redundancy.",
+                                             "allowed":  [
+                                                             "B1",
+                                                             "B2",
+                                                             "S1",
+                                                             "P0v3",
+                                                             "P1v3",
+                                                             "P2v3"
+                                                         ]
+                                         },
+                                         {
+                                             "name":  "capacity",
+                                             "type":  "int",
+                                             "default":  1,
+                                             "description":  "Number of plan instances. Zone redundancy requires at least 3 on a Premium v3 plan.",
+                                             "min":  1,
+                                             "max":  30
+                                         },
+                                         {
+                                             "name":  "zoneRedundant",
+                                             "type":  "bool",
+                                             "default":  false,
+                                             "description":  "Spread instances across availability zones (reliability). Requires a Premium v3 SKU and capacity \u003e= 3."
+                                         },
+                                         {
+                                             "name":  "linuxFxVersion",
+                                             "type":  "string",
+                                             "default":  "DOTNETCORE|8.0",
+                                             "description":  "Linux runtime stack for the web app (e.g. DOTNETCORE|8.0, NODE|20-lts, PYTHON|3.12)."
+                                         },
+                                         {
+                                             "name":  "healthCheckPath",
+                                             "type":  "string",
+                                             "default":  "/health",
+                                             "description":  "Relative health check path used by the platform to evict unhealthy instances."
+                                         }
+                                     ]
                   }
               ]
 }
