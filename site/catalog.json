@@ -1,7 +1,7 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-07-30T17:57:54Z",
+    "generated":  "2026-07-31T15:26:25Z",
     "count":  22,
     "items":  [
                   {
@@ -159,7 +159,12 @@
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "3 instances x 730 hours.",
                                                           "unitPrice":  0.155,
-                                                          "monthly":  339.45
+                                                          "monthly":  339.45,
+                                                          "armSkuName":  "P1v3",
+                                                          "productNameContains":  "Linux",
+                                                          "skuParam":  "appServiceSku",
+                                                          "instanceParam":  "appCapacity",
+                                                          "hoursPerInstance":  730
                                                       },
                                                       {
                                                           "name":  "Azure OpenAI gpt-5-mini input tokens",
@@ -169,7 +174,9 @@
                                                           "quantityPerMonth":  20,
                                                           "notes":  "Assumes ~20M input tokens/month on GlobalStandard. Meter naming varies - verify.",
                                                           "unitPrice":  0.25,
-                                                          "monthly":  5.00
+                                                          "monthly":  5.00,
+                                                          "productNameContains":  "GPT5",
+                                                          "meterNameContains":  "GPT 5 Mini Inpt Glbl 1M Tokens"
                                                       },
                                                       {
                                                           "name":  "Azure OpenAI gpt-5-mini output tokens",
@@ -179,7 +186,9 @@
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5M output tokens/month on GlobalStandard. Meter naming varies - verify.",
                                                           "unitPrice":  2.0,
-                                                          "monthly":  10.0
+                                                          "monthly":  10.0,
+                                                          "productNameContains":  "GPT5",
+                                                          "meterNameContains":  "GPT 5 Mini outpt Glbl 1M Tokens"
                                                       },
                                                       {
                                                           "name":  "Cosmos DB serverless request units",
@@ -189,7 +198,9 @@
                                                           "quantityPerMonth":  50,
                                                           "notes":  "Assumes ~50M RUs/month.",
                                                           "unitPrice":  0.25,
-                                                          "monthly":  12.50
+                                                          "monthly":  12.50,
+                                                          "productNameContains":  "serverless",
+                                                          "meterNameContains":  "RUs"
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
@@ -199,14 +210,15 @@
                                                           "quantityPerMonth":  10,
                                                           "notes":  "Assumes ~10 GB/month telemetry.",
                                                           "unitPrice":  0.05,
-                                                          "monthly":  0.50
+                                                          "monthly":  0.50,
+                                                          "meterNameContains":  "Data Ingestion"
                                                       }
                                                   ],
                                    "fixedMonthly":  339.45,
                                    "usageMonthly":  28.00,
                                    "totalMonthly":  367.45,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -355,7 +367,9 @@
                                                           "quantityPerMonth":  730,
                                                           "notes":  "Per-cluster uptime SLA charge (Free tier in dev).",
                                                           "unitPrice":  0.1,
-                                                          "monthly":  73.0
+                                                          "monthly":  73.0,
+                                                          "meterNameContains":  "Standard Uptime SLA",
+                                                          "skuNameContains":  "Standard"
                                                       },
                                                       {
                                                           "name":  "System nodes (D4s_v5 x3)",
@@ -365,7 +379,13 @@
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Three nodes x 730 hours.",
                                                           "unitPrice":  0.192,
-                                                          "monthly":  420.48
+                                                          "monthly":  420.48,
+                                                          "armSkuName":  "Standard_D4s_v5",
+                                                          "meterNameContains":  "D4s v5",
+                                                          "meterNameExact":  "D4s v5",
+                                                          "skuParam":  "systemNodeVmSize",
+                                                          "instanceParam":  "systemNodeCount",
+                                                          "hoursPerInstance":  730
                                                       },
                                                       {
                                                           "name":  "Premium Container Registry",
@@ -375,7 +395,9 @@
                                                           "quantityPerMonth":  30,
                                                           "notes":  "Premium registry daily charge.",
                                                           "unitPrice":  1.6666,
-                                                          "monthly":  50.00
+                                                          "monthly":  50.00,
+                                                          "meterNameContains":  "Premium Registry",
+                                                          "skuNameContains":  "Premium"
                                                       },
                                                       {
                                                           "name":  "Container Insights ingestion",
@@ -385,14 +407,15 @@
                                                           "quantityPerMonth":  100,
                                                           "notes":  "Assumes ~100 GB/month of cluster logs.",
                                                           "unitPrice":  0.05,
-                                                          "monthly":  5.00
+                                                          "monthly":  5.00,
+                                                          "meterNameContains":  "Data Ingestion"
                                                       }
                                                   ],
                                    "fixedMonthly":  543.48,
                                    "usageMonthly":  5.00,
                                    "totalMonthly":  548.48,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -541,7 +564,9 @@
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "Two Premium units x 730 hours.",
                                                           "unitPrice":  3.829,
-                                                          "monthly":  5590.34
+                                                          "monthly":  5590.34,
+                                                          "meterNameContains":  "Premium Unit",
+                                                          "skuNameContains":  "Premium"
                                                       },
                                                       {
                                                           "name":  "Backend App Service Plan (P1v3 x3)",
@@ -551,14 +576,16 @@
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Three backend instances.",
                                                           "unitPrice":  0.155,
-                                                          "monthly":  339.45
+                                                          "monthly":  339.45,
+                                                          "armSkuName":  "P1v3",
+                                                          "meterNameContains":  "P1 v3"
                                                       }
                                                   ],
                                    "fixedMonthly":  5929.79,
                                    "usageMonthly":  0,
                                    "totalMonthly":  5929.79,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -734,7 +761,9 @@
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "Example: 2 hosts averaged over business hours with autoscaling. Replace with your pool sizing.",
                                                           "unitPrice":  0.192,
-                                                          "monthly":  280.32
+                                                          "monthly":  280.32,
+                                                          "armSkuName":  "Standard_D4s_v5",
+                                                          "meterNameContains":  "D4s v5"
                                                       },
                                                       {
                                                           "name":  "Session host managed disks (Premium SSD)",
@@ -744,14 +773,18 @@
                                                           "quantityPerMonth":  2,
                                                           "notes":  "One OS disk per session host.",
                                                           "unitPrice":  19.71,
-                                                          "monthly":  39.42
+                                                          "monthly":  39.42,
+                                                          "productNameContains":  "Premium SSD Managed Disks",
+                                                          "meterNameContains":  "P10 LRS Disk",
+                                                          "meterNameExact":  "P10 LRS Disk",
+                                                          "skuNameContains":  "P10 LRS"
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
                                    "usageMonthly":  319.74,
                                    "totalMonthly":  319.74,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -900,7 +933,12 @@
                                                           "quantityPerMonth":  3650,
                                                           "notes":  "Example assumes 5 session hosts x 730 hours. A scaling plan reduces this materially; replace with your host count and schedule.",
                                                           "unitPrice":  0.376,
-                                                          "monthly":  1372.40
+                                                          "monthly":  1372.40,
+                                                          "productNameContains":  "Dsv5 Series Windows",
+                                                          "meterNameContains":  "D4s v5",
+                                                          "meterNameExact":  "D4s v5",
+                                                          "instanceParam":  "sessionHostCount",
+                                                          "hoursPerInstance":  730
                                                       },
                                                       {
                                                           "name":  "FSLogix profile storage (Azure Files)",
@@ -910,7 +948,10 @@
                                                           "quantityPerMonth":  500,
                                                           "notes":  "Example assumes ~500 GB of pooled user profiles.",
                                                           "unitPrice":  0.06,
-                                                          "monthly":  30.00
+                                                          "monthly":  30.00,
+                                                          "productNameContains":  "Files",
+                                                          "meterNameContains":  "LRS Data Stored",
+                                                          "skuNameContains":  "Standard LRS"
                                                       },
                                                       {
                                                           "name":  "Log Analytics ingestion",
@@ -920,14 +961,16 @@
                                                           "quantityPerMonth":  20,
                                                           "notes":  "Example monthly diagnostic and platform telemetry ingestion.",
                                                           "unitPrice":  2.3,
-                                                          "monthly":  46.0
+                                                          "monthly":  46.0,
+                                                          "meterNameContains":  "Analytics Logs Data Ingestion",
+                                                          "skuNameContains":  "Analytics Logs"
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
                                    "usageMonthly":  1448.40,
                                    "totalMonthly":  1448.40,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -1167,7 +1210,13 @@
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Example assumes 3 nodes x 730 hours. Replace with your cluster size and region rates.",
                                                           "unitPrice":  7.35311,
-                                                          "monthly":  16103.31
+                                                          "monthly":  16103.31,
+                                                          "productNameContains":  "Azure VMware Solution",
+                                                          "meterNameContains":  "AV36 VCF BYOL Node",
+                                                          "skuNameContains":  "AV36 VCF BYOL",
+                                                          "skuParam":  "avsSkuName",
+                                                          "instanceParam":  "avsClusterSize",
+                                                          "hoursPerInstance":  730
                                                       },
                                                       {
                                                           "name":  "ExpressRoute gateway (ErGw2AZ)",
@@ -1177,7 +1226,9 @@
                                                           "quantityPerMonth":  730,
                                                           "notes":  "Optional but commonly required for hybrid AVS connectivity.",
                                                           "unitPrice":  0.632,
-                                                          "monthly":  461.36
+                                                          "monthly":  461.36,
+                                                          "meterNameContains":  "ErGw2AZ Gateway",
+                                                          "skuNameContains":  "ErGw2AZ"
                                                       },
                                                       {
                                                           "name":  "Log Analytics ingestion",
@@ -1187,14 +1238,16 @@
                                                           "quantityPerMonth":  20,
                                                           "notes":  "Example monthly diagnostic and platform telemetry ingestion.",
                                                           "unitPrice":  2.3,
-                                                          "monthly":  46.0
+                                                          "monthly":  46.0,
+                                                          "meterNameContains":  "Analytics Logs Data Ingestion",
+                                                          "skuNameContains":  "Analytics Logs"
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
                                    "usageMonthly":  16610.67,
                                    "totalMonthly":  16610.67,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -1366,7 +1419,8 @@
                                                           "quantityPerMonth":  5256000,
                                                           "notes":  "2 warm replicas x 1 vCPU x 730h x 3600s. Active rate (resource-allocated).",
                                                           "unitPrice":  0.00002,
-                                                          "monthly":  126.14
+                                                          "monthly":  126.14,
+                                                          "meterNameContains":  "vCPU Active Usage"
                                                       },
                                                       {
                                                           "name":  "Container Apps memory (active)",
@@ -1376,7 +1430,8 @@
                                                           "quantityPerMonth":  10512000,
                                                           "notes":  "2 warm replicas x 2 GiB x 730h x 3600s.",
                                                           "unitPrice":  0.00000,
-                                                          "monthly":  31.54
+                                                          "monthly":  31.54,
+                                                          "meterNameContains":  "Memory Active Usage"
                                                       },
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
@@ -1386,14 +1441,16 @@
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month container logs.",
                                                           "unitPrice":  2.3,
-                                                          "monthly":  11.5
+                                                          "monthly":  11.5,
+                                                          "meterNameContains":  "Analytics Logs Data Ingestion",
+                                                          "skuNameContains":  "Analytics Logs"
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
                                    "usageMonthly":  169.18,
                                    "totalMonthly":  169.18,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -1542,7 +1599,9 @@
                                                           "quantityPerMonth":  5000,
                                                           "notes":  "Assumes ~5 TB across bronze/silver/gold.",
                                                           "unitPrice":  0.004,
-                                                          "monthly":  20.00
+                                                          "monthly":  20.00,
+                                                          "meterNameContains":  "Data Stored",
+                                                          "skuNameContains":  "ZRS"
                                                       },
                                                       {
                                                           "name":  "Databricks (premium) DBUs",
@@ -1552,7 +1611,9 @@
                                                           "quantityPerMonth":  2000,
                                                           "notes":  "Assumes ~2000 DBUs/month; VM compute billed separately.",
                                                           "unitPrice":  0.55,
-                                                          "monthly":  1100.00
+                                                          "monthly":  1100.00,
+                                                          "meterNameContains":  "All-purpose Compute DBU",
+                                                          "skuNameContains":  "Premium"
                                                       },
                                                       {
                                                           "name":  "Data Factory pipeline activity runs",
@@ -1562,7 +1623,8 @@
                                                           "quantityPerMonth":  50,
                                                           "notes":  "Assumes ~50K orchestration activity runs/month.",
                                                           "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "monthly":  null,
+                                                          "meterNameContains":  "Cloud Activity Runs"
                                                       },
                                                       {
                                                           "name":  "Data Factory managed VNet IR (data flow)",
@@ -1572,14 +1634,15 @@
                                                           "quantityPerMonth":  200,
                                                           "notes":  "Assumes ~200 vCore-hours of managed-VNet data movement.",
                                                           "unitPrice":  0.0961,
-                                                          "monthly":  19.22
+                                                          "monthly":  19.22,
+                                                          "meterNameContains":  "vCore"
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
                                    "usageMonthly":  1139.22,
                                    "totalMonthly":  1139.22,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -1745,7 +1808,9 @@
                                                           "quantityPerMonth":  50,
                                                           "notes":  "Assumes ~50M input tokens/month on GlobalStandard.",
                                                           "unitPrice":  0.25,
-                                                          "monthly":  12.50
+                                                          "monthly":  12.50,
+                                                          "productNameContains":  "GPT5",
+                                                          "meterNameContains":  "GPT 5 Mini Inpt Glbl 1M Tokens"
                                                       },
                                                       {
                                                           "name":  "Azure OpenAI - gpt-5-mini output",
@@ -1755,7 +1820,9 @@
                                                           "quantityPerMonth":  15,
                                                           "notes":  "Assumes ~15M output tokens/month on GlobalStandard.",
                                                           "unitPrice":  2.0,
-                                                          "monthly":  30.0
+                                                          "monthly":  30.0,
+                                                          "productNameContains":  "GPT5",
+                                                          "meterNameContains":  "GPT 5 Mini outpt Glbl 1M Tokens"
                                                       },
                                                       {
                                                           "name":  "Azure OpenAI - text-embedding-3-large",
@@ -1765,7 +1832,8 @@
                                                           "quantityPerMonth":  20,
                                                           "notes":  "Embedding tokens for ingestion + queries.",
                                                           "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "monthly":  null,
+                                                          "meterNameContains":  "Text-Embedding-3-Large"
                                                       },
                                                       {
                                                           "name":  "Azure AI Search (Standard S1)",
@@ -1775,7 +1843,9 @@
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Three replicas x 730 hours.",
                                                           "unitPrice":  0.336,
-                                                          "monthly":  735.84
+                                                          "monthly":  735.84,
+                                                          "meterNameContains":  "Standard",
+                                                          "skuNameContains":  "Standard"
                                                       },
                                                       {
                                                           "name":  "App Service Plan (P1v3 x3)",
@@ -1785,7 +1855,9 @@
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Three orchestrator instances.",
                                                           "unitPrice":  0.155,
-                                                          "monthly":  339.45
+                                                          "monthly":  339.45,
+                                                          "armSkuName":  "P1v3",
+                                                          "meterNameContains":  "P1 v3"
                                                       },
                                                       {
                                                           "name":  "API Management (Premium)",
@@ -1795,14 +1867,16 @@
                                                           "quantityPerMonth":  730,
                                                           "notes":  "One Premium unit; Developer tier in dev is far cheaper.",
                                                           "unitPrice":  3.829,
-                                                          "monthly":  2795.17
+                                                          "monthly":  2795.17,
+                                                          "meterNameContains":  "Premium Unit",
+                                                          "skuNameContains":  "Premium"
                                                       }
                                                   ],
                                    "fixedMonthly":  3870.46,
                                    "usageMonthly":  42.50,
                                    "totalMonthly":  3912.96,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -2005,7 +2079,9 @@
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "Two processing units x 730 hours.",
                                                           "unitPrice":  1.027,
-                                                          "monthly":  1499.42
+                                                          "monthly":  1499.42,
+                                                          "meterNameContains":  "Processing Unit",
+                                                          "skuNameContains":  "Premium"
                                                       },
                                                       {
                                                           "name":  "Stream Analytics (6 SU)",
@@ -2015,7 +2091,8 @@
                                                           "quantityPerMonth":  4380,
                                                           "notes":  "Six streaming units x 730 hours.",
                                                           "unitPrice":  0.11,
-                                                          "monthly":  481.80
+                                                          "monthly":  481.80,
+                                                          "meterNameContains":  "Standard Streaming Unit"
                                                       },
                                                       {
                                                           "name":  "Functions (Elastic Premium EP1)",
@@ -2025,7 +2102,9 @@
                                                           "quantityPerMonth":  730,
                                                           "notes":  "One always-ready EP1 instance.",
                                                           "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "monthly":  null,
+                                                          "meterNameContains":  "vCPU Duration",
+                                                          "skuNameContains":  "EP1"
                                                       },
                                                       {
                                                           "name":  "Cosmos DB (serverless RU)",
@@ -2035,7 +2114,9 @@
                                                           "quantityPerMonth":  50,
                                                           "notes":  "Assumes ~50M serverless request units/month.",
                                                           "unitPrice":  0.25,
-                                                          "monthly":  12.50
+                                                          "monthly":  12.50,
+                                                          "productNameContains":  "serverless",
+                                                          "meterNameContains":  "RUs"
                                                       },
                                                       {
                                                           "name":  "Curated lake storage (ZRS)",
@@ -2045,14 +2126,16 @@
                                                           "quantityPerMonth":  1000,
                                                           "notes":  "Assumes ~1 TB curated Parquet retained.",
                                                           "unitPrice":  0.004,
-                                                          "monthly":  4.00
+                                                          "monthly":  4.00,
+                                                          "meterNameContains":  "Data Stored",
+                                                          "skuNameContains":  "ZRS"
                                                       }
                                                   ],
                                    "fixedMonthly":  1981.22,
                                    "usageMonthly":  16.50,
                                    "totalMonthly":  1997.72,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -2315,7 +2398,9 @@
                                                           "quantityPerMonth":  730,
                                                           "notes":  "Per-deployment hourly charge; data processing billed separately.",
                                                           "unitPrice":  1.75,
-                                                          "monthly":  1277.50
+                                                          "monthly":  1277.50,
+                                                          "meterNameContains":  "Deployment",
+                                                          "skuNameContains":  "Premium"
                                                       },
                                                       {
                                                           "name":  "Azure Firewall data processed",
@@ -2325,7 +2410,8 @@
                                                           "quantityPerMonth":  1000,
                                                           "notes":  "Assumes ~1 TB/month inspected egress.",
                                                           "unitPrice":  0.016,
-                                                          "monthly":  16.00
+                                                          "monthly":  16.00,
+                                                          "meterNameContains":  "Data Processed"
                                                       },
                                                       {
                                                           "name":  "Azure Bastion (Standard)",
@@ -2335,7 +2421,8 @@
                                                           "quantityPerMonth":  730,
                                                           "notes":  "Per-hour Bastion host charge.",
                                                           "unitPrice":  0.05000,
-                                                          "monthly":  36.50
+                                                          "monthly":  36.50,
+                                                          "skuNameContains":  "Standard"
                                                       },
                                                       {
                                                           "name":  "Public IP (Standard, static)",
@@ -2345,14 +2432,16 @@
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "Two static public IPs (firewall + bastion).",
                                                           "unitPrice":  0.006,
-                                                          "monthly":  8.76
+                                                          "monthly":  8.76,
+                                                          "meterNameContains":  "Static IP",
+                                                          "skuNameContains":  "Standard"
                                                       }
                                                   ],
                                    "fixedMonthly":  1322.76,
                                    "usageMonthly":  16.00,
                                    "totalMonthly":  1338.76,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -2488,7 +2577,9 @@
                                                           "quantityPerMonth":  730,
                                                           "notes":  "One WS3 instance x 730 hours.",
                                                           "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "monthly":  null,
+                                                          "meterNameContains":  "WS3",
+                                                          "skuNameContains":  "WS3"
                                                       },
                                                       {
                                                           "name":  "Service Bus (Premium)",
@@ -2498,7 +2589,9 @@
                                                           "quantityPerMonth":  730,
                                                           "notes":  "One Premium messaging unit.",
                                                           "unitPrice":  0.9275,
-                                                          "monthly":  677.08
+                                                          "monthly":  677.08,
+                                                          "meterNameContains":  "Messaging Unit",
+                                                          "skuNameContains":  "Premium"
                                                       },
                                                       {
                                                           "name":  "Runtime storage (LRS)",
@@ -2508,14 +2601,16 @@
                                                           "quantityPerMonth":  50,
                                                           "notes":  "Workflow run history and content share.",
                                                           "unitPrice":  0.00099,
-                                                          "monthly":  0.05
+                                                          "monthly":  0.05,
+                                                          "meterNameContains":  "Data Stored",
+                                                          "skuNameContains":  "LRS"
                                                       }
                                                   ],
                                    "fixedMonthly":  677.08,
                                    "usageMonthly":  0.05,
                                    "totalMonthly":  677.13,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -2648,7 +2743,9 @@
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "3 search units (replicas) x 730 hours.",
                                                           "unitPrice":  0.336,
-                                                          "monthly":  735.84
+                                                          "monthly":  735.84,
+                                                          "meterNameContains":  "S1 Unit",
+                                                          "skuNameContains":  "Standard S1"
                                                       },
                                                       {
                                                           "name":  "Blob storage (hot ZRS)",
@@ -2658,7 +2755,9 @@
                                                           "quantityPerMonth":  200,
                                                           "notes":  "Assumes ~200 GB of grounding documents.",
                                                           "unitPrice":  0.0239,
-                                                          "monthly":  4.78
+                                                          "monthly":  4.78,
+                                                          "productNameContains":  "General Block Blob",
+                                                          "meterNameContains":  "Hot ZRS Data Stored"
                                                       },
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
@@ -2668,14 +2767,16 @@
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month telemetry. Model token usage is billed per AI use case.",
                                                           "unitPrice":  2.3,
-                                                          "monthly":  11.5
+                                                          "monthly":  11.5,
+                                                          "meterNameContains":  "Analytics Logs Data Ingestion",
+                                                          "skuNameContains":  "Analytics Logs"
                                                       }
                                                   ],
                                    "fixedMonthly":  735.84,
                                    "usageMonthly":  16.28,
                                    "totalMonthly":  752.12,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -2795,7 +2896,9 @@
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month platform logs.",
                                                           "unitPrice":  2.3,
-                                                          "monthly":  11.5
+                                                          "monthly":  11.5,
+                                                          "meterNameContains":  "Analytics Logs Data Ingestion",
+                                                          "skuNameContains":  "Analytics Logs"
                                                       },
                                                       {
                                                           "name":  "Blob storage (hot LRS)",
@@ -2805,7 +2908,9 @@
                                                           "quantityPerMonth":  100,
                                                           "notes":  "Assumes ~100 GB stored.",
                                                           "unitPrice":  0.0191,
-                                                          "monthly":  1.91
+                                                          "monthly":  1.91,
+                                                          "productNameContains":  "General Block Blob",
+                                                          "meterNameContains":  "Hot LRS Data Stored"
                                                       },
                                                       {
                                                           "name":  "Key Vault operations",
@@ -2815,14 +2920,15 @@
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~50K secret/key operations per month.",
                                                           "unitPrice":  0.03,
-                                                          "monthly":  0.15
+                                                          "monthly":  0.15,
+                                                          "meterNameContains":  "Operations"
                                                       }
                                                   ],
                                    "fixedMonthly":  0,
                                    "usageMonthly":  13.56,
                                    "totalMonthly":  13.56,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -2926,7 +3032,8 @@
                                                           "quantityPerMonth":  5256000,
                                                           "notes":  "~2 active vCPU-equivalents continuously (2 x 730h).",
                                                           "unitPrice":  0.00002,
-                                                          "monthly":  126.14
+                                                          "monthly":  126.14,
+                                                          "meterNameContains":  "vCPU Active Usage"
                                                       },
                                                       {
                                                           "name":  "Container Apps memory (active)",
@@ -2936,7 +3043,8 @@
                                                           "quantityPerMonth":  10512000,
                                                           "notes":  "~4 GiB active continuously.",
                                                           "unitPrice":  0.00000,
-                                                          "monthly":  31.54
+                                                          "monthly":  31.54,
+                                                          "meterNameContains":  "Memory Active Usage"
                                                       },
                                                       {
                                                           "name":  "Service Bus (Premium)",
@@ -2946,7 +3054,9 @@
                                                           "quantityPerMonth":  730,
                                                           "notes":  "One Premium messaging unit.",
                                                           "unitPrice":  0.9275,
-                                                          "monthly":  677.08
+                                                          "monthly":  677.08,
+                                                          "meterNameContains":  "Messaging Unit",
+                                                          "skuNameContains":  "Premium"
                                                       },
                                                       {
                                                           "name":  "Cosmos DB (serverless RU)",
@@ -2956,14 +3066,16 @@
                                                           "quantityPerMonth":  25,
                                                           "notes":  "Assumes ~25M serverless request units/month.",
                                                           "unitPrice":  0.25,
-                                                          "monthly":  6.25
+                                                          "monthly":  6.25,
+                                                          "productNameContains":  "serverless",
+                                                          "meterNameContains":  "RUs"
                                                       }
                                                   ],
                                    "fixedMonthly":  677.08,
                                    "usageMonthly":  163.93,
                                    "totalMonthly":  841.01,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -3115,7 +3227,9 @@
                                                           "quantityPerMonth":  1,
                                                           "notes":  "Monthly Premium profile base fee.",
                                                           "unitPrice":  null,
-                                                          "monthly":  null
+                                                          "monthly":  null,
+                                                          "meterNameContains":  "Premium Base",
+                                                          "skuNameContains":  "Premium"
                                                       },
                                                       {
                                                           "name":  "App Service Plan primary (P1v3 x3)",
@@ -3125,7 +3239,12 @@
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Three instances in the primary region.",
                                                           "unitPrice":  0.155,
-                                                          "monthly":  339.45
+                                                          "monthly":  339.45,
+                                                          "armSkuName":  "P1v3",
+                                                          "meterNameContains":  "P1 v3",
+                                                          "skuParam":  "appServiceSku",
+                                                          "instanceParam":  "appServiceCapacity",
+                                                          "hoursPerInstance":  730
                                                       },
                                                       {
                                                           "name":  "App Service Plan secondary (P1v3 x3)",
@@ -3135,7 +3254,12 @@
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Three instances in the secondary region.",
                                                           "unitPrice":  0.155,
-                                                          "monthly":  339.45
+                                                          "monthly":  339.45,
+                                                          "armSkuName":  "P1v3",
+                                                          "meterNameContains":  "P1 v3",
+                                                          "skuParam":  "appServiceSku",
+                                                          "instanceParam":  "appServiceCapacity",
+                                                          "hoursPerInstance":  730
                                                       },
                                                       {
                                                           "name":  "Cosmos DB multi-region (provisioned RU)",
@@ -3145,14 +3269,15 @@
                                                           "quantityPerMonth":  14600,
                                                           "notes":  "~1000 RU/s replicated across two regions (2 x 730h x 10 units).",
                                                           "unitPrice":  0.008,
-                                                          "monthly":  116.80
+                                                          "monthly":  116.80,
+                                                          "meterNameContains":  "100 RU/s"
                                                       }
                                                   ],
                                    "fixedMonthly":  678.90,
                                    "usageMonthly":  116.80,
                                    "totalMonthly":  795.70,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -3509,7 +3634,12 @@
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "Three instances x 730 hours.",
                                                           "unitPrice":  0.155,
-                                                          "monthly":  339.45
+                                                          "monthly":  339.45,
+                                                          "armSkuName":  "P1v3",
+                                                          "meterNameContains":  "P1 v3",
+                                                          "skuParam":  "appServiceSku",
+                                                          "instanceParam":  "appServiceCapacity",
+                                                          "hoursPerInstance":  730
                                                       },
                                                       {
                                                           "name":  "Application Gateway WAF_v2",
@@ -3519,7 +3649,9 @@
                                                           "quantityPerMonth":  730,
                                                           "notes":  "Fixed gateway hours; capacity units billed separately.",
                                                           "unitPrice":  0.36,
-                                                          "monthly":  262.80
+                                                          "monthly":  262.80,
+                                                          "productNameContains":  "Application Gateway WAF v2",
+                                                          "meterNameContains":  "Fixed Cost"
                                                       },
                                                       {
                                                           "name":  "Application Gateway capacity units",
@@ -3529,7 +3661,9 @@
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "Assumes ~2 capacity units sustained.",
                                                           "unitPrice":  0.0144,
-                                                          "monthly":  21.02
+                                                          "monthly":  21.02,
+                                                          "productNameContains":  "Application Gateway WAF v2",
+                                                          "meterNameContains":  "Capacity Units"
                                                       },
                                                       {
                                                           "name":  "Azure SQL (GP_Gen5_2)",
@@ -3539,7 +3673,10 @@
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "2 vCores x 730 hours, General Purpose provisioned. Priced per vCore-hour.",
                                                           "unitPrice":  0.15222,
-                                                          "monthly":  222.24
+                                                          "monthly":  222.24,
+                                                          "productNameContains":  "General Purpose - Compute Gen5",
+                                                          "meterNameContains":  "vCore",
+                                                          "skuNameContains":  "1 vCore"
                                                       },
                                                       {
                                                           "name":  "Private Endpoints (SQL + Key Vault)",
@@ -3549,14 +3686,15 @@
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "Two private endpoints x 730 hours.",
                                                           "unitPrice":  0.01,
-                                                          "monthly":  14.60
+                                                          "monthly":  14.60,
+                                                          "meterNameContains":  "Private Endpoint"
                                                       }
                                                   ],
                                    "fixedMonthly":  839.09,
                                    "usageMonthly":  21.02,
                                    "totalMonthly":  860.11,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -3702,7 +3840,12 @@
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "3 instances x 730 hours.",
                                                           "unitPrice":  0.155,
-                                                          "monthly":  339.45
+                                                          "monthly":  339.45,
+                                                          "armSkuName":  "P1v3",
+                                                          "productNameContains":  "Linux",
+                                                          "skuParam":  "appServiceSku",
+                                                          "instanceParam":  "appCapacity",
+                                                          "hoursPerInstance":  730
                                                       },
                                                       {
                                                           "name":  "Azure SQL Database (GP Gen5 2 vCore)",
@@ -3712,7 +3855,10 @@
                                                           "quantityPerMonth":  1460,
                                                           "notes":  "2 vCores x 730 hours, General Purpose provisioned. Priced per vCore-hour.",
                                                           "unitPrice":  0.15222,
-                                                          "monthly":  222.24
+                                                          "monthly":  222.24,
+                                                          "productNameContains":  "General Purpose - Compute Gen5",
+                                                          "meterNameContains":  "vCore",
+                                                          "skuNameContains":  "1 vCore"
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
@@ -3722,14 +3868,15 @@
                                                           "quantityPerMonth":  10,
                                                           "notes":  "Assumes ~10 GB/month telemetry.",
                                                           "unitPrice":  0.05,
-                                                          "monthly":  0.50
+                                                          "monthly":  0.50,
+                                                          "meterNameContains":  "Data Ingestion"
                                                       }
                                                   ],
                                    "fixedMonthly":  561.69,
                                    "usageMonthly":  0.50,
                                    "totalMonthly":  562.19,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {
@@ -3880,7 +4027,12 @@
                                                           "quantityPerMonth":  2190,
                                                           "notes":  "3 instances x 730 hours for zone redundancy.",
                                                           "unitPrice":  0.155,
-                                                          "monthly":  339.45
+                                                          "monthly":  339.45,
+                                                          "armSkuName":  "P1v3",
+                                                          "productNameContains":  "Linux",
+                                                          "skuParam":  "sku",
+                                                          "instanceParam":  "capacity",
+                                                          "hoursPerInstance":  730
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
@@ -3890,7 +4042,8 @@
                                                           "quantityPerMonth":  10,
                                                           "notes":  "Assumes ~10 GB/month telemetry after sampling.",
                                                           "unitPrice":  0.05,
-                                                          "monthly":  0.50
+                                                          "monthly":  0.50,
+                                                          "meterNameContains":  "Data Ingestion"
                                                       },
                                                       {
                                                           "name":  "Log Analytics analytics logs",
@@ -3900,14 +4053,16 @@
                                                           "quantityPerMonth":  5,
                                                           "notes":  "Assumes ~5 GB/month platform logs.",
                                                           "unitPrice":  2.3,
-                                                          "monthly":  11.5
+                                                          "monthly":  11.5,
+                                                          "meterNameContains":  "Analytics Logs Data Ingestion",
+                                                          "skuNameContains":  "Analytics Logs"
                                                       }
                                                   ],
                                    "fixedMonthly":  339.45,
                                    "usageMonthly":  12.00,
                                    "totalMonthly":  351.45,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-30"
+                                   "pricedAt":  "2026-07-31"
                                },
                       "parameters":  [
                                          {

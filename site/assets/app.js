@@ -273,35 +273,38 @@
     return wrap;
   }
 
-  function costBlock(it) {
-    const cost = it.cost;
-    if (!cost) return null;
+  function costBlock(it, ctl) {
+    const baseCost = it.cost;
+    if (!baseCost) return null;
 
-    const totalMonthly = typeof cost.totalMonthly === "number" ? cost.totalMonthly : null;
-    const totalMoney = totalMonthly !== null ? fmtMoney(totalMonthly, cost.currency) : null;
-    const summaryTotal =
-      totalMoney && totalMonthly > 0
-        ? `for the selected services: ~${totalMoney}/mo`
-        : "for the selected services: usage-based";
-
+    const summaryTotalSpan = el("span", { class: "cost-summary-total" });
     const wrap = el("details", { class: "modal-section modal-card collapsible-card" }, [
       el("summary", { class: "collapse-summary" }, [
         el("span", { class: "cost-summary-lead" }, [
           el("span", { class: "collapse-title", role: "heading", "aria-level": "3", text: "Cost estimate" }),
-          el("span", { class: "cost-summary-total", text: summaryTotal }),
+          summaryTotalSpan,
         ]),
         el("span", { class: "collapse-caret", "aria-hidden": "true" }),
       ]),
     ]);
+    const host = el("div", { class: "cost-body" });
+    wrap.appendChild(host);
 
-    if (cost.profile) {
-      wrap.appendChild(el("p", { text: cost.profile }));
-    }
+    function render(cost, opts) {
+      host.innerHTML = "";
+      const totalMonthly = typeof cost.totalMonthly === "number" ? cost.totalMonthly : null;
+      const totalMoney = totalMonthly !== null ? fmtMoney(totalMonthly, cost.currency) : null;
+      summaryTotalSpan.textContent =
+        totalMoney && totalMonthly > 0
+          ? `for the selected services: ~${totalMoney}/mo`
+          : "for the selected services: usage-based";
 
-    const components = cost.components || [];
-    const priced = components.some((c) => typeof c.monthly === "number");
+      if (cost.profile) host.appendChild(el("p", { text: cost.profile }));
 
-    if (components.length && priced) {
+      const components = cost.components || [];
+      const priced = components.some((c) => typeof c.monthly === "number");
+
+      if (components.length && priced) {
       const head = el("div", { class: "cost-row cost-head" }, [
         el("span", { class: "cost-name", text: "Component" }),
         el("span", { class: "cost-qty", text: "Qty/mo" }),
@@ -340,17 +343,18 @@
           totalRow("Total / month", fmtMoney(cost.totalMonthly, cost.currency), "cost-grand")
         );
 
-      wrap.appendChild(table);
+      host.appendChild(table);
 
       const meta = [];
       if (cost.region) meta.push(`Region ${cost.region}`);
       if (cost.pricedAt) meta.push(`retail prices as of ${cost.pricedAt}`);
       meta.push("PAYG list price, excludes tax/reservations/free tiers");
+      if (opts && opts.forSelection) meta.push("estimated live for your current selections");
       if (cost.complete === false) meta.push("some components not priced — see notes");
-      wrap.appendChild(el("p", { class: "cost-note", text: meta.join(" · ") }));
+      host.appendChild(el("p", { class: "cost-note", text: meta.join(" · ") }));
     } else if (components.length) {
       // No prices available — fall back to the component list.
-      wrap.appendChild(
+      host.appendChild(
         el(
           "ul",
           {},
@@ -364,9 +368,19 @@
       );
     }
 
-    wrap.appendChild(
-      el("div", { class: "code", text: `./tools/Get-CatalogCost.ps1 -UseCase ${it.path}` })
-    );
+      host.appendChild(
+        el("div", { class: "code", text: `./tools/Get-CatalogCost.ps1 -UseCase ${it.path}` })
+      );
+    }
+
+    render(baseCost);
+
+    if (ctl) {
+      ctl.baseCost = baseCost;
+      ctl.apply = function (est, opts) { host.classList.remove("cost-pending"); render(est, opts); };
+      ctl.reset = function () { host.classList.remove("cost-pending"); render(baseCost); };
+      ctl.pending = function () { host.classList.add("cost-pending"); };
+    }
 
     return wrap;
   }
@@ -503,7 +517,7 @@
     return { select: select, note: note };
   }
 
-  function deployBlock(it) {
+  function deployBlock(it, estimateCtl) {
     const me = state.me;
     const maxHours = me && me.maxLifetimeHours ? me.maxLifetimeHours : 48;
     const now = new Date();
@@ -940,6 +954,7 @@
           });
           updateAdvSummary();
           syncEngine();
+          scheduleEstimate();
           window.TechlabsPanel.close();
         });
         cancelBtn.addEventListener("click", () => window.TechlabsPanel.close());
@@ -948,6 +963,30 @@
     }
 
     updateAdvSummary();
+
+    // Live cost re-estimate: when the region or an advanced option changes, ask
+    // the backend to re-price for the selection; fall back to the static cost.
+    let estimateTimer = null;
+    let estimateSeq = 0;
+    function scheduleEstimate() {
+      if (!estimateCtl || !estimateCtl.apply || !window.TechlabsApi) return;
+      const baseRegion = (estimateCtl.baseCost && estimateCtl.baseCost.region) || "";
+      const loc = region.select.value;
+      const values = Object.assign({}, advValues);
+      const changed = Object.keys(values).length > 0 || loc.toLowerCase() !== String(baseRegion).toLowerCase();
+      if (!changed) {
+        estimateCtl.reset();
+        return;
+      }
+      estimateCtl.pending();
+      clearTimeout(estimateTimer);
+      estimateTimer = setTimeout(function () {
+        const seq = ++estimateSeq;
+        window.TechlabsApi.estimateCost({ useCase: it.path, location: loc, parameterValues: values })
+          .then(function (est) { if (seq === estimateSeq) estimateCtl.apply(est, { forSelection: true }); })
+          .catch(function () { if (seq === estimateSeq) estimateCtl.reset(); });
+      }, 350);
+    }
 
     const deployField = (labelText, control, extra) =>
       el("div", { class: "deploy-field" }, [
@@ -1019,6 +1058,7 @@
       control.addEventListener("change", syncEngine);
       control.addEventListener("input", syncEngine);
     });
+    region.select.addEventListener("change", scheduleEstimate);
     syncEngine();
     const manual = el("details", { class: "deploy-manual", hidden: "" }, [manualSummary, manualCode]);
     advancedForm.hidden = true;
@@ -1334,10 +1374,11 @@
     if (lifecycle) body.appendChild(lifecycle);
 
     // Deploy section (boxed).
-    body.appendChild(deployBlock(it));
+    const estimateCtl = {};
+    body.appendChild(deployBlock(it, estimateCtl));
 
     // Cost estimate (boxed).
-    const cost = costBlock(it);
+    const cost = costBlock(it, estimateCtl);
     if (cost) body.appendChild(cost);
 
     body.appendChild(

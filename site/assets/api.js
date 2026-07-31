@@ -44,6 +44,8 @@
     createDeployment: (payload) =>
       request("POST", "/api/deployments", payload).then((d) => d.deployment),
 
+    estimateCost: (payload) => request("POST", "/api/estimate", payload),
+
     getDeployment: (id) =>
       request("GET", "/api/deployments/" + encodeURIComponent(id)).then((d) => d.deployment),
 

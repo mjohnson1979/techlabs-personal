@@ -66,6 +66,9 @@
         "productNameContains": "Linux",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "sku",
+        "instanceParam": "capacity",
+        "hoursPerInstance": 730,
         "notes": "3 instances x 730 hours for zone redundancy."
       },
       {

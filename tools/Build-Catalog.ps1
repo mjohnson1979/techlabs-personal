@@ -137,7 +137,7 @@ function Get-PricedCost {
         elseif ($c.billing -eq 'fixed') { $fixedTotal += $monthly }
         else { $usageTotal += $monthly }
 
-        $components.Add([ordered]@{
+        $entry = [ordered]@{
             name             = $c.name
             billing          = $c.billing
             serviceName      = $c.serviceName
@@ -146,7 +146,13 @@ function Get-PricedCost {
             notes            = $c.notes
             unitPrice        = $unitPrice
             monthly          = $monthly
-        })
+        }
+        # Carry the price-match + override-annotation fields so the backend can
+        # re-price live (POST /api/estimate) for the selected region/parameters.
+        foreach ($f in @('armSkuName', 'productNameContains', 'meterNameContains', 'meterNameExact', 'skuNameContains', 'skuParam', 'instanceParam', 'hoursPerInstance')) {
+            if ($null -ne $c.$f) { $entry[$f] = $c.$f }
+        }
+        $components.Add($entry)
     }
 
     $priced = -not $SkipPricing
