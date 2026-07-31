@@ -39,14 +39,21 @@ param(
     # Subscription to measure. Defaults to the az CLI's current subscription.
     [string]$SubscriptionId,
 
-    # Regions to scan. Default mirrors where this lab subscription operates.
-    [string[]]$Regions = @('eastus', 'eastus2', 'centralus', 'southcentralus', 'westus2', 'westus3'),
+    # Regions to scan. Americas public regions (GA; canary/partner excluded),
+    # matching the model/SKU registry (tools/Build-Registry.ps1).
+    [string[]]$Regions = @(
+        'eastus', 'eastus2', 'centralus', 'northcentralus', 'southcentralus',
+        'westus', 'westus2', 'westus3', 'westcentralus',
+        'canadacentral', 'canadaeast',
+        'brazilsouth', 'brazilsoutheast',
+        'mexicocentral'
+    ),
 
-    # OpenAI models the catalog deploys (name:version:sku). The SKU matters:
-    # a region can have capacity for one SKU (e.g. GlobalStandard) yet not offer
-    # another (regional Standard), in which case the deployment fails preflight.
-    # Keep these in lock-step with the catalog's main.bicep model deployments.
-    [string[]]$OpenAiModels = @('gpt-5-mini:2025-08-07:GlobalStandard', 'text-embedding-3-small:1:Standard'),
+    # OpenAI models the catalog deploys (name:version:sku). Empty means derive the
+    # set from the catalog's model deployments (see Get-CatalogOpenAiModels). The
+    # SKU matters: a region can have one SKU (e.g. GlobalStandard) but not another
+    # (regional Standard), which fails preflight.
+    [string[]]$OpenAiModels = @(),
 
     # Skip individual probes (faster offline/partial runs).
     [switch]$SkipOpenAi,
@@ -82,6 +89,25 @@ function Get-AccessToken {
     $tok = Invoke-Az @('account', 'get-access-token', '--resource', 'https://management.azure.com', '--query', 'accessToken', '-o', 'tsv')
     if (-not $tok) { throw 'Could not acquire ARM access token.' }
     return $tok.Trim()
+}
+
+# Distinct "model:version:sku" the catalog actually deploys, from every use
+# case's metadata quota requirements (kind = model-tpm). Keeps the probe set in
+# lock-step with the catalog instead of a hand-maintained list.
+function Get-CatalogOpenAiModels {
+    $catalogDir = Join-Path $RepoRoot 'catalog'
+    $seen = [ordered]@{}
+    Get-ChildItem -Path $catalogDir -Recurse -Filter 'metadata.json' -File | ForEach-Object {
+        try { $meta = Get-Content $_.FullName -Raw | ConvertFrom-Json } catch { return }
+        foreach ($req in @($meta.quota.requirements)) {
+            if ("$($req.kind)" -ne 'model-tpm' -or -not $req.model) { continue }
+            $ver = if ($req.modelVersion) { $req.modelVersion } else { '' }
+            $sku = if ($req.sku) { $req.sku } else { 'Standard' }
+            $spec = "$($req.model):${ver}:$sku"
+            if (-not $seen.Contains($spec)) { $seen[$spec] = $true }
+        }
+    }
+    return @($seen.Keys)
 }
 
 function New-Status {
@@ -250,6 +276,10 @@ $services = [ordered]@{}
 
 # Azure OpenAI models
 if (-not $SkipOpenAi) {
+    if (-not $OpenAiModels -or $OpenAiModels.Count -eq 0) {
+        $OpenAiModels = Get-CatalogOpenAiModels
+        Write-Host "  derived OpenAI models from catalog: $($OpenAiModels -join ', ')" -ForegroundColor DarkGray
+    }
     # Per-region model/SKU deprecation lookup, fetched once and reused across
     # models. $null for a region means the query failed (deprecation unknown).
     $deprecationByRegion = @{}

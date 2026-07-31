@@ -26,9 +26,19 @@
     return rb > ra ? b : a;
   }
   // Map a use-case quota requirement to a key in capacity.json's services map.
-  function capacityServiceKey(req) {
+  // `sel` (advanced-option overrides) can swap the model so the picker reflects
+  // capacity for the model the user actually chose.
+  function capacityServiceKey(req, sel) {
     if (!req) return null;
-    if (req.kind === "model-tpm" && req.model) return "openai:" + req.model;
+    if (req.kind === "model-tpm" && req.model) {
+      let model = req.model;
+      if (sel) {
+        const isEmbed = /embed/i.test(model) || /embed/i.test(req.service || "");
+        const override = isEmbed ? sel.embeddingModel : (sel.chatModelName || sel.chatModel);
+        if (override) model = override;
+      }
+      return "openai:" + model;
+    }
     const p = (req.provider || "").toLowerCase();
     if (p.indexOf("microsoft.web/serverfarms") === 0) return "appservice";
     if (p.indexOf("microsoft.compute/virtualmachines") === 0) return "vm";
@@ -38,11 +48,11 @@
   }
   // Roll up every quota requirement of a use case to a single status for one
   // region, plus a per-service breakdown.
-  function regionStatus(it, region) {
+  function regionStatus(it, region, sel) {
     const cap = state.capacity;
     const reqs = (it.quota && it.quota.requirements) || [];
     const services = reqs.map((req) => {
-      const key = capacityServiceKey(req);
+      const key = capacityServiceKey(req, sel);
       let status = "unknown";
       let detail = "No live capacity signal for this service.";
       if (cap && key && cap.services && cap.services[key] && cap.services[key].byRegion[region]) {
@@ -463,15 +473,18 @@
   }
 
   // Color-coded region picker reflecting live capacity for a use case.
-  function deployRegionField(it) {
+  function deployRegionField(it, getSel) {
+    const sel = () => (getSel ? getSel() : null);
     const regions = capacityRegions();
     const select = el("select", { class: "deploy-input deploy-region", id: "deploy-region" });
+    const options = {};
     let preferred = null;
     regions.forEach((r) => {
-      const rs = regionStatus(it, r);
+      const rs = regionStatus(it, r, sel());
       const opt = el("option", { value: r, text: `${r} \u2014 ${ROLL_LABEL[rs.status]}` });
       opt.setAttribute("data-status", rs.status);
       select.appendChild(opt);
+      options[r] = opt;
       if (!preferred && rs.status === "green") preferred = r;
     });
     if (preferred) select.value = preferred;
@@ -479,7 +492,7 @@
     const note = el("div", { class: "deploy-region-note" });
     function refresh() {
       const r = select.value;
-      const rs = regionStatus(it, r);
+      const rs = regionStatus(it, r, sel());
       select.setAttribute("data-status", rs.status);
       note.className = "deploy-region-note cap-note-" + rs.status;
       note.innerHTML = "";
@@ -514,7 +527,16 @@
     }
     select.addEventListener("change", refresh);
     refresh();
-    return { select: select, note: note };
+    // Re-label every option and the note for the current advanced selections.
+    function refreshAll() {
+      regions.forEach((r) => {
+        const rs = regionStatus(it, r, sel());
+        options[r].textContent = `${r} \u2014 ${ROLL_LABEL[rs.status]}`;
+        options[r].setAttribute("data-status", rs.status);
+      });
+      refresh();
+    }
+    return { select: select, note: note, refreshAll: refreshAll };
   }
 
   function deployBlock(it, estimateCtl) {
@@ -544,7 +566,10 @@
       placeholder: "rg-techlabs",
     });
 
-    const region = deployRegionField(it);
+    // Advanced-option overrides (param name -> value); shared with the region
+    // picker so capacity reflects the chosen model/SKU.
+    const advValues = {};
+    const region = deployRegionField(it, function () { return advValues; });
 
     const endInput = el("input", {
       type: "datetime-local",
@@ -623,7 +648,6 @@
     const params = (Array.isArray(it.parameters) ? it.parameters : []).filter(
       (p) => p.type === "string" || p.type === "int" || p.type === "bool"
     );
-    const advValues = {};
     const advOptsSummary = el("p", { class: "deploy-note deploy-advopts-summary" });
     const advOptsBtn = el("button", {
       class: "deploy-btn-secondary",
@@ -955,6 +979,7 @@
           updateAdvSummary();
           syncEngine();
           scheduleEstimate();
+          if (region.refreshAll) region.refreshAll();
           window.TechlabsPanel.close();
         });
         cancelBtn.addEventListener("click", () => window.TechlabsPanel.close());
