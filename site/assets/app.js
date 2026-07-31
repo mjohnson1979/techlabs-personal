@@ -54,6 +54,9 @@
     }
     if (p.indexOf("microsoft.app/managedenvironments") === 0) return "containerapps";
     if (p.indexOf("microsoft.avs/privateclouds") === 0) return "avs";
+    if (p.indexOf("microsoft.fabric/capacities") === 0) return "fabric";
+    if (p.indexOf("microsoft.powerbidedicated/capacities") === 0) return "powerbi";
+    if (p.indexOf("microsoft.purview/accounts") === 0) return "purview";
     return null;
   }
   // Roll up every quota requirement of a use case to a single status for one

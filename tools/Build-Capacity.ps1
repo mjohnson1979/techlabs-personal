@@ -60,7 +60,10 @@ param(
     [switch]$SkipAppService,
     [switch]$SkipVm,
     [switch]$SkipContainerApps,
-    [switch]$SkipAvs
+    [switch]$SkipAvs,
+    [switch]$SkipFabric,
+    [switch]$SkipPowerBi,
+    [switch]$SkipPurview
 )
 
 $ErrorActionPreference = 'Stop'
@@ -482,6 +485,39 @@ if (-not $SkipAvs) {
         provider = 'Microsoft.AVS/privateClouds'
         kind     = 'availability'
         byRegion = Get-RegionAvailabilityMap -Namespace 'Microsoft.AVS' -ResourceType 'privateClouds' -Regions $Regions -OfferedStatus 'yellow' -OfferedDetail 'offered - request AVS host quota (0 by default)'
+    }
+}
+
+# Microsoft Fabric (capacity SKU availability; tenant entitlement is separate).
+if (-not $SkipFabric) {
+    Write-Host '  Fabric availability ...' -ForegroundColor DarkGray
+    $services['fabric'] = [ordered]@{
+        label    = 'Microsoft Fabric'
+        provider = 'Microsoft.Fabric/capacities'
+        kind     = 'availability'
+        byRegion = Get-RegionAvailabilityMap -Namespace 'Microsoft.Fabric' -ResourceType 'capacities' -Regions $Regions -OfferedDetail 'offered - tenant entitlement required'
+    }
+}
+
+# Power BI Dedicated (capacity SKU availability by region).
+if (-not $SkipPowerBi) {
+    Write-Host '  Power BI Dedicated availability ...' -ForegroundColor DarkGray
+    $services['powerbi'] = [ordered]@{
+        label    = 'Power BI Dedicated'
+        provider = 'Microsoft.PowerBIDedicated/capacities'
+        kind     = 'availability'
+        byRegion = Get-RegionAvailabilityMap -Namespace 'Microsoft.PowerBIDedicated' -ResourceType 'capacities' -Regions $Regions
+    }
+}
+
+# Microsoft Purview (account availability by region).
+if (-not $SkipPurview) {
+    Write-Host '  Purview availability ...' -ForegroundColor DarkGray
+    $services['purview'] = [ordered]@{
+        label    = 'Microsoft Purview'
+        provider = 'Microsoft.Purview/accounts'
+        kind     = 'availability'
+        byRegion = Get-RegionAvailabilityMap -Namespace 'Microsoft.Purview' -ResourceType 'accounts' -Regions $Regions
     }
 }
 
