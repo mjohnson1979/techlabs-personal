@@ -48,11 +48,14 @@
   function openAiKey(model, version, sku) {
     const cap = state.capacity;
     const full = "openai:" + model + ":" + (version || "") + ":" + String(sku || "").toLowerCase();
-    if (cap && cap.services && cap.services[full]) return full;
     if (cap && cap.services) {
+      if (cap.services[full]) return full;
       const prefix = "openai:" + model + ":";
       const hit = Object.keys(cap.services).find((k) => k.indexOf(prefix) === 0);
       if (hit) return hit;
+      // Legacy snapshots keyed OpenAI by model only; match until the next refresh.
+      const legacy = "openai:" + model;
+      if (cap.services[legacy]) return legacy;
     }
     return full;
   }
