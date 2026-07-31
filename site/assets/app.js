@@ -41,7 +41,17 @@
     }
     const p = (req.provider || "").toLowerCase();
     if (p.indexOf("microsoft.web/serverfarms") === 0) return "appservice";
-    if (p.indexOf("microsoft.compute/virtualmachines") === 0) return "vm";
+    if (p.indexOf("microsoft.compute/virtualmachines") === 0) {
+      // A chosen VM size checks its own family quota (vm:<size>); else regional.
+      if (sel) {
+        const vmKey = Object.keys(sel).find((k) => /vm.?size/i.test(k));
+        const cap = state.capacity;
+        if (vmKey && sel[vmKey] && cap && cap.services && cap.services["vm:" + sel[vmKey]]) {
+          return "vm:" + sel[vmKey];
+        }
+      }
+      return "vm";
+    }
     if (p.indexOf("microsoft.app/managedenvironments") === 0) return "containerapps";
     if (p.indexOf("microsoft.avs/privateclouds") === 0) return "avs";
     return null;
