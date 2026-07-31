@@ -81,7 +81,17 @@
   }
   function capacityRegions() {
     const cap = state.capacity;
-    return cap && cap.regions && cap.regions.length ? cap.regions : ["centralus"];
+    const reg = state.registry;
+    const capRegions = cap && cap.regions && cap.regions.length ? cap.regions : null;
+    // The deployable region set is the registry's canonical list, so the picker
+    // stays complete even when the capacity snapshot is stale or partial.
+    // Capacity status overlays per region; regions absent from the snapshot show
+    // "unknown" rather than disappearing from the dropdown.
+    if (reg && Array.isArray(reg.regions) && reg.regions.length) {
+      const extra = (capRegions || []).filter((r) => reg.regions.indexOf(r) === -1);
+      return reg.regions.concat(extra);
+    }
+    return capRegions || ["centralus"];
   }
 
   function pad2(n) {
