@@ -28,16 +28,55 @@
   // Map a use-case quota requirement to a key in capacity.json's services map.
   // `sel` (advanced-option overrides) can swap the model so the picker reflects
   // capacity for the model the user actually chose.
+  function openAiRegModels(isEmbed) {
+    const reg = state.registry;
+    if (!reg || !reg.models) return [];
+    return ((isEmbed ? reg.models.embedding : reg.models.chat) || []).filter((m) => m.provider === "OpenAI");
+  }
+  function openAiDefaultVersion(model, isEmbed) {
+    const m = openAiRegModels(isEmbed).find((x) => x.name === model);
+    return m && m.version ? m.version : "";
+  }
+  function openAiDefaultSku(model, version, isEmbed) {
+    const models = openAiRegModels(isEmbed);
+    const m = models.find((x) => x.name === model && x.version === version) || models.find((x) => x.name === model);
+    return m && Array.isArray(m.skus) && m.skus.length ? m.skus[0] : "Standard";
+  }
+  // Capacity key for an OpenAI deployment: model + version + SKU, matching the
+  // keys Build-Capacity.ps1 emits. Falls back to any probe for the same model so
+  // a version/SKU we did not probe still yields a model-level signal.
+  function openAiKey(model, version, sku) {
+    const cap = state.capacity;
+    const full = "openai:" + model + ":" + (version || "") + ":" + String(sku || "").toLowerCase();
+    if (cap && cap.services && cap.services[full]) return full;
+    if (cap && cap.services) {
+      const prefix = "openai:" + model + ":";
+      const hit = Object.keys(cap.services).find((k) => k.indexOf(prefix) === 0);
+      if (hit) return hit;
+    }
+    return full;
+  }
   function capacityServiceKey(req, sel) {
     if (!req) return null;
     if (req.kind === "model-tpm" && req.model) {
+      const isEmbed = /embed/i.test(req.model) || /embed/i.test(req.service || "");
       let model = req.model;
+      let version = req.modelVersion || "";
+      let sku = req.sku || "Standard";
       if (sel) {
-        const isEmbed = /embed/i.test(model) || /embed/i.test(req.service || "");
-        const override = isEmbed ? sel.embeddingModel : (sel.chatModelName || sel.chatModel);
-        if (override) model = override;
+        const om = isEmbed ? sel.embeddingModel : (sel.chatModelName || sel.chatModel);
+        const ov = isEmbed ? sel.embeddingModelVersion : sel.chatModelVersion;
+        const os = isEmbed ? sel.embeddingModelSku : sel.chatModelSku;
+        if (om && om !== model) {
+          model = om;
+          version = ov || openAiDefaultVersion(model, isEmbed);
+          sku = os || openAiDefaultSku(model, version, isEmbed);
+        } else {
+          if (ov) version = ov;
+          if (os) sku = os;
+        }
       }
-      return "openai:" + model;
+      return openAiKey(model, version, sku);
     }
     const p = (req.provider || "").toLowerCase();
     if (p.indexOf("microsoft.web/serverfarms") === 0) return "appservice";

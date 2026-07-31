@@ -96,21 +96,42 @@ function Get-AccessToken {
     return $tok.Trim()
 }
 
-# Distinct "model:version:sku" the catalog actually deploys, from every use
-# case's metadata quota requirements (kind = model-tpm). Keeps the probe set in
-# lock-step with the catalog instead of a hand-maintained list.
+# Distinct "model:version:sku" the gallery can deploy or let the user pick, from
+# every use case's metadata quota requirements (kind = model-tpm) UNION every
+# OpenAI model the registry offers in advanced options (model x version x sku).
+# Deriving from both keeps the probe set in lock-step with what a user can
+# actually select, so a chosen model/version/SKU always has a matching signal.
 function Get-CatalogOpenAiModels {
-    $catalogDir = Join-Path $RepoRoot 'catalog'
     $seen = [ordered]@{}
+    $add = {
+        param($model, $ver, $sku)
+        if (-not $model) { return }
+        if (-not $ver) { $ver = '' }
+        if (-not $sku) { $sku = 'Standard' }
+        $spec = "${model}:${ver}:$sku"
+        if (-not $seen.Contains($spec)) { $seen[$spec] = $true }
+    }
+    $catalogDir = Join-Path $RepoRoot 'catalog'
     Get-ChildItem -Path $catalogDir -Recurse -Filter 'metadata.json' -File | ForEach-Object {
         try { $meta = Get-Content $_.FullName -Raw | ConvertFrom-Json } catch { return }
         foreach ($req in @($meta.quota.requirements)) {
             if ("$($req.kind)" -ne 'model-tpm' -or -not $req.model) { continue }
-            $ver = if ($req.modelVersion) { $req.modelVersion } else { '' }
-            $sku = if ($req.sku) { $req.sku } else { 'Standard' }
-            $spec = "$($req.model):${ver}:$sku"
-            if (-not $seen.Contains($spec)) { $seen[$spec] = $true }
+            & $add $req.model $req.modelVersion $req.sku
         }
+    }
+    $regPath = Join-Path $RepoRoot 'site/registry.json'
+    if (Test-Path $regPath) {
+        try {
+            $reg = Get-Content $regPath -Raw | ConvertFrom-Json
+            foreach ($group in @('chat', 'embedding')) {
+                foreach ($m in @($reg.models.$group)) {
+                    if ("$($m.provider)" -ne 'OpenAI' -or -not $m.name) { continue }
+                    $skus = if ($m.skus) { @($m.skus) } else { @('Standard') }
+                    foreach ($s in $skus) { & $add $m.name $m.version $s }
+                }
+            }
+        }
+        catch { }
     }
     return @($seen.Keys)
 }
@@ -384,11 +405,12 @@ if (-not $SkipOpenAi) {
                 }
             }
         }
-        $services["openai:$name"] = [ordered]@{
-            label    = "Azure OpenAI - $name"
+        $services["openai:${name}:${ver}:$($sku.ToLower())"] = [ordered]@{
+            label    = "Azure OpenAI - $name $ver [$sku]"
             provider = 'Microsoft.CognitiveServices/accounts/deployments'
             kind     = 'model-tpm'
             model    = $name
+            version  = $ver
             sku      = $sku
             byRegion = $regionMap
         }
