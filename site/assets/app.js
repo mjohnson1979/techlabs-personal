@@ -1108,8 +1108,8 @@
       if (engine === "terraform") {
         const tfArgs = [
           `-var-file=${env}.tfvars`,
-          `-var resource_group_name=${rg}`,
-          `-var location=${location}`,
+          `-var "resource_group_name=${rg}"`,
+          `-var "location=${location}"`,
         ];
         overrides.forEach((line) => {
           const i = line.indexOf("=");
@@ -1119,7 +1119,7 @@
           if (!key || !value) return;
           // Bicep params are camelCase; Terraform variables are the snake_case form.
           const tfKey = key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
-          tfArgs.push(`-var ${tfKey}=${value}`);
+          tfArgs.push(`-var "${tfKey}=${value}"`);
         });
         return [
           `cd catalog/${it.path}/terraform`,

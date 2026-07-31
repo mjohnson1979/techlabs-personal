@@ -50,8 +50,11 @@ async def _fetch_rows(
     if arm_exact:
         parts.append(f"armSkuName eq '{_odata(arm_exact)}'")
     flt = " and ".join(parts)
-    if flt in _price_cache:
-        return _price_cache[flt]
+    # Cache key includes currency: the same filter in another currency must not
+    # return the previously cached prices.
+    cache_key = f"{currency}\n{flt}"
+    if cache_key in _price_cache:
+        return _price_cache[cache_key]
 
     rows: list[dict[str, Any]] = []
     url: str | None = f"{_RETAIL_API}?currencyCode={currency}&$filter={quote(flt, safe='')}"
@@ -73,7 +76,10 @@ async def _fetch_rows(
         rows.extend(data.get("Items") or [])
         url = data.get("NextPageLink")
         page += 1
-    _price_cache[flt] = rows
+    # Only cache complete result sets. If we stopped at the page cap (url still
+    # set), the rows are truncated and caching them would poison later lookups.
+    if url is None:
+        _price_cache[cache_key] = rows
     return rows
 
 

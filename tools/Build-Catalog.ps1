@@ -183,7 +183,7 @@ function Get-BicepParameters {
         $json = Get-Content $tmp -Raw | ConvertFrom-Json
     }
     catch {
-        Write-Warning "Could not compile $BicepPath for parameters: $_"
+        Write-Warning "Could not compile $BicepPath for parameters: $($_.Exception.Message)"
         return @()
     }
     finally {
