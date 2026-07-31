@@ -137,7 +137,7 @@ function Get-PricedCost {
         elseif ($c.billing -eq 'fixed') { $fixedTotal += $monthly }
         else { $usageTotal += $monthly }
 
-        $components.Add([ordered]@{
+        $entry = [ordered]@{
             name             = $c.name
             billing          = $c.billing
             serviceName      = $c.serviceName
@@ -146,7 +146,13 @@ function Get-PricedCost {
             notes            = $c.notes
             unitPrice        = $unitPrice
             monthly          = $monthly
-        })
+        }
+        # Carry the price-match + override-annotation fields so the backend can
+        # re-price live (POST /api/estimate) for the selected region/parameters.
+        foreach ($f in @('armSkuName', 'productNameContains', 'meterNameContains', 'meterNameExact', 'skuNameContains', 'skuParam', 'instanceParam', 'hoursPerInstance')) {
+            if ($null -ne $c.$f) { $entry[$f] = $c.$f }
+        }
+        $components.Add($entry)
     }
 
     $priced = -not $SkipPricing
@@ -161,6 +167,47 @@ function Get-PricedCost {
         complete      = $priced -and $allPriced
         pricedAt      = if ($priced) { (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd') } else { $null }
     }
+}
+
+# Extract user-facing IaC parameters from a use case's main.bicep by compiling
+# it to ARM JSON (robust vs. regex). Skips params already surfaced by dedicated
+# UI controls. Returns an array of ordered hashtables, or empty if unavailable.
+function Get-BicepParameters {
+    param([Parameter(Mandatory)][string]$BicepPath)
+
+    if (-not (Test-Path $BicepPath)) { return @() }
+    $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("bicep-params-" + [guid]::NewGuid().ToString('N') + ".json")
+    try {
+        az bicep build --file $BicepPath --outfile $tmp --only-show-errors 2>$null | Out-Null
+        if (-not (Test-Path $tmp)) { return @() }
+        $json = Get-Content $tmp -Raw | ConvertFrom-Json
+    }
+    catch {
+        Write-Warning "Could not compile $BicepPath for parameters: $($_.Exception.Message)"
+        return @()
+    }
+    finally {
+        Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+    }
+    if (-not $json -or -not $json.parameters) { return @() }
+
+    $skip = @('location', 'environment')
+    $params = New-Object System.Collections.Generic.List[object]
+    foreach ($prop in $json.parameters.PSObject.Properties) {
+        if ($skip -contains $prop.Name) { continue }
+        $p = $prop.Value
+        $entry = [ordered]@{
+            name        = $prop.Name
+            type        = $p.type
+            default     = $p.defaultValue
+            description = if ($p.metadata) { $p.metadata.description } else { $null }
+        }
+        if ($null -ne $p.allowedValues) { $entry.allowed = @($p.allowedValues) }
+        if ($null -ne $p.minValue) { $entry.min = $p.minValue }
+        if ($null -ne $p.maxValue) { $entry.max = $p.maxValue }
+        $params.Add($entry)
+    }
+    return $params.ToArray()
 }
 
 $metaFiles = Get-ChildItem -Path $CatalogDir -Recurse -Filter 'metadata.json' -File | Sort-Object FullName
@@ -178,6 +225,8 @@ foreach ($mf in $metaFiles) {
     if ($hasTerraform) { $engines.Add('terraform') }
     $costObj = if ($meta.cost) { Get-PricedCost -Cost $meta.cost } else { $null }
     if ($costObj) { Write-Host ("  priced {0}: {1} {2}/mo" -f $rel, $costObj.currency, $costObj.totalMonthly) -ForegroundColor DarkGray }
+
+    $parameters = Get-BicepParameters -BicepPath (Join-Path $mf.DirectoryName 'main.bicep')
 
     $items.Add([ordered]@{
         name             = $meta.name
@@ -201,6 +250,7 @@ foreach ($mf in $metaFiles) {
         componentCount   = $componentCount
         costProfile      = if ($meta.cost) { $meta.cost.profile } else { $null }
         cost             = $costObj
+        parameters       = $parameters
     })
 }
 

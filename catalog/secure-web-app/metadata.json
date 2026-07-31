@@ -56,6 +56,19 @@
       "Gateway autoscale matches capacity to load"
     ]
   },
+  "quota": {
+    "summary": "App Service Premium v3 compute is needed in the target region. Azure SQL and Application Gateway have no blocking regional quota gate.",
+    "requirements": [
+      {
+        "service": "Azure App Service",
+        "provider": "Microsoft.Web/serverFarms",
+        "kind": "compute",
+        "sku": "P1v3 x3",
+        "detail": "The App Service plan needs available compute (vCPU) quota for the chosen SKU. Zone redundancy requires >= 3 instances.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",
@@ -69,6 +82,9 @@
         "meterNameContains": "P1 v3",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "appServiceSku",
+        "instanceParam": "appServiceCapacity",
+        "hoursPerInstance": 730,
         "notes": "Three instances x 730 hours."
       },
       {

@@ -26,23 +26,88 @@
     return rb > ra ? b : a;
   }
   // Map a use-case quota requirement to a key in capacity.json's services map.
-  function capacityServiceKey(req) {
+  // `sel` (advanced-option overrides) can swap the model so the picker reflects
+  // capacity for the model the user actually chose.
+  function openAiRegModels(isEmbed) {
+    const reg = state.registry;
+    if (!reg || !reg.models) return [];
+    return ((isEmbed ? reg.models.embedding : reg.models.chat) || []).filter((m) => m.provider === "OpenAI");
+  }
+  function openAiDefaultVersion(model, isEmbed) {
+    const m = openAiRegModels(isEmbed).find((x) => x.name === model);
+    return m && m.version ? m.version : "";
+  }
+  function openAiDefaultSku(model, version, isEmbed) {
+    const models = openAiRegModels(isEmbed);
+    const m = models.find((x) => x.name === model && x.version === version) || models.find((x) => x.name === model);
+    return m && Array.isArray(m.skus) && m.skus.length ? m.skus[0] : "Standard";
+  }
+  // Capacity key for an OpenAI deployment: model + version + SKU, matching the
+  // keys Build-Capacity.ps1 emits. Falls back to any probe for the same model so
+  // a version/SKU we did not probe still yields a model-level signal.
+  function openAiKey(model, version, sku) {
+    const cap = state.capacity;
+    const full = "openai:" + model + ":" + (version || "") + ":" + String(sku || "").toLowerCase();
+    if (cap && cap.services) {
+      if (cap.services[full]) return full;
+      const prefix = "openai:" + model + ":";
+      const hit = Object.keys(cap.services).find((k) => k.indexOf(prefix) === 0);
+      if (hit) return hit;
+      // Legacy snapshots keyed OpenAI by model only; match until the next refresh.
+      const legacy = "openai:" + model;
+      if (cap.services[legacy]) return legacy;
+    }
+    return full;
+  }
+  function capacityServiceKey(req, sel) {
     if (!req) return null;
-    if (req.kind === "model-tpm" && req.model) return "openai:" + req.model;
+    if (req.kind === "model-tpm" && req.model) {
+      const isEmbed = /embed/i.test(req.model) || /embed/i.test(req.service || "");
+      let model = req.model;
+      let version = req.modelVersion || "";
+      let sku = req.sku || "Standard";
+      if (sel) {
+        const om = isEmbed ? sel.embeddingModel : (sel.chatModelName || sel.chatModel);
+        const ov = isEmbed ? sel.embeddingModelVersion : sel.chatModelVersion;
+        const os = isEmbed ? sel.embeddingModelSku : sel.chatModelSku;
+        if (om && om !== model) {
+          model = om;
+          version = ov || openAiDefaultVersion(model, isEmbed);
+          sku = os || openAiDefaultSku(model, version, isEmbed);
+        } else {
+          if (ov) version = ov;
+          if (os) sku = os;
+        }
+      }
+      return openAiKey(model, version, sku);
+    }
     const p = (req.provider || "").toLowerCase();
     if (p.indexOf("microsoft.web/serverfarms") === 0) return "appservice";
-    if (p.indexOf("microsoft.compute/virtualmachines") === 0) return "vm";
+    if (p.indexOf("microsoft.compute/virtualmachines") === 0) {
+      // A chosen VM size checks its own family quota (vm:<size>); else regional.
+      if (sel) {
+        const vmKey = Object.keys(sel).find((k) => /vm.?size/i.test(k));
+        const cap = state.capacity;
+        if (vmKey && sel[vmKey] && cap && cap.services && cap.services["vm:" + sel[vmKey]]) {
+          return "vm:" + sel[vmKey];
+        }
+      }
+      return "vm";
+    }
     if (p.indexOf("microsoft.app/managedenvironments") === 0) return "containerapps";
     if (p.indexOf("microsoft.avs/privateclouds") === 0) return "avs";
+    if (p.indexOf("microsoft.fabric/capacities") === 0) return "fabric";
+    if (p.indexOf("microsoft.powerbidedicated/capacities") === 0) return "powerbi";
+    if (p.indexOf("microsoft.purview/accounts") === 0) return "purview";
     return null;
   }
   // Roll up every quota requirement of a use case to a single status for one
   // region, plus a per-service breakdown.
-  function regionStatus(it, region) {
+  function regionStatus(it, region, sel) {
     const cap = state.capacity;
     const reqs = (it.quota && it.quota.requirements) || [];
     const services = reqs.map((req) => {
-      const key = capacityServiceKey(req);
+      const key = capacityServiceKey(req, sel);
       let status = "unknown";
       let detail = "No live capacity signal for this service.";
       if (cap && key && cap.services && cap.services[key] && cap.services[key].byRegion[region]) {
@@ -58,7 +123,17 @@
   }
   function capacityRegions() {
     const cap = state.capacity;
-    return cap && cap.regions && cap.regions.length ? cap.regions : ["centralus"];
+    const reg = state.registry;
+    const capRegions = cap && cap.regions && cap.regions.length ? cap.regions : null;
+    // The deployable region set is the registry's canonical list, so the picker
+    // stays complete even when the capacity snapshot is stale or partial.
+    // Capacity status overlays per region; regions absent from the snapshot show
+    // "unknown" rather than disappearing from the dropdown.
+    if (reg && Array.isArray(reg.regions) && reg.regions.length) {
+      const extra = (capRegions || []).filter((r) => reg.regions.indexOf(r) === -1);
+      return reg.regions.concat(extra);
+    }
+    return capRegions || ["centralus"];
   }
 
   function pad2(n) {
@@ -273,35 +348,38 @@
     return wrap;
   }
 
-  function costBlock(it) {
-    const cost = it.cost;
-    if (!cost) return null;
+  function costBlock(it, ctl) {
+    const baseCost = it.cost;
+    if (!baseCost) return null;
 
-    const totalMonthly = typeof cost.totalMonthly === "number" ? cost.totalMonthly : null;
-    const totalMoney = totalMonthly !== null ? fmtMoney(totalMonthly, cost.currency) : null;
-    const summaryTotal =
-      totalMoney && totalMonthly > 0
-        ? `for the selected services: ~${totalMoney}/mo`
-        : "for the selected services: usage-based";
-
+    const summaryTotalSpan = el("span", { class: "cost-summary-total" });
     const wrap = el("details", { class: "modal-section modal-card collapsible-card" }, [
       el("summary", { class: "collapse-summary" }, [
         el("span", { class: "cost-summary-lead" }, [
           el("span", { class: "collapse-title", role: "heading", "aria-level": "3", text: "Cost estimate" }),
-          el("span", { class: "cost-summary-total", text: summaryTotal }),
+          summaryTotalSpan,
         ]),
         el("span", { class: "collapse-caret", "aria-hidden": "true" }),
       ]),
     ]);
+    const host = el("div", { class: "cost-body" });
+    wrap.appendChild(host);
 
-    if (cost.profile) {
-      wrap.appendChild(el("p", { text: cost.profile }));
-    }
+    function render(cost, opts) {
+      host.innerHTML = "";
+      const totalMonthly = typeof cost.totalMonthly === "number" ? cost.totalMonthly : null;
+      const totalMoney = totalMonthly !== null ? fmtMoney(totalMonthly, cost.currency) : null;
+      summaryTotalSpan.textContent =
+        totalMoney && totalMonthly > 0
+          ? `for the selected services: ~${totalMoney}/mo`
+          : "for the selected services: usage-based";
 
-    const components = cost.components || [];
-    const priced = components.some((c) => typeof c.monthly === "number");
+      if (cost.profile) host.appendChild(el("p", { text: cost.profile }));
 
-    if (components.length && priced) {
+      const components = cost.components || [];
+      const priced = components.some((c) => typeof c.monthly === "number");
+
+      if (components.length && priced) {
       const head = el("div", { class: "cost-row cost-head" }, [
         el("span", { class: "cost-name", text: "Component" }),
         el("span", { class: "cost-qty", text: "Qty/mo" }),
@@ -340,17 +418,18 @@
           totalRow("Total / month", fmtMoney(cost.totalMonthly, cost.currency), "cost-grand")
         );
 
-      wrap.appendChild(table);
+      host.appendChild(table);
 
       const meta = [];
       if (cost.region) meta.push(`Region ${cost.region}`);
       if (cost.pricedAt) meta.push(`retail prices as of ${cost.pricedAt}`);
       meta.push("PAYG list price, excludes tax/reservations/free tiers");
+      if (opts && opts.forSelection) meta.push("estimated live for your current selections");
       if (cost.complete === false) meta.push("some components not priced — see notes");
-      wrap.appendChild(el("p", { class: "cost-note", text: meta.join(" · ") }));
+      host.appendChild(el("p", { class: "cost-note", text: meta.join(" · ") }));
     } else if (components.length) {
       // No prices available — fall back to the component list.
-      wrap.appendChild(
+      host.appendChild(
         el(
           "ul",
           {},
@@ -364,9 +443,19 @@
       );
     }
 
-    wrap.appendChild(
-      el("div", { class: "code", text: `./tools/Get-CatalogCost.ps1 -UseCase ${it.path}` })
-    );
+      host.appendChild(
+        el("div", { class: "code", text: `./tools/Get-CatalogCost.ps1 -UseCase ${it.path}` })
+      );
+    }
+
+    render(baseCost);
+
+    if (ctl) {
+      ctl.baseCost = baseCost;
+      ctl.apply = function (est, opts) { host.classList.remove("cost-pending"); render(est, opts); };
+      ctl.reset = function () { host.classList.remove("cost-pending"); render(baseCost); };
+      ctl.pending = function () { host.classList.add("cost-pending"); };
+    }
 
     return wrap;
   }
@@ -449,15 +538,18 @@
   }
 
   // Color-coded region picker reflecting live capacity for a use case.
-  function deployRegionField(it) {
+  function deployRegionField(it, getSel) {
+    const sel = () => (getSel ? getSel() : null);
     const regions = capacityRegions();
     const select = el("select", { class: "deploy-input deploy-region", id: "deploy-region" });
+    const options = {};
     let preferred = null;
     regions.forEach((r) => {
-      const rs = regionStatus(it, r);
+      const rs = regionStatus(it, r, sel());
       const opt = el("option", { value: r, text: `${r} \u2014 ${ROLL_LABEL[rs.status]}` });
       opt.setAttribute("data-status", rs.status);
       select.appendChild(opt);
+      options[r] = opt;
       if (!preferred && rs.status === "green") preferred = r;
     });
     if (preferred) select.value = preferred;
@@ -465,7 +557,7 @@
     const note = el("div", { class: "deploy-region-note" });
     function refresh() {
       const r = select.value;
-      const rs = regionStatus(it, r);
+      const rs = regionStatus(it, r, sel());
       select.setAttribute("data-status", rs.status);
       note.className = "deploy-region-note cap-note-" + rs.status;
       note.innerHTML = "";
@@ -500,17 +592,19 @@
     }
     select.addEventListener("change", refresh);
     refresh();
-    return { select: select, note: note };
+    // Re-label every option and the note for the current advanced selections.
+    function refreshAll() {
+      regions.forEach((r) => {
+        const rs = regionStatus(it, r, sel());
+        options[r].textContent = `${r} \u2014 ${ROLL_LABEL[rs.status]}`;
+        options[r].setAttribute("data-status", rs.status);
+      });
+      refresh();
+    }
+    return { select: select, note: note, refreshAll: refreshAll };
   }
 
-  function parseOverrides(raw) {
-    return String(raw || "")
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter((line) => line && !line.startsWith("#") && !line.startsWith("//") && line.includes("="));
-  }
-
-  function deployBlock(it) {
+  function deployBlock(it, estimateCtl) {
     const me = state.me;
     const maxHours = me && me.maxLifetimeHours ? me.maxLifetimeHours : 48;
     const now = new Date();
@@ -537,13 +631,10 @@
       placeholder: "rg-techlabs",
     });
 
-    const overrideInput = el("textarea", {
-      class: "deploy-input deploy-overrides",
-      id: "deploy-overrides",
-      placeholder: "Optional parameter overrides, one per line\nexample:\nprefix=contoso\nenvironment=mvp",
-    });
-
-    const region = deployRegionField(it);
+    // Advanced-option overrides (param name -> value); shared with the region
+    // picker so capacity reflects the chosen model/SKU.
+    const advValues = {};
+    const region = deployRegionField(it, function () { return advValues; });
 
     const endInput = el("input", {
       type: "datetime-local",
@@ -599,6 +690,8 @@
         location: region.select.value,
         endAt: new Date(endVal).toISOString(),
       };
+      const parameterValues = Object.assign({}, advValues);
+      if (Object.keys(parameterValues).length) payload.parameterValues = parameterValues;
       btn.disabled = true;
       status.textContent = "Requesting deployment…";
       window.TechlabsApi.createDeployment(payload)
@@ -612,6 +705,378 @@
           btn.disabled = false;
         });
     });
+
+    // Advanced deployment options: dynamic controls generated from the template
+    // parameters extracted into catalog.json (Build-Catalog.ps1). Selected values
+    // override the template defaults on deploy and feed the manual CLI snippet.
+    // Only scalar params are overridable; object/array/secret params are skipped.
+    const params = (Array.isArray(it.parameters) ? it.parameters : []).filter(
+      (p) => p.type === "string" || p.type === "int" || p.type === "bool"
+    );
+    const advOptsSummary = el("p", { class: "deploy-note deploy-advopts-summary" });
+    const advOptsBtn = el("button", {
+      class: "deploy-btn-secondary",
+      type: "button",
+      text: "Advanced deployment options",
+    });
+    advOptsBtn.addEventListener("click", openParamPanel);
+
+    function advOverridePairs() {
+      return Object.keys(advValues).map((k) => `${k}=${advValues[k]}`);
+    }
+
+    function updateAdvSummary() {
+      const n = Object.keys(advValues).length;
+      advOptsSummary.textContent = n
+        ? `${n} option${n === 1 ? "" : "s"} customized. Values apply when you deploy.`
+        : "Using recommended defaults for all template parameters.";
+    }
+
+    function paramDefaultString(p) {
+      if (p.type === "bool") return String(p.default === true);
+      return p.default === null || p.default === undefined ? "" : String(p.default);
+    }
+
+    // Registry-backed option sources (tools/Build-Registry.ps1). Models are
+    // filtered to the OpenAI format the templates actually deploy; the registry
+    // still records every provider for future provider-agnostic templates.
+    const registry = state.registry || null;
+    const CHAT_NAME_PARAMS = ["chatModelName", "chatModel"];
+    const chatNameParam = params.map((p) => p.name).find((n) => CHAT_NAME_PARAMS.indexOf(n) !== -1);
+
+    function regChatModels() {
+      if (!registry || !registry.models) return [];
+      return (registry.models.chat || []).filter((m) => m.provider === "OpenAI");
+    }
+    function regEmbedModels() {
+      if (!registry || !registry.models) return [];
+      return (registry.models.embedding || []).filter((m) => m.provider === "OpenAI");
+    }
+    function distinctNames(models) {
+      const seen = [];
+      models.forEach((m) => { if (seen.indexOf(m.name) === -1) seen.push(m.name); });
+      return seen.sort();
+    }
+    function versionsFor(models, name) {
+      return models.filter((m) => m.name === name).map((m) => m.version).filter((v) => v).sort();
+    }
+    function skusFor(models, name, version) {
+      const entry = models.find((m) => m.name === name && m.version === version)
+        || models.find((m) => m.name === name);
+      return entry && Array.isArray(entry.skus) ? entry.skus.slice() : [];
+    }
+
+    // The registry SKU family for a non-model param, or null. Params that carry
+    // a template @allowed set keep it (the compiled ARM template enforces it);
+    // params without one source options from the registry so they become dropdowns
+    // too. Matching is by convention (exact name, then the family name as a token,
+    // then aliases) so a new use case's SKU/tier/size param maps automatically.
+    function skuFamilyFor(p) {
+      if (Array.isArray(p.allowed) && p.allowed.length) return null;
+      if (!registry || !registry.skus) return null;
+      if (registry.skus[p.name]) return p.name;
+      const n = p.name.toLowerCase();
+      const keys = Object.keys(registry.skus).sort((a, b) => b.length - a.length);
+      for (let i = 0; i < keys.length; i++) {
+        if (n.indexOf(keys[i].toLowerCase()) !== -1) return keys[i];
+      }
+      const aliases = [
+        [/vm.?size|nodesize|hostsize/, "vmSize"],
+        [/k8sversion|aksversion|kubernetes/, "kubernetesVersion"],
+        [/runtimestack|linuxfx/, "linuxFxVersion"],
+        [/sql.*tier/, "sqlTier"],
+        [/sql.*sku/, "sqlSkuName"],
+      ];
+      for (let i = 0; i < aliases.length; i++) {
+        if (aliases[i][0].test(n) && registry.skus[aliases[i][1]]) return aliases[i][1];
+      }
+      return null;
+    }
+    function regSkuValues(familyKey) {
+      const fam = registry && registry.skus ? registry.skus[familyKey] : null;
+      if (!fam || !Array.isArray(fam.values) || !fam.values.length) return null;
+      const loc = region.select.value;
+      const vals = fam.values
+        .filter((v) => v.regions === "all" || !Array.isArray(v.regions) || !loc || v.regions.indexOf(loc) !== -1)
+        .map((v) => String(v.value));
+      return vals.length ? vals : null;
+    }
+
+    // The option list for a param, or null to fall back to @allowed/type input.
+    function registryOptionsFor(p) {
+      if (p.name === chatNameParam) {
+        const n = distinctNames(regChatModels());
+        return n.length ? n : null;
+      }
+      if (p.name === "embeddingModel") {
+        const n = distinctNames(regEmbedModels());
+        return n.length ? n : null;
+      }
+      if (p.name === "chatModelVersion") {
+        const sel = advValues[chatNameParam] != null ? advValues[chatNameParam] : (chatNameParam ? paramDefaultOf(chatNameParam) : null);
+        const v = versionsFor(regChatModels(), sel);
+        return v.length ? v : null;
+      }
+      if (p.name === "chatModelSku") {
+        const selName = advValues[chatNameParam] != null ? advValues[chatNameParam] : (chatNameParam ? paramDefaultOf(chatNameParam) : null);
+        const selVer = advValues["chatModelVersion"] != null ? advValues["chatModelVersion"] : paramDefaultOf("chatModelVersion");
+        const s = skusFor(regChatModels(), selName, selVer);
+        return s.length ? s : null;
+      }
+      if (p.name === "embeddingModelVersion") {
+        const sel = advValues["embeddingModel"] != null ? advValues["embeddingModel"] : paramDefaultOf("embeddingModel");
+        const v = versionsFor(regEmbedModels(), sel);
+        return v.length ? v : null;
+      }
+      const fam = skuFamilyFor(p);
+      if (fam) return regSkuValues(fam);
+      return null;
+    }
+
+    function paramDefaultOf(name) {
+      const p = params.find((x) => x.name === name);
+      return p ? paramDefaultString(p) : "";
+    }
+
+    function fillSelect(select, values, preferred) {
+      select.innerHTML = "";
+      values.forEach((v) => select.appendChild(el("option", { value: String(v), text: String(v) })));
+      if (preferred != null && values.map(String).indexOf(String(preferred)) !== -1) select.value = String(preferred);
+      else if (values.length) select.value = String(values[0]);
+    }
+
+    function openParamPanel() {
+      if (!window.TechlabsPanel || !params.length) return;
+      window.TechlabsPanel.open((bodyEl, e) => {
+        bodyEl.appendChild(e("h2", { text: "Advanced deployment options" }));
+        bodyEl.appendChild(
+          e("p", {
+            class: "deploy-note",
+            text:
+              `Customize the ${it.displayName} template parameters. Model and SKU choices ` +
+              "come from the live Azure registry when available; otherwise the template's " +
+              "own allowed values are used. Saved values apply when you deploy.",
+          })
+        );
+
+        const controls = {};
+        const formWrap = e("div", { class: "advopts-form" });
+        // Render the SQL tier above its SKU (they cascade tier -> SKU).
+        const orderedParams = params.slice();
+        const ti = orderedParams.findIndex((p) => p.name === "sqlTier");
+        const si = orderedParams.findIndex((p) => p.name === "sqlSkuName");
+        if (ti !== -1 && si !== -1 && ti > si) {
+          const tier = orderedParams.splice(ti, 1)[0];
+          orderedParams.splice(orderedParams.findIndex((p) => p.name === "sqlSkuName"), 0, tier);
+        }
+        orderedParams.forEach((p) => {
+          const fieldId = "advopt-" + p.name;
+          const current = advValues[p.name];
+          const defStr = paramDefaultString(p);
+          const regOptions = registryOptionsFor(p);
+          let control;
+          let fromRegistry = false;
+          if (regOptions) {
+            fromRegistry = true;
+            control = e("select", { class: "deploy-input", id: fieldId },
+              regOptions.map((a) => e("option", { value: String(a), text: String(a) })));
+            control.value = current != null && regOptions.map(String).indexOf(String(current)) !== -1
+              ? current
+              : (regOptions.map(String).indexOf(defStr) !== -1 ? defStr : String(regOptions[0]));
+          } else if (p.type === "bool") {
+            control = e("select", { class: "deploy-input", id: fieldId }, [
+              e("option", { value: "true", text: "true" }),
+              e("option", { value: "false", text: "false" }),
+            ]);
+            control.value = current != null ? current : defStr || "false";
+          } else if (Array.isArray(p.allowed) && p.allowed.length) {
+            control = e(
+              "select",
+              { class: "deploy-input", id: fieldId },
+              p.allowed.map((a) => e("option", { value: String(a), text: String(a) }))
+            );
+            control.value = current != null ? current : defStr || String(p.allowed[0]);
+          } else if (p.type === "int") {
+            const props = {
+              type: "number",
+              class: "deploy-input",
+              id: fieldId,
+              value: current != null ? current : defStr,
+            };
+            if (p.min !== null && p.min !== undefined) props.min = p.min;
+            if (p.max !== null && p.max !== undefined) props.max = p.max;
+            control = e("input", props);
+          } else {
+            control = e("input", {
+              type: "text",
+              class: "deploy-input",
+              id: fieldId,
+              value: current != null ? current : defStr,
+            });
+          }
+
+          const meta = [];
+          if (p.description) meta.push(e("span", { class: "advopt-desc", text: p.description }));
+          const hintBits = [];
+          if (fromRegistry) hintBits.push("live from Azure registry");
+          if (p.type === "int" && (p.min != null || p.max != null)) {
+            hintBits.push(`range ${p.min != null ? p.min : "-"}..${p.max != null ? p.max : "-"}`);
+          }
+          if (defStr !== "") hintBits.push(`default ${defStr}`);
+          if (hintBits.length) meta.push(e("span", { class: "advopt-hint", text: hintBits.join(" \u00b7 ") }));
+
+          formWrap.appendChild(
+            e(
+              "div",
+              { class: "advopt-field" },
+              [e("label", { class: "deploy-label", for: fieldId, text: p.name }), control].concat(meta)
+            )
+          );
+          controls[p.name] = { control: control, param: p };
+        });
+        bodyEl.appendChild(formWrap);
+
+        // Cascade: when a model name changes, refresh its version and SKU lists.
+        const chatCtl = chatNameParam && controls[chatNameParam];
+        const chatVerCtl = controls["chatModelVersion"];
+        const chatSkuCtl = controls["chatModelSku"];
+        function refreshChat() {
+          if (!chatCtl) return;
+          const name = chatCtl.control.value;
+          if (chatVerCtl && chatVerCtl.control.tagName === "SELECT") {
+            const vers = versionsFor(regChatModels(), name);
+            if (vers.length) fillSelect(chatVerCtl.control, vers, paramDefaultOf("chatModelVersion"));
+          }
+          if (chatSkuCtl && chatSkuCtl.control.tagName === "SELECT") {
+            const ver = chatVerCtl ? chatVerCtl.control.value : paramDefaultOf("chatModelVersion");
+            const sk = skusFor(regChatModels(), name, ver);
+            if (sk.length) fillSelect(chatSkuCtl.control, sk, paramDefaultOf("chatModelSku"));
+          }
+        }
+        if (chatCtl && chatCtl.control.tagName === "SELECT" && regChatModels().length) {
+          chatCtl.control.addEventListener("change", refreshChat);
+          if (chatVerCtl && chatVerCtl.control.tagName === "SELECT") {
+            chatVerCtl.control.addEventListener("change", () => {
+              if (chatSkuCtl && chatSkuCtl.control.tagName === "SELECT") {
+                const sk = skusFor(regChatModels(), chatCtl.control.value, chatVerCtl.control.value);
+                if (sk.length) fillSelect(chatSkuCtl.control, sk, paramDefaultOf("chatModelSku"));
+              }
+            });
+          }
+        }
+        const embedCtl = controls["embeddingModel"];
+        const embedVerCtl = controls["embeddingModelVersion"];
+        if (embedCtl && embedCtl.control.tagName === "SELECT" && regEmbedModels().length && embedVerCtl) {
+          embedCtl.control.addEventListener("change", () => {
+            const vers = versionsFor(regEmbedModels(), embedCtl.control.value);
+            if (vers.length && embedVerCtl.control.tagName === "SELECT") {
+              fillSelect(embedVerCtl.control, vers, paramDefaultOf("embeddingModelVersion"));
+            }
+          });
+        }
+
+        // Azure SQL tier and SKU are coupled (GeneralPurpose->GP_*, etc.): filter
+        // the SKU list to the selected tier so mismatched pairs can't be chosen.
+        const sqlTierCtl = controls["sqlTier"];
+        const sqlSkuCtl = controls["sqlSkuName"];
+        if (sqlTierCtl && sqlSkuCtl && sqlSkuCtl.control.tagName === "SELECT") {
+          const tierPrefix = (t) => (t === "BusinessCritical" ? "BC_" : t === "Hyperscale" ? "HS_" : "GP_");
+          const skusForTier = (t) => {
+            const all = regSkuValues("sqlSkuName") || [];
+            const f = all.filter((s) => s.indexOf(tierPrefix(t)) === 0);
+            return f.length ? f : all;
+          };
+          fillSelect(sqlSkuCtl.control, skusForTier(sqlTierCtl.control.value), advValues["sqlSkuName"] != null ? advValues["sqlSkuName"] : paramDefaultOf("sqlSkuName"));
+          if (sqlTierCtl.control.tagName === "SELECT") {
+            sqlTierCtl.control.addEventListener("change", () => {
+              fillSelect(sqlSkuCtl.control, skusForTier(sqlTierCtl.control.value), paramDefaultOf("sqlSkuName"));
+            });
+          }
+        }
+
+        // App Service zone redundancy needs a Premium v3 plan and >= 3 instances;
+        // warn live when the toggle is on but the coupled SKU/capacity don't qualify.
+        const zrParam = ["appZoneRedundant", "zoneRedundant"].find((n) => controls[n]);
+        const zrSkuParam = ["appServiceSku", "sku"].find((n) => controls[n]);
+        const zrCapParam = ["appCapacity", "appServiceCapacity", "capacity"].find((n) => controls[n]);
+        if (zrParam && (zrSkuParam || zrCapParam)) {
+          const warn = e("span", { class: "advopt-warn" });
+          const zrField = controls[zrParam].control.closest(".advopt-field");
+          if (zrField) zrField.appendChild(warn);
+          const isPremiumV3 = (v) => /^P\w*v3$/i.test(v);
+          const checkZr = () => {
+            const needs = [];
+            if (controls[zrParam].control.value === "true") {
+              if (zrSkuParam && !isPremiumV3(controls[zrSkuParam].control.value)) needs.push("a Premium v3 plan (P1v3+)");
+              if (zrCapParam && Number(controls[zrCapParam].control.value) < 3) needs.push("at least 3 instances");
+            }
+            if (needs.length) {
+              const fields = [zrSkuParam, zrCapParam].filter(Boolean).join(" / ");
+              warn.textContent = `Zone redundancy needs ${needs.join(" and ")} — update ${fields} above.`;
+              warn.style.display = "";
+            } else {
+              warn.textContent = "";
+              warn.style.display = "none";
+            }
+          };
+          controls[zrParam].control.addEventListener("change", checkZr);
+          if (zrSkuParam) controls[zrSkuParam].control.addEventListener("change", checkZr);
+          if (zrCapParam) {
+            controls[zrCapParam].control.addEventListener("change", checkZr);
+            controls[zrCapParam].control.addEventListener("input", checkZr);
+          }
+          checkZr();
+        }
+
+        const saveBtn = e("button", { class: "deploy-btn", type: "button", text: "Save options" });
+        const cancelBtn = e("button", { class: "deploy-btn-secondary", type: "button", text: "Cancel" });
+        saveBtn.addEventListener("click", () => {
+          Object.keys(controls).forEach((name) => {
+            const entry = controls[name];
+            const val = entry.control.value;
+            const defStr = paramDefaultString(entry.param);
+            if (val === null || val === undefined || val === "" || val === defStr) {
+              delete advValues[name];
+            } else {
+              advValues[name] = val;
+            }
+          });
+          updateAdvSummary();
+          syncEngine();
+          scheduleEstimate();
+          if (region.refreshAll) region.refreshAll();
+          window.TechlabsPanel.close();
+        });
+        cancelBtn.addEventListener("click", () => window.TechlabsPanel.close());
+        bodyEl.appendChild(e("div", { class: "advopts-actions" }, [saveBtn, cancelBtn]));
+      });
+    }
+
+    updateAdvSummary();
+
+    // Live cost re-estimate: when the region or an advanced option changes, ask
+    // the backend to re-price for the selection; fall back to the static cost.
+    let estimateTimer = null;
+    let estimateSeq = 0;
+    function scheduleEstimate() {
+      if (!estimateCtl || !estimateCtl.apply || !window.TechlabsApi) return;
+      const baseRegion = (estimateCtl.baseCost && estimateCtl.baseCost.region) || "";
+      const loc = region.select.value;
+      const values = Object.assign({}, advValues);
+      const changed = Object.keys(values).length > 0 || loc.toLowerCase() !== String(baseRegion).toLowerCase();
+      if (!changed) {
+        estimateCtl.reset();
+        return;
+      }
+      estimateCtl.pending();
+      clearTimeout(estimateTimer);
+      estimateTimer = setTimeout(function () {
+        const seq = ++estimateSeq;
+        window.TechlabsApi.estimateCost({ useCase: it.path, location: loc, parameterValues: values })
+          .then(function (est) { if (seq === estimateSeq) estimateCtl.apply(est, { forSelection: true }); })
+          .catch(function () { if (seq === estimateSeq) estimateCtl.reset(); });
+      }, 350);
+    }
 
     const deployField = (labelText, control, extra) =>
       el("div", { class: "deploy-field" }, [
@@ -628,8 +1093,7 @@
     ]);
 
     const advancedForm = el("div", { class: "deploy-form deploy-advanced-form" }, [
-      el("label", { class: "deploy-label", for: "deploy-overrides", text: "Template parameter overrides" }),
-      overrideInput,
+      params.length ? el("div", { class: "deploy-advopts" }, [advOptsBtn, advOptsSummary]) : null,
       el("label", { class: "deploy-label", for: "deploy-end", text: "End time (auto-cleanup)" }),
       endInput,
       el("p", { class: "deploy-note", text: lifeNote }),
@@ -639,13 +1103,13 @@
       const env = envSelect.value;
       const location = region.select.value;
       const rg = (rgInput.value || "rg-techlabs").trim();
-      const overrides = parseOverrides(overrideInput.value);
+      const overrides = advOverridePairs();
 
       if (engine === "terraform") {
         const tfArgs = [
           `-var-file=${env}.tfvars`,
-          `-var resource_group_name=${rg}`,
-          `-var location=${location}`,
+          `-var "resource_group_name=${rg}"`,
+          `-var "location=${location}"`,
         ];
         overrides.forEach((line) => {
           const i = line.indexOf("=");
@@ -653,7 +1117,9 @@
           const key = line.slice(0, i).trim();
           const value = line.slice(i + 1).trim();
           if (!key || !value) return;
-          tfArgs.push(`-var ${key}=${value}`);
+          // Bicep params are camelCase; Terraform variables are the snake_case form.
+          const tfKey = key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+          tfArgs.push(`-var "${tfKey}=${value}"`);
         });
         return [
           `cd catalog/${it.path}/terraform`,
@@ -678,10 +1144,11 @@
 
     const manualCode = el("div", { class: "code", text: manualSnippet(engineSelect.value) });
     const manualSummary = el("summary", { text: "Or deploy manually with the CLI" });
-    [engineSelect, envSelect, region.select, rgInput, overrideInput].forEach((control) => {
+    [engineSelect, envSelect, region.select, rgInput].forEach((control) => {
       control.addEventListener("change", syncEngine);
       control.addEventListener("input", syncEngine);
     });
+    region.select.addEventListener("change", scheduleEstimate);
     syncEngine();
     const manual = el("details", { class: "deploy-manual", hidden: "" }, [manualSummary, manualCode]);
     advancedForm.hidden = true;
@@ -997,10 +1464,11 @@
     if (lifecycle) body.appendChild(lifecycle);
 
     // Deploy section (boxed).
-    body.appendChild(deployBlock(it));
+    const estimateCtl = {};
+    body.appendChild(deployBlock(it, estimateCtl));
 
     // Cost estimate (boxed).
-    const cost = costBlock(it);
+    const cost = costBlock(it, estimateCtl);
     if (cost) body.appendChild(cost);
 
     body.appendChild(
@@ -1451,6 +1919,18 @@
     })
     .catch(() => {
       /* no updates data — gallery hides lifecycle notices */
+    });
+
+  // Live model + service SKU registry (tools/Build-Registry.ps1, refreshed every
+  // few days). Best-effort: advanced deployment options fall back to the
+  // template's own @allowed sets when it is missing.
+  fetch("registry.json")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((reg) => {
+      state.registry = reg;
+    })
+    .catch(() => {
+      /* no registry — advanced options use template defaults */
     });
 
   fetch("catalog.json")

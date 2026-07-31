@@ -10,6 +10,9 @@
   if (!el || !Panel || !Api || !trigger) return;
 
   const LIVE = ["requested", "deploying", "active", "expiring"];
+  // A failed deploy can leave partially-created resources, so allow tearing it
+  // down too.
+  const CLEANABLE = ["requested", "deploying", "active", "expiring", "failed"];
 
   function fmt(iso) {
     if (!iso) return "—";
@@ -37,7 +40,7 @@
         el("a", { href: dep.ghRunUrl, target: "_blank", rel: "noopener", class: "link-btn", text: "Azure portal" })
       );
     }
-    if (LIVE.indexOf(dep.status) !== -1) {
+    if (CLEANABLE.indexOf(dep.status) !== -1) {
       const btn = el("button", { type: "button", class: "danger-btn", text: "Tear down" });
       btn.addEventListener("click", () => {
         if (!window.confirm("Tear down " + dep.useCase + " now? This deletes " + dep.resourceGroup + ".")) return;

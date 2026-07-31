@@ -150,12 +150,45 @@ def _clean_error(exc: Exception) -> str:
 # --------------------------------------------------------------------------- #
 # Blocking SDK work (run in a thread via asyncio.to_thread)
 # --------------------------------------------------------------------------- #
+def _merge_parameter_overrides(
+    template: dict[str, Any],
+    parameters: dict[str, Any],
+    overrides: dict[str, str] | None,
+) -> None:
+    """Merge validated advanced deployment options into the ARM parameters map
+    (mutated in place). Values arrive as strings from the API; cast each to the
+    type declared in the compiled template so ARM accepts them. Unknown params
+    are ignored (the API already validates against the catalog)."""
+    if not overrides:
+        return
+    declared = template.get("parameters") or {}
+    for name, raw in overrides.items():
+        spec = declared.get(name)
+        if not isinstance(spec, dict):
+            continue
+        ptype = str(spec.get("type") or "string").lower()
+        sval = str(raw)
+        if ptype == "int":
+            try:
+                value: Any = int(sval)
+            except ValueError:
+                continue
+        elif ptype == "bool":
+            value = sval.strip().lower() == "true"
+        else:
+            value = sval
+        parameters[name] = {"value": value}
+
+
 def _do_deploy(dep: dict[str, Any]) -> None:
     subscription_id = dep["subscription_id"]
     resource_group = dep["resource_group"]
     template, parameters = load_template(dep["use_case"], dep["environment"])
 
-    location = (dep.get("params") or {}).get("location") or _location()
+    params_meta = dep.get("params") or {}
+    _merge_parameter_overrides(template, parameters, params_meta.get("parameterValues"))
+
+    location = params_meta.get("location") or _location()
     client = _client(subscription_id)
     client.resource_groups.create_or_update(
         resource_group,
@@ -377,7 +410,14 @@ async def run_deploy(dep: dict[str, Any]) -> None:
             deployment_id=dep_id,
         )
     except Exception as exc:
-        db.update_deployment(dep_id, status="failed", detail=_clean_error(exc))
+        # A failed deploy can still leave the resource group and partially
+        # created resources behind; say so and log it so an operator can clean up.
+        detail = (
+            _clean_error(exc)
+            + f" | Partial resources may remain in {dep['resource_group']}; "
+            "use Clean up to remove them."
+        )
+        db.update_deployment(dep_id, status="failed", detail=detail[:500])
         db.record_event(
             type="deploy_failed",
             user_oid=dep["user_oid"],

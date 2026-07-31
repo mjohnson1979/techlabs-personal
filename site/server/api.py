@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 import azure_deploy as az
 import db
 import github_intake
+import pricing
 import submissions
 from identity import (
     CurrentUser,
@@ -34,6 +35,7 @@ from identity import (
 
 SITE_ROOT = Path(__file__).resolve().parent.parent
 CATALOG_PATH = SITE_ROOT / "catalog.json"
+REGISTRY_PATH = SITE_ROOT / "registry.json"
 
 DEFAULT_SUBSCRIPTION = os.environ.get(
     "GALLERY_SUBSCRIPTION_ID", "8ad2703f-069c-4c1a-8f4f-850c2a4c2676"
@@ -68,6 +70,24 @@ def _catalog_items() -> dict[str, dict[str, Any]]:
     return _catalog_cache["items"]
 
 
+_registry_cache: dict[str, Any] = {"mtime": 0.0, "data": {}}
+
+
+def _registry() -> dict[str, Any]:
+    """Return the model/SKU registry from registry.json, reloaded on change."""
+    try:
+        mtime = REGISTRY_PATH.stat().st_mtime
+    except OSError:
+        return {}
+    if mtime != _registry_cache["mtime"]:
+        try:
+            _registry_cache["data"] = json.loads(REGISTRY_PATH.read_text(encoding="utf-8-sig"))
+        except (OSError, ValueError):
+            return _registry_cache["data"]
+        _registry_cache["mtime"] = mtime
+    return _registry_cache["data"]
+
+
 def _sanitize(part: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", part.lower()).strip("-")
 
@@ -75,6 +95,155 @@ def _sanitize(part: str) -> str:
 def _resource_group_name(use_case: str, environment: str, short_id: str) -> str:
     base = f"rg-techlabs-{_sanitize(use_case)}-{_sanitize(environment)}-{short_id}"
     return base[:88]  # Azure RG name max length is 90.
+
+
+def _validate_parameter_values(
+    raw: dict[str, str] | None, item: dict[str, Any]
+) -> dict[str, str]:
+    """Validate advanced deployment options against the use case's declared
+    template parameters. Only known parameter names are accepted, and each value
+    is checked against the parameter's allowed set / type / min-max bounds. Returns
+    a clean name->string map (empty values dropped). Raises 400 on any violation."""
+    if not raw:
+        return {}
+    declared = {
+        p["name"]: p
+        for p in (item.get("parameters") or [])
+        if isinstance(p, dict) and p.get("name")
+    }
+    out: dict[str, str] = {}
+    for name, value in raw.items():
+        spec = declared.get(name)
+        if spec is None:
+            raise HTTPException(status_code=400, detail=f"unknown parameter: {name}")
+        sval = str(value).strip()
+        if sval == "":
+            continue
+        if len(sval) > 256:
+            raise HTTPException(status_code=400, detail=f"parameter {name} value too long")
+        ptype = str(spec.get("type") or "string").lower()
+        if ptype not in ("string", "int", "bool"):
+            raise HTTPException(status_code=400, detail=f"parameter {name} is not overridable")
+        allowed = spec.get("allowed")
+        if allowed:
+            if sval not in [str(a) for a in allowed]:
+                raise HTTPException(status_code=400, detail=f"invalid value for {name}")
+        elif ptype == "int":
+            try:
+                ival = int(sval)
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"{name} must be an integer")
+            mn, mx = spec.get("min"), spec.get("max")
+            if mn is not None and ival < mn:
+                raise HTTPException(status_code=400, detail=f"{name} is below minimum {mn}")
+            if mx is not None and ival > mx:
+                raise HTTPException(status_code=400, detail=f"{name} is above maximum {mx}")
+        elif ptype == "bool":
+            if sval.lower() not in ("true", "false"):
+                raise HTTPException(status_code=400, detail=f"{name} must be true or false")
+            sval = sval.lower()
+        if not allowed and ptype not in ("int", "bool"):
+            fam_vals = _registry_sku_values(name)
+            if fam_vals and sval not in fam_vals:
+                raise HTTPException(status_code=400, detail=f"invalid value for {name}")
+        out[name] = sval
+    _validate_model_params(out, item)
+    return out
+
+
+# Model name/version/SKU params carry no template @allowed set (the registry is
+# their source of truth). Validate them against registry.json so a stale or
+# hand-crafted request can't submit a model the deployment can't create.
+_CHAT_NAME_PARAMS = ("chatModelName", "chatModel")
+
+
+def _openai_models(kind: str) -> list[dict[str, Any]]:
+    reg = _registry()
+    models = (reg.get("models") or {}) if isinstance(reg, dict) else {}
+    return [m for m in (models.get(kind) or []) if m.get("provider") == "OpenAI"]
+
+
+# The registry SKU family values for a non-model param. Matching is by convention
+# (exact name, then the family name as a token, then aliases) so a new use case's
+# SKU/tier/size param maps automatically. Returns the union of values, or None.
+_SKU_FAMILY_ALIASES = (
+    (r"vm.?size|nodesize|hostsize", "vmSize"),
+    (r"k8sversion|aksversion|kubernetes", "kubernetesVersion"),
+    (r"runtimestack|linuxfx", "linuxFxVersion"),
+    (r"sql.*tier", "sqlTier"),
+    (r"sql.*sku", "sqlSkuName"),
+)
+
+
+def _sku_family_key(name: str, skus: dict[str, Any]) -> str | None:
+    if name in skus:
+        return name
+    low = name.lower()
+    for key in sorted(skus.keys(), key=len, reverse=True):
+        if key.lower() in low:
+            return key
+    for pat, key in _SKU_FAMILY_ALIASES:
+        if key in skus and re.search(pat, low):
+            return key
+    return None
+
+
+def _registry_sku_values(name: str) -> list[str] | None:
+    reg = _registry()
+    skus = (reg.get("skus") or {}) if isinstance(reg, dict) else {}
+    key = _sku_family_key(name, skus)
+    if not key:
+        return None
+    fam = skus.get(key) or {}
+    vals = [str(v.get("value")) for v in (fam.get("values") or []) if v.get("value") is not None]
+    return vals or None
+
+
+def _check_model_triplet(
+    models: list[dict[str, Any]], name_param: str, name: str | None,
+    version: str | None, sku: str | None,
+) -> None:
+    if not models or not name:
+        return
+    if name not in {m.get("name") for m in models}:
+        raise HTTPException(status_code=400, detail=f"{name_param}: unknown model '{name}'")
+    versions = {m.get("version") for m in models if m.get("name") == name}
+    if version and version not in versions:
+        raise HTTPException(status_code=400, detail=f"invalid version '{version}' for {name}")
+    if sku:
+        skus: set[str] = set()
+        for m in models:
+            if m.get("name") == name and (not version or m.get("version") == version):
+                skus.update(m.get("skus") or [])
+        if skus and sku not in skus:
+            raise HTTPException(status_code=400, detail=f"invalid SKU '{sku}' for {name}")
+
+
+def _validate_model_params(out: dict[str, str], item: dict[str, Any]) -> None:
+    defaults = {
+        p["name"]: p.get("default")
+        for p in (item.get("parameters") or [])
+        if isinstance(p, dict) and p.get("name")
+    }
+
+    def eff(name: str) -> str | None:
+        if name in out:
+            return out[name]
+        d = defaults.get(name)
+        return None if d is None else str(d)
+
+    chat_param = next((n for n in _CHAT_NAME_PARAMS if n in defaults), None)
+    if chat_param and any(n in out for n in (chat_param, "chatModelVersion", "chatModelSku")):
+        _check_model_triplet(
+            _openai_models("chat"), chat_param,
+            eff(chat_param), eff("chatModelVersion"), eff("chatModelSku"),
+        )
+    if "embeddingModel" in defaults and any(n in out for n in ("embeddingModel", "embeddingModelVersion")):
+        _check_model_triplet(
+            _openai_models("embedding"), "embeddingModel",
+            eff("embeddingModel"), eff("embeddingModelVersion"), None,
+        )
+
 
 
 def _iso(ts: float | None) -> str | None:
@@ -139,6 +308,18 @@ class DeployIn(BaseModel):
     # Either an explicit end time (ISO 8601) or a lifetime in hours.
     endAt: str = ""
     lifetimeHours: float | None = None
+    # Optional advanced deployment options: template parameter name -> value
+    # (as a string). Validated against the use case's declared parameters and
+    # merged into the ARM parameters at deploy time.
+    parameterValues: dict[str, str] | None = None
+
+
+class EstimateIn(BaseModel):
+    useCase: str
+    # Region to price for; empty uses the use case's authored cost region.
+    location: str = ""
+    # Advanced-option overrides (param name -> value) that shift SKU/quantity.
+    parameterValues: dict[str, str] | None = None
 
 
 class RoleIn(BaseModel):
@@ -203,6 +384,31 @@ def build_api_router() -> APIRouter:
             meta={k: str(v)[:200] for k, v in (body.meta or {}).items()},
         )
 
+    # -------------------------------------------------------- estimate ---
+    @router.post("/estimate")
+    async def estimate_cost(body: EstimateIn, request: Request) -> dict[str, Any]:
+        # Unauthenticated, so require a browser Origin/Referer (verify_same_origin
+        # allows header-less server-to-server calls, which we don't want here).
+        if not (request.headers.get("origin") or request.headers.get("referer")):
+            raise HTTPException(status_code=403, detail="browser origin required")
+        verify_same_origin(request)
+        item = _catalog_items().get(body.useCase)
+        if item is None:
+            raise HTTPException(status_code=404, detail="unknown use case")
+        cost = item.get("cost")
+        if not cost or not cost.get("components"):
+            raise HTTPException(status_code=404, detail="no cost model for this use case")
+        region = (body.location or "").strip().lower()
+        if region and not re.fullmatch(r"[a-z][a-z0-9]{2,30}", region):
+            raise HTTPException(status_code=400, detail="invalid location")
+        pv: dict[str, str] = {}
+        for k, v in list((body.parameterValues or {}).items())[:50]:
+            pv[str(k)[:64]] = str(v)[:128]
+        try:
+            return await pricing.estimate(cost, region or str(cost.get("region") or ""), pv)
+        except Exception as exc:  # network/parse failure -> caller keeps static cost
+            raise HTTPException(status_code=502, detail="pricing lookup failed") from exc
+
     # --------------------------------------------------------- deployments ---
     @router.post("/deployments")
     async def create_deployment(
@@ -243,6 +449,8 @@ def build_api_router() -> APIRouter:
         if location and not re.fullmatch(r"[a-z][a-z0-9]{2,30}", location):
             raise HTTPException(status_code=400, detail="invalid location")
 
+        parameter_values = _validate_parameter_values(body.parameterValues, item)
+
         dep_id = secrets.token_hex(8)
         short_id = dep_id[:6]
         rg = _resource_group_name(body.useCase, env, short_id)
@@ -257,7 +465,11 @@ def build_api_router() -> APIRouter:
             resource_group=rg,
             end_at=end_at,
             engine=engine,
-            params={"template": item.get("template", ""), "location": location},
+            params={
+                "template": item.get("template", ""),
+                "location": location,
+                "parameterValues": parameter_values,
+            },
         )
         db.record_event(
             type="deploy_requested",

@@ -49,6 +49,9 @@
 
   // Statuses that still hold (or are tearing down) Azure resources.
   const LIVE = ["requested", "deploying", "active", "expiring", "destroying"];
+  // Statuses that can be torn down now (may hold resources). A failed deploy can
+  // leave partially-created resources; an in-flight 'destroying' is excluded.
+  const CLEANABLE = ["requested", "deploying", "active", "expiring", "failed"];
 
   function fmtDate(iso) {
     if (!iso) return "—";
@@ -89,7 +92,12 @@
       el("td", {}, el("strong", { text: dep.useCase })),
       el("td", {}, el("span", { class: "chip", text: dep.environment })),
       owner,
-      el("td", {}, statusBadge(dep.status)),
+      el("td", {}, [
+        statusBadge(dep.status),
+        dep.status === "failed" && dep.detail
+          ? el("div", { class: "muted small", text: dep.detail, title: dep.detail })
+          : null,
+      ]),
       el("td", { text: fmtDate(dep.createdAt) }),
       el("td", { text: running }),
       el("td", { text: fmtDate(dep.endAt) }),
@@ -102,9 +110,10 @@
         el("a", { href: dep.ghRunUrl, target: "_blank", rel: "noopener", class: "link-btn", text: "Portal" })
       );
     }
-    // Offer cleanup for anything still holding resources, except a teardown
-    // that is already in flight.
-    if (LIVE.indexOf(dep.status) !== -1 && dep.status !== "destroying") {
+    // Offer cleanup for anything that may still hold resources, including a
+    // failed deploy that created partial resources; an in-flight teardown is
+    // already excluded from CLEANABLE.
+    if (CLEANABLE.indexOf(dep.status) !== -1) {
       const btn = el("button", { type: "button", class: "danger-btn", text: "Clean up" });
       btn.addEventListener("click", () => {
         const who = dep.userName || dep.userUpn;
@@ -136,10 +145,12 @@
           mount.innerHTML = "";
           deps = deps || [];
           const live = deps.filter((d) => LIVE.indexOf(d.status) !== -1);
+          const failed = deps.filter((d) => d.status === "failed");
 
           mount.appendChild(
             el("div", { class: "stat-grid" }, [
               statCard("Active deployments", live.length),
+              statCard("Failed - check resources", failed.length),
               statCard("Total tracked", deps.length),
             ])
           );
@@ -150,7 +161,7 @@
             state.activeOnly = checkbox.checked;
             renderTable();
           });
-          const toggle = el("label", { class: "toggle" }, [checkbox, el("span", { text: "Active only" })]);
+          const toggle = el("label", { class: "toggle" }, [checkbox, el("span", { text: "Hide destroyed" })]);
           const refreshBtn = el("button", { type: "button", class: "deploy-btn", text: "Refresh" });
           refreshBtn.addEventListener("click", load);
           mount.appendChild(el("div", { class: "deploy-toolbar" }, [toggle, refreshBtn]));
@@ -159,11 +170,11 @@
           mount.appendChild(tableWrap);
 
           function renderTable() {
-            const rows = state.activeOnly ? live : deps;
+            const rows = state.activeOnly ? deps.filter((d) => d.status !== "destroyed") : deps;
             tableWrap.innerHTML = "";
             if (!rows.length) {
               tableWrap.appendChild(
-                el("p", { class: "muted", text: state.activeOnly ? "No active deployments." : "No deployments tracked yet." })
+                el("p", { class: "muted", text: state.activeOnly ? "No deployments holding resources." : "No deployments tracked yet." })
               );
               return;
             }

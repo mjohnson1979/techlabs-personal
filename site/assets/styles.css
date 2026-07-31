@@ -454,6 +454,11 @@ details[open] > .collapse-summary .collapse-caret {
   margin-bottom: 10px;
 }
 
+.cost-body.cost-pending {
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
 .cost-row {
   display: grid;
   grid-template-columns: 1fr auto auto;
@@ -888,13 +893,6 @@ details[open] > .collapse-summary .collapse-caret {
   font-size: 0.9rem;
 }
 
-.deploy-overrides {
-  min-height: 84px;
-  resize: vertical;
-  font-family: "Cascadia Code", Consolas, monospace;
-  font-size: 0.84rem;
-}
-
 .deploy-note {
   margin: 2px 0 0;
   color: var(--muted);
@@ -921,6 +919,68 @@ details[open] > .collapse-summary .collapse-caret {
 .deploy-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.deploy-btn-secondary {
+  justify-self: start;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.deploy-btn-secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.deploy-advopts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.deploy-advopts-summary {
+  margin: 0;
+}
+
+.advopts-form {
+  display: grid;
+  gap: 16px;
+  margin: 12px 0 18px;
+}
+
+.advopt-field {
+  display: grid;
+  gap: 4px;
+}
+
+.advopt-desc {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.advopt-hint {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.advopt-warn {
+  color: var(--danger);
+  font-size: 0.78rem;
+}
+
+.advopts-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .deploy-status {

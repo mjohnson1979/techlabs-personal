@@ -1,0 +1,562 @@
+﻿{
+    "generated":  "2026-07-30T19:33:41Z",
+    "regions":  [
+                    "eastus",
+                    "eastus2",
+                    "centralus",
+                    "northcentralus",
+                    "southcentralus",
+                    "westus",
+                    "westus2",
+                    "westus3",
+                    "westcentralus",
+                    "canadacentral",
+                    "canadaeast",
+                    "brazilsouth",
+                    "brazilsoutheast",
+                    "mexicocentral"
+                ],
+    "models":  {
+                   "chat":  [
+                                {
+                                    "provider":  "OpenAI",
+                                    "name":  "gpt-5",
+                                    "version":  "2025-08-07",
+                                    "skus":  [
+                                                 "GlobalStandard",
+                                                 "DataZoneStandard"
+                                             ],
+                                    "regions":  "all",
+                                    "lifecycle":  "GenerallyAvailable",
+                                    "kind":  "chat"
+                                },
+                                {
+                                    "provider":  "OpenAI",
+                                    "name":  "gpt-5-mini",
+                                    "version":  "2025-08-07",
+                                    "skus":  [
+                                                 "GlobalStandard",
+                                                 "DataZoneStandard"
+                                             ],
+                                    "regions":  "all",
+                                    "lifecycle":  "GenerallyAvailable",
+                                    "kind":  "chat"
+                                },
+                                {
+                                    "provider":  "OpenAI",
+                                    "name":  "gpt-5-nano",
+                                    "version":  "2025-08-07",
+                                    "skus":  [
+                                                 "GlobalStandard",
+                                                 "DataZoneStandard"
+                                             ],
+                                    "regions":  "all",
+                                    "lifecycle":  "GenerallyAvailable",
+                                    "kind":  "chat"
+                                },
+                                {
+                                    "provider":  "OpenAI",
+                                    "name":  "gpt-4.1",
+                                    "version":  "2025-04-14",
+                                    "skus":  [
+                                                 "GlobalStandard",
+                                                 "DataZoneStandard",
+                                                 "Standard"
+                                             ],
+                                    "regions":  "all",
+                                    "lifecycle":  "GenerallyAvailable",
+                                    "kind":  "chat"
+                                },
+                                {
+                                    "provider":  "OpenAI",
+                                    "name":  "gpt-4o",
+                                    "version":  "2024-11-20",
+                                    "skus":  [
+                                                 "GlobalStandard",
+                                                 "DataZoneStandard",
+                                                 "Standard"
+                                             ],
+                                    "regions":  "all",
+                                    "lifecycle":  "GenerallyAvailable",
+                                    "kind":  "chat"
+                                },
+                                {
+                                    "provider":  "OpenAI",
+                                    "name":  "gpt-4o-mini",
+                                    "version":  "2024-07-18",
+                                    "skus":  [
+                                                 "GlobalStandard",
+                                                 "DataZoneStandard",
+                                                 "Standard"
+                                             ],
+                                    "regions":  "all",
+                                    "lifecycle":  "GenerallyAvailable",
+                                    "kind":  "chat"
+                                }
+                            ],
+                   "embedding":  [
+                                     {
+                                         "provider":  "OpenAI",
+                                         "name":  "text-embedding-3-large",
+                                         "version":  "1",
+                                         "skus":  [
+                                                      "Standard",
+                                                      "GlobalStandard"
+                                                  ],
+                                         "regions":  "all",
+                                         "lifecycle":  "GenerallyAvailable",
+                                         "kind":  "embedding"
+                                     },
+                                     {
+                                         "provider":  "OpenAI",
+                                         "name":  "text-embedding-3-small",
+                                         "version":  "1",
+                                         "skus":  [
+                                                      "Standard",
+                                                      "GlobalStandard"
+                                                  ],
+                                         "regions":  "all",
+                                         "lifecycle":  "GenerallyAvailable",
+                                         "kind":  "embedding"
+                                     },
+                                     {
+                                         "provider":  "OpenAI",
+                                         "name":  "text-embedding-ada-002",
+                                         "version":  "2",
+                                         "skus":  [
+                                                      "Standard"
+                                                  ],
+                                         "regions":  "all",
+                                         "lifecycle":  "GenerallyAvailable",
+                                         "kind":  "embedding"
+                                     }
+                                 ]
+               },
+    "skus":  {
+                 "appServiceSku":  {
+                                       "label":  "App Service plan",
+                                       "source":  "curated",
+                                       "values":  [
+                                                      {
+                                                          "value":  "B1",
+                                                          "regions":  "all"
+                                                      },
+                                                      {
+                                                          "value":  "S1",
+                                                          "regions":  "all"
+                                                      },
+                                                      {
+                                                          "value":  "P0v3",
+                                                          "regions":  "all"
+                                                      },
+                                                      {
+                                                          "value":  "P1v3",
+                                                          "regions":  "all"
+                                                      },
+                                                      {
+                                                          "value":  "P2v3",
+                                                          "regions":  "all"
+                                                      },
+                                                      {
+                                                          "value":  "P3v3",
+                                                          "regions":  "all"
+                                                      }
+                                                  ]
+                                   },
+                 "apimSku":  {
+                                 "label":  "API Management",
+                                 "source":  "curated",
+                                 "values":  [
+                                                {
+                                                    "value":  "Developer",
+                                                    "regions":  "all"
+                                                },
+                                                {
+                                                    "value":  "Basic",
+                                                    "regions":  "all"
+                                                },
+                                                {
+                                                    "value":  "Standard",
+                                                    "regions":  "all"
+                                                },
+                                                {
+                                                    "value":  "Premium",
+                                                    "regions":  "all"
+                                                },
+                                                {
+                                                    "value":  "BasicV2",
+                                                    "regions":  "all"
+                                                },
+                                                {
+                                                    "value":  "StandardV2",
+                                                    "regions":  "all"
+                                                }
+                                            ]
+                             },
+                 "searchSku":  {
+                                   "label":  "AI Search",
+                                   "source":  "curated",
+                                   "values":  [
+                                                  {
+                                                      "value":  "free",
+                                                      "regions":  "all"
+                                                  },
+                                                  {
+                                                      "value":  "basic",
+                                                      "regions":  "all"
+                                                  },
+                                                  {
+                                                      "value":  "standard",
+                                                      "regions":  "all"
+                                                  },
+                                                  {
+                                                      "value":  "standard2",
+                                                      "regions":  "all"
+                                                  },
+                                                  {
+                                                      "value":  "standard3",
+                                                      "regions":  "all"
+                                                  }
+                                              ]
+                               },
+                 "serviceBusSku":  {
+                                       "label":  "Service Bus",
+                                       "source":  "curated",
+                                       "values":  [
+                                                      {
+                                                          "value":  "Basic",
+                                                          "regions":  "all"
+                                                      },
+                                                      {
+                                                          "value":  "Standard",
+                                                          "regions":  "all"
+                                                      },
+                                                      {
+                                                          "value":  "Premium",
+                                                          "regions":  "all"
+                                                      }
+                                                  ]
+                                   },
+                 "eventHubsSku":  {
+                                      "label":  "Event Hubs",
+                                      "source":  "curated",
+                                      "values":  [
+                                                     {
+                                                         "value":  "Basic",
+                                                         "regions":  "all"
+                                                     },
+                                                     {
+                                                         "value":  "Standard",
+                                                         "regions":  "all"
+                                                     },
+                                                     {
+                                                         "value":  "Premium",
+                                                         "regions":  "all"
+                                                     }
+                                                 ]
+                                  },
+                 "functionPlanSku":  {
+                                         "label":  "Functions Elastic Premium",
+                                         "source":  "curated",
+                                         "values":  [
+                                                        {
+                                                            "value":  "EP1",
+                                                            "regions":  "all"
+                                                        },
+                                                        {
+                                                            "value":  "EP2",
+                                                            "regions":  "all"
+                                                        },
+                                                        {
+                                                            "value":  "EP3",
+                                                            "regions":  "all"
+                                                        }
+                                                    ]
+                                     },
+                 "workflowSku":  {
+                                     "label":  "Logic Apps Standard",
+                                     "source":  "curated",
+                                     "values":  [
+                                                    {
+                                                        "value":  "WS1",
+                                                        "regions":  "all"
+                                                    },
+                                                    {
+                                                        "value":  "WS2",
+                                                        "regions":  "all"
+                                                    },
+                                                    {
+                                                        "value":  "WS3",
+                                                        "regions":  "all"
+                                                    }
+                                                ]
+                                 },
+                 "databricksSku":  {
+                                       "label":  "Azure Databricks",
+                                       "source":  "curated",
+                                       "values":  [
+                                                      {
+                                                          "value":  "standard",
+                                                          "regions":  "all"
+                                                      },
+                                                      {
+                                                          "value":  "premium",
+                                                          "regions":  "all"
+                                                      }
+                                                  ]
+                                   },
+                 "frontDoorSku":  {
+                                      "label":  "Front Door",
+                                      "source":  "curated",
+                                      "values":  [
+                                                     {
+                                                         "value":  "Standard_AzureFrontDoor",
+                                                         "regions":  "all"
+                                                     },
+                                                     {
+                                                         "value":  "Premium_AzureFrontDoor",
+                                                         "regions":  "all"
+                                                     }
+                                                 ]
+                                  },
+                 "linuxFxVersion":  {
+                                        "label":  "Linux runtime stack",
+                                        "source":  "curated",
+                                        "values":  [
+                                                       {
+                                                           "value":  "DOTNETCORE|8.0",
+                                                           "regions":  "all"
+                                                       },
+                                                       {
+                                                           "value":  "DOTNETCORE|9.0",
+                                                           "regions":  "all"
+                                                       },
+                                                       {
+                                                           "value":  "NODE|20-lts",
+                                                           "regions":  "all"
+                                                       },
+                                                       {
+                                                           "value":  "NODE|22-lts",
+                                                           "regions":  "all"
+                                                       },
+                                                       {
+                                                           "value":  "PYTHON|3.12",
+                                                           "regions":  "all"
+                                                       },
+                                                       {
+                                                           "value":  "PYTHON|3.13",
+                                                           "regions":  "all"
+                                                       },
+                                                       {
+                                                           "value":  "JAVA|21-java21",
+                                                           "regions":  "all"
+                                                       }
+                                                   ]
+                                    },
+                 "kubernetesVersion":  {
+                                           "label":  "Kubernetes version",
+                                           "source":  "curated",
+                                           "values":  [
+                                                          {
+                                                              "value":  "1.28",
+                                                              "regions":  "all"
+                                                          },
+                                                          {
+                                                              "value":  "1.29",
+                                                              "regions":  "all"
+                                                          },
+                                                          {
+                                                              "value":  "1.30",
+                                                              "regions":  "all"
+                                                          },
+                                                          {
+                                                              "value":  "1.31",
+                                                              "regions":  "all"
+                                                          },
+                                                          {
+                                                              "value":  "1.32",
+                                                              "regions":  "all"
+                                                          }
+                                                      ]
+                                       },
+                 "avsSkuName":  {
+                                    "label":  "AVS host SKU",
+                                    "source":  "curated",
+                                    "values":  [
+                                                   {
+                                                       "value":  "AV36",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "AV36P",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "AV52",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "AV64",
+                                                       "regions":  "all"
+                                                   }
+                                               ]
+                                },
+                 "sqlTier":  {
+                                 "label":  "Azure SQL tier (vCore)",
+                                 "source":  "curated",
+                                 "values":  [
+                                                {
+                                                    "value":  "GeneralPurpose",
+                                                    "regions":  "all"
+                                                },
+                                                {
+                                                    "value":  "BusinessCritical",
+                                                    "regions":  "all"
+                                                },
+                                                {
+                                                    "value":  "Hyperscale",
+                                                    "regions":  "all"
+                                                }
+                                            ]
+                             },
+                 "sqlSkuName":  {
+                                    "label":  "Azure SQL SKU",
+                                    "source":  "curated",
+                                    "values":  [
+                                                   {
+                                                       "value":  "GP_S_Gen5_1",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "GP_S_Gen5_2",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "GP_S_Gen5_4",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "GP_S_Gen5_8",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "GP_Gen5_2",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "GP_Gen5_4",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "GP_Gen5_8",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "BC_Gen5_2",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "BC_Gen5_4",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "BC_Gen5_8",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "HS_Gen5_2",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "HS_Gen5_4",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "HS_Gen5_8",
+                                                       "regions":  "all"
+                                                   }
+                                               ]
+                                },
+                 "vmSize":  {
+                                "label":  "Virtual machine size",
+                                "source":  "curated",
+                                "values":  [
+                                               {
+                                                   "value":  "Standard_D2s_v5",
+                                                   "regions":  "all"
+                                               },
+                                               {
+                                                   "value":  "Standard_D4s_v5",
+                                                   "regions":  "all"
+                                               },
+                                               {
+                                                   "value":  "Standard_D8s_v5",
+                                                   "regions":  "all"
+                                               },
+                                               {
+                                                   "value":  "Standard_D16s_v5",
+                                                   "regions":  "all"
+                                               },
+                                               {
+                                                   "value":  "Standard_D2s_v6",
+                                                   "regions":  "all"
+                                               },
+                                               {
+                                                   "value":  "Standard_D4s_v6",
+                                                   "regions":  "all"
+                                               },
+                                               {
+                                                   "value":  "Standard_D8s_v6",
+                                                   "regions":  "all"
+                                               },
+                                               {
+                                                   "value":  "Standard_E4s_v5",
+                                                   "regions":  "all"
+                                               },
+                                               {
+                                                   "value":  "Standard_E8s_v5",
+                                                   "regions":  "all"
+                                               },
+                                               {
+                                                   "value":  "Standard_F4s_v2",
+                                                   "regions":  "all"
+                                               },
+                                               {
+                                                   "value":  "Standard_F8s_v2",
+                                                   "regions":  "all"
+                                               }
+                                           ]
+                            },
+                 "backendSku":  {
+                                    "label":  "App Service plan",
+                                    "source":  "curated",
+                                    "alias":  "appServiceSku",
+                                    "values":  [
+                                                   {
+                                                       "value":  "B1",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "S1",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "P0v3",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "P1v3",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "P2v3",
+                                                       "regions":  "all"
+                                                   },
+                                                   {
+                                                       "value":  "P3v3",
+                                                       "regions":  "all"
+                                                   }
+                                               ]
+                                }
+             }
+}
