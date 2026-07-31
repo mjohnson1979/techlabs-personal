@@ -29,6 +29,11 @@ def _norm(value: Any) -> str:
     return re.sub(r"[^a-z0-9]", "", str(value or "").lower())
 
 
+def _odata(value: Any) -> str:
+    # OData escapes a single quote by doubling it.
+    return str(value).replace("'", "''")
+
+
 def _contains(row: dict[str, Any], field: str, needle: str) -> bool:
     return needle.lower() in str(row.get(field) or "").lower()
 
@@ -37,13 +42,13 @@ async def _fetch_rows(
     client: httpx.AsyncClient, region: str, currency: str,
     service_name: str | None, meter_exact: str | None, arm_exact: str | None = None,
 ) -> list[dict[str, Any]]:
-    parts = [f"armRegionName eq '{region}'", "priceType eq 'Consumption'"]
+    parts = [f"armRegionName eq '{_odata(region)}'", "priceType eq 'Consumption'"]
     if service_name:
-        parts.append(f"serviceName eq '{service_name}'")
+        parts.append(f"serviceName eq '{_odata(service_name)}'")
     if meter_exact:
-        parts.append(f"meterName eq '{meter_exact}'")
+        parts.append(f"meterName eq '{_odata(meter_exact)}'")
     if arm_exact:
-        parts.append(f"armSkuName eq '{arm_exact}'")
+        parts.append(f"armSkuName eq '{_odata(arm_exact)}'")
     flt = " and ".join(parts)
     if flt in _price_cache:
         return _price_cache[flt]
@@ -60,8 +65,10 @@ async def _fetch_rows(
                 continue
             resp.raise_for_status()
             break
+        # Persistent rate-limit: raise so the route returns 502 and the UI keeps
+        # the static cost, rather than caching a partial/empty result.
         if resp is None or resp.status_code == 429:
-            break
+            raise RuntimeError("retail prices API rate-limited after retries")
         data = resp.json()
         rows.extend(data.get("Items") or [])
         url = data.get("NextPageLink")

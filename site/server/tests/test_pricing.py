@@ -82,3 +82,8 @@ def test_region_change_triggers_lookup(monkeypatch):
     est = asyncio.run(pricing.estimate(_cost(), "westus2", {}))
     assert est["components"][0]["monthly"] == 547.5  # 0.25 * 2190
     assert calls == [1]
+
+
+def test_odata_escapes_single_quotes():
+    assert pricing._odata("a'b") == "a''b"
+    assert pricing._odata("Standard_D4s_v5") == "Standard_D4s_v5"

@@ -967,6 +967,7 @@
     // Live cost re-estimate: when the region or an advanced option changes, ask
     // the backend to re-price for the selection; fall back to the static cost.
     let estimateTimer = null;
+    let estimateSeq = 0;
     function scheduleEstimate() {
       if (!estimateCtl || !estimateCtl.apply || !window.TechlabsApi) return;
       const baseRegion = (estimateCtl.baseCost && estimateCtl.baseCost.region) || "";
@@ -980,9 +981,10 @@
       estimateCtl.pending();
       clearTimeout(estimateTimer);
       estimateTimer = setTimeout(function () {
+        const seq = ++estimateSeq;
         window.TechlabsApi.estimateCost({ useCase: it.path, location: loc, parameterValues: values })
-          .then(function (est) { estimateCtl.apply(est, { forSelection: true }); })
-          .catch(function () { estimateCtl.reset(); });
+          .then(function (est) { if (seq === estimateSeq) estimateCtl.apply(est, { forSelection: true }); })
+          .catch(function () { if (seq === estimateSeq) estimateCtl.reset(); });
       }, 350);
     }
 

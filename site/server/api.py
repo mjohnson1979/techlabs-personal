@@ -387,6 +387,10 @@ def build_api_router() -> APIRouter:
     # -------------------------------------------------------- estimate ---
     @router.post("/estimate")
     async def estimate_cost(body: EstimateIn, request: Request) -> dict[str, Any]:
+        # Unauthenticated, so require a browser Origin/Referer (verify_same_origin
+        # allows header-less server-to-server calls, which we don't want here).
+        if not (request.headers.get("origin") or request.headers.get("referer")):
+            raise HTTPException(status_code=403, detail="browser origin required")
         verify_same_origin(request)
         item = _catalog_items().get(body.useCase)
         if item is None:
