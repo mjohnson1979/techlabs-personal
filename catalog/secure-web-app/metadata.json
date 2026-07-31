@@ -69,6 +69,9 @@
         "meterNameContains": "P1 v3",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "appServiceSku",
+        "instanceParam": "appServiceCapacity",
+        "hoursPerInstance": 730,
         "notes": "Three instances x 730 hours."
       },
       {

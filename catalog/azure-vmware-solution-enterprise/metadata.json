@@ -78,6 +78,9 @@
         "meterNameContains": "AV36 VCF BYOL Node",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "avsSkuName",
+        "instanceParam": "avsClusterSize",
+        "hoursPerInstance": 730,
         "notes": "Example assumes 3 nodes x 730 hours. Replace with your cluster size and region rates."
       },
       {

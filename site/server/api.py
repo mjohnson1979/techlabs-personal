@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 import azure_deploy as az
 import db
 import github_intake
+import pricing
 import submissions
 from identity import (
     CurrentUser,
@@ -313,6 +314,14 @@ class DeployIn(BaseModel):
     parameterValues: dict[str, str] | None = None
 
 
+class EstimateIn(BaseModel):
+    useCase: str
+    # Region to price for; empty uses the use case's authored cost region.
+    location: str = ""
+    # Advanced-option overrides (param name -> value) that shift SKU/quantity.
+    parameterValues: dict[str, str] | None = None
+
+
 class RoleIn(BaseModel):
     upn: str
     role: str  # 'admin' | 'guest'
@@ -374,6 +383,27 @@ def build_api_router() -> APIRouter:
             use_case=use_case,
             meta={k: str(v)[:200] for k, v in (body.meta or {}).items()},
         )
+
+    # -------------------------------------------------------- estimate ---
+    @router.post("/estimate")
+    async def estimate_cost(body: EstimateIn, request: Request) -> dict[str, Any]:
+        verify_same_origin(request)
+        item = _catalog_items().get(body.useCase)
+        if item is None:
+            raise HTTPException(status_code=404, detail="unknown use case")
+        cost = item.get("cost")
+        if not cost or not cost.get("components"):
+            raise HTTPException(status_code=404, detail="no cost model for this use case")
+        region = (body.location or "").strip().lower()
+        if region and not re.fullmatch(r"[a-z][a-z0-9]{2,30}", region):
+            raise HTTPException(status_code=400, detail="invalid location")
+        pv: dict[str, str] = {}
+        for k, v in list((body.parameterValues or {}).items())[:50]:
+            pv[str(k)[:64]] = str(v)[:128]
+        try:
+            return await pricing.estimate(cost, region or str(cost.get("region") or ""), pv)
+        except Exception as exc:  # network/parse failure -> caller keeps static cost
+            raise HTTPException(status_code=502, detail="pricing lookup failed") from exc
 
     # --------------------------------------------------------- deployments ---
     @router.post("/deployments")

@@ -53,6 +53,9 @@
         "productNameContains": "Linux",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "appServiceSku",
+        "instanceParam": "appCapacity",
+        "hoursPerInstance": 730,
         "notes": "3 instances x 730 hours."
       },
       {

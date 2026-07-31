@@ -79,8 +79,12 @@
         "serviceName": "Virtual Machines",
         "armSkuName": "Standard_D4s_v5",
         "meterNameContains": "D4s v5",
+        "meterNameExact": "D4s v5",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "systemNodeVmSize",
+        "instanceParam": "systemNodeCount",
+        "hoursPerInstance": 730,
         "notes": "Three nodes x 730 hours."
       },
       {
