@@ -54,6 +54,18 @@
       "Concurrency-based HTTP scaling on the API"
     ]
   },
+  "quota": {
+    "summary": "Azure Container Apps must be available in the target region. Container Apps Consumption has no blocking vCPU quota; Service Bus and Cosmos have no regional quota gate.",
+    "requirements": [
+      {
+        "service": "Azure Container Apps",
+        "provider": "Microsoft.App/managedEnvironments",
+        "kind": "compute",
+        "detail": "The Container Apps managed environment must be offered in the target region.",
+        "checkUrl": "https://learn.microsoft.com/azure/container-apps/quotas"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",
