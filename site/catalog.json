@@ -1,7 +1,7 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-07-31T18:08:40Z",
+    "generated":  "2026-07-31T19:38:59Z",
     "count":  22,
     "items":  [
                   {
@@ -3226,7 +3226,19 @@
                                                                             "Front Door caching and connection offload at the edge"
                                                                         ]
                                           },
-                      "quota":  null,
+                      "quota":  {
+                                    "summary":  "App Service Premium v3 compute is needed in both the primary and secondary regions. Front Door and Cosmos have no blocking regional quota.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Azure App Service",
+                                                             "provider":  "Microsoft.Web/serverFarms",
+                                                             "kind":  "compute",
+                                                             "sku":  "P1v3 x3 (per region)",
+                                                             "detail":  "Each region\u0027s App Service plan needs available compute (vCPU) quota for the chosen SKU. Zone redundancy requires \u003e= 3 instances.",
+                                                             "checkUrl":  "https://aka.ms/antquotahelp"
+                                                         }
+                                                     ]
+                                },
                       "architecture":  null,
                       "path":  "multiregion-web",
                       "readme":  "catalog/multiregion-web/README.md",
@@ -3633,7 +3645,19 @@
                                                                             "Gateway autoscale matches capacity to load"
                                                                         ]
                                           },
-                      "quota":  null,
+                      "quota":  {
+                                    "summary":  "App Service Premium v3 compute is needed in the target region. Azure SQL and Application Gateway have no blocking regional quota gate.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Azure App Service",
+                                                             "provider":  "Microsoft.Web/serverFarms",
+                                                             "kind":  "compute",
+                                                             "sku":  "P1v3 x3",
+                                                             "detail":  "The App Service plan needs available compute (vCPU) quota for the chosen SKU. Zone redundancy requires \u003e= 3 instances.",
+                                                             "checkUrl":  "https://aka.ms/antquotahelp"
+                                                         }
+                                                     ]
+                                },
                       "architecture":  null,
                       "path":  "secure-web-app",
                       "readme":  "catalog/secure-web-app/README.md",
@@ -3839,7 +3863,19 @@
                                                                             "Connection pooling via managed identity tokens"
                                                                         ]
                                           },
-                      "quota":  null,
+                      "quota":  {
+                                    "summary":  "App Service compute is needed in the target region. Azure SQL (vCore serverless) has no blocking regional quota gate.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Azure App Service",
+                                                             "provider":  "Microsoft.Web/serverFarms",
+                                                             "kind":  "compute",
+                                                             "sku":  "B1 (dev) / P1v3 x3 (prod)",
+                                                             "detail":  "The App Service plan needs available compute (vCPU) quota for the chosen SKU in the region.",
+                                                             "checkUrl":  "https://aka.ms/antquotahelp"
+                                                         }
+                                                     ]
+                                },
                       "architecture":  null,
                       "path":  "sql-data-api",
                       "readme":  "catalog/sql-data-api/README.md",
