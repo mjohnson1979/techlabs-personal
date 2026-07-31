@@ -410,7 +410,14 @@ async def run_deploy(dep: dict[str, Any]) -> None:
             deployment_id=dep_id,
         )
     except Exception as exc:
-        db.update_deployment(dep_id, status="failed", detail=_clean_error(exc))
+        # A failed deploy can still leave the resource group and partially
+        # created resources behind; say so and log it so an operator can clean up.
+        detail = (
+            _clean_error(exc)
+            + f" | Partial resources may remain in {dep['resource_group']}; "
+            "use Clean up to remove them."
+        )
+        db.update_deployment(dep_id, status="failed", detail=detail[:500])
         db.record_event(
             type="deploy_failed",
             user_oid=dep["user_oid"],
