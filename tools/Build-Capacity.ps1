@@ -39,19 +39,31 @@ param(
     # Subscription to measure. Defaults to the az CLI's current subscription.
     [string]$SubscriptionId,
 
-    # Regions to scan. Default mirrors where this lab subscription operates.
-    [string[]]$Regions = @('eastus', 'eastus2', 'centralus', 'southcentralus', 'westus2', 'westus3'),
+    # Regions to scan. Americas public regions (GA; canary/partner excluded),
+    # matching the model/SKU registry (tools/Build-Registry.ps1).
+    [string[]]$Regions = @(
+        'eastus', 'eastus2', 'centralus', 'northcentralus', 'southcentralus',
+        'westus', 'westus2', 'westus3', 'westcentralus',
+        'canadacentral', 'canadaeast',
+        'brazilsouth', 'brazilsoutheast',
+        'mexicocentral'
+    ),
 
-    # OpenAI models the catalog deploys (name:version:sku). The SKU matters:
-    # a region can have capacity for one SKU (e.g. GlobalStandard) yet not offer
-    # another (regional Standard), in which case the deployment fails preflight.
-    # Keep these in lock-step with the catalog's main.bicep model deployments.
-    [string[]]$OpenAiModels = @('gpt-5-mini:2025-08-07:GlobalStandard', 'text-embedding-3-small:1:Standard'),
+    # OpenAI models the catalog deploys (name:version:sku). Empty means derive the
+    # set from the catalog's model deployments (see Get-CatalogOpenAiModels). The
+    # SKU matters: a region can have one SKU (e.g. GlobalStandard) but not another
+    # (regional Standard), which fails preflight.
+    [string[]]$OpenAiModels = @(),
 
     # Skip individual probes (faster offline/partial runs).
     [switch]$SkipOpenAi,
     [switch]$SkipAppService,
-    [switch]$SkipVm
+    [switch]$SkipVm,
+    [switch]$SkipContainerApps,
+    [switch]$SkipAvs,
+    [switch]$SkipFabric,
+    [switch]$SkipPowerBi,
+    [switch]$SkipPurview
 )
 
 $ErrorActionPreference = 'Stop'
@@ -82,6 +94,46 @@ function Get-AccessToken {
     $tok = Invoke-Az @('account', 'get-access-token', '--resource', 'https://management.azure.com', '--query', 'accessToken', '-o', 'tsv')
     if (-not $tok) { throw 'Could not acquire ARM access token.' }
     return $tok.Trim()
+}
+
+# Distinct "model:version:sku" the gallery can deploy or let the user pick, from
+# every use case's metadata quota requirements (kind = model-tpm) UNION every
+# OpenAI model the registry offers in advanced options (model x version x sku).
+# Deriving from both keeps the probe set in lock-step with what a user can
+# actually select, so a chosen model/version/SKU always has a matching signal.
+function Get-CatalogOpenAiModels {
+    $seen = [ordered]@{}
+    $add = {
+        param($model, $ver, $sku)
+        if (-not $model) { return }
+        if (-not $ver) { $ver = '' }
+        if (-not $sku) { $sku = 'Standard' }
+        $spec = "${model}:${ver}:$sku"
+        if (-not $seen.Contains($spec)) { $seen[$spec] = $true }
+    }
+    $catalogDir = Join-Path $RepoRoot 'catalog'
+    Get-ChildItem -Path $catalogDir -Recurse -Filter 'metadata.json' -File | ForEach-Object {
+        try { $meta = Get-Content $_.FullName -Raw | ConvertFrom-Json } catch { return }
+        foreach ($req in @($meta.quota.requirements)) {
+            if ("$($req.kind)" -ne 'model-tpm' -or -not $req.model) { continue }
+            & $add $req.model $req.modelVersion $req.sku
+        }
+    }
+    $regPath = Join-Path $RepoRoot 'site/registry.json'
+    if (Test-Path $regPath) {
+        try {
+            $reg = Get-Content $regPath -Raw | ConvertFrom-Json
+            foreach ($group in @('chat', 'embedding')) {
+                foreach ($m in @($reg.models.$group)) {
+                    if ("$($m.provider)" -ne 'OpenAI' -or -not $m.name) { continue }
+                    $skus = if ($m.skus) { @($m.skus) } else { @('Standard') }
+                    foreach ($s in $skus) { & $add $m.name $m.version $s }
+                }
+            }
+        }
+        catch { }
+    }
+    return @($seen.Keys)
 }
 
 function New-Status {
@@ -164,19 +216,38 @@ function Get-RegionModelDeprecations {
 }
 
 # --------------------------------------------------------------------------- #
-# Probe: VM regional core quota vs usage
+# Probe: VM regional + per-family core quota vs usage
 # --------------------------------------------------------------------------- #
-function Get-VmCoresCapacity {
+function Get-VmUsage {
     param([string]$Region)
     $json = Invoke-Az @('vm', 'list-usage', '--location', $Region, '-o', 'json')
-    if (-not $json) { return New-Status 'unknown' 'usage query failed' }
-    $usages = $json | ConvertFrom-Json
-    $cores = $usages | Where-Object { $_.name.value -eq 'cores' } | Select-Object -First 1
-    if (-not $cores) { return New-Status 'unknown' 'no regional cores metric' }
-    $spare = [int]$cores.limit - [int]$cores.currentValue
-    if ($spare -ge $VmCoresGreen) { return New-Status 'green' "$spare of $($cores.limit) vCPUs free" $spare }
-    if ($spare -ge $VmCoresYellow) { return New-Status 'yellow' "only $spare vCPUs free" $spare }
-    return New-Status 'red' "0 of $($cores.limit) vCPUs free - request quota" $spare
+    if (-not $json) { return $null }
+    try { return $json | ConvertFrom-Json } catch { return $null }
+}
+
+# green/yellow/red from a single vm list-usage entry (limit vs currentValue).
+function Get-CoreStatus {
+    param($Entry, [string]$What)
+    if (-not $Entry) { return New-Status 'unknown' "$What quota not reported in this region" }
+    $spare = [int]$Entry.limit - [int]$Entry.currentValue
+    if ($spare -ge $VmCoresGreen) { return New-Status 'green' "$spare of $($Entry.limit) $What vCPUs free" $spare }
+    if ($spare -ge $VmCoresYellow) { return New-Status 'yellow' "only $spare $What vCPUs free" $spare }
+    return New-Status 'red' "0 of $($Entry.limit) $What vCPUs free - request quota" $spare
+}
+
+# Map an Azure VM size to its quota family token (matches list-usage name.value),
+# e.g. Standard_D4s_v5 -> standardDSv5Family, Standard_F4s_v2 -> standardFSv2Family.
+function Convert-VmSizeToFamily {
+    param([string]$Size)
+    if ($Size -match '^Standard_([A-Za-z]+)\d+([a-z]*)_v(\d+)$') {
+        # Capture before the inner -match, which would clobber $Matches.
+        $series = $Matches[1].ToUpper()
+        $suffix = $Matches[2]
+        $ver = $Matches[3]
+        $s = if ($suffix -match 's') { 'S' } else { '' }
+        return "standard$series${s}v${ver}Family"
+    }
+    return $null
 }
 
 # --------------------------------------------------------------------------- #
@@ -240,6 +311,34 @@ function Get-AppServiceCapacity {
 }
 
 # --------------------------------------------------------------------------- #
+# Probe: resource-provider regional availability (for services without a simple
+# quota API - a region either offers the service or it doesn't).
+# --------------------------------------------------------------------------- #
+function Get-RegionAvailabilityMap {
+    param(
+        [string]$Namespace, [string]$ResourceType, [string[]]$Regions,
+        [string]$OfferedStatus = 'green', [string]$OfferedDetail = 'offered in this region'
+    )
+    $q = "resourceTypes[?resourceType=='$ResourceType'].locations | [0]"
+    $json = Invoke-Az @('provider', 'show', '--namespace', $Namespace, '--query', $q, '-o', 'json')
+    $map = [ordered]@{}
+    $locs = $null
+    if ($json) { try { $locs = $json | ConvertFrom-Json } catch { $locs = $null } }
+    if ($null -eq $locs) {
+        foreach ($r in $Regions) { $map[$r] = New-Status 'unknown' 'availability query failed' }
+        return $map
+    }
+    # RP locations are display names ("Brazil South"); normalize to region codes.
+    $offered = @{}
+    foreach ($l in @($locs)) { $offered[(("$l" -replace '\s', '').ToLower())] = $true }
+    foreach ($r in $Regions) {
+        if ($offered.ContainsKey($r.ToLower())) { $map[$r] = New-Status $OfferedStatus $OfferedDetail }
+        else { $map[$r] = New-Status 'red' 'not offered in this region' }
+    }
+    return $map
+}
+
+# --------------------------------------------------------------------------- #
 # Main
 # --------------------------------------------------------------------------- #
 $sub = Get-SubscriptionId
@@ -250,6 +349,10 @@ $services = [ordered]@{}
 
 # Azure OpenAI models
 if (-not $SkipOpenAi) {
+    if (-not $OpenAiModels -or $OpenAiModels.Count -eq 0) {
+        $OpenAiModels = Get-CatalogOpenAiModels
+        Write-Host "  derived OpenAI models from catalog: $($OpenAiModels -join ', ')" -ForegroundColor DarkGray
+    }
     # Per-region model/SKU deprecation lookup, fetched once and reused across
     # models. $null for a region means the query failed (deprecation unknown).
     $deprecationByRegion = @{}
@@ -302,11 +405,12 @@ if (-not $SkipOpenAi) {
                 }
             }
         }
-        $services["openai:$name"] = [ordered]@{
-            label    = "Azure OpenAI - $name"
+        $services["openai:${name}:${ver}:$($sku.ToLower())"] = [ordered]@{
+            label    = "Azure OpenAI - $name $ver [$sku]"
             provider = 'Microsoft.CognitiveServices/accounts/deployments'
             kind     = 'model-tpm'
             model    = $name
+            version  = $ver
             sku      = $sku
             byRegion = $regionMap
         }
@@ -328,18 +432,114 @@ if (-not $SkipAppService) {
     }
 }
 
-# Virtual Machines
+# Virtual Machines: total regional cores + per-catalog-VM-size family quota.
 if (-not $SkipVm) {
-    $regionMap = [ordered]@{}
+    # Catalog VM sizes offered in the deploy dropdowns (from the registry).
+    $vmSizes = @('Standard_D2s_v5', 'Standard_D4s_v5', 'Standard_D8s_v5', 'Standard_D16s_v5', 'Standard_D2s_v6', 'Standard_D4s_v6', 'Standard_D8s_v6', 'Standard_E4s_v5', 'Standard_E8s_v5', 'Standard_F4s_v2', 'Standard_F8s_v2')
+    $regPath = Join-Path $RepoRoot 'site/registry.json'
+    if (Test-Path $regPath) {
+        try {
+            $rv = @((Get-Content $regPath -Raw | ConvertFrom-Json).skus.vmSize.values | ForEach-Object { $_.value })
+            if ($rv.Count) { $vmSizes = $rv }
+        }
+        catch { }
+    }
+
+    $usageByRegion = @{}
     foreach ($r in $Regions) {
-        Write-Host "  VM cores $r ..." -ForegroundColor DarkGray
-        $regionMap[$r] = Get-VmCoresCapacity -Region $r
+        Write-Host "  VM usage $r ..." -ForegroundColor DarkGray
+        $usageByRegion[$r] = Get-VmUsage -Region $r
+    }
+
+    # Total regional vCPUs.
+    $coreMap = [ordered]@{}
+    foreach ($r in $Regions) {
+        $u = $usageByRegion[$r]
+        if (-not $u) { $coreMap[$r] = New-Status 'unknown' 'usage query failed'; continue }
+        $entry = $u | Where-Object { $_.name.value -eq 'cores' } | Select-Object -First 1
+        $coreMap[$r] = Get-CoreStatus -Entry $entry -What 'regional'
     }
     $services['vm'] = [ordered]@{
-        label    = 'Virtual Machine cores'
+        label    = 'Virtual Machine cores (regional)'
         provider = 'Microsoft.Compute/virtualMachines'
         kind     = 'compute'
-        byRegion = $regionMap
+        byRegion = $coreMap
+    }
+
+    # Per-size family quota, so a chosen VM size checks its own family limit.
+    foreach ($size in $vmSizes) {
+        $family = Convert-VmSizeToFamily -Size $size
+        if (-not $family) { continue }
+        $sizeMap = [ordered]@{}
+        foreach ($r in $Regions) {
+            $u = $usageByRegion[$r]
+            if (-not $u) { $sizeMap[$r] = New-Status 'unknown' 'usage query failed'; continue }
+            $fe = $u | Where-Object { "$($_.name.value)".ToLower() -eq $family.ToLower() } | Select-Object -First 1
+            $sizeMap[$r] = Get-CoreStatus -Entry $fe -What $size
+        }
+        $services["vm:$size"] = [ordered]@{
+            label    = "Virtual Machine - $size"
+            provider = 'Microsoft.Compute/virtualMachines'
+            kind     = 'compute'
+            family   = $family
+            byRegion = $sizeMap
+        }
+    }
+}
+
+# Container Apps (availability by region; Consumption has no blocking vCPU quota).
+if (-not $SkipContainerApps) {
+    Write-Host '  Container Apps availability ...' -ForegroundColor DarkGray
+    $services['containerapps'] = [ordered]@{
+        label    = 'Azure Container Apps'
+        provider = 'Microsoft.App/managedEnvironments'
+        kind     = 'availability'
+        byRegion = Get-RegionAvailabilityMap -Namespace 'Microsoft.App' -ResourceType 'managedEnvironments' -Regions $Regions
+    }
+}
+
+# Azure VMware Solution (offered in few regions; node quota is 0 by default, so
+# "offered" is yellow - request AVS host quota before deploying).
+if (-not $SkipAvs) {
+    Write-Host '  AVS availability ...' -ForegroundColor DarkGray
+    $services['avs'] = [ordered]@{
+        label    = 'Azure VMware Solution'
+        provider = 'Microsoft.AVS/privateClouds'
+        kind     = 'availability'
+        byRegion = Get-RegionAvailabilityMap -Namespace 'Microsoft.AVS' -ResourceType 'privateClouds' -Regions $Regions -OfferedStatus 'yellow' -OfferedDetail 'offered - request AVS host quota (0 by default)'
+    }
+}
+
+# Microsoft Fabric (capacity SKU availability; tenant entitlement is separate).
+if (-not $SkipFabric) {
+    Write-Host '  Fabric availability ...' -ForegroundColor DarkGray
+    $services['fabric'] = [ordered]@{
+        label    = 'Microsoft Fabric'
+        provider = 'Microsoft.Fabric/capacities'
+        kind     = 'availability'
+        byRegion = Get-RegionAvailabilityMap -Namespace 'Microsoft.Fabric' -ResourceType 'capacities' -Regions $Regions -OfferedDetail 'offered - tenant entitlement required'
+    }
+}
+
+# Power BI Dedicated (capacity SKU availability by region).
+if (-not $SkipPowerBi) {
+    Write-Host '  Power BI Dedicated availability ...' -ForegroundColor DarkGray
+    $services['powerbi'] = [ordered]@{
+        label    = 'Power BI Dedicated'
+        provider = 'Microsoft.PowerBIDedicated/capacities'
+        kind     = 'availability'
+        byRegion = Get-RegionAvailabilityMap -Namespace 'Microsoft.PowerBIDedicated' -ResourceType 'capacities' -Regions $Regions
+    }
+}
+
+# Microsoft Purview (account availability by region).
+if (-not $SkipPurview) {
+    Write-Host '  Purview availability ...' -ForegroundColor DarkGray
+    $services['purview'] = [ordered]@{
+        label    = 'Microsoft Purview'
+        provider = 'Microsoft.Purview/accounts'
+        kind     = 'availability'
+        byRegion = Get-RegionAvailabilityMap -Namespace 'Microsoft.Purview' -ResourceType 'accounts' -Regions $Regions
     }
 }
 

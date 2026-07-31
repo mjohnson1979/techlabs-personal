@@ -26,23 +26,88 @@
     return rb > ra ? b : a;
   }
   // Map a use-case quota requirement to a key in capacity.json's services map.
-  function capacityServiceKey(req) {
+  // `sel` (advanced-option overrides) can swap the model so the picker reflects
+  // capacity for the model the user actually chose.
+  function openAiRegModels(isEmbed) {
+    const reg = state.registry;
+    if (!reg || !reg.models) return [];
+    return ((isEmbed ? reg.models.embedding : reg.models.chat) || []).filter((m) => m.provider === "OpenAI");
+  }
+  function openAiDefaultVersion(model, isEmbed) {
+    const m = openAiRegModels(isEmbed).find((x) => x.name === model);
+    return m && m.version ? m.version : "";
+  }
+  function openAiDefaultSku(model, version, isEmbed) {
+    const models = openAiRegModels(isEmbed);
+    const m = models.find((x) => x.name === model && x.version === version) || models.find((x) => x.name === model);
+    return m && Array.isArray(m.skus) && m.skus.length ? m.skus[0] : "Standard";
+  }
+  // Capacity key for an OpenAI deployment: model + version + SKU, matching the
+  // keys Build-Capacity.ps1 emits. Falls back to any probe for the same model so
+  // a version/SKU we did not probe still yields a model-level signal.
+  function openAiKey(model, version, sku) {
+    const cap = state.capacity;
+    const full = "openai:" + model + ":" + (version || "") + ":" + String(sku || "").toLowerCase();
+    if (cap && cap.services) {
+      if (cap.services[full]) return full;
+      const prefix = "openai:" + model + ":";
+      const hit = Object.keys(cap.services).find((k) => k.indexOf(prefix) === 0);
+      if (hit) return hit;
+      // Legacy snapshots keyed OpenAI by model only; match until the next refresh.
+      const legacy = "openai:" + model;
+      if (cap.services[legacy]) return legacy;
+    }
+    return full;
+  }
+  function capacityServiceKey(req, sel) {
     if (!req) return null;
-    if (req.kind === "model-tpm" && req.model) return "openai:" + req.model;
+    if (req.kind === "model-tpm" && req.model) {
+      const isEmbed = /embed/i.test(req.model) || /embed/i.test(req.service || "");
+      let model = req.model;
+      let version = req.modelVersion || "";
+      let sku = req.sku || "Standard";
+      if (sel) {
+        const om = isEmbed ? sel.embeddingModel : (sel.chatModelName || sel.chatModel);
+        const ov = isEmbed ? sel.embeddingModelVersion : sel.chatModelVersion;
+        const os = isEmbed ? sel.embeddingModelSku : sel.chatModelSku;
+        if (om && om !== model) {
+          model = om;
+          version = ov || openAiDefaultVersion(model, isEmbed);
+          sku = os || openAiDefaultSku(model, version, isEmbed);
+        } else {
+          if (ov) version = ov;
+          if (os) sku = os;
+        }
+      }
+      return openAiKey(model, version, sku);
+    }
     const p = (req.provider || "").toLowerCase();
     if (p.indexOf("microsoft.web/serverfarms") === 0) return "appservice";
-    if (p.indexOf("microsoft.compute/virtualmachines") === 0) return "vm";
+    if (p.indexOf("microsoft.compute/virtualmachines") === 0) {
+      // A chosen VM size checks its own family quota (vm:<size>); else regional.
+      if (sel) {
+        const vmKey = Object.keys(sel).find((k) => /vm.?size/i.test(k));
+        const cap = state.capacity;
+        if (vmKey && sel[vmKey] && cap && cap.services && cap.services["vm:" + sel[vmKey]]) {
+          return "vm:" + sel[vmKey];
+        }
+      }
+      return "vm";
+    }
     if (p.indexOf("microsoft.app/managedenvironments") === 0) return "containerapps";
     if (p.indexOf("microsoft.avs/privateclouds") === 0) return "avs";
+    if (p.indexOf("microsoft.fabric/capacities") === 0) return "fabric";
+    if (p.indexOf("microsoft.powerbidedicated/capacities") === 0) return "powerbi";
+    if (p.indexOf("microsoft.purview/accounts") === 0) return "purview";
     return null;
   }
   // Roll up every quota requirement of a use case to a single status for one
   // region, plus a per-service breakdown.
-  function regionStatus(it, region) {
+  function regionStatus(it, region, sel) {
     const cap = state.capacity;
     const reqs = (it.quota && it.quota.requirements) || [];
     const services = reqs.map((req) => {
-      const key = capacityServiceKey(req);
+      const key = capacityServiceKey(req, sel);
       let status = "unknown";
       let detail = "No live capacity signal for this service.";
       if (cap && key && cap.services && cap.services[key] && cap.services[key].byRegion[region]) {
@@ -58,7 +123,17 @@
   }
   function capacityRegions() {
     const cap = state.capacity;
-    return cap && cap.regions && cap.regions.length ? cap.regions : ["centralus"];
+    const reg = state.registry;
+    const capRegions = cap && cap.regions && cap.regions.length ? cap.regions : null;
+    // The deployable region set is the registry's canonical list, so the picker
+    // stays complete even when the capacity snapshot is stale or partial.
+    // Capacity status overlays per region; regions absent from the snapshot show
+    // "unknown" rather than disappearing from the dropdown.
+    if (reg && Array.isArray(reg.regions) && reg.regions.length) {
+      const extra = (capRegions || []).filter((r) => reg.regions.indexOf(r) === -1);
+      return reg.regions.concat(extra);
+    }
+    return capRegions || ["centralus"];
   }
 
   function pad2(n) {
@@ -463,15 +538,18 @@
   }
 
   // Color-coded region picker reflecting live capacity for a use case.
-  function deployRegionField(it) {
+  function deployRegionField(it, getSel) {
+    const sel = () => (getSel ? getSel() : null);
     const regions = capacityRegions();
     const select = el("select", { class: "deploy-input deploy-region", id: "deploy-region" });
+    const options = {};
     let preferred = null;
     regions.forEach((r) => {
-      const rs = regionStatus(it, r);
+      const rs = regionStatus(it, r, sel());
       const opt = el("option", { value: r, text: `${r} \u2014 ${ROLL_LABEL[rs.status]}` });
       opt.setAttribute("data-status", rs.status);
       select.appendChild(opt);
+      options[r] = opt;
       if (!preferred && rs.status === "green") preferred = r;
     });
     if (preferred) select.value = preferred;
@@ -479,7 +557,7 @@
     const note = el("div", { class: "deploy-region-note" });
     function refresh() {
       const r = select.value;
-      const rs = regionStatus(it, r);
+      const rs = regionStatus(it, r, sel());
       select.setAttribute("data-status", rs.status);
       note.className = "deploy-region-note cap-note-" + rs.status;
       note.innerHTML = "";
@@ -514,7 +592,16 @@
     }
     select.addEventListener("change", refresh);
     refresh();
-    return { select: select, note: note };
+    // Re-label every option and the note for the current advanced selections.
+    function refreshAll() {
+      regions.forEach((r) => {
+        const rs = regionStatus(it, r, sel());
+        options[r].textContent = `${r} \u2014 ${ROLL_LABEL[rs.status]}`;
+        options[r].setAttribute("data-status", rs.status);
+      });
+      refresh();
+    }
+    return { select: select, note: note, refreshAll: refreshAll };
   }
 
   function deployBlock(it, estimateCtl) {
@@ -544,7 +631,10 @@
       placeholder: "rg-techlabs",
     });
 
-    const region = deployRegionField(it);
+    // Advanced-option overrides (param name -> value); shared with the region
+    // picker so capacity reflects the chosen model/SKU.
+    const advValues = {};
+    const region = deployRegionField(it, function () { return advValues; });
 
     const endInput = el("input", {
       type: "datetime-local",
@@ -623,7 +713,6 @@
     const params = (Array.isArray(it.parameters) ? it.parameters : []).filter(
       (p) => p.type === "string" || p.type === "int" || p.type === "bool"
     );
-    const advValues = {};
     const advOptsSummary = el("p", { class: "deploy-note deploy-advopts-summary" });
     const advOptsBtn = el("button", {
       class: "deploy-btn-secondary",
@@ -955,6 +1044,7 @@
           updateAdvSummary();
           syncEngine();
           scheduleEstimate();
+          if (region.refreshAll) region.refreshAll();
           window.TechlabsPanel.close();
         });
         cancelBtn.addEventListener("click", () => window.TechlabsPanel.close());

@@ -40,6 +40,19 @@
       "Connection pooling via managed identity tokens"
     ]
   },
+  "quota": {
+    "summary": "App Service compute is needed in the target region. Azure SQL (vCore serverless) has no blocking regional quota gate.",
+    "requirements": [
+      {
+        "service": "Azure App Service",
+        "provider": "Microsoft.Web/serverFarms",
+        "kind": "compute",
+        "sku": "B1 (dev) / P1v3 x3 (prod)",
+        "detail": "The App Service plan needs available compute (vCPU) quota for the chosen SKU in the region.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",

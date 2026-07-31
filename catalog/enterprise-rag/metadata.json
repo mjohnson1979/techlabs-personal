@@ -64,6 +64,7 @@
         "provider": "Microsoft.CognitiveServices/accounts/deployments",
         "kind": "model-tpm",
         "model": "gpt-5-mini",
+        "modelVersion": "2025-08-07",
         "sku": "GlobalStandard",
         "detail": "Chat model deployment requires tokens-per-minute (TPM) quota in the region. gpt-5-mini is offered on the GlobalStandard SKU.",
         "checkUrl": "https://learn.microsoft.com/azure/ai-services/openai/how-to/quota"
@@ -73,6 +74,7 @@
         "provider": "Microsoft.CognitiveServices/accounts/deployments",
         "kind": "model-tpm",
         "model": "text-embedding-3-small",
+        "modelVersion": "1",
         "sku": "Standard",
         "detail": "Embedding model deployment requires its own TPM quota in the region.",
         "checkUrl": "https://learn.microsoft.com/azure/ai-services/openai/how-to/quota"

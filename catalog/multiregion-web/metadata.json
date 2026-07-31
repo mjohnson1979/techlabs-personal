@@ -57,6 +57,19 @@
       "Front Door caching and connection offload at the edge"
     ]
   },
+  "quota": {
+    "summary": "App Service Premium v3 compute is needed in both the primary and secondary regions. Front Door and Cosmos have no blocking regional quota.",
+    "requirements": [
+      {
+        "service": "Azure App Service",
+        "provider": "Microsoft.Web/serverFarms",
+        "kind": "compute",
+        "sku": "P1v3 x3 (per region)",
+        "detail": "Each region's App Service plan needs available compute (vCPU) quota for the chosen SKU. Zone redundancy requires >= 3 instances.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",
