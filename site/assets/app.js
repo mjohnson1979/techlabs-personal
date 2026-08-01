@@ -1159,19 +1159,28 @@
         extra || null,
       ]);
 
-    const form = el("div", { class: "deploy-form" }, [
-      deployField("Region", region.select, region.note, "deploy-field-wide"),
-      deployField("Environment", envSelect),
-      deployField("IaC engine", engineSelect, engineHint),
-      deployField("Resource group", rgInput, null, "deploy-field-wide"),
+    region.select.setAttribute("aria-label", "Region");
+    const regionBox = el("fieldset", { class: "deploy-group deploy-region-box" }, [
+      el("legend", { class: "deploy-legend", text: "Region" }),
+      el("div", { class: "deploy-field" }, [region.select, region.note]),
     ]);
+    const envBox = el("fieldset", { class: "deploy-group" }, [
+      el("legend", { class: "deploy-legend", text: "Environment" }),
+      el("div", { class: "deploy-grid" }, [
+        deployField("Type", envSelect),
+        deployField("IaC engine", engineSelect, engineHint),
+        deployField("Resource group", rgInput),
+        deployField("End time (auto-cleanup)", endInput, el("p", { class: "deploy-note", text: lifeNote })),
+      ]),
+    ]);
+    const topRow = el("div", { class: "deploy-toprow" }, [regionBox, envBox]);
 
-    const advancedForm = el("div", { class: "deploy-form deploy-advanced-form" }, [
-      params.length ? el("div", { class: "deploy-advopts" }, [advOptsBtn, advOptsSummary]) : null,
-      el("label", { class: "deploy-label", for: "deploy-end", text: "End time (auto-cleanup)" }),
-      endInput,
-      el("p", { class: "deploy-note", text: lifeNote }),
-    ]);
+    // Advanced options sit below the deploy button; the CLI snippet comes last.
+    const advSection = el(
+      "div",
+      { class: "deploy-advanced-section" },
+      params.length ? [advOptsBtn, advOptsSummary] : []
+    );
 
     function manualSnippet(engine) {
       const env = envSelect.value;
@@ -1225,7 +1234,7 @@
     region.select.addEventListener("change", scheduleEstimate);
     syncEngine();
     const manual = el("details", { class: "deploy-manual", hidden: "" }, [manualSummary, manualCode]);
-    advancedForm.hidden = true;
+    advSection.hidden = true;
 
     const footer = el("div", { class: "deploy-foot" }, [btn, status]);
     const card = el("div", { class: "modal-section modal-card deploy-card" });
@@ -1241,7 +1250,7 @@
     let expanded = false;
     function toggleDeploy() {
       expanded = !expanded;
-      advancedForm.hidden = !expanded;
+      advSection.hidden = !expanded;
       manual.hidden = !expanded;
       header.setAttribute("aria-expanded", String(expanded));
       card.classList.toggle("is-open", expanded);
@@ -1254,7 +1263,7 @@
       }
     });
 
-    [header, form, advancedForm, footer, manual].forEach((n) => card.appendChild(n));
+    [header, topRow, footer, advSection, manual].forEach((n) => card.appendChild(n));
     return card;
   }
 
