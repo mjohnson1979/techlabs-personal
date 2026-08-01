@@ -29,8 +29,8 @@ _ITEM = {
 
 
 def _has_seed_models() -> bool:
-    reg = api._registry()
-    return bool((reg.get("models") or {}).get("chat"))
+    # Skip guards must match the validator, which only accepts OpenAI models.
+    return _seed_triplet() is not None
 
 
 def _seed_triplet() -> tuple[str, str, str] | None:

@@ -143,7 +143,10 @@ async def estimate(cost: dict[str, Any], region: str, parameter_values: dict[str
             if sq_param and sq_map and pv.get(sq_param) not in (None, ""):
                 units = sq_map.get(str(pv[sq_param]))
                 if units is not None:
-                    qty = float(units) * int(comp.get("hoursPerInstance") or 730)
+                    try:
+                        qty = float(units) * int(comp.get("hoursPerInstance") or 730)
+                    except (TypeError, ValueError):
+                        pass
 
             # Zone redundancy forces a minimum instance floor (App Service ZR
             # needs >= 3 instances), so toggling it on reprices even when the
@@ -180,7 +183,10 @@ async def estimate(cost: dict[str, Any], region: str, parameter_values: dict[str
             if unit is not None and spm_param and spm_map and pv.get(spm_param) not in (None, ""):
                 mult = spm_map.get(str(pv[spm_param]))
                 if mult is not None:
-                    unit = unit * float(mult)
+                    try:
+                        unit = unit * float(mult)
+                    except (TypeError, ValueError):
+                        pass
 
             monthly = round(unit * qty, 2) if unit is not None else None
             if monthly is None:

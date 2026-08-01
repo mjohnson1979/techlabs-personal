@@ -564,6 +564,8 @@
     }
     ["mousedown", "focus"].forEach((ev) => select.addEventListener(ev, () => applyLabels(true)));
     ["change", "blur"].forEach((ev) => select.addEventListener(ev, () => applyLabels(false)));
+    // Escape closes the list without a change/blur, so reset labels too.
+    select.addEventListener("keydown", (e) => { if (e.key === "Escape") applyLabels(false); });
 
     const note = el("div", { class: "deploy-region-note" });
     function refresh() {
@@ -886,8 +888,9 @@
 
         // Group each parameter under the Azure service it configures, so the
         // panel reads as a set of per-service boxes instead of one long list.
-        // Priced params map via their cost component's serviceName; the rest use
-        // name heuristics, falling back to "General".
+        // Name heuristics run first for consistent friendly labels; params they
+        // don't classify fall back to the cost component's serviceName, else
+        // "General".
         const costSvc = {};
         ((it.cost && it.cost.components) || []).forEach((c) => {
           ["skuParam", "instanceParam", "zoneRedundantParam", "skuQuantityParam", "skuPriceMultiplierParam"].forEach((k) => {
