@@ -135,6 +135,15 @@ async def estimate(cost: dict[str, Any], region: str, parameter_values: dict[str
                 except ValueError:
                     pass
 
+            # Zone redundancy forces a minimum instance floor (App Service ZR
+            # needs >= 3 instances), so toggling it on reprices even when the
+            # instance count itself wasn't raised.
+            zr_param = comp.get("zoneRedundantParam")
+            if zr_param and str(pv.get(zr_param, "")).strip().lower() in ("true", "1", "yes", "on"):
+                floor = int(comp.get("zoneRedundantMinInstances") or 3) * int(comp.get("hoursPerInstance") or 730)
+                if qty < floor:
+                    qty = floor
+
             sku_param = comp.get("skuParam")
             sku_override = pv.get(sku_param) if sku_param else None
             same_region = region == base_region

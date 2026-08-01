@@ -68,6 +68,7 @@
         "quantityPerMonth": 2190,
         "skuParam": "appServiceSku",
         "instanceParam": "appCapacity",
+        "zoneRedundantParam": "appZoneRedundant",
         "hoursPerInstance": 730,
         "notes": "3 instances x 730 hours."
       },

@@ -149,7 +149,7 @@ function Get-PricedCost {
         }
         # Carry the price-match + override-annotation fields so the backend can
         # re-price live (POST /api/estimate) for the selected region/parameters.
-        foreach ($f in @('armSkuName', 'productNameContains', 'meterNameContains', 'meterNameExact', 'skuNameContains', 'skuParam', 'instanceParam', 'hoursPerInstance')) {
+        foreach ($f in @('armSkuName', 'productNameContains', 'meterNameContains', 'meterNameExact', 'skuNameContains', 'skuParam', 'instanceParam', 'hoursPerInstance', 'zoneRedundantParam', 'zoneRedundantMinInstances')) {
             if ($null -ne $c.$f) { $entry[$f] = $c.$f }
         }
         $components.Add($entry)

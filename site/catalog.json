@@ -1,7 +1,7 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-07-31T19:38:59Z",
+    "generated":  "2026-08-01T00:21:05Z",
     "count":  22,
     "items":  [
                   {
@@ -164,7 +164,8 @@
                                                           "productNameContains":  "Linux",
                                                           "skuParam":  "appServiceSku",
                                                           "instanceParam":  "appCapacity",
-                                                          "hoursPerInstance":  730
+                                                          "hoursPerInstance":  730,
+                                                          "zoneRedundantParam":  "appZoneRedundant"
                                                       },
                                                       {
                                                           "name":  "Azure OpenAI gpt-5-mini input tokens",
@@ -218,7 +219,7 @@
                                    "usageMonthly":  28.00,
                                    "totalMonthly":  367.45,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -427,7 +428,7 @@
                                    "usageMonthly":  5.00,
                                    "totalMonthly":  548.48,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -578,7 +579,10 @@
                                                           "unitPrice":  3.829,
                                                           "monthly":  5590.34,
                                                           "meterNameContains":  "Premium Unit",
-                                                          "skuNameContains":  "Premium"
+                                                          "skuNameContains":  "Premium",
+                                                          "skuParam":  "apimSku",
+                                                          "instanceParam":  "apimCapacity",
+                                                          "hoursPerInstance":  730
                                                       },
                                                       {
                                                           "name":  "Backend App Service Plan (P1v3 x3)",
@@ -590,14 +594,15 @@
                                                           "unitPrice":  0.155,
                                                           "monthly":  339.45,
                                                           "armSkuName":  "P1v3",
-                                                          "meterNameContains":  "P1 v3"
+                                                          "meterNameContains":  "P1 v3",
+                                                          "skuParam":  "backendSku"
                                                       }
                                                   ],
                                    "fixedMonthly":  5929.79,
                                    "usageMonthly":  0,
                                    "totalMonthly":  5929.79,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -796,7 +801,7 @@
                                    "usageMonthly":  319.74,
                                    "totalMonthly":  319.74,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -949,6 +954,7 @@
                                                           "productNameContains":  "Dsv5 Series Windows",
                                                           "meterNameContains":  "D4s v5",
                                                           "meterNameExact":  "D4s v5",
+                                                          "skuParam":  "sessionHostVmSize",
                                                           "instanceParam":  "sessionHostCount",
                                                           "hoursPerInstance":  730
                                                       },
@@ -982,7 +988,7 @@
                                    "usageMonthly":  1448.40,
                                    "totalMonthly":  1448.40,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -1259,7 +1265,7 @@
                                    "usageMonthly":  16610.67,
                                    "totalMonthly":  16610.67,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -1432,7 +1438,9 @@
                                                           "notes":  "2 warm replicas x 1 vCPU x 730h x 3600s. Active rate (resource-allocated).",
                                                           "unitPrice":  0.00002,
                                                           "monthly":  126.14,
-                                                          "meterNameContains":  "vCPU Active Usage"
+                                                          "meterNameContains":  "vCPU Active Usage",
+                                                          "instanceParam":  "minReplicas",
+                                                          "hoursPerInstance":  2628000
                                                       },
                                                       {
                                                           "name":  "Container Apps memory (active)",
@@ -1443,7 +1451,9 @@
                                                           "notes":  "2 warm replicas x 2 GiB x 730h x 3600s.",
                                                           "unitPrice":  0.00000,
                                                           "monthly":  31.54,
-                                                          "meterNameContains":  "Memory Active Usage"
+                                                          "meterNameContains":  "Memory Active Usage",
+                                                          "instanceParam":  "minReplicas",
+                                                          "hoursPerInstance":  5256000
                                                       },
                                                       {
                                                           "name":  "Log Analytics analytics logs ingestion",
@@ -1462,7 +1472,7 @@
                                    "usageMonthly":  169.18,
                                    "totalMonthly":  169.18,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -1654,7 +1664,7 @@
                                    "usageMonthly":  1139.22,
                                    "totalMonthly":  1139.22,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -1859,7 +1869,9 @@
                                                           "unitPrice":  0.336,
                                                           "monthly":  735.84,
                                                           "meterNameContains":  "Standard",
-                                                          "skuNameContains":  "Standard"
+                                                          "skuNameContains":  "Standard",
+                                                          "instanceParam":  "searchReplicas",
+                                                          "hoursPerInstance":  730
                                                       },
                                                       {
                                                           "name":  "App Service Plan (P1v3 x3)",
@@ -1871,7 +1883,8 @@
                                                           "unitPrice":  0.155,
                                                           "monthly":  339.45,
                                                           "armSkuName":  "P1v3",
-                                                          "meterNameContains":  "P1 v3"
+                                                          "meterNameContains":  "P1 v3",
+                                                          "skuParam":  "appServiceSku"
                                                       },
                                                       {
                                                           "name":  "API Management (Premium)",
@@ -1890,7 +1903,7 @@
                                    "usageMonthly":  42.50,
                                    "totalMonthly":  3912.96,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -2149,7 +2162,7 @@
                                    "usageMonthly":  16.50,
                                    "totalMonthly":  1997.72,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -2290,9 +2303,32 @@
                                       "bicep"
                                   ],
                       "hasProd":  true,
-                      "componentCount":  0,
-                      "costProfile":  null,
-                      "cost":  null,
+                      "componentCount":  1,
+                      "costProfile":  "prod",
+                      "cost":  {
+                                   "currency":  "USD",
+                                   "region":  "eastus",
+                                   "profile":  "prod",
+                                   "components":  [
+                                                      {
+                                                          "name":  "Fabric capacity (F2, 2 CU)",
+                                                          "billing":  "fixed",
+                                                          "serviceName":  "Microsoft Fabric",
+                                                          "unitOfMeasure":  "1 Hour",
+                                                          "quantityPerMonth":  1460,
+                                                          "notes":  "F2 = 2 capacity units x 730 hours at the per-CU-hour rate. Larger F-SKUs scale the CU count (F4=4, F64=64, ...); pause the capacity to stop compute billing.",
+                                                          "unitPrice":  0.18,
+                                                          "monthly":  262.80,
+                                                          "productNameContains":  "Fabric Capacity",
+                                                          "meterNameContains":  "Capacity Usage CU"
+                                                      }
+                                                  ],
+                                   "fixedMonthly":  262.80,
+                                   "usageMonthly":  0,
+                                   "totalMonthly":  262.80,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-08-01"
+                               },
                       "parameters":  [
                                          {
                                              "name":  "prefix",
@@ -2455,7 +2491,7 @@
                                    "usageMonthly":  16.00,
                                    "totalMonthly":  1338.76,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -2624,7 +2660,7 @@
                                    "usageMonthly":  0.05,
                                    "totalMonthly":  677.13,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -2790,7 +2826,7 @@
                                    "usageMonthly":  16.28,
                                    "totalMonthly":  752.12,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -2942,7 +2978,7 @@
                                    "usageMonthly":  13.56,
                                    "totalMonthly":  13.56,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -3100,7 +3136,7 @@
                                    "usageMonthly":  163.93,
                                    "totalMonthly":  841.01,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -3281,7 +3317,8 @@
                                                           "meterNameContains":  "P1 v3",
                                                           "skuParam":  "appServiceSku",
                                                           "instanceParam":  "appServiceCapacity",
-                                                          "hoursPerInstance":  730
+                                                          "hoursPerInstance":  730,
+                                                          "zoneRedundantParam":  "zoneRedundant"
                                                       },
                                                       {
                                                           "name":  "App Service Plan secondary (P1v3 x3)",
@@ -3296,7 +3333,8 @@
                                                           "meterNameContains":  "P1 v3",
                                                           "skuParam":  "appServiceSku",
                                                           "instanceParam":  "appServiceCapacity",
-                                                          "hoursPerInstance":  730
+                                                          "hoursPerInstance":  730,
+                                                          "zoneRedundantParam":  "zoneRedundant"
                                                       },
                                                       {
                                                           "name":  "Cosmos DB multi-region (provisioned RU)",
@@ -3314,7 +3352,7 @@
                                    "usageMonthly":  116.80,
                                    "totalMonthly":  795.70,
                                    "complete":  false,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -3452,9 +3490,34 @@
                                       "bicep"
                                   ],
                       "hasProd":  true,
-                      "componentCount":  0,
-                      "costProfile":  null,
-                      "cost":  null,
+                      "componentCount":  1,
+                      "costProfile":  "prod",
+                      "cost":  {
+                                   "currency":  "USD",
+                                   "region":  "eastus",
+                                   "profile":  "prod",
+                                   "components":  [
+                                                      {
+                                                          "name":  "Power BI Embedded A1 node",
+                                                          "billing":  "fixed",
+                                                          "serviceName":  "Power BI Embedded",
+                                                          "unitOfMeasure":  "1 Hour",
+                                                          "quantityPerMonth":  730,
+                                                          "notes":  "One A1 node x 730 hours. A higher A-SKU or more capacity units rescales this; pause the capacity to stop billing.",
+                                                          "unitPrice":  1.0081,
+                                                          "monthly":  735.91,
+                                                          "meterNameContains":  "A1 Node",
+                                                          "skuParam":  "skuName",
+                                                          "instanceParam":  "skuCapacity",
+                                                          "hoursPerInstance":  730
+                                                      }
+                                                  ],
+                                   "fixedMonthly":  735.91,
+                                   "usageMonthly":  0,
+                                   "totalMonthly":  735.91,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-08-01"
+                               },
                       "parameters":  [
                                          {
                                              "name":  "prefix",
@@ -3553,9 +3616,42 @@
                                       "bicep"
                                   ],
                       "hasProd":  true,
-                      "componentCount":  0,
-                      "costProfile":  null,
-                      "cost":  null,
+                      "componentCount":  2,
+                      "costProfile":  "prod",
+                      "cost":  {
+                                   "currency":  "USD",
+                                   "region":  "eastus",
+                                   "profile":  "prod",
+                                   "components":  [
+                                                      {
+                                                          "name":  "Purview Data Map (1 capacity unit, always on)",
+                                                          "billing":  "fixed",
+                                                          "serviceName":  "Azure Purview",
+                                                          "unitOfMeasure":  "1 Hour",
+                                                          "quantityPerMonth":  730,
+                                                          "notes":  "One always-on Data Map capacity unit x 730 hours.",
+                                                          "unitPrice":  0.411,
+                                                          "monthly":  300.03,
+                                                          "meterNameContains":  "Standard Capacity Unit"
+                                                      },
+                                                      {
+                                                          "name":  "Purview scanning (vCore)",
+                                                          "billing":  "usage",
+                                                          "serviceName":  "Azure Purview",
+                                                          "unitOfMeasure":  "1 Hour",
+                                                          "quantityPerMonth":  40,
+                                                          "notes":  "Assumes ~40 scanning vCore-hours/month; scales with scan frequency and source size.",
+                                                          "unitPrice":  0.63,
+                                                          "monthly":  25.20,
+                                                          "meterNameContains":  "Standard vCore"
+                                                      }
+                                                  ],
+                                   "fixedMonthly":  300.03,
+                                   "usageMonthly":  25.20,
+                                   "totalMonthly":  325.23,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-08-01"
+                               },
                       "parameters":  [
                                          {
                                              "name":  "prefix",
@@ -3688,7 +3784,8 @@
                                                           "meterNameContains":  "P1 v3",
                                                           "skuParam":  "appServiceSku",
                                                           "instanceParam":  "appServiceCapacity",
-                                                          "hoursPerInstance":  730
+                                                          "hoursPerInstance":  730,
+                                                          "zoneRedundantParam":  "zoneRedundant"
                                                       },
                                                       {
                                                           "name":  "Application Gateway WAF_v2",
@@ -3743,7 +3840,7 @@
                                    "usageMonthly":  21.02,
                                    "totalMonthly":  860.11,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -3906,7 +4003,8 @@
                                                           "productNameContains":  "Linux",
                                                           "skuParam":  "appServiceSku",
                                                           "instanceParam":  "appCapacity",
-                                                          "hoursPerInstance":  730
+                                                          "hoursPerInstance":  730,
+                                                          "zoneRedundantParam":  "appZoneRedundant"
                                                       },
                                                       {
                                                           "name":  "Azure SQL Database (GP Gen5 2 vCore)",
@@ -3937,7 +4035,7 @@
                                    "usageMonthly":  0.50,
                                    "totalMonthly":  562.19,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {
@@ -4093,7 +4191,8 @@
                                                           "productNameContains":  "Linux",
                                                           "skuParam":  "sku",
                                                           "instanceParam":  "capacity",
-                                                          "hoursPerInstance":  730
+                                                          "hoursPerInstance":  730,
+                                                          "zoneRedundantParam":  "zoneRedundant"
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
@@ -4123,7 +4222,7 @@
                                    "usageMonthly":  12.00,
                                    "totalMonthly":  351.45,
                                    "complete":  true,
-                                   "pricedAt":  "2026-07-31"
+                                   "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
                                          {

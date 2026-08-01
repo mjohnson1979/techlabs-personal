@@ -65,6 +65,8 @@
         "meterNameContains": "vCPU Active Usage",
         "unitOfMeasure": "1 Second",
         "quantityPerMonth": 5256000,
+        "instanceParam": "minReplicas",
+        "hoursPerInstance": 2628000,
         "notes": "2 warm replicas x 1 vCPU x 730h x 3600s. Active rate (resource-allocated)."
       },
       {
@@ -74,6 +76,8 @@
         "meterNameContains": "Memory Active Usage",
         "unitOfMeasure": "1 GiB Second",
         "quantityPerMonth": 10512000,
+        "instanceParam": "minReplicas",
+        "hoursPerInstance": 5256000,
         "notes": "2 warm replicas x 2 GiB x 730h x 3600s."
       },
       {

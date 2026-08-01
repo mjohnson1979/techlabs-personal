@@ -49,5 +49,30 @@
         "detail": "Confirm Purview account creation is enabled for your subscription in the chosen region."
       }
     ]
+  },
+  "cost": {
+    "currency": "USD",
+    "region": "eastus",
+    "profile": "prod",
+    "components": [
+      {
+        "name": "Purview Data Map (1 capacity unit, always on)",
+        "billing": "fixed",
+        "serviceName": "Azure Purview",
+        "meterNameContains": "Standard Capacity Unit",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 730,
+        "notes": "One always-on Data Map capacity unit x 730 hours."
+      },
+      {
+        "name": "Purview scanning (vCore)",
+        "billing": "usage",
+        "serviceName": "Azure Purview",
+        "meterNameContains": "Standard vCore",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 40,
+        "notes": "Assumes ~40 scanning vCore-hours/month; scales with scan frequency and source size."
+      }
+    ]
   }
 }

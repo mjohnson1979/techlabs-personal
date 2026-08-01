@@ -66,6 +66,9 @@
         "meterNameContains": "Premium Unit",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 1460,
+        "skuParam": "apimSku",
+        "instanceParam": "apimCapacity",
+        "hoursPerInstance": 730,
         "notes": "Two Premium units x 730 hours."
       },
       {
@@ -76,6 +79,7 @@
         "meterNameContains": "P1 v3",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "backendSku",
         "notes": "Three backend instances."
       }
     ]
