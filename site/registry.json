@@ -1,562 +1,3793 @@
-﻿{
-    "generated":  "2026-07-30T19:33:41Z",
-    "regions":  [
-                    "eastus",
-                    "eastus2",
-                    "centralus",
-                    "northcentralus",
-                    "southcentralus",
-                    "westus",
-                    "westus2",
-                    "westus3",
-                    "westcentralus",
-                    "canadacentral",
-                    "canadaeast",
-                    "brazilsouth",
-                    "brazilsoutheast",
-                    "mexicocentral"
-                ],
-    "models":  {
-                   "chat":  [
-                                {
-                                    "provider":  "OpenAI",
-                                    "name":  "gpt-5",
-                                    "version":  "2025-08-07",
-                                    "skus":  [
-                                                 "GlobalStandard",
-                                                 "DataZoneStandard"
-                                             ],
-                                    "regions":  "all",
-                                    "lifecycle":  "GenerallyAvailable",
-                                    "kind":  "chat"
-                                },
-                                {
-                                    "provider":  "OpenAI",
-                                    "name":  "gpt-5-mini",
-                                    "version":  "2025-08-07",
-                                    "skus":  [
-                                                 "GlobalStandard",
-                                                 "DataZoneStandard"
-                                             ],
-                                    "regions":  "all",
-                                    "lifecycle":  "GenerallyAvailable",
-                                    "kind":  "chat"
-                                },
-                                {
-                                    "provider":  "OpenAI",
-                                    "name":  "gpt-5-nano",
-                                    "version":  "2025-08-07",
-                                    "skus":  [
-                                                 "GlobalStandard",
-                                                 "DataZoneStandard"
-                                             ],
-                                    "regions":  "all",
-                                    "lifecycle":  "GenerallyAvailable",
-                                    "kind":  "chat"
-                                },
-                                {
-                                    "provider":  "OpenAI",
-                                    "name":  "gpt-4.1",
-                                    "version":  "2025-04-14",
-                                    "skus":  [
-                                                 "GlobalStandard",
-                                                 "DataZoneStandard",
-                                                 "Standard"
-                                             ],
-                                    "regions":  "all",
-                                    "lifecycle":  "GenerallyAvailable",
-                                    "kind":  "chat"
-                                },
-                                {
-                                    "provider":  "OpenAI",
-                                    "name":  "gpt-4o",
-                                    "version":  "2024-11-20",
-                                    "skus":  [
-                                                 "GlobalStandard",
-                                                 "DataZoneStandard",
-                                                 "Standard"
-                                             ],
-                                    "regions":  "all",
-                                    "lifecycle":  "GenerallyAvailable",
-                                    "kind":  "chat"
-                                },
-                                {
-                                    "provider":  "OpenAI",
-                                    "name":  "gpt-4o-mini",
-                                    "version":  "2024-07-18",
-                                    "skus":  [
-                                                 "GlobalStandard",
-                                                 "DataZoneStandard",
-                                                 "Standard"
-                                             ],
-                                    "regions":  "all",
-                                    "lifecycle":  "GenerallyAvailable",
-                                    "kind":  "chat"
-                                }
-                            ],
-                   "embedding":  [
-                                     {
-                                         "provider":  "OpenAI",
-                                         "name":  "text-embedding-3-large",
-                                         "version":  "1",
-                                         "skus":  [
-                                                      "Standard",
-                                                      "GlobalStandard"
-                                                  ],
-                                         "regions":  "all",
-                                         "lifecycle":  "GenerallyAvailable",
-                                         "kind":  "embedding"
-                                     },
-                                     {
-                                         "provider":  "OpenAI",
-                                         "name":  "text-embedding-3-small",
-                                         "version":  "1",
-                                         "skus":  [
-                                                      "Standard",
-                                                      "GlobalStandard"
-                                                  ],
-                                         "regions":  "all",
-                                         "lifecycle":  "GenerallyAvailable",
-                                         "kind":  "embedding"
-                                     },
-                                     {
-                                         "provider":  "OpenAI",
-                                         "name":  "text-embedding-ada-002",
-                                         "version":  "2",
-                                         "skus":  [
-                                                      "Standard"
-                                                  ],
-                                         "regions":  "all",
-                                         "lifecycle":  "GenerallyAvailable",
-                                         "kind":  "embedding"
-                                     }
-                                 ]
-               },
-    "skus":  {
-                 "appServiceSku":  {
-                                       "label":  "App Service plan",
-                                       "source":  "curated",
-                                       "values":  [
-                                                      {
-                                                          "value":  "B1",
-                                                          "regions":  "all"
-                                                      },
-                                                      {
-                                                          "value":  "S1",
-                                                          "regions":  "all"
-                                                      },
-                                                      {
-                                                          "value":  "P0v3",
-                                                          "regions":  "all"
-                                                      },
-                                                      {
-                                                          "value":  "P1v3",
-                                                          "regions":  "all"
-                                                      },
-                                                      {
-                                                          "value":  "P2v3",
-                                                          "regions":  "all"
-                                                      },
-                                                      {
-                                                          "value":  "P3v3",
-                                                          "regions":  "all"
-                                                      }
-                                                  ]
-                                   },
-                 "apimSku":  {
-                                 "label":  "API Management",
-                                 "source":  "curated",
-                                 "values":  [
-                                                {
-                                                    "value":  "Developer",
-                                                    "regions":  "all"
-                                                },
-                                                {
-                                                    "value":  "Basic",
-                                                    "regions":  "all"
-                                                },
-                                                {
-                                                    "value":  "Standard",
-                                                    "regions":  "all"
-                                                },
-                                                {
-                                                    "value":  "Premium",
-                                                    "regions":  "all"
-                                                },
-                                                {
-                                                    "value":  "BasicV2",
-                                                    "regions":  "all"
-                                                },
-                                                {
-                                                    "value":  "StandardV2",
-                                                    "regions":  "all"
-                                                }
-                                            ]
-                             },
-                 "searchSku":  {
-                                   "label":  "AI Search",
-                                   "source":  "curated",
-                                   "values":  [
-                                                  {
-                                                      "value":  "free",
-                                                      "regions":  "all"
-                                                  },
-                                                  {
-                                                      "value":  "basic",
-                                                      "regions":  "all"
-                                                  },
-                                                  {
-                                                      "value":  "standard",
-                                                      "regions":  "all"
-                                                  },
-                                                  {
-                                                      "value":  "standard2",
-                                                      "regions":  "all"
-                                                  },
-                                                  {
-                                                      "value":  "standard3",
-                                                      "regions":  "all"
-                                                  }
-                                              ]
-                               },
-                 "serviceBusSku":  {
-                                       "label":  "Service Bus",
-                                       "source":  "curated",
-                                       "values":  [
-                                                      {
-                                                          "value":  "Basic",
-                                                          "regions":  "all"
-                                                      },
-                                                      {
-                                                          "value":  "Standard",
-                                                          "regions":  "all"
-                                                      },
-                                                      {
-                                                          "value":  "Premium",
-                                                          "regions":  "all"
-                                                      }
-                                                  ]
-                                   },
-                 "eventHubsSku":  {
-                                      "label":  "Event Hubs",
-                                      "source":  "curated",
-                                      "values":  [
-                                                     {
-                                                         "value":  "Basic",
-                                                         "regions":  "all"
-                                                     },
-                                                     {
-                                                         "value":  "Standard",
-                                                         "regions":  "all"
-                                                     },
-                                                     {
-                                                         "value":  "Premium",
-                                                         "regions":  "all"
-                                                     }
-                                                 ]
-                                  },
-                 "functionPlanSku":  {
-                                         "label":  "Functions Elastic Premium",
-                                         "source":  "curated",
-                                         "values":  [
-                                                        {
-                                                            "value":  "EP1",
-                                                            "regions":  "all"
-                                                        },
-                                                        {
-                                                            "value":  "EP2",
-                                                            "regions":  "all"
-                                                        },
-                                                        {
-                                                            "value":  "EP3",
-                                                            "regions":  "all"
-                                                        }
-                                                    ]
-                                     },
-                 "workflowSku":  {
-                                     "label":  "Logic Apps Standard",
-                                     "source":  "curated",
-                                     "values":  [
-                                                    {
-                                                        "value":  "WS1",
-                                                        "regions":  "all"
-                                                    },
-                                                    {
-                                                        "value":  "WS2",
-                                                        "regions":  "all"
-                                                    },
-                                                    {
-                                                        "value":  "WS3",
-                                                        "regions":  "all"
-                                                    }
-                                                ]
-                                 },
-                 "databricksSku":  {
-                                       "label":  "Azure Databricks",
-                                       "source":  "curated",
-                                       "values":  [
-                                                      {
-                                                          "value":  "standard",
-                                                          "regions":  "all"
-                                                      },
-                                                      {
-                                                          "value":  "premium",
-                                                          "regions":  "all"
-                                                      }
-                                                  ]
-                                   },
-                 "frontDoorSku":  {
-                                      "label":  "Front Door",
-                                      "source":  "curated",
-                                      "values":  [
-                                                     {
-                                                         "value":  "Standard_AzureFrontDoor",
-                                                         "regions":  "all"
-                                                     },
-                                                     {
-                                                         "value":  "Premium_AzureFrontDoor",
-                                                         "regions":  "all"
-                                                     }
-                                                 ]
-                                  },
-                 "linuxFxVersion":  {
-                                        "label":  "Linux runtime stack",
-                                        "source":  "curated",
-                                        "values":  [
-                                                       {
-                                                           "value":  "DOTNETCORE|8.0",
-                                                           "regions":  "all"
-                                                       },
-                                                       {
-                                                           "value":  "DOTNETCORE|9.0",
-                                                           "regions":  "all"
-                                                       },
-                                                       {
-                                                           "value":  "NODE|20-lts",
-                                                           "regions":  "all"
-                                                       },
-                                                       {
-                                                           "value":  "NODE|22-lts",
-                                                           "regions":  "all"
-                                                       },
-                                                       {
-                                                           "value":  "PYTHON|3.12",
-                                                           "regions":  "all"
-                                                       },
-                                                       {
-                                                           "value":  "PYTHON|3.13",
-                                                           "regions":  "all"
-                                                       },
-                                                       {
-                                                           "value":  "JAVA|21-java21",
-                                                           "regions":  "all"
-                                                       }
-                                                   ]
-                                    },
-                 "kubernetesVersion":  {
-                                           "label":  "Kubernetes version",
-                                           "source":  "curated",
-                                           "values":  [
-                                                          {
-                                                              "value":  "1.28",
-                                                              "regions":  "all"
-                                                          },
-                                                          {
-                                                              "value":  "1.29",
-                                                              "regions":  "all"
-                                                          },
-                                                          {
-                                                              "value":  "1.30",
-                                                              "regions":  "all"
-                                                          },
-                                                          {
-                                                              "value":  "1.31",
-                                                              "regions":  "all"
-                                                          },
-                                                          {
-                                                              "value":  "1.32",
-                                                              "regions":  "all"
-                                                          }
-                                                      ]
-                                       },
-                 "avsSkuName":  {
-                                    "label":  "AVS host SKU",
-                                    "source":  "curated",
-                                    "values":  [
-                                                   {
-                                                       "value":  "AV36",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "AV36P",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "AV52",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "AV64",
-                                                       "regions":  "all"
-                                                   }
-                                               ]
-                                },
-                 "sqlTier":  {
-                                 "label":  "Azure SQL tier (vCore)",
-                                 "source":  "curated",
-                                 "values":  [
-                                                {
-                                                    "value":  "GeneralPurpose",
-                                                    "regions":  "all"
-                                                },
-                                                {
-                                                    "value":  "BusinessCritical",
-                                                    "regions":  "all"
-                                                },
-                                                {
-                                                    "value":  "Hyperscale",
-                                                    "regions":  "all"
-                                                }
-                                            ]
-                             },
-                 "sqlSkuName":  {
-                                    "label":  "Azure SQL SKU",
-                                    "source":  "curated",
-                                    "values":  [
-                                                   {
-                                                       "value":  "GP_S_Gen5_1",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "GP_S_Gen5_2",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "GP_S_Gen5_4",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "GP_S_Gen5_8",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "GP_Gen5_2",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "GP_Gen5_4",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "GP_Gen5_8",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "BC_Gen5_2",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "BC_Gen5_4",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "BC_Gen5_8",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "HS_Gen5_2",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "HS_Gen5_4",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "HS_Gen5_8",
-                                                       "regions":  "all"
-                                                   }
-                                               ]
-                                },
-                 "vmSize":  {
-                                "label":  "Virtual machine size",
-                                "source":  "curated",
-                                "values":  [
-                                               {
-                                                   "value":  "Standard_D2s_v5",
-                                                   "regions":  "all"
-                                               },
-                                               {
-                                                   "value":  "Standard_D4s_v5",
-                                                   "regions":  "all"
-                                               },
-                                               {
-                                                   "value":  "Standard_D8s_v5",
-                                                   "regions":  "all"
-                                               },
-                                               {
-                                                   "value":  "Standard_D16s_v5",
-                                                   "regions":  "all"
-                                               },
-                                               {
-                                                   "value":  "Standard_D2s_v6",
-                                                   "regions":  "all"
-                                               },
-                                               {
-                                                   "value":  "Standard_D4s_v6",
-                                                   "regions":  "all"
-                                               },
-                                               {
-                                                   "value":  "Standard_D8s_v6",
-                                                   "regions":  "all"
-                                               },
-                                               {
-                                                   "value":  "Standard_E4s_v5",
-                                                   "regions":  "all"
-                                               },
-                                               {
-                                                   "value":  "Standard_E8s_v5",
-                                                   "regions":  "all"
-                                               },
-                                               {
-                                                   "value":  "Standard_F4s_v2",
-                                                   "regions":  "all"
-                                               },
-                                               {
-                                                   "value":  "Standard_F8s_v2",
-                                                   "regions":  "all"
-                                               }
-                                           ]
-                            },
-                 "backendSku":  {
-                                    "label":  "App Service plan",
-                                    "source":  "curated",
-                                    "alias":  "appServiceSku",
-                                    "values":  [
-                                                   {
-                                                       "value":  "B1",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "S1",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "P0v3",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "P1v3",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "P2v3",
-                                                       "regions":  "all"
-                                                   },
-                                                   {
-                                                       "value":  "P3v3",
-                                                       "regions":  "all"
-                                                   }
-                                               ]
-                                }
-             }
+{
+  "generated": "2026-08-01T06:04:51Z",
+  "regions": [
+    "eastus",
+    "eastus2",
+    "centralus",
+    "northcentralus",
+    "southcentralus",
+    "westus",
+    "westus2",
+    "westus3",
+    "westcentralus",
+    "canadacentral",
+    "canadaeast",
+    "brazilsouth",
+    "brazilsoutheast",
+    "mexicocentral"
+  ],
+  "models": {
+    "chat": [
+      {
+        "provider": "Alibaba",
+        "name": "qwen3-32b",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-fable-5",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-haiku-4-5",
+        "version": "2",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-haiku-4-5",
+        "version": "20251001",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2",
+          "westcentralus"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-opus-4-1",
+        "version": "20250805",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2",
+          "westcentralus"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-opus-4-5",
+        "version": "20251101",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2",
+          "westcentralus"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-opus-4-6",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-opus-4-7",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-opus-4-8",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-opus-4-8",
+        "version": "2",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-opus-5",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-opus-5",
+        "version": "2",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-sonnet-4-5",
+        "version": "20250929",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2",
+          "westcentralus"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-sonnet-4-6",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-sonnet-5",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-sonnet-5",
+        "version": "2",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Black Forest Labs",
+        "name": "FLUX-1.1-pro",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Black Forest Labs",
+        "name": "FLUX.1-Kontext-pro",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Black Forest Labs",
+        "name": "FLUX.2-pro",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Cohere",
+        "name": "cohere-command-a",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Cohere",
+        "name": "Cohere-command-a-plus-05-2026",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "Cohere",
+        "name": "Cohere-rerank-v4.0-fast",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Cohere",
+        "name": "Cohere-rerank-v4.0-pro",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "DeepSeek",
+        "name": "DeepSeek-V3.2",
+        "version": "1",
+        "skus": [
+          "DataZoneProvisionedManaged",
+          "GlobalProvisionedManaged",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "DeepSeek",
+        "name": "DeepSeek-V3.2-Speciale",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "DeepSeek",
+        "name": "DeepSeek-V4-Flash",
+        "version": "2026-04-23",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "DeepSeek",
+        "name": "DeepSeek-V4-Pro",
+        "version": "2026-04-23",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Meta",
+        "name": "Llama-3.3-70B-Instruct",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Meta",
+        "name": "Llama-3.3-70B-Instruct",
+        "version": "2",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Meta",
+        "name": "Llama-3.3-70B-Instruct",
+        "version": "3",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Meta",
+        "name": "Llama-3.3-70B-Instruct",
+        "version": "4",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Meta",
+        "name": "Llama-3.3-70B-Instruct",
+        "version": "5",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Meta",
+        "name": "Llama-3.3-70B-Instruct",
+        "version": "9",
+        "skus": [
+          "DataZoneProvisionedManaged",
+          "GlobalProvisionedManaged",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Meta",
+        "name": "Llama-4-Maverick-17B-128E-Instruct-FP8",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Meta",
+        "name": "Llama-4-Scout-17B-16E-Instruct",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "MAI-Image-2.5",
+        "version": "2026-06-02",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus",
+          "westcentralus",
+          "westus"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "MAI-Image-2.5-Flash",
+        "version": "2026-06-02",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus",
+          "westcentralus",
+          "westus"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "MAI-Image-2.5-Pro",
+        "version": "2026-06-19",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus",
+          "westcentralus",
+          "westus"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "Phi-4",
+        "version": "2",
+        "skus": [
+          "Arc",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "Phi-4",
+        "version": "3",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "Phi-4",
+        "version": "4",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "Phi-4",
+        "version": "5",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "Phi-4",
+        "version": "6",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "Phi-4",
+        "version": "7",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "Phi-4-mini-instruct",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "Phi-4-mini-reasoning",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "Phi-4-multimodal-instruct",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "Phi-4-reasoning",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Mistral AI",
+        "name": "Codestral-2501",
+        "version": "2",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Mistral AI",
+        "name": "Ministral-3B",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Mistral AI",
+        "name": "mistral-document-ai-2512",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Mistral AI",
+        "name": "Mistral-large",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Mistral AI",
+        "name": "Mistral-Large-3",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Mistral AI",
+        "name": "mistral-medium-2505",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Mistral AI",
+        "name": "mistral-medium-3-5",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "Mistral AI",
+        "name": "mistral-ocr-4-0",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "Mistral AI",
+        "name": "mistral-small-2503",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "MoonshotAI",
+        "name": "Kimi-K2.5",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "MoonshotAI",
+        "name": "Kimi-K2.6",
+        "version": "2026-04-20",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "MoonshotAI",
+        "name": "Kimi-K2.7-Code",
+        "version": "2026-06-12",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-4o-mini-transcribe",
+        "version": "2025-03-20",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-4o-mini-transcribe",
+        "version": "2025-12-15",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-4o-mini-tts",
+        "version": "2025-03-20",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-4o-mini-tts",
+        "version": "2025-12-15",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-4o-transcribe",
+        "version": "2025-03-20",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-4o-transcribe-diarize",
+        "version": "2025-10-15",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5",
+        "version": "2025-08-07",
+        "skus": [
+          "DataZoneBatch",
+          "DataZoneProvisionedManaged",
+          "DataZoneStandard",
+          "GlobalBatch",
+          "GlobalProvisionedManaged",
+          "GlobalStandard",
+          "ProvisionedManaged"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5-codex",
+        "version": "2025-09-15",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5-mini",
+        "version": "2025-08-07",
+        "skus": [
+          "DataZoneProvisionedManaged",
+          "DataZoneStandard",
+          "GlobalProvisionedManaged",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5-nano",
+        "version": "2025-08-07",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5-pro",
+        "version": "2025-10-06",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.1",
+        "version": "2025-11-13",
+        "skus": [
+          "DataZoneBatch",
+          "DataZoneProvisionedManaged",
+          "DataZoneStandard",
+          "GlobalBatch",
+          "GlobalProvisionedManaged",
+          "GlobalStandard",
+          "ProvisionedManaged",
+          "Standard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.1-codex",
+        "version": "2025-11-13",
+        "skus": [
+          "DataZoneProvisionedManaged",
+          "GlobalProvisionedManaged",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.1-codex-max",
+        "version": "2025-12-04",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.1-codex-mini",
+        "version": "2025-11-13",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.2",
+        "version": "2025-12-11",
+        "skus": [
+          "DataZoneProvisionedManaged",
+          "DataZoneStandard",
+          "GlobalProvisionedManaged",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.2-codex",
+        "version": "2026-01-14",
+        "skus": [
+          "GlobalProvisionedManaged",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.3-codex",
+        "version": "2026-02-24",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalProvisionedManaged",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.4",
+        "version": "2026-03-05",
+        "skus": [
+          "DataZoneBatch",
+          "DataZoneProvisionedManaged",
+          "DataZoneStandard",
+          "GlobalBatch",
+          "GlobalProvisionedManaged",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.4-mini",
+        "version": "2026-03-17",
+        "skus": [
+          "DataZoneBatch",
+          "DataZoneProvisionedManaged",
+          "DataZoneStandard",
+          "GlobalBatch",
+          "GlobalProvisionedManaged",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.4-nano",
+        "version": "2026-03-17",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.4-pro",
+        "version": "2026-03-05",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.5",
+        "version": "2026-04-24",
+        "skus": [
+          "DataZoneProvisionedManaged",
+          "DataZoneStandard",
+          "GlobalProvisionedManaged",
+          "GlobalStandard",
+          "ProvisionedManaged"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.6-luna",
+        "version": "2026-07-09",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.6-sol",
+        "version": "2026-07-09",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-5.6-terra",
+        "version": "2026-07-09",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalProvisionedManaged",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-audio",
+        "version": "2025-08-28",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-audio-1.5",
+        "version": "2026-02-23",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-audio-mini",
+        "version": "2025-10-06",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-audio-mini",
+        "version": "2025-12-15",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-chat-latest",
+        "version": "2026-05-05",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-chat-latest",
+        "version": "2026-05-28",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2",
+          "southcentralus",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-chat-latest",
+        "version": "2026-06-24",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2",
+          "southcentralus",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-image-1",
+        "version": "2025-04-15",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-image-1-mini",
+        "version": "2025-10-06",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-image-1.5",
+        "version": "2025-12-16",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-image-2",
+        "version": "2026-04-21",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-live-transcribe",
+        "version": "2026-07-28",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-realtime",
+        "version": "2025-08-28",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-realtime-1.5",
+        "version": "2026-02-23",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-realtime-2",
+        "version": "2026-05-06",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-realtime-2.1",
+        "version": "2026-07-07",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-realtime-2.1-mini",
+        "version": "2026-07-07",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-realtime-mini",
+        "version": "2025-10-06",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-realtime-mini",
+        "version": "2025-12-15",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-realtime-translate",
+        "version": "2026-05-06",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-realtime-whisper",
+        "version": "2026-05-06",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-transcribe",
+        "version": "2026-07-28",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "canadacentral",
+          "centralus",
+          "eastus2"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "model-router",
+        "version": "2025-05-19",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "model-router",
+        "version": "2025-08-07",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "model-router",
+        "version": "2025-11-18",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "o3",
+        "version": "2025-04-16",
+        "skus": [
+          "DataZoneBatch",
+          "DataZoneProvisionedManaged",
+          "DataZoneStandard",
+          "GlobalBatch",
+          "GlobalProvisionedManaged",
+          "GlobalStandard",
+          "ProvisionedManaged"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "o3-deep-research",
+        "version": "2025-06-26",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "westus"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "sora-2",
+        "version": "2025-12-08",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "tts",
+        "version": "001",
+        "skus": [
+          "Standard"
+        ],
+        "regions": [
+          "northcentralus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "tts-hd",
+        "version": "001",
+        "skus": [
+          "Standard"
+        ],
+        "regions": [
+          "northcentralus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "whisper",
+        "version": "001",
+        "skus": [],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI-OSS",
+        "name": "gpt-oss-120b",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI-OSS",
+        "name": "gpt-oss-20b",
+        "version": "11",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "xAI",
+        "name": "grok-4-1-fast-non-reasoning",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "xAI",
+        "name": "grok-4-1-fast-reasoning",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "xAI",
+        "name": "grok-4-20-non-reasoning",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "xAI",
+        "name": "grok-4-20-reasoning",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "xAI",
+        "name": "grok-4.3",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      }
+    ],
+    "embedding": [
+      {
+        "provider": "Cohere",
+        "name": "Cohere-embed-v3-english",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "embedding"
+      },
+      {
+        "provider": "Cohere",
+        "name": "Cohere-embed-v3-multilingual",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "embedding"
+      },
+      {
+        "provider": "Cohere",
+        "name": "embed-v-4-0",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "embedding"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "text-embedding-3-large",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard",
+          "Standard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "embedding"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "text-embedding-3-small",
+        "version": "1",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard",
+          "Standard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "embedding"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "text-embedding-ada-002",
+        "version": "1",
+        "skus": [
+          "Standard"
+        ],
+        "regions": [
+          "eastus",
+          "southcentralus"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "embedding"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "text-embedding-ada-002",
+        "version": "2",
+        "skus": [
+          "DataZoneStandard",
+          "GlobalStandard",
+          "Standard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "embedding"
+      }
+    ]
+  },
+  "skus": {
+    "appServiceSku": {
+      "label": "App Service plan",
+      "source": "curated",
+      "values": [
+        {
+          "value": "B1",
+          "regions": "all"
+        },
+        {
+          "value": "S1",
+          "regions": "all"
+        },
+        {
+          "value": "P0v3",
+          "regions": "all"
+        },
+        {
+          "value": "P1v3",
+          "regions": "all"
+        },
+        {
+          "value": "P2v3",
+          "regions": "all"
+        },
+        {
+          "value": "P3v3",
+          "regions": "all"
+        }
+      ]
+    },
+    "apimSku": {
+      "label": "API Management",
+      "source": "curated",
+      "values": [
+        {
+          "value": "Developer",
+          "regions": "all"
+        },
+        {
+          "value": "Basic",
+          "regions": "all"
+        },
+        {
+          "value": "Standard",
+          "regions": "all"
+        },
+        {
+          "value": "Premium",
+          "regions": "all"
+        },
+        {
+          "value": "BasicV2",
+          "regions": "all"
+        },
+        {
+          "value": "StandardV2",
+          "regions": "all"
+        }
+      ]
+    },
+    "searchSku": {
+      "label": "AI Search",
+      "source": "curated",
+      "values": [
+        {
+          "value": "free",
+          "regions": "all"
+        },
+        {
+          "value": "basic",
+          "regions": "all"
+        },
+        {
+          "value": "standard",
+          "regions": "all"
+        },
+        {
+          "value": "standard2",
+          "regions": "all"
+        },
+        {
+          "value": "standard3",
+          "regions": "all"
+        }
+      ]
+    },
+    "serviceBusSku": {
+      "label": "Service Bus",
+      "source": "curated",
+      "values": [
+        {
+          "value": "Basic",
+          "regions": "all"
+        },
+        {
+          "value": "Standard",
+          "regions": "all"
+        },
+        {
+          "value": "Premium",
+          "regions": "all"
+        }
+      ]
+    },
+    "eventHubsSku": {
+      "label": "Event Hubs",
+      "source": "curated",
+      "values": [
+        {
+          "value": "Basic",
+          "regions": "all"
+        },
+        {
+          "value": "Standard",
+          "regions": "all"
+        },
+        {
+          "value": "Premium",
+          "regions": "all"
+        }
+      ]
+    },
+    "functionPlanSku": {
+      "label": "Functions Elastic Premium",
+      "source": "curated",
+      "values": [
+        {
+          "value": "EP1",
+          "regions": "all"
+        },
+        {
+          "value": "EP2",
+          "regions": "all"
+        },
+        {
+          "value": "EP3",
+          "regions": "all"
+        }
+      ]
+    },
+    "workflowSku": {
+      "label": "Logic Apps Standard",
+      "source": "curated",
+      "values": [
+        {
+          "value": "WS1",
+          "regions": "all"
+        },
+        {
+          "value": "WS2",
+          "regions": "all"
+        },
+        {
+          "value": "WS3",
+          "regions": "all"
+        }
+      ]
+    },
+    "databricksSku": {
+      "label": "Azure Databricks",
+      "source": "curated",
+      "values": [
+        {
+          "value": "standard",
+          "regions": "all"
+        },
+        {
+          "value": "premium",
+          "regions": "all"
+        }
+      ]
+    },
+    "frontDoorSku": {
+      "label": "Front Door",
+      "source": "curated",
+      "values": [
+        {
+          "value": "Standard_AzureFrontDoor",
+          "regions": "all"
+        },
+        {
+          "value": "Premium_AzureFrontDoor",
+          "regions": "all"
+        }
+      ]
+    },
+    "linuxFxVersion": {
+      "label": "Linux runtime stack",
+      "source": "curated",
+      "values": [
+        {
+          "value": "DOTNETCORE|8.0",
+          "regions": "all"
+        },
+        {
+          "value": "DOTNETCORE|9.0",
+          "regions": "all"
+        },
+        {
+          "value": "NODE|20-lts",
+          "regions": "all"
+        },
+        {
+          "value": "NODE|22-lts",
+          "regions": "all"
+        },
+        {
+          "value": "PYTHON|3.12",
+          "regions": "all"
+        },
+        {
+          "value": "PYTHON|3.13",
+          "regions": "all"
+        },
+        {
+          "value": "JAVA|21-java21",
+          "regions": "all"
+        }
+      ]
+    },
+    "kubernetesVersion": {
+      "label": "Kubernetes version",
+      "source": "live",
+      "values": [
+        {
+          "value": "1.31",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "1.32",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "1.33",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "1.34",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "1.35",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "1.36",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        }
+      ]
+    },
+    "avsSkuName": {
+      "label": "AVS host SKU",
+      "source": "curated",
+      "values": [
+        {
+          "value": "AV36",
+          "regions": "all"
+        },
+        {
+          "value": "AV36P",
+          "regions": "all"
+        },
+        {
+          "value": "AV52",
+          "regions": "all"
+        },
+        {
+          "value": "AV64",
+          "regions": "all"
+        }
+      ]
+    },
+    "sqlTier": {
+      "label": "Azure SQL tier (vCore)",
+      "source": "curated",
+      "values": [
+        {
+          "value": "GeneralPurpose",
+          "regions": "all"
+        },
+        {
+          "value": "BusinessCritical",
+          "regions": "all"
+        },
+        {
+          "value": "Hyperscale",
+          "regions": "all"
+        }
+      ]
+    },
+    "sqlSkuName": {
+      "label": "Azure SQL SKU",
+      "source": "curated",
+      "values": [
+        {
+          "value": "GP_S_Gen5_1",
+          "regions": "all"
+        },
+        {
+          "value": "GP_S_Gen5_2",
+          "regions": "all"
+        },
+        {
+          "value": "GP_S_Gen5_4",
+          "regions": "all"
+        },
+        {
+          "value": "GP_S_Gen5_8",
+          "regions": "all"
+        },
+        {
+          "value": "GP_Gen5_2",
+          "regions": "all"
+        },
+        {
+          "value": "GP_Gen5_4",
+          "regions": "all"
+        },
+        {
+          "value": "GP_Gen5_8",
+          "regions": "all"
+        },
+        {
+          "value": "BC_Gen5_2",
+          "regions": "all"
+        },
+        {
+          "value": "BC_Gen5_4",
+          "regions": "all"
+        },
+        {
+          "value": "BC_Gen5_8",
+          "regions": "all"
+        },
+        {
+          "value": "HS_Gen5_2",
+          "regions": "all"
+        },
+        {
+          "value": "HS_Gen5_4",
+          "regions": "all"
+        },
+        {
+          "value": "HS_Gen5_8",
+          "regions": "all"
+        }
+      ]
+    },
+    "vmSize": {
+      "label": "Virtual machine size",
+      "source": "live",
+      "values": [
+        {
+          "value": "Standard_D2s_v5",
+          "regions": [
+            "canadacentral",
+            "canadaeast",
+            "mexicocentral",
+            "westcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_D4s_v5",
+          "regions": [
+            "canadacentral",
+            "canadaeast",
+            "mexicocentral",
+            "westcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_D8s_v5",
+          "regions": [
+            "canadacentral",
+            "canadaeast",
+            "mexicocentral",
+            "westcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_D16s_v5",
+          "regions": [
+            "canadacentral",
+            "canadaeast",
+            "mexicocentral",
+            "westcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_D2s_v6",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_D4s_v6",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_D8s_v6",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_E4s_v5",
+          "regions": [
+            "canadacentral",
+            "canadaeast",
+            "mexicocentral",
+            "westcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_E8s_v5",
+          "regions": [
+            "canadacentral",
+            "canadaeast",
+            "mexicocentral",
+            "westcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_F4s_v2",
+          "regions": "all"
+        },
+        {
+          "value": "Standard_F8s_v2",
+          "regions": "all"
+        }
+      ]
+    },
+    "storageSku": {
+      "label": "Storage account",
+      "source": "live",
+      "values": [
+        {
+          "value": "Premium_LRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Premium_ZRS",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "southcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "PremiumV2_LRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "PremiumV2_ZRS",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "southcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_GRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_GZRS",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "southcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_LRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_RAGRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_RAGZRS",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "southcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_ZRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "StandardV2_GRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "StandardV2_GZRS",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "southcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "StandardV2_LRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "StandardV2_ZRS",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "southcentralus",
+            "westus2",
+            "westus3"
+          ]
+        }
+      ]
+    },
+    "backendSku": {
+      "label": "App Service plan",
+      "source": "curated",
+      "alias": "appServiceSku",
+      "values": [
+        {
+          "value": "B1",
+          "regions": "all"
+        },
+        {
+          "value": "S1",
+          "regions": "all"
+        },
+        {
+          "value": "P0v3",
+          "regions": "all"
+        },
+        {
+          "value": "P1v3",
+          "regions": "all"
+        },
+        {
+          "value": "P2v3",
+          "regions": "all"
+        },
+        {
+          "value": "P3v3",
+          "regions": "all"
+        }
+      ]
+    },
+    "lakeStorageSku": {
+      "label": "Storage account",
+      "source": "live",
+      "alias": "storageSku",
+      "values": [
+        {
+          "value": "Premium_LRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Premium_ZRS",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "southcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "PremiumV2_LRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "PremiumV2_ZRS",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "southcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_GRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_GZRS",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "southcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_LRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_RAGRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_RAGZRS",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "southcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "Standard_ZRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "StandardV2_GRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "StandardV2_GZRS",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "southcentralus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "StandardV2_LRS",
+          "regions": [
+            "brazilsouth",
+            "brazilsoutheast",
+            "canadacentral",
+            "canadaeast",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "northcentralus",
+            "southcentralus",
+            "westcentralus",
+            "westus",
+            "westus2",
+            "westus3"
+          ]
+        },
+        {
+          "value": "StandardV2_ZRS",
+          "regions": [
+            "brazilsouth",
+            "canadacentral",
+            "centralus",
+            "eastus",
+            "eastus2",
+            "mexicocentral",
+            "southcentralus",
+            "westus2",
+            "westus3"
+          ]
+        }
+      ]
+    }
+  }
 }
