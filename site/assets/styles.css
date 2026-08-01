@@ -1558,14 +1558,18 @@ details[open] > .collapse-summary .collapse-caret {
   margin: 0;
 }
 .lifecycle-summary::after {
-  content: "\25B6";
+  content: "";
   margin-left: auto;
-  font-size: 0.7rem;
-  color: var(--muted);
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
   transition: transform 0.15s ease;
 }
 .lifecycle-block[open] .lifecycle-summary::after {
-  transform: rotate(90deg);
+  transform: rotate(-135deg);
 }
 .lifecycle-count {
   display: inline-flex;
