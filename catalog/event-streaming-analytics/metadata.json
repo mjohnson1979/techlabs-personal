@@ -68,7 +68,9 @@
         "meterNameContains": "Processing Unit",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 1460,
-        "notes": "Two processing units x 730 hours."
+        "instanceParam": "throughputUnits",
+        "hoursPerInstance": 730,
+        "notes": "Processing units x 730 hours (Premium bills per PU)."
       },
       {
         "name": "Stream Analytics (6 SU)",
@@ -77,17 +79,19 @@
         "meterNameContains": "Standard Streaming Unit",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 4380,
-        "notes": "Six streaming units x 730 hours."
+        "instanceParam": "streamingUnits",
+        "hoursPerInstance": 730,
+        "notes": "Streaming units x 730 hours."
       },
       {
         "name": "Functions (Elastic Premium EP1)",
         "billing": "fixed",
         "serviceName": "Functions",
-        "skuNameContains": "EP1",
-        "meterNameContains": "vCPU Duration",
+        "skuNameContains": "Premium",
+        "meterNameContains": "Premium vCPU Duration",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 730,
-        "notes": "One always-ready EP1 instance."
+        "notes": "One always-ready EP1 vCPU x 730 hours. Larger EP SKUs add vCPUs/memory."
       },
       {
         "name": "Cosmos DB (serverless RU)",

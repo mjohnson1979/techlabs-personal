@@ -1,7 +1,7 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-08-01T00:21:05Z",
+    "generated":  "2026-08-01T14:28:38Z",
     "count":  22,
     "items":  [
                   {
@@ -2104,11 +2104,13 @@
                                                           "serviceName":  "Event Hubs",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  1460,
-                                                          "notes":  "Two processing units x 730 hours.",
+                                                          "notes":  "Processing units x 730 hours (Premium bills per PU).",
                                                           "unitPrice":  1.027,
                                                           "monthly":  1499.42,
                                                           "meterNameContains":  "Processing Unit",
-                                                          "skuNameContains":  "Premium"
+                                                          "skuNameContains":  "Premium",
+                                                          "instanceParam":  "throughputUnits",
+                                                          "hoursPerInstance":  730
                                                       },
                                                       {
                                                           "name":  "Stream Analytics (6 SU)",
@@ -2116,10 +2118,12 @@
                                                           "serviceName":  "Stream Analytics",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  4380,
-                                                          "notes":  "Six streaming units x 730 hours.",
+                                                          "notes":  "Streaming units x 730 hours.",
                                                           "unitPrice":  0.11,
                                                           "monthly":  481.80,
-                                                          "meterNameContains":  "Standard Streaming Unit"
+                                                          "meterNameContains":  "Standard Streaming Unit",
+                                                          "instanceParam":  "streamingUnits",
+                                                          "hoursPerInstance":  730
                                                       },
                                                       {
                                                           "name":  "Functions (Elastic Premium EP1)",
@@ -2127,11 +2131,11 @@
                                                           "serviceName":  "Functions",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
-                                                          "notes":  "One always-ready EP1 instance.",
-                                                          "unitPrice":  null,
-                                                          "monthly":  null,
-                                                          "meterNameContains":  "vCPU Duration",
-                                                          "skuNameContains":  "EP1"
+                                                          "notes":  "One always-ready EP1 vCPU x 730 hours. Larger EP SKUs add vCPUs/memory.",
+                                                          "unitPrice":  0.173,
+                                                          "monthly":  126.29,
+                                                          "meterNameContains":  "Premium vCPU Duration",
+                                                          "skuNameContains":  "Premium"
                                                       },
                                                       {
                                                           "name":  "Cosmos DB (serverless RU)",
@@ -2158,10 +2162,10 @@
                                                           "skuNameContains":  "ZRS"
                                                       }
                                                   ],
-                                   "fixedMonthly":  1981.22,
+                                   "fixedMonthly":  2107.51,
                                    "usageMonthly":  16.50,
-                                   "totalMonthly":  1997.72,
-                                   "complete":  false,
+                                   "totalMonthly":  2124.01,
+                                   "complete":  true,
                                    "pricedAt":  "2026-08-01"
                                },
                       "parameters":  [
