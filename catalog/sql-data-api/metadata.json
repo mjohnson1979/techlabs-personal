@@ -68,19 +68,25 @@
         "quantityPerMonth": 2190,
         "skuParam": "appServiceSku",
         "instanceParam": "appCapacity",
+        "zoneRedundantParam": "appZoneRedundant",
         "hoursPerInstance": 730,
         "notes": "3 instances x 730 hours."
       },
       {
-        "name": "Azure SQL Database (GP Gen5 2 vCore)",
+        "name": "Azure SQL Database (GP Gen5, vCores)",
         "billing": "fixed",
         "serviceName": "SQL Database",
-        "skuNameContains": "1 vCore",
         "productNameContains": "General Purpose - Compute Gen5",
         "meterNameContains": "vCore",
+        "meterNameExact": "vCore",
         "unitOfMeasure": "1 Hour",
-        "quantityPerMonth": 1460,
-        "notes": "2 vCores x 730 hours, General Purpose provisioned. Priced per vCore-hour."
+        "quantityPerMonth": 730,
+        "skuQuantityParam": "sqlSkuName",
+        "skuQuantityMap": { "GP_S_Gen5_1": 1, "GP_S_Gen5_2": 2, "GP_S_Gen5_4": 4, "GP_S_Gen5_8": 8, "GP_Gen5_2": 2, "GP_Gen5_4": 4, "GP_Gen5_8": 8, "BC_Gen5_2": 2, "BC_Gen5_4": 4, "BC_Gen5_8": 8, "HS_Gen5_2": 2, "HS_Gen5_4": 4, "HS_Gen5_8": 8 },
+        "skuPriceMultiplierParam": "sqlSkuName",
+        "skuPriceMultiplierMap": { "BC_Gen5_2": 2, "BC_Gen5_4": 2, "BC_Gen5_8": 2 },
+        "hoursPerInstance": 730,
+        "notes": "vCore-hours at the GP Gen5 rate (default GP serverless 1 vCore, always-on upper bound). Business Critical is ~2x per vCore; serverless auto-pauses so real cost is lower."
       },
       {
         "name": "Application Insights ingestion",

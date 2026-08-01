@@ -45,5 +45,22 @@
         "detail": "Your tenant/subscription must be allowed to create Fabric capacities in the target region."
       }
     ]
+  },
+  "cost": {
+    "currency": "USD",
+    "region": "eastus",
+    "profile": "prod",
+    "components": [
+      {
+        "name": "Fabric capacity (F2, 2 CU)",
+        "billing": "fixed",
+        "serviceName": "Microsoft Fabric",
+        "productNameContains": "Fabric Capacity",
+        "meterNameContains": "Capacity Usage CU",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 1460,
+        "notes": "F2 = 2 capacity units x 730 hours at the per-CU-hour rate. Larger F-SKUs scale the CU count (F4=4, F64=64, ...); pause the capacity to stop compute billing."
+      }
+    ]
   }
 }

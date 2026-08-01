@@ -29,18 +29,32 @@ _ITEM = {
 
 
 def _has_seed_models() -> bool:
+    # Skip guards must match the validator, which only accepts OpenAI models.
+    return _seed_triplet() is not None
+
+
+def _seed_triplet() -> tuple[str, str, str] | None:
+    """A valid OpenAI (name, version, sku) from the current registry, or None."""
     reg = api._registry()
-    return bool((reg.get("models") or {}).get("chat"))
+    for m in (reg.get("models") or {}).get("chat") or []:
+        if m.get("provider") != "OpenAI":
+            continue
+        name, ver, skus = m.get("name"), m.get("version"), m.get("skus") or []
+        if name and ver and skus:
+            return name, ver, skus[0]
+    return None
 
 
 def test_valid_model_triplet_passes() -> None:
-    if not _has_seed_models():
-        pytest.skip("registry.json has no models")
+    trip = _seed_triplet()
+    if trip is None:
+        pytest.skip("registry.json has no usable models")
+    name, ver, sku = trip
     out = api._validate_parameter_values(
-        {"chatModelName": "gpt-4o", "chatModelVersion": "2024-11-20", "chatModelSku": "Standard"},
+        {"chatModelName": name, "chatModelVersion": ver, "chatModelSku": sku},
         _ITEM,
     )
-    assert out["chatModelName"] == "gpt-4o"
+    assert out["chatModelName"] == name
 
 
 def test_unknown_model_rejected() -> None:
@@ -52,20 +66,24 @@ def test_unknown_model_rejected() -> None:
 
 
 def test_invalid_version_rejected() -> None:
-    if not _has_seed_models():
-        pytest.skip("registry.json has no models")
+    trip = _seed_triplet()
+    if trip is None:
+        pytest.skip("registry.json has no usable models")
+    name, _, _ = trip
     with pytest.raises(HTTPException):
         api._validate_parameter_values(
-            {"chatModelName": "gpt-4o", "chatModelVersion": "1999-01-01"}, _ITEM
+            {"chatModelName": name, "chatModelVersion": "1999-01-01"}, _ITEM
         )
 
 
 def test_invalid_sku_rejected() -> None:
-    if not _has_seed_models():
-        pytest.skip("registry.json has no models")
+    trip = _seed_triplet()
+    if trip is None:
+        pytest.skip("registry.json has no usable models")
+    name, ver, _ = trip
     with pytest.raises(HTTPException):
         api._validate_parameter_values(
-            {"chatModelName": "gpt-4o", "chatModelVersion": "2024-11-20", "chatModelSku": "NoSuchSku"},
+            {"chatModelName": name, "chatModelVersion": ver, "chatModelSku": "NoSuchSku"},
             _ITEM,
         )
 

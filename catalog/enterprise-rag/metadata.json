@@ -131,6 +131,8 @@
         "meterNameContains": "Standard",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "instanceParam": "searchReplicas",
+        "hoursPerInstance": 730,
         "notes": "Three replicas x 730 hours."
       },
       {
@@ -141,6 +143,7 @@
         "meterNameContains": "P1 v3",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "appServiceSku",
         "notes": "Three orchestrator instances."
       },
       {

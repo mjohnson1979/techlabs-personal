@@ -80,6 +80,7 @@
         "meterNameExact": "D4s v5",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 3650,
+        "skuParam": "sessionHostVmSize",
         "instanceParam": "sessionHostCount",
         "hoursPerInstance": 730,
         "notes": "Example assumes 5 session hosts x 730 hours. A scaling plan reduces this materially; replace with your host count and schedule."

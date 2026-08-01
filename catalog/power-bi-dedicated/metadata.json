@@ -49,5 +49,24 @@
         "detail": "Ensure your subscription can create the requested Power BI Dedicated SKU in the target region."
       }
     ]
+  },
+  "cost": {
+    "currency": "USD",
+    "region": "eastus",
+    "profile": "prod",
+    "components": [
+      {
+        "name": "Power BI Embedded A1 node",
+        "billing": "fixed",
+        "serviceName": "Power BI Embedded",
+        "meterNameContains": "A1 Node",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 730,
+        "skuParam": "skuName",
+        "instanceParam": "skuCapacity",
+        "hoursPerInstance": 730,
+        "notes": "One A1 node x 730 hours. A higher A-SKU or more capacity units rescales this; pause the capacity to stop billing."
+      }
+    ]
   }
 }

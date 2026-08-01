@@ -87,3 +87,59 @@ def test_region_change_triggers_lookup(monkeypatch):
 def test_odata_escapes_single_quotes():
     assert pricing._odata("a'b") == "a''b"
     assert pricing._odata("Standard_D4s_v5") == "Standard_D4s_v5"
+
+
+def _sql_cost() -> dict:
+    return {
+        "currency": "USD",
+        "region": "eastus",
+        "components": [{
+            "name": "Azure SQL",
+            "billing": "fixed",
+            "serviceName": "SQL Database",
+            "productNameContains": "General Purpose - Compute Gen5",
+            "meterNameContains": "vCore",
+            "meterNameExact": "vCore",
+            "quantityPerMonth": 730,
+            "hoursPerInstance": 730,
+            "skuQuantityParam": "sqlSkuName",
+            "skuQuantityMap": {"GP_S_Gen5_1": 1, "GP_Gen5_8": 8, "BC_Gen5_4": 4},
+            "skuPriceMultiplierParam": "sqlSkuName",
+            "skuPriceMultiplierMap": {"BC_Gen5_4": 2},
+            "unitPrice": 0.15,
+            "monthly": 109.5,
+        }],
+    }
+
+
+def test_sql_vcore_quantity_scales_without_lookup(monkeypatch):
+    calls: list[int] = []
+    _patch_rows(monkeypatch, [], calls)
+    est = asyncio.run(pricing.estimate(_sql_cost(), "eastus", {"sqlSkuName": "GP_Gen5_8"}))
+    comp = est["components"][0]
+    assert comp["quantityPerMonth"] == 5840  # 8 vCores * 730
+    assert comp["monthly"] == 876.0  # 0.15 * 5840
+    assert calls == []  # skuQuantity reuses the cached unit price
+
+
+def test_sql_business_critical_applies_multiplier(monkeypatch):
+    calls: list[int] = []
+    _patch_rows(monkeypatch, [], calls)
+    est = asyncio.run(pricing.estimate(_sql_cost(), "eastus", {"sqlSkuName": "BC_Gen5_4"}))
+    comp = est["components"][0]
+    assert comp["quantityPerMonth"] == 2920  # 4 vCores * 730
+    assert round(comp["unitPrice"], 4) == 0.30  # 0.15 * 2 (Business Critical)
+    assert comp["monthly"] == 876.0  # 0.30 * 2920
+    assert calls == []
+
+
+def test_malformed_multiplier_does_not_crash(monkeypatch):
+    calls: list[int] = []
+    _patch_rows(monkeypatch, [], calls)
+    cost = _sql_cost()
+    cost["components"][0]["skuPriceMultiplierMap"] = {"BC_Gen5_4": "oops"}
+    est = asyncio.run(pricing.estimate(cost, "eastus", {"sqlSkuName": "BC_Gen5_4"}))
+    comp = est["components"][0]
+    assert comp["unitPrice"] == 0.15  # bad multiplier skipped, base rate kept
+    assert comp["monthly"] == 438.0  # 0.15 * 2920
+    assert est["complete"] is True

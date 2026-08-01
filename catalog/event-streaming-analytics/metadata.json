@@ -68,7 +68,9 @@
         "meterNameContains": "Processing Unit",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 1460,
-        "notes": "Two processing units x 730 hours."
+        "instanceParam": "throughputUnits",
+        "hoursPerInstance": 730,
+        "notes": "Processing units x 730 hours (Premium bills per PU)."
       },
       {
         "name": "Stream Analytics (6 SU)",
@@ -77,17 +79,35 @@
         "meterNameContains": "Standard Streaming Unit",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 4380,
-        "notes": "Six streaming units x 730 hours."
+        "instanceParam": "streamingUnits",
+        "hoursPerInstance": 730,
+        "notes": "Streaming units x 730 hours."
       },
       {
-        "name": "Functions (Elastic Premium EP1)",
+        "name": "Functions Premium vCPU",
         "billing": "fixed",
         "serviceName": "Functions",
-        "skuNameContains": "EP1",
-        "meterNameContains": "vCPU Duration",
+        "skuNameContains": "Premium",
+        "meterNameContains": "Premium vCPU Duration",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 730,
-        "notes": "One always-ready EP1 instance."
+        "skuQuantityParam": "functionPlanSku",
+        "skuQuantityMap": { "Y1": 0, "EP1": 1, "EP2": 2, "EP3": 4 },
+        "hoursPerInstance": 730,
+        "notes": "Always-ready vCPUs x 730 hours (EP1=1, EP2=2). Y1 Consumption has no always-ready compute."
+      },
+      {
+        "name": "Functions Premium memory",
+        "billing": "fixed",
+        "serviceName": "Functions",
+        "skuNameContains": "Premium",
+        "meterNameContains": "Premium Memory Duration",
+        "unitOfMeasure": "1 GiB Hour",
+        "quantityPerMonth": 2555,
+        "skuQuantityParam": "functionPlanSku",
+        "skuQuantityMap": { "Y1": 0, "EP1": 3.5, "EP2": 7, "EP3": 14 },
+        "hoursPerInstance": 730,
+        "notes": "Always-ready memory (GiB) x 730 hours (EP1=3.5, EP2=7)."
       },
       {
         "name": "Cosmos DB (serverless RU)",

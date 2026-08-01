@@ -135,6 +135,28 @@ async def estimate(cost: dict[str, Any], region: str, parameter_values: dict[str
                 except ValueError:
                     pass
 
+            # A SKU that changes the *count* of a fixed-price unit (Functions
+            # EP1/EP2 = 1/2 vCPUs, etc.) scales quantity via a value->units map
+            # rather than swapping the unit price.
+            sq_param = comp.get("skuQuantityParam")
+            sq_map = comp.get("skuQuantityMap")
+            if sq_param and sq_map and pv.get(sq_param) not in (None, ""):
+                units = sq_map.get(str(pv[sq_param]))
+                if units is not None:
+                    try:
+                        qty = float(units) * int(comp.get("hoursPerInstance") or 730)
+                    except (TypeError, ValueError):
+                        pass
+
+            # Zone redundancy forces a minimum instance floor (App Service ZR
+            # needs >= 3 instances), so toggling it on reprices even when the
+            # instance count itself wasn't raised.
+            zr_param = comp.get("zoneRedundantParam")
+            if zr_param and str(pv.get(zr_param, "")).strip().lower() in ("true", "1", "yes", "on"):
+                floor = int(comp.get("zoneRedundantMinInstances") or 3) * int(comp.get("hoursPerInstance") or 730)
+                if qty < floor:
+                    qty = floor
+
             sku_param = comp.get("skuParam")
             sku_override = pv.get(sku_param) if sku_param else None
             same_region = region == base_region
@@ -152,6 +174,19 @@ async def estimate(cost: dict[str, Any], region: str, parameter_values: dict[str
                     meter_exact = None
                 rows = await _fetch_rows(client, region, currency, comp.get("serviceName"), meter_exact, arm_exact)
                 unit = _pick_unit_price(rows, comp, sku_override)
+
+            # A tier SKU (SQL General Purpose vs Business Critical) changes the
+            # per-unit price of the same meter; apply a multiplier when that
+            # param is overridden.
+            spm_param = comp.get("skuPriceMultiplierParam")
+            spm_map = comp.get("skuPriceMultiplierMap")
+            if unit is not None and spm_param and spm_map and pv.get(spm_param) not in (None, ""):
+                mult = spm_map.get(str(pv[spm_param]))
+                if mult is not None:
+                    try:
+                        unit = unit * float(mult)
+                    except (TypeError, ValueError):
+                        pass
 
             monthly = round(unit * qty, 2) if unit is not None else None
             if monthly is None:
