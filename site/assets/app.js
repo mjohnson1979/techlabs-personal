@@ -1193,7 +1193,7 @@
     const advSection = el(
       "div",
       { class: "deploy-advanced-section" },
-      params.length ? [advOptsBtn, advOptsSummary] : []
+      params.length ? [el("div", { class: "deploy-advopts" }, [advOptsBtn, advOptsSummary])] : []
     );
 
     function manualSnippet(engine) {
