@@ -913,6 +913,8 @@ details[open] > .collapse-summary .collapse-caret {
   grid-column: 2;
   grid-row: 2;
   margin: 0;
+  align-items: flex-end;
+  text-align: right;
 }
 
 /* Boxes match the advanced-options look: legend cuts the top-left outline. */
