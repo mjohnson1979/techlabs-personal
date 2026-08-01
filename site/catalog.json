@@ -1,7 +1,7 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-08-01T14:35:45Z",
+    "generated":  "2026-08-01T14:49:31Z",
     "count":  22,
     "items":  [
                   {
@@ -3844,17 +3844,40 @@
                                                           "meterNameContains":  "Capacity Units"
                                                       },
                                                       {
-                                                          "name":  "Azure SQL (GP_Gen5_2)",
+                                                          "name":  "Azure SQL Database (GP Gen5, vCores)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "SQL Database",
                                                           "unitOfMeasure":  "1 Hour",
-                                                          "quantityPerMonth":  1460,
-                                                          "notes":  "2 vCores x 730 hours, General Purpose provisioned. Priced per vCore-hour.",
+                                                          "quantityPerMonth":  730,
+                                                          "notes":  "vCore-hours at the GP Gen5 rate (default GP serverless 1 vCore, always-on upper bound). Business Critical is ~2x per vCore; serverless auto-pauses so real cost is lower.",
                                                           "unitPrice":  0.15222,
-                                                          "monthly":  222.24,
+                                                          "monthly":  111.12,
                                                           "productNameContains":  "General Purpose - Compute Gen5",
                                                           "meterNameContains":  "vCore",
-                                                          "skuNameContains":  "1 vCore"
+                                                          "meterNameExact":  "vCore",
+                                                          "hoursPerInstance":  730,
+                                                          "skuQuantityParam":  "sqlSkuName",
+                                                          "skuQuantityMap":  {
+                                                                                 "GP_S_Gen5_1":  1,
+                                                                                 "GP_S_Gen5_2":  2,
+                                                                                 "GP_S_Gen5_4":  4,
+                                                                                 "GP_S_Gen5_8":  8,
+                                                                                 "GP_Gen5_2":  2,
+                                                                                 "GP_Gen5_4":  4,
+                                                                                 "GP_Gen5_8":  8,
+                                                                                 "BC_Gen5_2":  2,
+                                                                                 "BC_Gen5_4":  4,
+                                                                                 "BC_Gen5_8":  8,
+                                                                                 "HS_Gen5_2":  2,
+                                                                                 "HS_Gen5_4":  4,
+                                                                                 "HS_Gen5_8":  8
+                                                                             },
+                                                          "skuPriceMultiplierParam":  "sqlSkuName",
+                                                          "skuPriceMultiplierMap":  {
+                                                                                        "BC_Gen5_2":  2,
+                                                                                        "BC_Gen5_4":  2,
+                                                                                        "BC_Gen5_8":  2
+                                                                                    }
                                                       },
                                                       {
                                                           "name":  "Private Endpoints (SQL + Key Vault)",
@@ -3868,9 +3891,9 @@
                                                           "meterNameContains":  "Private Endpoint"
                                                       }
                                                   ],
-                                   "fixedMonthly":  839.09,
+                                   "fixedMonthly":  727.97,
                                    "usageMonthly":  21.02,
-                                   "totalMonthly":  860.11,
+                                   "totalMonthly":  748.99,
                                    "complete":  true,
                                    "pricedAt":  "2026-08-01"
                                },
@@ -4039,17 +4062,40 @@
                                                           "zoneRedundantParam":  "appZoneRedundant"
                                                       },
                                                       {
-                                                          "name":  "Azure SQL Database (GP Gen5 2 vCore)",
+                                                          "name":  "Azure SQL Database (GP Gen5, vCores)",
                                                           "billing":  "fixed",
                                                           "serviceName":  "SQL Database",
                                                           "unitOfMeasure":  "1 Hour",
-                                                          "quantityPerMonth":  1460,
-                                                          "notes":  "2 vCores x 730 hours, General Purpose provisioned. Priced per vCore-hour.",
+                                                          "quantityPerMonth":  730,
+                                                          "notes":  "vCore-hours at the GP Gen5 rate (default GP serverless 1 vCore, always-on upper bound). Business Critical is ~2x per vCore; serverless auto-pauses so real cost is lower.",
                                                           "unitPrice":  0.15222,
-                                                          "monthly":  222.24,
+                                                          "monthly":  111.12,
                                                           "productNameContains":  "General Purpose - Compute Gen5",
                                                           "meterNameContains":  "vCore",
-                                                          "skuNameContains":  "1 vCore"
+                                                          "meterNameExact":  "vCore",
+                                                          "hoursPerInstance":  730,
+                                                          "skuQuantityParam":  "sqlSkuName",
+                                                          "skuQuantityMap":  {
+                                                                                 "GP_S_Gen5_1":  1,
+                                                                                 "GP_S_Gen5_2":  2,
+                                                                                 "GP_S_Gen5_4":  4,
+                                                                                 "GP_S_Gen5_8":  8,
+                                                                                 "GP_Gen5_2":  2,
+                                                                                 "GP_Gen5_4":  4,
+                                                                                 "GP_Gen5_8":  8,
+                                                                                 "BC_Gen5_2":  2,
+                                                                                 "BC_Gen5_4":  4,
+                                                                                 "BC_Gen5_8":  8,
+                                                                                 "HS_Gen5_2":  2,
+                                                                                 "HS_Gen5_4":  4,
+                                                                                 "HS_Gen5_8":  8
+                                                                             },
+                                                          "skuPriceMultiplierParam":  "sqlSkuName",
+                                                          "skuPriceMultiplierMap":  {
+                                                                                        "BC_Gen5_2":  2,
+                                                                                        "BC_Gen5_4":  2,
+                                                                                        "BC_Gen5_8":  2
+                                                                                    }
                                                       },
                                                       {
                                                           "name":  "Application Insights ingestion",
@@ -4063,9 +4109,9 @@
                                                           "meterNameContains":  "Data Ingestion"
                                                       }
                                                   ],
-                                   "fixedMonthly":  561.69,
+                                   "fixedMonthly":  450.57,
                                    "usageMonthly":  0.50,
-                                   "totalMonthly":  562.19,
+                                   "totalMonthly":  451.07,
                                    "complete":  true,
                                    "pricedAt":  "2026-08-01"
                                },

@@ -172,6 +172,16 @@ async def estimate(cost: dict[str, Any], region: str, parameter_values: dict[str
                 rows = await _fetch_rows(client, region, currency, comp.get("serviceName"), meter_exact, arm_exact)
                 unit = _pick_unit_price(rows, comp, sku_override)
 
+            # A tier SKU (SQL General Purpose vs Business Critical) changes the
+            # per-unit price of the same meter; apply a multiplier when that
+            # param is overridden.
+            spm_param = comp.get("skuPriceMultiplierParam")
+            spm_map = comp.get("skuPriceMultiplierMap")
+            if unit is not None and spm_param and spm_map and pv.get(spm_param) not in (None, ""):
+                mult = spm_map.get(str(pv[spm_param]))
+                if mult is not None:
+                    unit = unit * float(mult)
+
             monthly = round(unit * qty, 2) if unit is not None else None
             if monthly is None:
                 complete = False
