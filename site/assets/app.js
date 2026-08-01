@@ -1247,38 +1247,16 @@
     });
     region.select.addEventListener("change", scheduleEstimate);
     syncEngine();
-    const manual = el("details", { class: "deploy-manual", hidden: "" }, [manualSummary, manualCode]);
-    advSection.hidden = true;
+    const manual = el("details", { class: "deploy-manual" }, [manualSummary, manualCode]);
 
     const footer = el("div", { class: "deploy-foot" }, [btn, status]);
+    // Advanced options under Region (left); deploy button under Environment (right).
+    topRow.appendChild(advSection);
     topRow.appendChild(footer);
-    const card = el("div", { class: "modal-section modal-card deploy-card" });
 
-    // Collapsed shows the basic fields + deploy button; expanding reveals the
-    // parameter overrides, end time, and manual CLI (the full form).
-    const header = el(
-      "div",
-      { class: "collapse-summary deploy-head", role: "button", tabindex: "0", "aria-expanded": "false" },
-      [el("h3", { text: "Deploy" }), el("span", { class: "collapse-caret", "aria-hidden": "true" })]
-    );
-
-    let expanded = false;
-    function toggleDeploy() {
-      expanded = !expanded;
-      advSection.hidden = !expanded;
-      manual.hidden = !expanded;
-      header.setAttribute("aria-expanded", String(expanded));
-      card.classList.toggle("is-open", expanded);
-    }
-    header.addEventListener("click", toggleDeploy);
-    header.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        toggleDeploy();
-      }
-    });
-
-    [header, topRow, advSection, manual].forEach((n) => card.appendChild(n));
+    const card = el("div", { class: "modal-section modal-card deploy-card is-open" });
+    const header = el("div", { class: "deploy-head deploy-head-static" }, [el("h3", { text: "Deploy" })]);
+    [header, topRow, manual].forEach((n) => card.appendChild(n));
     return card;
   }
 
