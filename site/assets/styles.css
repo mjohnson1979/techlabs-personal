@@ -708,6 +708,7 @@ details[open] > .collapse-summary .collapse-caret {
 
 .modal-grid-even {
   grid-template-columns: 1fr 1fr;
+  align-items: start;
 }
 
 .modal-grid-single {
