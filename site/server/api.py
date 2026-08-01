@@ -41,7 +41,7 @@ DEFAULT_SUBSCRIPTION = os.environ.get(
     "GALLERY_SUBSCRIPTION_ID", "8ad2703f-069c-4c1a-8f4f-850c2a4c2676"
 ).strip()
 DEFAULT_MAX_LIFETIME_HOURS = int(
-    os.environ.get("GALLERY_MAX_LIFETIME_HOURS", "48").strip() or "48"
+    os.environ.get("GALLERY_MAX_LIFETIME_HOURS", "96").strip() or "96"
 )
 MIN_LIFETIME_MINUTES = 15
 _VALID_EVENT_TYPES = {"view", "search", "modal_open"}

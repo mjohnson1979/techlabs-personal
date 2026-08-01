@@ -544,15 +544,28 @@
     const select = el("select", { class: "deploy-input deploy-region", id: "deploy-region" });
     const options = {};
     let preferred = null;
+    // Full label (with capacity) shows while the list is open; once a region is
+    // picked the closed select shows just the region name.
+    const fullText = {};
+    let listOpen = false;
     regions.forEach((r) => {
       const rs = regionStatus(it, r, sel());
-      const opt = el("option", { value: r, text: `${r} \u2014 ${ROLL_LABEL[rs.status]}` });
+      fullText[r] = `${r} \u2014 ${ROLL_LABEL[rs.status]}`;
+      const opt = el("option", { value: r, text: r });
       opt.setAttribute("data-status", rs.status);
       select.appendChild(opt);
       options[r] = opt;
       if (!preferred && rs.status === "green") preferred = r;
     });
     if (preferred) select.value = preferred;
+    function applyLabels(open) {
+      listOpen = open;
+      regions.forEach((r) => { options[r].textContent = open ? fullText[r] : r; });
+    }
+    ["mousedown", "focus"].forEach((ev) => select.addEventListener(ev, () => applyLabels(true)));
+    ["change", "blur"].forEach((ev) => select.addEventListener(ev, () => applyLabels(false)));
+    // Escape closes the list without a change/blur, so reset labels too.
+    select.addEventListener("keydown", (e) => { if (e.key === "Escape") applyLabels(false); });
 
     const note = el("div", { class: "deploy-region-note" });
     function refresh() {
@@ -596,7 +609,8 @@
     function refreshAll() {
       regions.forEach((r) => {
         const rs = regionStatus(it, r, sel());
-        options[r].textContent = `${r} \u2014 ${ROLL_LABEL[rs.status]}`;
+        fullText[r] = `${r} \u2014 ${ROLL_LABEL[rs.status]}`;
+        options[r].textContent = listOpen ? fullText[r] : r;
         options[r].setAttribute("data-status", rs.status);
       });
       refresh();
@@ -606,7 +620,7 @@
 
   function deployBlock(it, estimateCtl) {
     const me = state.me;
-    const maxHours = me && me.maxLifetimeHours ? me.maxLifetimeHours : 48;
+    const maxHours = me && me.maxLifetimeHours ? me.maxLifetimeHours : 96;
     const now = new Date();
     const defaultEnd = new Date(now.getTime() + Math.min(48, maxHours) * 3600 * 1000);
     const maxEnd = new Date(now.getTime() + maxHours * 3600 * 1000);
@@ -643,14 +657,16 @@
       value: localDatetimeValue(defaultEnd),
       min: localDatetimeValue(new Date(now.getTime() + 15 * 60 * 1000)),
     });
-    if (me && !me.isAdmin) endInput.setAttribute("max", localDatetimeValue(maxEnd));
+    // Admins may exceed the cap; everyone else is limited to maxHours.
+    if (!me || !me.isAdmin) endInput.setAttribute("max", localDatetimeValue(maxEnd));
 
     const status = el("div", { class: "deploy-status", role: "status" });
     const btn = el("button", { class: "deploy-btn", type: "button", text: "Deploy to my subscription" });
 
+    const maxLabel = maxHours % 24 === 0 ? `${maxHours / 24} day${maxHours / 24 === 1 ? "" : "s"}` : `${maxHours}h`;
     const lifeNote = me && me.isAdmin
       ? "As an admin you can set any end time. Resources are auto-deleted at the end time."
-      : `Pick when this should be torn down (max ${maxHours}h). Resources are auto-deleted at the end time.`;
+      : `Pick when this should be torn down (max ${maxLabel}). Resources are auto-deleted at the end time.`;
 
     const tfExec = !!(me && me.terraformExecAvailable);
     const engineHint = el("p", { class: "deploy-note deploy-engine-hint", text: "" });
@@ -869,6 +885,71 @@
           const tier = orderedParams.splice(ti, 1)[0];
           orderedParams.splice(orderedParams.findIndex((p) => p.name === "sqlSkuName"), 0, tier);
         }
+
+        // Group each parameter under the Azure service it configures, so the
+        // panel reads as a set of per-service boxes instead of one long list.
+        // Name heuristics run first for consistent friendly labels; params they
+        // don't classify fall back to the cost component's serviceName, else
+        // "General".
+        const costSvc = {};
+        ((it.cost && it.cost.components) || []).forEach((c) => {
+          ["skuParam", "instanceParam", "zoneRedundantParam", "skuQuantityParam", "skuPriceMultiplierParam"].forEach((k) => {
+            if (c[k] && c.serviceName) costSvc[c[k]] = c.serviceName;
+          });
+        });
+        // Normalize an Azure serviceName to the same friendly label the
+        // heuristics produce, so both paths land in one box per service.
+        function canonService(svc) {
+          const s = String(svc).toLowerCase();
+          if (/app service/.test(s)) return "App Service";
+          if (/cognitive search|ai search/.test(s)) return "AI Search";
+          if (/sql/.test(s)) return "Azure SQL";
+          if (/openai|foundry/.test(s)) return "Azure OpenAI";
+          if (/api management/.test(s)) return "API Management";
+          if (/application gateway/.test(s)) return "Application Gateway";
+          if (/container apps/.test(s)) return "Container Apps";
+          if (/event hubs/.test(s)) return "Event Hubs";
+          if (/stream analytics/.test(s)) return "Stream Analytics";
+          if (/functions/.test(s)) return "Functions";
+          if (/service bus/.test(s)) return "Service Bus";
+          if (/cosmos/.test(s)) return "Cosmos DB";
+          if (/virtual machines/.test(s)) return "Virtual machines";
+          return svc;
+        }
+        function heuristicGroup(n) {
+          if (/^(chat|embedding)/.test(n) || /model/.test(n)) return "Azure OpenAI";
+          if (/sql/.test(n)) return "Azure SQL";
+          if (/search/.test(n)) return "AI Search";
+          if (/apim|publisher/.test(n)) return "API Management";
+          if (/gateway|waf/.test(n)) return "Application Gateway";
+          if (/session|hostpool|fslogix|scaling/.test(n)) return "Session hosts";
+          if (/node|k8s|kubernetes|aks/.test(n)) return "Kubernetes";
+          if (/replica/.test(n)) return "Container Apps";
+          if (/servicebus/.test(n)) return "Service Bus";
+          if (/cosmos/.test(n)) return "Cosmos DB";
+          if (/eventhub|throughput|partition|streaming|messageretention/.test(n)) return "Streaming";
+          if (/function/.test(n)) return "Functions";
+          if (/databricks|lake/.test(n)) return "Data lake";
+          if (/storage|blob/.test(n)) return "Storage";
+          if (/firewall|bastion/.test(n)) return "Networking";
+          if (/frontdoor/.test(n)) return "Front Door";
+          if (/fabric/.test(n) || /admin/.test(n)) return "Fabric capacity";
+          if (/app|zoneredundant|linuxfx|runtime|plan|capacity/.test(n)) return "App Service";
+          return "General";
+        }
+        function groupFor(name) {
+          const h = heuristicGroup(name.toLowerCase());
+          if (h !== "General") return h;
+          if (costSvc[name]) return canonService(costSvc[name]);
+          return "General";
+        }
+        const groups = [];
+        function bucket(gname) {
+          let g = groups.find((x) => x.name === gname);
+          if (!g) { g = { name: gname, fields: [] }; groups.push(g); }
+          return g;
+        }
+
         orderedParams.forEach((p) => {
           const fieldId = "advopt-" + p.name;
           const current = advValues[p.name];
@@ -925,14 +1006,24 @@
           if (defStr !== "") hintBits.push(`default ${defStr}`);
           if (hintBits.length) meta.push(e("span", { class: "advopt-hint", text: hintBits.join(" \u00b7 ") }));
 
-          formWrap.appendChild(
-            e(
-              "div",
-              { class: "advopt-field" },
-              [e("label", { class: "deploy-label", for: fieldId, text: p.name }), control].concat(meta)
-            )
+          const field = e(
+            "div",
+            { class: "advopt-field" },
+            [e("label", { class: "deploy-label", for: fieldId, text: p.name }), control].concat(meta)
           );
+          bucket(groupFor(p.name)).fields.push(field);
           controls[p.name] = { control: control, param: p };
+        });
+
+        // "General" reads as a catch-all, so render it last.
+        groups.sort((a, b) => (a.name === "General" ? 1 : 0) - (b.name === "General" ? 1 : 0));
+        groups.forEach((g) => {
+          formWrap.appendChild(
+            e("fieldset", { class: "advopt-group" }, [
+              e("legend", { class: "advopt-legend", text: g.name }),
+              e("div", { class: "advopt-grid" }, g.fields),
+            ])
+          );
         });
         bodyEl.appendChild(formWrap);
 
@@ -1078,26 +1169,35 @@
       }, 350);
     }
 
-    const deployField = (labelText, control, extra) =>
-      el("div", { class: "deploy-field" }, [
+    const deployField = (labelText, control, extra, cls) =>
+      el("div", { class: "deploy-field" + (cls ? " " + cls : "") }, [
         el("label", { class: "deploy-label", for: control.id, text: labelText }),
         control,
         extra || null,
       ]);
 
-    const form = el("div", { class: "deploy-form" }, [
-      deployField("Region", region.select, region.note),
-      deployField("Environment", envSelect),
-      deployField("IaC engine", engineSelect, engineHint),
-      deployField("Resource group", rgInput),
+    region.select.setAttribute("aria-label", "Region");
+    const regionBox = el("fieldset", { class: "deploy-group deploy-region-box" }, [
+      el("legend", { class: "deploy-legend", text: "Region" }),
+      el("div", { class: "deploy-field" }, [region.select, region.note]),
     ]);
+    const envBox = el("fieldset", { class: "deploy-group" }, [
+      el("legend", { class: "deploy-legend", text: "Environment" }),
+      el("div", { class: "deploy-grid" }, [
+        deployField("Type", envSelect),
+        deployField("IaC engine", engineSelect, engineHint),
+        deployField("Resource group", rgInput),
+        deployField("End time (auto-cleanup)", endInput, el("p", { class: "deploy-note", text: lifeNote })),
+      ]),
+    ]);
+    const topRow = el("div", { class: "deploy-toprow" }, [regionBox, envBox]);
 
-    const advancedForm = el("div", { class: "deploy-form deploy-advanced-form" }, [
-      params.length ? el("div", { class: "deploy-advopts" }, [advOptsBtn, advOptsSummary]) : null,
-      el("label", { class: "deploy-label", for: "deploy-end", text: "End time (auto-cleanup)" }),
-      endInput,
-      el("p", { class: "deploy-note", text: lifeNote }),
-    ]);
+    // Advanced options sit below the deploy button; the CLI snippet comes last.
+    const advSection = el(
+      "div",
+      { class: "deploy-advanced-section" },
+      params.length ? [el("div", { class: "deploy-advopts" }, [advOptsBtn, advOptsSummary])] : []
+    );
 
     function manualSnippet(engine) {
       const env = envSelect.value;
@@ -1150,37 +1250,16 @@
     });
     region.select.addEventListener("change", scheduleEstimate);
     syncEngine();
-    const manual = el("details", { class: "deploy-manual", hidden: "" }, [manualSummary, manualCode]);
-    advancedForm.hidden = true;
+    const manual = el("details", { class: "deploy-manual" }, [manualSummary, manualCode]);
 
     const footer = el("div", { class: "deploy-foot" }, [btn, status]);
-    const card = el("div", { class: "modal-section modal-card deploy-card" });
+    // Advanced options under Region (left); deploy button under Environment (right).
+    topRow.appendChild(advSection);
+    topRow.appendChild(footer);
 
-    // Collapsed shows the basic fields + deploy button; expanding reveals the
-    // parameter overrides, end time, and manual CLI (the full form).
-    const header = el(
-      "div",
-      { class: "collapse-summary deploy-head", role: "button", tabindex: "0", "aria-expanded": "false" },
-      [el("h3", { text: "Deploy" }), el("span", { class: "collapse-caret", "aria-hidden": "true" })]
-    );
-
-    let expanded = false;
-    function toggleDeploy() {
-      expanded = !expanded;
-      advancedForm.hidden = !expanded;
-      manual.hidden = !expanded;
-      header.setAttribute("aria-expanded", String(expanded));
-      card.classList.toggle("is-open", expanded);
-    }
-    header.addEventListener("click", toggleDeploy);
-    header.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        toggleDeploy();
-      }
-    });
-
-    [header, form, advancedForm, footer, manual].forEach((n) => card.appendChild(n));
+    const card = el("div", { class: "modal-section modal-card deploy-card is-open" });
+    const header = el("div", { class: "deploy-head deploy-head-static" }, [el("h3", { text: "Deploy" })]);
+    [header, topRow, manual].forEach((n) => card.appendChild(n));
     return card;
   }
 
