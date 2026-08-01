@@ -544,15 +544,26 @@
     const select = el("select", { class: "deploy-input deploy-region", id: "deploy-region" });
     const options = {};
     let preferred = null;
+    // Full label (with capacity) shows while the list is open; once a region is
+    // picked the closed select shows just the region name.
+    const fullText = {};
+    let listOpen = false;
     regions.forEach((r) => {
       const rs = regionStatus(it, r, sel());
-      const opt = el("option", { value: r, text: `${r} \u2014 ${ROLL_LABEL[rs.status]}` });
+      fullText[r] = `${r} \u2014 ${ROLL_LABEL[rs.status]}`;
+      const opt = el("option", { value: r, text: r });
       opt.setAttribute("data-status", rs.status);
       select.appendChild(opt);
       options[r] = opt;
       if (!preferred && rs.status === "green") preferred = r;
     });
     if (preferred) select.value = preferred;
+    function applyLabels(open) {
+      listOpen = open;
+      regions.forEach((r) => { options[r].textContent = open ? fullText[r] : r; });
+    }
+    ["mousedown", "focus"].forEach((ev) => select.addEventListener(ev, () => applyLabels(true)));
+    ["change", "blur"].forEach((ev) => select.addEventListener(ev, () => applyLabels(false)));
 
     const note = el("div", { class: "deploy-region-note" });
     function refresh() {
@@ -596,7 +607,8 @@
     function refreshAll() {
       regions.forEach((r) => {
         const rs = regionStatus(it, r, sel());
-        options[r].textContent = `${r} \u2014 ${ROLL_LABEL[rs.status]}`;
+        fullText[r] = `${r} \u2014 ${ROLL_LABEL[rs.status]}`;
+        options[r].textContent = listOpen ? fullText[r] : r;
         options[r].setAttribute("data-status", rs.status);
       });
       refresh();
@@ -1237,6 +1249,7 @@
     advSection.hidden = true;
 
     const footer = el("div", { class: "deploy-foot" }, [btn, status]);
+    topRow.appendChild(footer);
     const card = el("div", { class: "modal-section modal-card deploy-card" });
 
     // Collapsed shows the basic fields + deploy button; expanding reveals the
@@ -1263,7 +1276,7 @@
       }
     });
 
-    [header, topRow, footer, advSection, manual].forEach((n) => card.appendChild(n));
+    [header, topRow, advSection, manual].forEach((n) => card.appendChild(n));
     return card;
   }
 
