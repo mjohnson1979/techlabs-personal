@@ -135,6 +135,16 @@ async def estimate(cost: dict[str, Any], region: str, parameter_values: dict[str
                 except ValueError:
                     pass
 
+            # A SKU that changes the *count* of a fixed-price unit (Functions
+            # EP1/EP2 = 1/2 vCPUs, etc.) scales quantity via a value->units map
+            # rather than swapping the unit price.
+            sq_param = comp.get("skuQuantityParam")
+            sq_map = comp.get("skuQuantityMap")
+            if sq_param and sq_map and pv.get(sq_param) not in (None, ""):
+                units = sq_map.get(str(pv[sq_param]))
+                if units is not None:
+                    qty = float(units) * int(comp.get("hoursPerInstance") or 730)
+
             # Zone redundancy forces a minimum instance floor (App Service ZR
             # needs >= 3 instances), so toggling it on reprices even when the
             # instance count itself wasn't raised.

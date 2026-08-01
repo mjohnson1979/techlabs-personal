@@ -1,7 +1,7 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-08-01T14:28:38Z",
+    "generated":  "2026-08-01T14:35:45Z",
     "count":  22,
     "items":  [
                   {
@@ -2091,7 +2091,7 @@
                                       "terraform"
                                   ],
                       "hasProd":  true,
-                      "componentCount":  5,
+                      "componentCount":  6,
                       "costProfile":  "Prod profile: Premium Event Hubs, 6 SU Stream Analytics, EP1 Functions.",
                       "cost":  {
                                    "currency":  "USD",
@@ -2126,16 +2126,44 @@
                                                           "hoursPerInstance":  730
                                                       },
                                                       {
-                                                          "name":  "Functions (Elastic Premium EP1)",
+                                                          "name":  "Functions Premium vCPU",
                                                           "billing":  "fixed",
                                                           "serviceName":  "Functions",
                                                           "unitOfMeasure":  "1 Hour",
                                                           "quantityPerMonth":  730,
-                                                          "notes":  "One always-ready EP1 vCPU x 730 hours. Larger EP SKUs add vCPUs/memory.",
+                                                          "notes":  "Always-ready vCPUs x 730 hours (EP1=1, EP2=2). Y1 Consumption has no always-ready compute.",
                                                           "unitPrice":  0.173,
                                                           "monthly":  126.29,
                                                           "meterNameContains":  "Premium vCPU Duration",
-                                                          "skuNameContains":  "Premium"
+                                                          "skuNameContains":  "Premium",
+                                                          "hoursPerInstance":  730,
+                                                          "skuQuantityParam":  "functionPlanSku",
+                                                          "skuQuantityMap":  {
+                                                                                 "Y1":  0,
+                                                                                 "EP1":  1,
+                                                                                 "EP2":  2,
+                                                                                 "EP3":  4
+                                                                             }
+                                                      },
+                                                      {
+                                                          "name":  "Functions Premium memory",
+                                                          "billing":  "fixed",
+                                                          "serviceName":  "Functions",
+                                                          "unitOfMeasure":  "1 GiB Hour",
+                                                          "quantityPerMonth":  2555,
+                                                          "notes":  "Always-ready memory (GiB) x 730 hours (EP1=3.5, EP2=7).",
+                                                          "unitPrice":  0.0123,
+                                                          "monthly":  31.43,
+                                                          "meterNameContains":  "Premium Memory Duration",
+                                                          "skuNameContains":  "Premium",
+                                                          "hoursPerInstance":  730,
+                                                          "skuQuantityParam":  "functionPlanSku",
+                                                          "skuQuantityMap":  {
+                                                                                 "Y1":  0,
+                                                                                 "EP1":  3.5,
+                                                                                 "EP2":  7,
+                                                                                 "EP3":  14
+                                                                             }
                                                       },
                                                       {
                                                           "name":  "Cosmos DB (serverless RU)",
@@ -2162,9 +2190,9 @@
                                                           "skuNameContains":  "ZRS"
                                                       }
                                                   ],
-                                   "fixedMonthly":  2107.51,
+                                   "fixedMonthly":  2138.94,
                                    "usageMonthly":  16.50,
-                                   "totalMonthly":  2124.01,
+                                   "totalMonthly":  2155.44,
                                    "complete":  true,
                                    "pricedAt":  "2026-08-01"
                                },
