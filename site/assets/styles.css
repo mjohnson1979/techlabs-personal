@@ -889,6 +889,23 @@ details[open] > .collapse-summary .collapse-caret {
   padding: 26px 28px;
 }
 
+/* Expanded main form: two columns; Region and Resource group span full width. */
+.deploy-card.is-open .deploy-form:not(.deploy-advanced-form) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  align-items: start;
+}
+
+.deploy-card.is-open .deploy-form:not(.deploy-advanced-form) .deploy-field-wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+  .deploy-card.is-open .deploy-form:not(.deploy-advanced-form) {
+    grid-template-columns: 1fr;
+  }
+}
+
 .deploy-label {
   font-size: 0.82rem;
   color: var(--muted);

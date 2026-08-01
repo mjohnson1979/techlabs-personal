@@ -1152,18 +1152,18 @@
       }, 350);
     }
 
-    const deployField = (labelText, control, extra) =>
-      el("div", { class: "deploy-field" }, [
+    const deployField = (labelText, control, extra, cls) =>
+      el("div", { class: "deploy-field" + (cls ? " " + cls : "") }, [
         el("label", { class: "deploy-label", for: control.id, text: labelText }),
         control,
         extra || null,
       ]);
 
     const form = el("div", { class: "deploy-form" }, [
-      deployField("Region", region.select, region.note),
+      deployField("Region", region.select, region.note, "deploy-field-wide"),
       deployField("Environment", envSelect),
       deployField("IaC engine", engineSelect, engineHint),
-      deployField("Resource group", rgInput),
+      deployField("Resource group", rgInput, null, "deploy-field-wide"),
     ]);
 
     const advancedForm = el("div", { class: "deploy-form deploy-advanced-form" }, [
