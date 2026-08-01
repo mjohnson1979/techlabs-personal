@@ -966,13 +966,38 @@ details[open] > .collapse-summary .collapse-caret {
 
 .advopts-form {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   margin: 12px 0 18px;
+}
+
+/* Per-service boxes: the legend sits on the top border, cutting the outline. */
+.advopt-group {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px 16px;
+  margin: 0;
+  min-inline-size: 0;
+}
+
+.advopt-legend {
+  padding: 0 8px;
+  margin-inline-start: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+.advopt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px 16px;
 }
 
 .advopt-field {
   display: grid;
   gap: 4px;
+  min-inline-size: 0;
 }
 
 .advopt-desc {

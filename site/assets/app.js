@@ -869,6 +869,70 @@
           const tier = orderedParams.splice(ti, 1)[0];
           orderedParams.splice(orderedParams.findIndex((p) => p.name === "sqlSkuName"), 0, tier);
         }
+
+        // Group each parameter under the Azure service it configures, so the
+        // panel reads as a set of per-service boxes instead of one long list.
+        // Priced params map via their cost component's serviceName; the rest use
+        // name heuristics, falling back to "General".
+        const costSvc = {};
+        ((it.cost && it.cost.components) || []).forEach((c) => {
+          ["skuParam", "instanceParam", "zoneRedundantParam", "skuQuantityParam", "skuPriceMultiplierParam"].forEach((k) => {
+            if (c[k] && c.serviceName) costSvc[c[k]] = c.serviceName;
+          });
+        });
+        // Normalize an Azure serviceName to the same friendly label the
+        // heuristics produce, so both paths land in one box per service.
+        function canonService(svc) {
+          const s = String(svc).toLowerCase();
+          if (/app service/.test(s)) return "App Service";
+          if (/cognitive search|ai search/.test(s)) return "AI Search";
+          if (/sql/.test(s)) return "Azure SQL";
+          if (/openai|foundry/.test(s)) return "Azure OpenAI";
+          if (/api management/.test(s)) return "API Management";
+          if (/application gateway/.test(s)) return "Application Gateway";
+          if (/container apps/.test(s)) return "Container Apps";
+          if (/event hubs/.test(s)) return "Event Hubs";
+          if (/stream analytics/.test(s)) return "Stream Analytics";
+          if (/functions/.test(s)) return "Functions";
+          if (/service bus/.test(s)) return "Service Bus";
+          if (/cosmos/.test(s)) return "Cosmos DB";
+          if (/virtual machines/.test(s)) return "Virtual machines";
+          return svc;
+        }
+        function heuristicGroup(n) {
+          if (/^(chat|embedding)/.test(n) || /model/.test(n)) return "Azure OpenAI";
+          if (/sql/.test(n)) return "Azure SQL";
+          if (/search/.test(n)) return "AI Search";
+          if (/apim|publisher/.test(n)) return "API Management";
+          if (/gateway|waf/.test(n)) return "Application Gateway";
+          if (/session|hostpool|fslogix|scaling/.test(n)) return "Session hosts";
+          if (/node|k8s|kubernetes|aks/.test(n)) return "Kubernetes";
+          if (/replica/.test(n)) return "Container Apps";
+          if (/servicebus/.test(n)) return "Service Bus";
+          if (/cosmos/.test(n)) return "Cosmos DB";
+          if (/eventhub|throughput|partition|streaming|messageretention/.test(n)) return "Streaming";
+          if (/function/.test(n)) return "Functions";
+          if (/databricks|lake/.test(n)) return "Data lake";
+          if (/storage|blob/.test(n)) return "Storage";
+          if (/firewall|bastion/.test(n)) return "Networking";
+          if (/frontdoor/.test(n)) return "Front Door";
+          if (/fabric/.test(n) || /admin/.test(n)) return "Fabric capacity";
+          if (/app|zoneredundant|linuxfx|runtime|plan|capacity/.test(n)) return "App Service";
+          return "General";
+        }
+        function groupFor(name) {
+          const h = heuristicGroup(name.toLowerCase());
+          if (h !== "General") return h;
+          if (costSvc[name]) return canonService(costSvc[name]);
+          return "General";
+        }
+        const groups = [];
+        function bucket(gname) {
+          let g = groups.find((x) => x.name === gname);
+          if (!g) { g = { name: gname, fields: [] }; groups.push(g); }
+          return g;
+        }
+
         orderedParams.forEach((p) => {
           const fieldId = "advopt-" + p.name;
           const current = advValues[p.name];
@@ -925,14 +989,24 @@
           if (defStr !== "") hintBits.push(`default ${defStr}`);
           if (hintBits.length) meta.push(e("span", { class: "advopt-hint", text: hintBits.join(" \u00b7 ") }));
 
-          formWrap.appendChild(
-            e(
-              "div",
-              { class: "advopt-field" },
-              [e("label", { class: "deploy-label", for: fieldId, text: p.name }), control].concat(meta)
-            )
+          const field = e(
+            "div",
+            { class: "advopt-field" },
+            [e("label", { class: "deploy-label", for: fieldId, text: p.name }), control].concat(meta)
           );
+          bucket(groupFor(p.name)).fields.push(field);
           controls[p.name] = { control: control, param: p };
+        });
+
+        // "General" reads as a catch-all, so render it last.
+        groups.sort((a, b) => (a.name === "General" ? 1 : 0) - (b.name === "General" ? 1 : 0));
+        groups.forEach((g) => {
+          formWrap.appendChild(
+            e("fieldset", { class: "advopt-group" }, [
+              e("legend", { class: "advopt-legend", text: g.name }),
+              e("div", { class: "advopt-grid" }, g.fields),
+            ])
+          );
         });
         bodyEl.appendChild(formWrap);
 
