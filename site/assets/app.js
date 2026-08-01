@@ -618,7 +618,7 @@
 
   function deployBlock(it, estimateCtl) {
     const me = state.me;
-    const maxHours = me && me.maxLifetimeHours ? me.maxLifetimeHours : 48;
+    const maxHours = me && me.maxLifetimeHours ? me.maxLifetimeHours : 96;
     const now = new Date();
     const defaultEnd = new Date(now.getTime() + Math.min(48, maxHours) * 3600 * 1000);
     const maxEnd = new Date(now.getTime() + maxHours * 3600 * 1000);
@@ -655,14 +655,16 @@
       value: localDatetimeValue(defaultEnd),
       min: localDatetimeValue(new Date(now.getTime() + 15 * 60 * 1000)),
     });
-    if (me && !me.isAdmin) endInput.setAttribute("max", localDatetimeValue(maxEnd));
+    // Admins may exceed the cap; everyone else is limited to maxHours.
+    if (!me || !me.isAdmin) endInput.setAttribute("max", localDatetimeValue(maxEnd));
 
     const status = el("div", { class: "deploy-status", role: "status" });
     const btn = el("button", { class: "deploy-btn", type: "button", text: "Deploy to my subscription" });
 
+    const maxLabel = maxHours % 24 === 0 ? `${maxHours / 24} day${maxHours / 24 === 1 ? "" : "s"}` : `${maxHours}h`;
     const lifeNote = me && me.isAdmin
       ? "As an admin you can set any end time. Resources are auto-deleted at the end time."
-      : `Pick when this should be torn down (max ${maxHours}h). Resources are auto-deleted at the end time.`;
+      : `Pick when this should be torn down (max ${maxLabel}). Resources are auto-deleted at the end time.`;
 
     const tfExec = !!(me && me.terraformExecAvailable);
     const engineHint = el("p", { class: "deploy-note deploy-engine-hint", text: "" });
