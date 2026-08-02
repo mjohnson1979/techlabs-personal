@@ -1,0 +1,60 @@
+# Keeps dev in sync with main so the integration branch never drifts behind.
+#
+# The daily snapshot workflows (capacity/registry/updates) commit refreshed JSON
+# directly to main, and dev->main promotions add a merge commit to main. None of
+# those flow back to dev on their own, so dev steadily falls "behind". This
+# merges main into dev automatically after the daily refreshes and after every
+# push to main, so branches cut from dev always start current.
+#
+# It only ever pushes dev (never main) and never deploys unreleased dev work.
+
+name: Sync main into dev
+
+on:
+  # After a dev->main merge or any other push to main. (Pushes made by the
+  # snapshot workflows use GITHUB_TOKEN and do not trigger this, so the daily
+  # schedule below covers those.)
+  push:
+    branches: [main]
+  # Safety net that also catches the token-authored snapshot commits. Runs after
+  # the daily refreshes (capacity 06:00, registry/updates 05:00 UTC).
+  schedule:
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: sync-main-into-dev
+  cancel-in-progress: false
+
+permissions:
+  contents: write # push the merge to dev
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Merge main into dev
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          if git merge-base --is-ancestor origin/main HEAD; then
+            echo "dev already contains main; nothing to sync."
+            exit 0
+          fi
+          # Feature commits mean dev can't fast-forward; a merge commit is normal.
+          if git merge --no-edit origin/main; then
+            git push origin dev
+            echo "Merged main into dev."
+          else
+            git merge --abort || true
+            echo "::error::Merge conflict syncing main into dev; resolve it manually (dev likely edited a CI-generated snapshot)."
+            exit 1
+          fi
