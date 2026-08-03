@@ -68,9 +68,9 @@ in, and a consistent baseline every project inherits.
 | --- | --- |
 | `catalog/` | One folder per use case: `main.bicep`, `parameters/*.bicepparam`, a parallel `terraform/` module, `metadata.json`, `README.md`. Landing zones are nested (e.g. `catalog/landing-zone/core`). |
 | `modules/` | Shared Bicep building blocks referenced by templates (Log Analytics, App Insights, Storage, Key Vault, private endpoints). |
-| `site/` | The static gallery (`index.html` + `assets/`) that loads `site/catalog.json`, plus the `site/capacity.json` and `site/updates.json` signal snapshots. |
+| `site/` | The static gallery (`index.html` + `assets/`) that loads `site/catalog.json`, plus the `site/capacity.json`, `site/registry.json`, and `site/updates.json` snapshots. |
 | `site/server/` | FastAPI backend that gates the gallery behind Entra ID and acts as the deploy control plane. See [site/server/README.md](site/server/README.md). |
-| `tools/` | PowerShell utilities — `Build-Catalog.ps1` (regenerates `catalog.json` with live prices), `Get-CatalogCost.ps1` (per-use-case / portfolio cost), `Test-Catalog.ps1` (validation), `Build-Capacity.ps1` (region capacity snapshot), `Build-Updates.ps1` (Azure service lifecycle snapshot), `Build-Templates.ps1` (compiles catalog templates for deploy). |
+| `tools/` | PowerShell utilities — `Build-Catalog.ps1` (regenerates `catalog.json` with live prices), `Get-CatalogCost.ps1` (per-use-case / portfolio cost), `Test-Catalog.ps1` (validation), `Build-Capacity.ps1` (region capacity snapshot), `Build-Registry.ps1` (model/SKU/region registry snapshot), `Build-Updates.ps1` (Azure service lifecycle snapshot), `Build-Templates.ps1` (compiles catalog templates for deploy). |
 | `llms.txt` | Machine-readable overview of the catalog for LLM tooling. |
 
 ## How the catalog is organized
@@ -89,7 +89,10 @@ in, and a consistent baseline every project inherits.
 
 - The gallery is a static site (`site/`) served only to signed-in users. The
   backend in `site/server/` runs an Entra ID OAuth (PKCE) gate, records activity,
-  and provisions/destroys Azure resources with its own managed identity.
+  and provisions/destroys Azure resources with its own managed identity. Every
+  deployment carries an auto-cleanup end time (default 2 days, max 4); a
+  background scheduler tears down expired deployments, and a failed deploy that
+  left partial resources can be cleaned up from the account/admin views.
 - A single **SQLite** file (on App Service's persistent `/home` share) is the
   system of record for users, roles, deployments, and telemetry. Full schema and
   rationale: [site/server/README.md](site/server/README.md).
@@ -102,6 +105,12 @@ in, and a consistent baseline every project inherits.
   Components are `fixed` (committed monthly) or `usage` (illustrative, from assumed
   monthly quantities). Each card shows an estimated monthly cost with an itemized
   breakdown in the detail view.
+- **Advanced deployment options + live re-estimate.** The deploy panel groups a
+  use case's template parameters into per-service boxes (models, SKUs, sizes,
+  capacities) sourced from `site/registry.json`. Changing the region or any option
+  calls `POST /api/estimate`, which reprices the affected components against the
+  live retail API — so the itemized total reflects the chosen SKU, instance
+  capacity, node/replica counts, zone redundancy, and SQL tier before you deploy.
 
 ## Live signals (capacity & service lifecycle)
 
@@ -110,11 +119,16 @@ each a static JSON snapshot committed back to the repo so the site stays
 fully static:
 
 - **Region capacity** — `tools/Build-Capacity.ps1` probes subscription quota and
-  regional availability for capacity-sensitive services (Azure OpenAI TPM, App
-  Service, VM cores, Container Apps) and writes `site/capacity.json`. Cards show a
-  **"Quota-sensitive"** flag, the region picker is colour-coded
-  (green/yellow/red), and the **Capacity** page renders a service x region grid.
-  Refreshed daily by `.github/workflows/capacity.yml` (Azure OIDC).
+  regional availability across the Americas regions for capacity-sensitive
+  services (Azure OpenAI TPM per model/version/SKU, App Service, VM cores and
+  per-family quota, Container Apps, AVS, Fabric, Power BI, Purview) and writes
+  `site/capacity.json`. Cards show a **"Quota-sensitive"** flag; the region picker
+  is colour-coded (green/yellow/red) and reacts to the model/VM size chosen in
+  advanced options; and the **Capacity** page groups the signal into collapsible
+  per-service items. Refreshed daily by `.github/workflows/capacity.yml` (Azure
+  OIDC). The companion model/SKU/region catalogue in `site/registry.json` — which
+  powers the advanced-option dropdowns — is refreshed by
+  `.github/workflows/registry.yml`.
 - **Service lifecycle** — `tools/Build-Updates.ps1` reads the public Microsoft
   Release Communications feed behind [azure.microsoft.com/updates](https://azure.microsoft.com/updates)
   (no Azure auth), maps each update's products onto the services a use case
