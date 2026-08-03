@@ -1997,6 +1997,73 @@ details[open] > .collapse-summary .collapse-caret {
   cursor: default;
 }
 
+/* Collapsible per-service capacity items (Region capacity panel). */
+.cap-service {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  margin-bottom: 10px;
+}
+
+.cap-service-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.cap-service-summary::-webkit-details-marker {
+  display: none;
+}
+
+.cap-service-title {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cap-service-rollup {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.cap-rollup-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cap-service[open] > .cap-service-summary .collapse-caret {
+  transform: rotate(-135deg);
+}
+
+.cap-region-list {
+  display: grid;
+  gap: 6px;
+  padding: 4px 16px 14px;
+}
+
+.cap-region-row {
+  display: grid;
+  grid-template-columns: 12px 130px 1fr;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+}
+
+.cap-region-name {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.cap-region-detail {
+  color: var(--muted);
+}
+
 /* ------------------------------------------------------------------ */
 /* Architecture diagram (use-case modal) with Azure service icons      */
 /* ------------------------------------------------------------------ */

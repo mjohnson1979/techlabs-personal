@@ -1599,30 +1599,47 @@
       });
       bodyEl.appendChild(legend);
 
+      // One collapsed item per service; expanding reveals its per-region status.
       const regions = cap.regions || [];
-      const headRow = e(
-        "tr",
-        {},
-        [e("th", { text: "Service" })].concat(regions.map((r) => e("th", { text: r })))
-      );
-      const rows = Object.keys(cap.services).map((key) => {
+      Object.keys(cap.services).forEach((key) => {
         const svc = cap.services[key];
-        const cells = [e("td", { class: "cap-svc-name", text: svc.label || key })];
+        const counts = { green: 0, yellow: 0, red: 0, unknown: 0 };
         regions.forEach((r) => {
-          const cell = (svc.byRegion && svc.byRegion[r]) || { status: "unknown", detail: "" };
-          cells.push(
-            e("td", { class: "cap-cell", title: cell.detail || "" }, [
-              e("span", { class: "cap-dot cap-" + cell.status }),
+          const st = (svc.byRegion && svc.byRegion[r] && svc.byRegion[r].status) || "unknown";
+          counts[st] = (counts[st] || 0) + 1;
+        });
+        const rollup = e("span", { class: "cap-service-rollup" });
+        ["green", "yellow", "red", "unknown"].forEach((s) => {
+          if (!counts[s]) return;
+          rollup.appendChild(
+            e("span", { class: "cap-rollup-item" }, [
+              e("span", { class: "cap-dot cap-" + s }),
+              e("span", { text: String(counts[s]) }),
             ])
           );
         });
-        return e("tr", {}, cells);
+        const list = e("div", { class: "cap-region-list" });
+        regions.forEach((r) => {
+          const cell = (svc.byRegion && svc.byRegion[r]) || { status: "unknown", detail: "" };
+          list.appendChild(
+            e("div", { class: "cap-region-row" }, [
+              e("span", { class: "cap-dot cap-" + cell.status }),
+              e("span", { class: "cap-region-name", text: r }),
+              e("span", { class: "cap-region-detail", text: cell.detail || "" }),
+            ])
+          );
+        });
+        bodyEl.appendChild(
+          e("details", { class: "cap-service" }, [
+            e("summary", { class: "cap-service-summary" }, [
+              e("span", { class: "cap-service-title", text: svc.label || key }),
+              rollup,
+              e("span", { class: "collapse-caret", "aria-hidden": "true" }),
+            ]),
+            list,
+          ])
+        );
       });
-      bodyEl.appendChild(
-        e("div", { class: "cap-table-wrap" }, [
-          e("table", { class: "cap-table" }, [e("thead", {}, headRow), e("tbody", {}, rows)]),
-        ])
-      );
     });
   }
 
