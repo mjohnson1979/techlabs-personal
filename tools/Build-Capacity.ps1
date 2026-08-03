@@ -231,9 +231,16 @@ function Get-VmUsage {
         $resp = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers
     }
     catch {
-        return $null
+        $code = ''
+        try { $code = [int]$_.Exception.Response.StatusCode } catch { }
+        $reason = ''
+        try { $reason = ($_.ErrorDetails.Message | ConvertFrom-Json).error.code } catch { }
+        if (-not $reason) { $reason = $_.Exception.Message }
+        $short = if ($code) { "usage query failed (HTTP $code $reason)" } else { "usage query failed ($reason)" }
+        Write-Warning "VM usage $Region : $short"
+        return [ordered]@{ ok = $false; value = @(); reason = $short }
     }
-    return @($resp.value)
+    return [ordered]@{ ok = $true; value = @($resp.value); reason = '' }
 }
 
 # green/yellow/red from a single vm list-usage entry (limit vs currentValue).
@@ -466,8 +473,8 @@ if (-not $SkipVm) {
     $coreMap = [ordered]@{}
     foreach ($r in $Regions) {
         $u = $usageByRegion[$r]
-        if (-not $u) { $coreMap[$r] = New-Status 'unknown' 'usage query failed'; continue }
-        $entry = $u | Where-Object { $_.name.value -eq 'cores' } | Select-Object -First 1
+        if (-not $u.ok) { $coreMap[$r] = New-Status 'unknown' $u.reason; continue }
+        $entry = $u.value | Where-Object { $_.name.value -eq 'cores' } | Select-Object -First 1
         $coreMap[$r] = Get-CoreStatus -Entry $entry -What 'regional'
     }
     $services['vm'] = [ordered]@{
@@ -484,8 +491,8 @@ if (-not $SkipVm) {
         $sizeMap = [ordered]@{}
         foreach ($r in $Regions) {
             $u = $usageByRegion[$r]
-            if (-not $u) { $sizeMap[$r] = New-Status 'unknown' 'usage query failed'; continue }
-            $fe = $u | Where-Object { "$($_.name.value)".ToLower() -eq $family.ToLower() } | Select-Object -First 1
+            if (-not $u.ok) { $sizeMap[$r] = New-Status 'unknown' $u.reason; continue }
+            $fe = $u.value | Where-Object { "$($_.name.value)".ToLower() -eq $family.ToLower() } | Select-Object -First 1
             $sizeMap[$r] = Get-CoreStatus -Entry $fe -What $size
         }
         $services["vm:$size"] = [ordered]@{
