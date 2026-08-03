@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-02T07:02:27Z",
+  "generated": "2026-08-03T07:21:51Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -28,33 +28,33 @@
       "byRegion": {
         "eastus": {
           "status": "green",
-          "detail": "990 K TPM available",
-          "value": 990
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "eastus2": {
           "status": "green",
-          "detail": "990 K TPM available",
-          "value": 990
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "centralus": {
           "status": "green",
-          "detail": "990 K TPM available",
-          "value": 990
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "northcentralus": {
           "status": "green",
-          "detail": "990 K TPM available",
-          "value": 990
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "southcentralus": {
           "status": "green",
-          "detail": "990 K TPM available",
-          "value": 990
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "westus": {
           "status": "green",
-          "detail": "990 K TPM available",
-          "value": 990
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "westus2": {
           "status": "red",
@@ -63,8 +63,8 @@
         },
         "westus3": {
           "status": "green",
-          "detail": "990 K TPM available",
-          "value": 990
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "westcentralus": {
           "status": "red",
@@ -78,13 +78,13 @@
         },
         "canadaeast": {
           "status": "green",
-          "detail": "990 K TPM available",
-          "value": 990
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "brazilsouth": {
           "status": "green",
-          "detail": "990 K TPM available",
-          "value": 990
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "brazilsoutheast": {
           "status": "red",
@@ -4988,13 +4988,13 @@
       "byRegion": {
         "eastus": {
           "status": "green",
-          "detail": "100 K TPM available",
-          "value": 100
+          "detail": "65 K TPM available",
+          "value": 65
         },
         "eastus2": {
           "status": "green",
-          "detail": "100 K TPM available",
-          "value": 100
+          "detail": "65 K TPM available",
+          "value": 65
         },
         "centralus": {
           "status": "green",
@@ -5003,8 +5003,8 @@
         },
         "northcentralus": {
           "status": "green",
-          "detail": "100 K TPM available",
-          "value": 100
+          "detail": "65 K TPM available",
+          "value": 65
         },
         "southcentralus": {
           "status": "green",
@@ -5033,8 +5033,8 @@
         },
         "canadacentral": {
           "status": "green",
-          "detail": "100 K TPM available",
-          "value": 100
+          "detail": "65 K TPM available",
+          "value": 65
         },
         "canadaeast": {
           "status": "green",
@@ -5043,8 +5043,8 @@
         },
         "brazilsouth": {
           "status": "green",
-          "detail": "100 K TPM available",
-          "value": 100
+          "detail": "65 K TPM available",
+          "value": 65
         },
         "brazilsoutheast": {
           "status": "red",
@@ -5147,9 +5147,9 @@
       "sku": "ProvisionedManaged",
       "byRegion": {
         "eastus": {
-          "status": "green",
-          "detail": "50 K TPM available",
-          "value": 50
+          "status": "yellow",
+          "detail": "only 15 K TPM available",
+          "value": 15
         },
         "eastus2": {
           "status": "red",
