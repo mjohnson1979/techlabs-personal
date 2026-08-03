@@ -1599,30 +1599,93 @@
       });
       bodyEl.appendChild(legend);
 
+      // One collapsed item per Azure service; a service with multiple SKUs/models
+      // (OpenAI, VMs) nests those as collapsed sub-items.
       const regions = cap.regions || [];
-      const headRow = e(
-        "tr",
-        {},
-        [e("th", { text: "Service" })].concat(regions.map((r) => e("th", { text: r })))
-      );
-      const rows = Object.keys(cap.services).map((key) => {
-        const svc = cap.services[key];
-        const cells = [e("td", { class: "cap-svc-name", text: svc.label || key })];
+      function groupName(svc, key) {
+        const p = (svc.provider || "").toLowerCase();
+        if (p.indexOf("cognitiveservices") !== -1 || key.indexOf("openai:") === 0) return "Azure OpenAI";
+        if (p.indexOf("compute/virtualmachines") !== -1 || key === "vm" || key.indexOf("vm:") === 0) return "Virtual Machines";
+        if (p.indexOf("web/serverfarms") !== -1) return "Azure App Service";
+        if (p.indexOf("app/managedenvironments") !== -1) return "Azure Container Apps";
+        if (p.indexOf("avs/privateclouds") !== -1) return "Azure VMware Solution";
+        if (p.indexOf("fabric/capacities") !== -1) return "Microsoft Fabric";
+        if (p.indexOf("powerbidedicated") !== -1) return "Power BI Dedicated";
+        if (p.indexOf("purview/accounts") !== -1) return "Microsoft Purview";
+        return svc.label || key;
+      }
+      function statusRollup(entries) {
+        const counts = { green: 0, yellow: 0, red: 0, unknown: 0 };
+        entries.forEach((svc) => regions.forEach((r) => {
+          const st = (svc.byRegion && svc.byRegion[r] && svc.byRegion[r].status) || "unknown";
+          counts[st] = (counts[st] || 0) + 1;
+        }));
+        const span = e("span", { class: "cap-service-rollup" });
+        ["green", "yellow", "red", "unknown"].forEach((s) => {
+          if (!counts[s]) return;
+          span.appendChild(e("span", { class: "cap-rollup-item" }, [
+            e("span", { class: "cap-dot cap-" + s }),
+            e("span", { text: String(counts[s]) }),
+          ]));
+        });
+        return span;
+      }
+      function regionList(svc) {
+        const list = e("div", { class: "cap-region-list" });
         regions.forEach((r) => {
           const cell = (svc.byRegion && svc.byRegion[r]) || { status: "unknown", detail: "" };
-          cells.push(
-            e("td", { class: "cap-cell", title: cell.detail || "" }, [
-              e("span", { class: "cap-dot cap-" + cell.status }),
-            ])
-          );
+          list.appendChild(e("div", { class: "cap-region-row" }, [
+            e("span", { class: "cap-dot cap-" + cell.status }),
+            e("span", { class: "cap-region-name", text: r }),
+            e("span", { class: "cap-region-detail", text: cell.detail || "" }),
+          ]));
         });
-        return e("tr", {}, cells);
+        return list;
+      }
+
+      const order = [];
+      const byGroup = {};
+      Object.keys(cap.services).forEach((key) => {
+        const svc = cap.services[key];
+        const g = groupName(svc, key);
+        if (!byGroup[g]) { byGroup[g] = []; order.push(g); }
+        byGroup[g].push({ key, svc });
       });
-      bodyEl.appendChild(
-        e("div", { class: "cap-table-wrap" }, [
-          e("table", { class: "cap-table" }, [e("thead", {}, headRow), e("tbody", {}, rows)]),
-        ])
-      );
+
+      order.forEach((g) => {
+        const entries = byGroup[g];
+        let body;
+        if (entries.length === 1) {
+          body = regionList(entries[0].svc);
+        } else {
+          body = e("div", { class: "cap-service-body" });
+          entries.forEach(({ svc, key }) => {
+            let sub = svc.label || key;
+            if (sub.indexOf(g + " - ") === 0) sub = sub.slice((g + " - ").length);
+            body.appendChild(
+              e("details", { class: "cap-sku" }, [
+                e("summary", { class: "cap-sku-summary" }, [
+                  e("span", { class: "cap-sku-title", text: sub }),
+                  statusRollup([svc]),
+                  e("span", { class: "collapse-caret", "aria-hidden": "true" }),
+                ]),
+                regionList(svc),
+              ])
+            );
+          });
+        }
+        bodyEl.appendChild(
+          e("details", { class: "cap-service" }, [
+            e("summary", { class: "cap-service-summary" }, [
+              e("span", { class: "cap-service-title", text: g }),
+              entries.length > 1 ? e("span", { class: "cap-service-count", text: entries.length + " SKUs" }) : null,
+              statusRollup(entries.map((x) => x.svc)),
+              e("span", { class: "collapse-caret", "aria-hidden": "true" }),
+            ]),
+            body,
+          ])
+        );
+      });
     });
   }
 
