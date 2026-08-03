@@ -17,7 +17,7 @@
         - REST: Microsoft.CognitiveServices/modelCapacities
       * Azure App Service plan compute - ARM preflight validate of a minimal B1
         serverFarm (the only reliable signal for serverFarms quota)
-      * Virtual Machine cores - az vm list-usage (Total Regional vCPUs)
+      * Virtual Machine cores - REST: Microsoft.Compute/locations/usages (Total Regional vCPUs)
 
     Each probe is best-effort; failures degrade to status 'unknown' (yellow) so a
     transient error never blocks the gallery.
@@ -217,12 +217,23 @@ function Get-RegionModelDeprecations {
 
 # --------------------------------------------------------------------------- #
 # Probe: VM regional + per-family core quota vs usage
+#
+# Uses the ARM usages REST API directly (same bearer-token path as every other
+# probe) rather than `az vm list-usage`: the CLI shell-out returned nothing in
+# CI, leaving every region 'usage query failed'. Returns the usage entries array
+# so callers can match name.value ('cores' or a family token) as before.
 # --------------------------------------------------------------------------- #
 function Get-VmUsage {
-    param([string]$Region)
-    $json = Invoke-Az @('vm', 'list-usage', '--location', $Region, '-o', 'json')
-    if (-not $json) { return $null }
-    try { return $json | ConvertFrom-Json } catch { return $null }
+    param([string]$Sub, [string]$Token, [string]$Region)
+    $headers = @{ Authorization = "Bearer $Token" }
+    $uri = "https://management.azure.com/subscriptions/$Sub/providers/Microsoft.Compute/locations/$Region/usages?api-version=2024-07-01"
+    try {
+        $resp = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers
+    }
+    catch {
+        return $null
+    }
+    return @($resp.value)
 }
 
 # green/yellow/red from a single vm list-usage entry (limit vs currentValue).
@@ -448,7 +459,7 @@ if (-not $SkipVm) {
     $usageByRegion = @{}
     foreach ($r in $Regions) {
         Write-Host "  VM usage $r ..." -ForegroundColor DarkGray
-        $usageByRegion[$r] = Get-VmUsage -Region $r
+        $usageByRegion[$r] = Get-VmUsage -Sub $sub -Token $token -Region $r
     }
 
     # Total regional vCPUs.
