@@ -1,9 +1,10 @@
 # SME&C Techlabs
 
-> A catalog of templatized Azure use cases as Infrastructure as Code (Bicep). Every
-> use case is resilient by design, mapped to the Azure Well-Architected Framework,
-> ships with dev and prod parameter profiles, and carries machine-readable cost
-> metadata that a script prices live against the public Azure Retail Prices API.
+> A catalog of templatized Azure use cases as Infrastructure as Code (Bicep and
+> Terraform). Every use case is resilient by design, mapped to the Azure
+> Well-Architected Framework, ships with dev and prod parameter profiles, and
+> carries machine-readable cost metadata that a script prices live against the
+> public Azure Retail Prices API.
 
 ## How the catalog is organized
 
@@ -33,19 +34,20 @@
 
 - `tools/Get-CatalogCost.ps1 -UseCase <path>` prices one use case; `-All` rolls up the portfolio TCO.
 - Prices come live from `https://prices.azure.com/api/retail/prices` (public, no auth). Components are `fixed` (committed monthly) or `usage` (illustrative, from assumed monthly quantities).
+- The deploy panel offers advanced options (models/SKUs/sizes/capacities from `site/registry.json`, grouped per service). Changing the region or an option calls `POST /api/estimate`, which reprices the affected components live so the itemized total reflects the chosen SKU, capacity, node/replica count, zone redundancy, and SQL tier.
 
 ## Website (gallery)
 
 - `site/` is a static SME&C Techlabs gallery (index.html + assets) that loads `site/catalog.json`.
 - `tools/Build-Catalog.ps1` regenerates `site/catalog.json` from every `metadata.json`.
-- A FastAPI backend in `site/server/` gates the gallery behind Entra ID, records activity, and provisions/destroys Azure resources with its own managed identity (SQLite system of record on App Service's `/home`). See `site/server/README.md`.
+- A FastAPI backend in `site/server/` gates the gallery behind Entra ID, records activity, and provisions/destroys Azure resources with its own managed identity (SQLite system of record on App Service's `/home`). Deployments carry an auto-cleanup end time (default 2 days, max 4) enforced by a background scheduler; failed deploys that left partial resources are cleanable from the account/admin views. See `site/server/README.md`.
 - `.github/workflows/deploy-gallery.yml` publishes the gallery to Azure App Service via Azure OIDC on pushes to `main` that touch `site/`, `catalog/`, or `tools/Build-Templates.ps1`.
-- Header pages: **Roadmap & retirements** (search by service, collapsible per-service lists of retirements / previews / recent GA from `site/updates.json`) and **Capacity** (service x region quota grid from `site/capacity.json`).
+- Header pages: **Roadmap & retirements** (search by service, collapsible per-service lists of retirements / previews / recent GA from `site/updates.json`) and **Capacity** (collapsible per-service items, each expanding to per-region status, from `site/capacity.json`).
 
 ## Live signals
 
 - **Service lifecycle** — `tools/Build-Updates.ps1` maps Azure Updates onto the services each use case provisions and writes `site/updates.json` (refreshed weekly by `.github/workflows/updates.yml`). The use-case modal lists only the upcoming retirements affecting that use case; the full catalog lives on the Roadmap & retirements page.
-- **Region capacity** — `tools/Build-Capacity.ps1` probes subscription quota and regional availability for capacity-sensitive services and writes `site/capacity.json` (refreshed daily by `.github/workflows/capacity.yml`). Cards show a "Quota-sensitive" flag and the region picker is colour-coded.
+- **Region capacity** — `tools/Build-Capacity.ps1` probes subscription quota and regional availability across Americas regions for capacity-sensitive services (Azure OpenAI TPM per model/version/SKU, App Service, VM cores + per-family quota, Container Apps, AVS, Fabric, Power BI, Purview) and writes `site/capacity.json` (refreshed daily by `.github/workflows/capacity.yml`). Cards show a "Quota-sensitive" flag; the region picker is colour-coded and model/VM-size aware. Advanced-option dropdowns are backed by `site/registry.json` (`tools/Build-Registry.ps1`, refreshed by `.github/workflows/registry.yml`).
 
 ## Submitting a use case
 
