@@ -2041,6 +2041,45 @@ details[open] > .collapse-summary .collapse-caret {
   transform: rotate(-135deg);
 }
 
+.cap-service-count {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* Nested SKU/model items inside a multi-SKU service (e.g. OpenAI, VMs). */
+.cap-service-body {
+  padding: 4px 12px 12px;
+}
+
+.cap-sku {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.015);
+  margin-top: 8px;
+}
+
+.cap-sku-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.cap-sku-summary::-webkit-details-marker {
+  display: none;
+}
+
+.cap-sku-title {
+  color: var(--text);
+}
+
+.cap-sku[open] > .cap-sku-summary .collapse-caret {
+  transform: rotate(-135deg);
+}
+
 .cap-region-list {
   display: grid;
   gap: 6px;
