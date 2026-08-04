@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-01T06:04:51Z",
+  "generated": "2026-08-04T06:02:59Z",
   "regions": [
     "eastus",
     "eastus2",
@@ -1310,6 +1310,62 @@
           "westus3"
         ],
         "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-4.1",
+        "version": "2025-04-14",
+        "skus": [
+          "DataZoneBatch",
+          "DataZoneStandard",
+          "DeveloperTier",
+          "GlobalBatch",
+          "GlobalProvisionedManaged",
+          "GlobalStandard",
+          "ProvisionedManaged"
+        ],
+        "regions": [
+          "centralus"
+        ],
+        "lifecycle": "Legacy",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-4.1-mini",
+        "version": "2025-04-14",
+        "skus": [
+          "DataZoneBatch",
+          "DataZoneStandard",
+          "DeveloperTier",
+          "GlobalBatch",
+          "GlobalProvisionedManaged",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "centralus"
+        ],
+        "lifecycle": "Legacy",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-4o",
+        "version": "2024-11-20",
+        "skus": [
+          "DataZoneBatch",
+          "DataZoneStandard",
+          "GlobalBatch",
+          "GlobalProvisionedManaged",
+          "GlobalStandard",
+          "ProvisionedManaged",
+          "Standard"
+        ],
+        "regions": [
+          "centralus"
+        ],
+        "lifecycle": "Legacy",
         "kind": "chat"
       },
       {
