@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-03T17:23:35Z",
+  "generated": "2026-08-04T07:03:00Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -174,6 +174,1606 @@
         "mexicocentral": {
           "status": "red",
           "detail": "Standard SKU not offered for text-embedding-3-small in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1:2025-04-14:datazonebatch": {
+      "label": "Azure OpenAI - gpt-4.1 2025-04-14 [DataZoneBatch]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1",
+      "version": "2025-04-14",
+      "sku": "DataZoneBatch",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4.1 DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4.1 DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4.1 DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4.1 DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1 in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1:2025-04-14:datazonestandard": {
+      "label": "Azure OpenAI - gpt-4.1 2025-04-14 [DataZoneStandard]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1",
+      "version": "2025-04-14",
+      "sku": "DataZoneStandard",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4.1 DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4.1 DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4.1 DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4.1 DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1:2025-04-14:developertier": {
+      "label": "Azure OpenAI - gpt-4.1 2025-04-14 [DeveloperTier]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1",
+      "version": "2025-04-14",
+      "sku": "DeveloperTier",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "centralus": {
+          "status": "red",
+          "detail": "no TPM capacity in this region",
+          "value": 0
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DeveloperTier SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DeveloperTier SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DeveloperTier SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DeveloperTier SKU not offered for gpt-4.1 in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1:2025-04-14:globalbatch": {
+      "label": "Azure OpenAI - gpt-4.1 2025-04-14 [GlobalBatch]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1",
+      "version": "2025-04-14",
+      "sku": "GlobalBatch",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4.1 in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1:2025-04-14:globalprovisionedmanaged": {
+      "label": "Azure OpenAI - gpt-4.1 2025-04-14 [GlobalProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1",
+      "version": "2025-04-14",
+      "sku": "GlobalProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1:2025-04-14:globalstandard": {
+      "label": "Azure OpenAI - gpt-4.1 2025-04-14 [GlobalStandard]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1",
+      "version": "2025-04-14",
+      "sku": "GlobalStandard",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1:2025-04-14:provisionedmanaged": {
+      "label": "Azure OpenAI - gpt-4.1 2025-04-14 [ProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1",
+      "version": "2025-04-14",
+      "sku": "ProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1-mini:2025-04-14:datazonebatch": {
+      "label": "Azure OpenAI - gpt-4.1-mini 2025-04-14 [DataZoneBatch]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1-mini",
+      "version": "2025-04-14",
+      "sku": "DataZoneBatch",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "100000 K TPM available",
+          "value": 100000
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1-mini:2025-04-14:datazonestandard": {
+      "label": "Azure OpenAI - gpt-4.1-mini 2025-04-14 [DataZoneStandard]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1-mini",
+      "version": "2025-04-14",
+      "sku": "DataZoneStandard",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DataZoneStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DataZoneStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "2000 K TPM available",
+          "value": 2000
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DataZoneStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DataZoneStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DataZoneStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DataZoneStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1-mini:2025-04-14:developertier": {
+      "label": "Azure OpenAI - gpt-4.1-mini 2025-04-14 [DeveloperTier]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1-mini",
+      "version": "2025-04-14",
+      "sku": "DeveloperTier",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "centralus": {
+          "status": "red",
+          "detail": "no TPM capacity in this region",
+          "value": 0
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DeveloperTier SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DeveloperTier SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DeveloperTier SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DeveloperTier SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1-mini:2025-04-14:globalbatch": {
+      "label": "Azure OpenAI - gpt-4.1-mini 2025-04-14 [GlobalBatch]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1-mini",
+      "version": "2025-04-14",
+      "sku": "GlobalBatch",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "1000000 K TPM available",
+          "value": 1000000
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1-mini:2025-04-14:globalprovisionedmanaged": {
+      "label": "Azure OpenAI - gpt-4.1-mini 2025-04-14 [GlobalProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1-mini",
+      "version": "2025-04-14",
+      "sku": "GlobalProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1-mini:2025-04-14:globalstandard": {
+      "label": "Azure OpenAI - gpt-4.1-mini 2025-04-14 [GlobalStandard]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1-mini",
+      "version": "2025-04-14",
+      "sku": "GlobalStandard",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4o:2024-11-20:datazonebatch": {
+      "label": "Azure OpenAI - gpt-4o 2024-11-20 [DataZoneBatch]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4o",
+      "version": "2024-11-20",
+      "sku": "DataZoneBatch",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4o DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4o DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4o DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4o DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4o DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4o DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneBatch SKU not offered for gpt-4o in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4o:2024-11-20:datazonestandard": {
+      "label": "Azure OpenAI - gpt-4o 2024-11-20 [DataZoneStandard]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4o",
+      "version": "2024-11-20",
+      "sku": "DataZoneStandard",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4o DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4o DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4o DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4o DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4o DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4o DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4o in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4o:2024-11-20:globalbatch": {
+      "label": "Azure OpenAI - gpt-4o 2024-11-20 [GlobalBatch]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4o",
+      "version": "2024-11-20",
+      "sku": "GlobalBatch",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "GlobalBatch SKU not offered for gpt-4o in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4o:2024-11-20:globalprovisionedmanaged": {
+      "label": "Azure OpenAI - gpt-4o 2024-11-20 [GlobalProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4o",
+      "version": "2024-11-20",
+      "sku": "GlobalProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4o:2024-11-20:globalstandard": {
+      "label": "Azure OpenAI - gpt-4o 2024-11-20 [GlobalStandard]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4o",
+      "version": "2024-11-20",
+      "sku": "GlobalStandard",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "450 K TPM available",
+          "value": 450
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-4o in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4o:2024-11-20:provisionedmanaged": {
+      "label": "Azure OpenAI - gpt-4o 2024-11-20 [ProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4o",
+      "version": "2024-11-20",
+      "sku": "ProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4o:2024-11-20:standard": {
+      "label": "Azure OpenAI - gpt-4o 2024-11-20 [Standard]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4o",
+      "version": "2024-11-20",
+      "sku": "Standard",
+      "byRegion": {
+        "eastus": {
+          "status": "red",
+          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "eastus2": {
+          "status": "red",
+          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "150 K TPM available",
+          "value": 150
+        },
+        "northcentralus": {
+          "status": "red",
+          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "southcentralus": {
+          "status": "red",
+          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus": {
+          "status": "red",
+          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "red",
+          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4o in this region",
           "value": null
         }
       }
@@ -4988,13 +6588,13 @@
       "byRegion": {
         "eastus": {
           "status": "green",
-          "detail": "65 K TPM available",
-          "value": 65
+          "detail": "95 K TPM available",
+          "value": 95
         },
         "eastus2": {
           "status": "green",
-          "detail": "65 K TPM available",
-          "value": 65
+          "detail": "95 K TPM available",
+          "value": 95
         },
         "centralus": {
           "status": "green",
@@ -5003,8 +6603,8 @@
         },
         "northcentralus": {
           "status": "green",
-          "detail": "65 K TPM available",
-          "value": 65
+          "detail": "95 K TPM available",
+          "value": 95
         },
         "southcentralus": {
           "status": "green",
@@ -5033,8 +6633,8 @@
         },
         "canadacentral": {
           "status": "green",
-          "detail": "65 K TPM available",
-          "value": 65
+          "detail": "95 K TPM available",
+          "value": 95
         },
         "canadaeast": {
           "status": "green",
@@ -5043,8 +6643,8 @@
         },
         "brazilsouth": {
           "status": "green",
-          "detail": "65 K TPM available",
-          "value": 65
+          "detail": "95 K TPM available",
+          "value": 95
         },
         "brazilsoutheast": {
           "status": "red",
@@ -5147,9 +6747,9 @@
       "sku": "ProvisionedManaged",
       "byRegion": {
         "eastus": {
-          "status": "yellow",
-          "detail": "only 15 K TPM available",
-          "value": 15
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "eastus2": {
           "status": "red",
@@ -10102,72 +11702,72 @@
       "byRegion": {
         "eastus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "regional quota not reported in this region",
           "value": null
         },
         "eastus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "regional quota not reported in this region",
           "value": null
         },
         "centralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "regional quota not reported in this region",
           "value": null
         },
         "northcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "regional quota not reported in this region",
           "value": null
         },
         "southcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "regional quota not reported in this region",
           "value": null
         },
         "westus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "regional quota not reported in this region",
           "value": null
         },
         "westus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "regional quota not reported in this region",
           "value": null
         },
         "westus3": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "regional quota not reported in this region",
           "value": null
         },
         "westcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "regional quota not reported in this region",
           "value": null
         },
         "canadacentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "regional quota not reported in this region",
           "value": null
         },
         "canadaeast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "regional quota not reported in this region",
           "value": null
         },
         "brazilsouth": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "regional quota not reported in this region",
           "value": null
         },
         "brazilsoutheast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "usage query failed (HTTP 400 NoRegisteredProviderFound)",
           "value": null
         },
         "mexicocentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "regional quota not reported in this region",
           "value": null
         }
       }
@@ -10180,72 +11780,72 @@
       "byRegion": {
         "eastus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v5 quota not reported in this region",
           "value": null
         },
         "eastus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v5 quota not reported in this region",
           "value": null
         },
         "centralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v5 quota not reported in this region",
           "value": null
         },
         "northcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v5 quota not reported in this region",
           "value": null
         },
         "southcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v5 quota not reported in this region",
           "value": null
         },
         "westus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v5 quota not reported in this region",
           "value": null
         },
         "westus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v5 quota not reported in this region",
           "value": null
         },
         "westus3": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v5 quota not reported in this region",
           "value": null
         },
         "westcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v5 quota not reported in this region",
           "value": null
         },
         "canadacentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v5 quota not reported in this region",
           "value": null
         },
         "canadaeast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v5 quota not reported in this region",
           "value": null
         },
         "brazilsouth": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v5 quota not reported in this region",
           "value": null
         },
         "brazilsoutheast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "usage query failed (HTTP 400 NoRegisteredProviderFound)",
           "value": null
         },
         "mexicocentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v5 quota not reported in this region",
           "value": null
         }
       }
@@ -10258,72 +11858,72 @@
       "byRegion": {
         "eastus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v5 quota not reported in this region",
           "value": null
         },
         "eastus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v5 quota not reported in this region",
           "value": null
         },
         "centralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v5 quota not reported in this region",
           "value": null
         },
         "northcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v5 quota not reported in this region",
           "value": null
         },
         "southcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v5 quota not reported in this region",
           "value": null
         },
         "westus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v5 quota not reported in this region",
           "value": null
         },
         "westus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v5 quota not reported in this region",
           "value": null
         },
         "westus3": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v5 quota not reported in this region",
           "value": null
         },
         "westcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v5 quota not reported in this region",
           "value": null
         },
         "canadacentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v5 quota not reported in this region",
           "value": null
         },
         "canadaeast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v5 quota not reported in this region",
           "value": null
         },
         "brazilsouth": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v5 quota not reported in this region",
           "value": null
         },
         "brazilsoutheast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "usage query failed (HTTP 400 NoRegisteredProviderFound)",
           "value": null
         },
         "mexicocentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v5 quota not reported in this region",
           "value": null
         }
       }
@@ -10336,72 +11936,72 @@
       "byRegion": {
         "eastus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v5 quota not reported in this region",
           "value": null
         },
         "eastus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v5 quota not reported in this region",
           "value": null
         },
         "centralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v5 quota not reported in this region",
           "value": null
         },
         "northcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v5 quota not reported in this region",
           "value": null
         },
         "southcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v5 quota not reported in this region",
           "value": null
         },
         "westus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v5 quota not reported in this region",
           "value": null
         },
         "westus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v5 quota not reported in this region",
           "value": null
         },
         "westus3": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v5 quota not reported in this region",
           "value": null
         },
         "westcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v5 quota not reported in this region",
           "value": null
         },
         "canadacentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v5 quota not reported in this region",
           "value": null
         },
         "canadaeast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v5 quota not reported in this region",
           "value": null
         },
         "brazilsouth": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v5 quota not reported in this region",
           "value": null
         },
         "brazilsoutheast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "usage query failed (HTTP 400 NoRegisteredProviderFound)",
           "value": null
         },
         "mexicocentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v5 quota not reported in this region",
           "value": null
         }
       }
@@ -10414,72 +12014,72 @@
       "byRegion": {
         "eastus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D16s_v5 quota not reported in this region",
           "value": null
         },
         "eastus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D16s_v5 quota not reported in this region",
           "value": null
         },
         "centralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D16s_v5 quota not reported in this region",
           "value": null
         },
         "northcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D16s_v5 quota not reported in this region",
           "value": null
         },
         "southcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D16s_v5 quota not reported in this region",
           "value": null
         },
         "westus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D16s_v5 quota not reported in this region",
           "value": null
         },
         "westus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D16s_v5 quota not reported in this region",
           "value": null
         },
         "westus3": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D16s_v5 quota not reported in this region",
           "value": null
         },
         "westcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D16s_v5 quota not reported in this region",
           "value": null
         },
         "canadacentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D16s_v5 quota not reported in this region",
           "value": null
         },
         "canadaeast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D16s_v5 quota not reported in this region",
           "value": null
         },
         "brazilsouth": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D16s_v5 quota not reported in this region",
           "value": null
         },
         "brazilsoutheast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "usage query failed (HTTP 400 NoRegisteredProviderFound)",
           "value": null
         },
         "mexicocentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D16s_v5 quota not reported in this region",
           "value": null
         }
       }
@@ -10492,72 +12092,72 @@
       "byRegion": {
         "eastus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v6 quota not reported in this region",
           "value": null
         },
         "eastus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v6 quota not reported in this region",
           "value": null
         },
         "centralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v6 quota not reported in this region",
           "value": null
         },
         "northcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v6 quota not reported in this region",
           "value": null
         },
         "southcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v6 quota not reported in this region",
           "value": null
         },
         "westus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v6 quota not reported in this region",
           "value": null
         },
         "westus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v6 quota not reported in this region",
           "value": null
         },
         "westus3": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v6 quota not reported in this region",
           "value": null
         },
         "westcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v6 quota not reported in this region",
           "value": null
         },
         "canadacentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v6 quota not reported in this region",
           "value": null
         },
         "canadaeast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v6 quota not reported in this region",
           "value": null
         },
         "brazilsouth": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v6 quota not reported in this region",
           "value": null
         },
         "brazilsoutheast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "usage query failed (HTTP 400 NoRegisteredProviderFound)",
           "value": null
         },
         "mexicocentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D2s_v6 quota not reported in this region",
           "value": null
         }
       }
@@ -10570,72 +12170,72 @@
       "byRegion": {
         "eastus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v6 quota not reported in this region",
           "value": null
         },
         "eastus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v6 quota not reported in this region",
           "value": null
         },
         "centralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v6 quota not reported in this region",
           "value": null
         },
         "northcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v6 quota not reported in this region",
           "value": null
         },
         "southcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v6 quota not reported in this region",
           "value": null
         },
         "westus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v6 quota not reported in this region",
           "value": null
         },
         "westus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v6 quota not reported in this region",
           "value": null
         },
         "westus3": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v6 quota not reported in this region",
           "value": null
         },
         "westcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v6 quota not reported in this region",
           "value": null
         },
         "canadacentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v6 quota not reported in this region",
           "value": null
         },
         "canadaeast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v6 quota not reported in this region",
           "value": null
         },
         "brazilsouth": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v6 quota not reported in this region",
           "value": null
         },
         "brazilsoutheast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "usage query failed (HTTP 400 NoRegisteredProviderFound)",
           "value": null
         },
         "mexicocentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D4s_v6 quota not reported in this region",
           "value": null
         }
       }
@@ -10648,72 +12248,72 @@
       "byRegion": {
         "eastus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v6 quota not reported in this region",
           "value": null
         },
         "eastus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v6 quota not reported in this region",
           "value": null
         },
         "centralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v6 quota not reported in this region",
           "value": null
         },
         "northcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v6 quota not reported in this region",
           "value": null
         },
         "southcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v6 quota not reported in this region",
           "value": null
         },
         "westus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v6 quota not reported in this region",
           "value": null
         },
         "westus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v6 quota not reported in this region",
           "value": null
         },
         "westus3": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v6 quota not reported in this region",
           "value": null
         },
         "westcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v6 quota not reported in this region",
           "value": null
         },
         "canadacentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v6 quota not reported in this region",
           "value": null
         },
         "canadaeast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v6 quota not reported in this region",
           "value": null
         },
         "brazilsouth": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v6 quota not reported in this region",
           "value": null
         },
         "brazilsoutheast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "usage query failed (HTTP 400 NoRegisteredProviderFound)",
           "value": null
         },
         "mexicocentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_D8s_v6 quota not reported in this region",
           "value": null
         }
       }
@@ -10726,72 +12326,72 @@
       "byRegion": {
         "eastus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E4s_v5 quota not reported in this region",
           "value": null
         },
         "eastus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E4s_v5 quota not reported in this region",
           "value": null
         },
         "centralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E4s_v5 quota not reported in this region",
           "value": null
         },
         "northcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E4s_v5 quota not reported in this region",
           "value": null
         },
         "southcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E4s_v5 quota not reported in this region",
           "value": null
         },
         "westus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E4s_v5 quota not reported in this region",
           "value": null
         },
         "westus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E4s_v5 quota not reported in this region",
           "value": null
         },
         "westus3": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E4s_v5 quota not reported in this region",
           "value": null
         },
         "westcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E4s_v5 quota not reported in this region",
           "value": null
         },
         "canadacentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E4s_v5 quota not reported in this region",
           "value": null
         },
         "canadaeast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E4s_v5 quota not reported in this region",
           "value": null
         },
         "brazilsouth": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E4s_v5 quota not reported in this region",
           "value": null
         },
         "brazilsoutheast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "usage query failed (HTTP 400 NoRegisteredProviderFound)",
           "value": null
         },
         "mexicocentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E4s_v5 quota not reported in this region",
           "value": null
         }
       }
@@ -10804,72 +12404,72 @@
       "byRegion": {
         "eastus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E8s_v5 quota not reported in this region",
           "value": null
         },
         "eastus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E8s_v5 quota not reported in this region",
           "value": null
         },
         "centralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E8s_v5 quota not reported in this region",
           "value": null
         },
         "northcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E8s_v5 quota not reported in this region",
           "value": null
         },
         "southcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E8s_v5 quota not reported in this region",
           "value": null
         },
         "westus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E8s_v5 quota not reported in this region",
           "value": null
         },
         "westus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E8s_v5 quota not reported in this region",
           "value": null
         },
         "westus3": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E8s_v5 quota not reported in this region",
           "value": null
         },
         "westcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E8s_v5 quota not reported in this region",
           "value": null
         },
         "canadacentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E8s_v5 quota not reported in this region",
           "value": null
         },
         "canadaeast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E8s_v5 quota not reported in this region",
           "value": null
         },
         "brazilsouth": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E8s_v5 quota not reported in this region",
           "value": null
         },
         "brazilsoutheast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "usage query failed (HTTP 400 NoRegisteredProviderFound)",
           "value": null
         },
         "mexicocentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_E8s_v5 quota not reported in this region",
           "value": null
         }
       }
@@ -10882,72 +12482,72 @@
       "byRegion": {
         "eastus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F4s_v2 quota not reported in this region",
           "value": null
         },
         "eastus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F4s_v2 quota not reported in this region",
           "value": null
         },
         "centralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F4s_v2 quota not reported in this region",
           "value": null
         },
         "northcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F4s_v2 quota not reported in this region",
           "value": null
         },
         "southcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F4s_v2 quota not reported in this region",
           "value": null
         },
         "westus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F4s_v2 quota not reported in this region",
           "value": null
         },
         "westus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F4s_v2 quota not reported in this region",
           "value": null
         },
         "westus3": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F4s_v2 quota not reported in this region",
           "value": null
         },
         "westcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F4s_v2 quota not reported in this region",
           "value": null
         },
         "canadacentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F4s_v2 quota not reported in this region",
           "value": null
         },
         "canadaeast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F4s_v2 quota not reported in this region",
           "value": null
         },
         "brazilsouth": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F4s_v2 quota not reported in this region",
           "value": null
         },
         "brazilsoutheast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "usage query failed (HTTP 400 NoRegisteredProviderFound)",
           "value": null
         },
         "mexicocentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F4s_v2 quota not reported in this region",
           "value": null
         }
       }
@@ -10960,72 +12560,72 @@
       "byRegion": {
         "eastus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F8s_v2 quota not reported in this region",
           "value": null
         },
         "eastus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F8s_v2 quota not reported in this region",
           "value": null
         },
         "centralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F8s_v2 quota not reported in this region",
           "value": null
         },
         "northcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F8s_v2 quota not reported in this region",
           "value": null
         },
         "southcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F8s_v2 quota not reported in this region",
           "value": null
         },
         "westus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F8s_v2 quota not reported in this region",
           "value": null
         },
         "westus2": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F8s_v2 quota not reported in this region",
           "value": null
         },
         "westus3": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F8s_v2 quota not reported in this region",
           "value": null
         },
         "westcentralus": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F8s_v2 quota not reported in this region",
           "value": null
         },
         "canadacentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F8s_v2 quota not reported in this region",
           "value": null
         },
         "canadaeast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F8s_v2 quota not reported in this region",
           "value": null
         },
         "brazilsouth": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F8s_v2 quota not reported in this region",
           "value": null
         },
         "brazilsoutheast": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "usage query failed (HTTP 400 NoRegisteredProviderFound)",
           "value": null
         },
         "mexicocentral": {
           "status": "unknown",
-          "detail": "usage query failed",
+          "detail": "Standard_F8s_v2 quota not reported in this region",
           "value": null
         }
       }
