@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-04T07:03:00Z",
+  "generated": "2026-08-05T07:06:58Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -192,9 +192,9 @@
           "value": null
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4.1 DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
         },
         "centralus": {
           "status": "green",
@@ -202,9 +202,9 @@
           "value": 30000
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1 DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
         },
         "southcentralus": {
           "status": "red",
@@ -272,9 +272,9 @@
           "value": null
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4.1 DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
         },
         "centralus": {
           "status": "green",
@@ -282,9 +282,9 @@
           "value": 300
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1 DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
         },
         "southcentralus": {
           "status": "red",
@@ -353,8 +353,8 @@
         },
         "eastus2": {
           "status": "red",
-          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "centralus": {
           "status": "red",
@@ -363,8 +363,8 @@
         },
         "northcentralus": {
           "status": "red",
-          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "southcentralus": {
           "status": "red",
@@ -393,8 +393,8 @@
         },
         "canadacentral": {
           "status": "red",
-          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "canadaeast": {
           "status": "red",
@@ -432,9 +432,9 @@
           "value": null
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "centralus": {
           "status": "green",
@@ -442,9 +442,9 @@
           "value": 200000
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "southcentralus": {
           "status": "red",
@@ -512,9 +512,9 @@
           "value": null
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "centralus": {
           "status": "green",
@@ -522,9 +522,9 @@
           "value": 100
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "southcentralus": {
           "status": "red",
@@ -552,9 +552,9 @@
           "value": null
         },
         "canadacentral": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "canadaeast": {
           "status": "red",
@@ -592,9 +592,9 @@
           "value": null
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "centralus": {
           "status": "green",
@@ -602,9 +602,9 @@
           "value": 1000
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "southcentralus": {
           "status": "red",
@@ -633,8 +633,8 @@
         },
         "canadacentral": {
           "status": "red",
-          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "canadaeast": {
           "status": "red",
@@ -672,9 +672,9 @@
           "value": null
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "centralus": {
           "status": "green",
@@ -682,9 +682,9 @@
           "value": 50
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "southcentralus": {
           "status": "red",
@@ -712,9 +712,9 @@
           "value": null
         },
         "canadacentral": {
-          "status": "red",
-          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "canadaeast": {
           "status": "red",
@@ -752,9 +752,9 @@
           "value": null
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4.1-mini DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100000 K TPM available",
+          "value": 100000
         },
         "centralus": {
           "status": "green",
@@ -762,9 +762,9 @@
           "value": 100000
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100000 K TPM available",
+          "value": 100000
         },
         "southcentralus": {
           "status": "red",
@@ -832,9 +832,9 @@
           "value": null
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4.1-mini DataZoneStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "2000 K TPM available",
+          "value": 2000
         },
         "centralus": {
           "status": "green",
@@ -842,9 +842,9 @@
           "value": 2000
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini DataZoneStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "2000 K TPM available",
+          "value": 2000
         },
         "southcentralus": {
           "status": "red",
@@ -913,8 +913,8 @@
         },
         "eastus2": {
           "status": "red",
-          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "centralus": {
           "status": "red",
@@ -923,8 +923,8 @@
         },
         "northcentralus": {
           "status": "red",
-          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "southcentralus": {
           "status": "red",
@@ -953,8 +953,8 @@
         },
         "canadacentral": {
           "status": "red",
-          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "canadaeast": {
           "status": "red",
@@ -992,9 +992,9 @@
           "value": null
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "1000000 K TPM available",
+          "value": 1000000
         },
         "centralus": {
           "status": "green",
@@ -1002,9 +1002,9 @@
           "value": 1000000
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "1000000 K TPM available",
+          "value": 1000000
         },
         "southcentralus": {
           "status": "red",
@@ -1072,9 +1072,9 @@
           "value": null
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "centralus": {
           "status": "green",
@@ -1082,9 +1082,9 @@
           "value": 100
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "southcentralus": {
           "status": "red",
@@ -1112,9 +1112,9 @@
           "value": null
         },
         "canadacentral": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "canadaeast": {
           "status": "red",
@@ -1152,9 +1152,9 @@
           "value": null
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
         },
         "centralus": {
           "status": "green",
@@ -1162,9 +1162,9 @@
           "value": 5000
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
         },
         "southcentralus": {
           "status": "red",
@@ -1193,8 +1193,8 @@
         },
         "canadacentral": {
           "status": "red",
-          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "canadaeast": {
           "status": "red",
@@ -1242,9 +1242,9 @@
           "value": 30000
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4o DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
         },
         "southcentralus": {
           "status": "red",
@@ -1322,9 +1322,9 @@
           "value": 300
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4o DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
         },
         "southcentralus": {
           "status": "red",
@@ -1402,9 +1402,9 @@
           "value": 200000
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "southcentralus": {
           "status": "red",
@@ -1442,9 +1442,9 @@
           "value": null
         },
         "brazilsouth": {
-          "status": "red",
-          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "brazilsoutheast": {
           "status": "red",
@@ -1482,9 +1482,9 @@
           "value": 100
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "southcentralus": {
           "status": "red",
@@ -1512,9 +1512,9 @@
           "value": null
         },
         "canadacentral": {
-          "status": "red",
-          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "canadaeast": {
           "status": "red",
@@ -1522,9 +1522,9 @@
           "value": null
         },
         "brazilsouth": {
-          "status": "red",
-          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "brazilsoutheast": {
           "status": "red",
@@ -1562,9 +1562,9 @@
           "value": 450
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "450 K TPM available",
+          "value": 450
         },
         "southcentralus": {
           "status": "red",
@@ -1602,9 +1602,9 @@
           "value": null
         },
         "brazilsouth": {
-          "status": "red",
-          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "450 K TPM available",
+          "value": 450
         },
         "brazilsoutheast": {
           "status": "red",
@@ -1642,9 +1642,9 @@
           "value": 50
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "southcentralus": {
           "status": "red",
@@ -1682,9 +1682,9 @@
           "value": null
         },
         "brazilsouth": {
-          "status": "red",
-          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "brazilsoutheast": {
           "status": "red",
@@ -1722,9 +1722,9 @@
           "value": 150
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "150 K TPM available",
+          "value": 150
         },
         "southcentralus": {
           "status": "red",
@@ -6588,13 +6588,13 @@
       "byRegion": {
         "eastus": {
           "status": "green",
-          "detail": "95 K TPM available",
-          "value": 95
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "eastus2": {
           "status": "green",
-          "detail": "95 K TPM available",
-          "value": 95
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "centralus": {
           "status": "green",
@@ -6603,8 +6603,8 @@
         },
         "northcentralus": {
           "status": "green",
-          "detail": "95 K TPM available",
-          "value": 95
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "southcentralus": {
           "status": "green",
@@ -6633,8 +6633,8 @@
         },
         "canadacentral": {
           "status": "green",
-          "detail": "95 K TPM available",
-          "value": 95
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "canadaeast": {
           "status": "green",
@@ -6643,8 +6643,8 @@
         },
         "brazilsouth": {
           "status": "green",
-          "detail": "95 K TPM available",
-          "value": 95
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "brazilsoutheast": {
           "status": "red",
@@ -9592,9 +9592,9 @@
           "value": null
         },
         "canadacentral": {
-          "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for model-router in this region",
+          "value": null
         },
         "canadaeast": {
           "status": "green",
@@ -9752,9 +9752,9 @@
           "value": null
         },
         "canadacentral": {
-          "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for model-router in this region",
+          "value": null
         },
         "canadaeast": {
           "status": "green",
@@ -9912,9 +9912,9 @@
           "value": null
         },
         "canadacentral": {
-          "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for model-router in this region",
+          "value": null
         },
         "canadaeast": {
           "status": "green",
