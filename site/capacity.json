@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-05T07:06:58Z",
+  "generated": "2026-08-06T07:08:21Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -187,9 +187,9 @@
       "sku": "DataZoneBatch",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4.1 DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
         },
         "eastus2": {
           "status": "green",
@@ -207,14 +207,14 @@
           "value": 30000
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1 DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4.1 DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
         },
         "westus2": {
           "status": "red",
@@ -222,9 +222,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4.1 DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
         },
         "westcentralus": {
           "status": "red",
@@ -267,9 +267,9 @@
       "sku": "DataZoneStandard",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4.1 DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
         },
         "eastus2": {
           "status": "green",
@@ -287,14 +287,14 @@
           "value": 300
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1 DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4.1 DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
         },
         "westus2": {
           "status": "red",
@@ -302,9 +302,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4.1 DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
         },
         "westcentralus": {
           "status": "red",
@@ -348,8 +348,8 @@
       "byRegion": {
         "eastus": {
           "status": "red",
-          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "eastus2": {
           "status": "red",
@@ -368,13 +368,13 @@
         },
         "southcentralus": {
           "status": "red",
-          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "westus": {
           "status": "red",
-          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "westus2": {
           "status": "red",
@@ -383,8 +383,8 @@
         },
         "westus3": {
           "status": "red",
-          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "westcentralus": {
           "status": "red",
@@ -398,13 +398,13 @@
         },
         "canadaeast": {
           "status": "red",
-          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "brazilsouth": {
           "status": "red",
-          "detail": "gpt-4.1 DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "brazilsoutheast": {
           "status": "red",
@@ -427,9 +427,9 @@
       "sku": "GlobalBatch",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "eastus2": {
           "status": "green",
@@ -447,14 +447,14 @@
           "value": 200000
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "westus2": {
           "status": "red",
@@ -462,9 +462,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "westcentralus": {
           "status": "red",
@@ -477,14 +477,14 @@
           "value": null
         },
         "canadaeast": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "brazilsouth": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "brazilsoutheast": {
           "status": "red",
@@ -507,9 +507,9 @@
       "sku": "GlobalProvisionedManaged",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "eastus2": {
           "status": "green",
@@ -527,14 +527,14 @@
           "value": 100
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westus2": {
           "status": "red",
@@ -542,9 +542,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westcentralus": {
           "status": "red",
@@ -557,14 +557,14 @@
           "value": 100
         },
         "canadaeast": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "brazilsouth": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "brazilsoutheast": {
           "status": "red",
@@ -587,9 +587,9 @@
       "sku": "GlobalStandard",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "eastus2": {
           "status": "green",
@@ -607,14 +607,14 @@
           "value": 1000
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "westus2": {
           "status": "red",
@@ -622,9 +622,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "westcentralus": {
           "status": "red",
@@ -637,14 +637,14 @@
           "value": 0
         },
         "canadaeast": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "brazilsouth": {
-          "status": "red",
-          "detail": "gpt-4.1 GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "brazilsoutheast": {
           "status": "red",
@@ -667,9 +667,9 @@
       "sku": "ProvisionedManaged",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "eastus2": {
           "status": "green",
@@ -687,14 +687,14 @@
           "value": 50
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "westus2": {
           "status": "red",
@@ -702,9 +702,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "westcentralus": {
           "status": "red",
@@ -722,9 +722,9 @@
           "value": null
         },
         "brazilsouth": {
-          "status": "red",
-          "detail": "gpt-4.1 ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "brazilsoutheast": {
           "status": "red",
@@ -747,9 +747,9 @@
       "sku": "DataZoneBatch",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100000 K TPM available",
+          "value": 100000
         },
         "eastus2": {
           "status": "green",
@@ -767,14 +767,14 @@
           "value": 100000
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100000 K TPM available",
+          "value": 100000
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100000 K TPM available",
+          "value": 100000
         },
         "westus2": {
           "status": "red",
@@ -782,9 +782,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4.1-mini DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100000 K TPM available",
+          "value": 100000
         },
         "westcentralus": {
           "status": "red",
@@ -827,9 +827,9 @@
       "sku": "DataZoneStandard",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini DataZoneStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "2000 K TPM available",
+          "value": 2000
         },
         "eastus2": {
           "status": "green",
@@ -847,14 +847,14 @@
           "value": 2000
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini DataZoneStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "2000 K TPM available",
+          "value": 2000
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini DataZoneStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "2000 K TPM available",
+          "value": 2000
         },
         "westus2": {
           "status": "red",
@@ -862,9 +862,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4.1-mini DataZoneStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "2000 K TPM available",
+          "value": 2000
         },
         "westcentralus": {
           "status": "red",
@@ -908,8 +908,8 @@
       "byRegion": {
         "eastus": {
           "status": "red",
-          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "eastus2": {
           "status": "red",
@@ -928,13 +928,13 @@
         },
         "southcentralus": {
           "status": "red",
-          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "westus": {
           "status": "red",
-          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "westus2": {
           "status": "red",
@@ -943,8 +943,8 @@
         },
         "westus3": {
           "status": "red",
-          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "westcentralus": {
           "status": "red",
@@ -958,13 +958,13 @@
         },
         "canadaeast": {
           "status": "red",
-          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "brazilsouth": {
           "status": "red",
-          "detail": "gpt-4.1-mini DeveloperTier is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "brazilsoutheast": {
           "status": "red",
@@ -987,9 +987,9 @@
       "sku": "GlobalBatch",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "1000000 K TPM available",
+          "value": 1000000
         },
         "eastus2": {
           "status": "green",
@@ -1007,14 +1007,14 @@
           "value": 1000000
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "1000000 K TPM available",
+          "value": 1000000
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "1000000 K TPM available",
+          "value": 1000000
         },
         "westus2": {
           "status": "red",
@@ -1022,9 +1022,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "1000000 K TPM available",
+          "value": 1000000
         },
         "westcentralus": {
           "status": "red",
@@ -1037,14 +1037,14 @@
           "value": null
         },
         "canadaeast": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "1000000 K TPM available",
+          "value": 1000000
         },
         "brazilsouth": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "1000000 K TPM available",
+          "value": 1000000
         },
         "brazilsoutheast": {
           "status": "red",
@@ -1067,9 +1067,9 @@
       "sku": "GlobalProvisionedManaged",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "eastus2": {
           "status": "green",
@@ -1087,14 +1087,14 @@
           "value": 100
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westus2": {
           "status": "red",
@@ -1102,9 +1102,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westcentralus": {
           "status": "red",
@@ -1117,14 +1117,14 @@
           "value": 100
         },
         "canadaeast": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "brazilsouth": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "brazilsoutheast": {
           "status": "red",
@@ -1147,9 +1147,9 @@
       "sku": "GlobalStandard",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
         },
         "eastus2": {
           "status": "green",
@@ -1167,14 +1167,14 @@
           "value": 5000
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
         },
         "westus2": {
           "status": "red",
@@ -1182,9 +1182,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
         },
         "westcentralus": {
           "status": "red",
@@ -1197,14 +1197,14 @@
           "value": 0
         },
         "canadaeast": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
         },
         "brazilsouth": {
-          "status": "red",
-          "detail": "gpt-4.1-mini GlobalStandard is Deprecating - blocked for new deployments (retires 2028-04-13)",
-          "value": null
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
         },
         "brazilsoutheast": {
           "status": "red",
@@ -1227,14 +1227,14 @@
       "sku": "DataZoneBatch",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4o DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4o DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
         },
         "centralus": {
           "status": "green",
@@ -1247,14 +1247,14 @@
           "value": 30000
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4o DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4o DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
         },
         "westus2": {
           "status": "red",
@@ -1262,9 +1262,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4o DataZoneBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "30000 K TPM available",
+          "value": 30000
         },
         "westcentralus": {
           "status": "red",
@@ -1307,14 +1307,14 @@
       "sku": "DataZoneStandard",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4o DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4o DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
         },
         "centralus": {
           "status": "green",
@@ -1327,14 +1327,14 @@
           "value": 300
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4o DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4o DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
         },
         "westus2": {
           "status": "red",
@@ -1342,9 +1342,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4o DataZoneStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
         },
         "westcentralus": {
           "status": "red",
@@ -1387,14 +1387,14 @@
       "sku": "GlobalBatch",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "centralus": {
           "status": "green",
@@ -1407,14 +1407,14 @@
           "value": 200000
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "westus2": {
           "status": "red",
@@ -1422,9 +1422,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "westcentralus": {
           "status": "red",
@@ -1437,9 +1437,9 @@
           "value": null
         },
         "canadaeast": {
-          "status": "red",
-          "detail": "gpt-4o GlobalBatch is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "200000 K TPM available",
+          "value": 200000
         },
         "brazilsouth": {
           "status": "green",
@@ -1467,14 +1467,14 @@
       "sku": "GlobalProvisionedManaged",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "centralus": {
           "status": "green",
@@ -1487,14 +1487,14 @@
           "value": 100
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westus2": {
           "status": "red",
@@ -1502,9 +1502,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westcentralus": {
           "status": "red",
@@ -1517,9 +1517,9 @@
           "value": 100
         },
         "canadaeast": {
-          "status": "red",
-          "detail": "gpt-4o GlobalProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "brazilsouth": {
           "status": "green",
@@ -1547,14 +1547,14 @@
       "sku": "GlobalStandard",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "450 K TPM available",
+          "value": 450
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "450 K TPM available",
+          "value": 450
         },
         "centralus": {
           "status": "green",
@@ -1567,14 +1567,14 @@
           "value": 450
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "450 K TPM available",
+          "value": 450
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "450 K TPM available",
+          "value": 450
         },
         "westus2": {
           "status": "red",
@@ -1582,9 +1582,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "450 K TPM available",
+          "value": 450
         },
         "westcentralus": {
           "status": "red",
@@ -1597,9 +1597,9 @@
           "value": null
         },
         "canadaeast": {
-          "status": "red",
-          "detail": "gpt-4o GlobalStandard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "450 K TPM available",
+          "value": 450
         },
         "brazilsouth": {
           "status": "green",
@@ -1627,14 +1627,14 @@
       "sku": "ProvisionedManaged",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "centralus": {
           "status": "green",
@@ -1652,9 +1652,9 @@
           "value": null
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "westus2": {
           "status": "red",
@@ -1662,9 +1662,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "westcentralus": {
           "status": "red",
@@ -1677,9 +1677,9 @@
           "value": null
         },
         "canadaeast": {
-          "status": "red",
-          "detail": "gpt-4o ProvisionedManaged is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "yellow",
+          "detail": "only 20 K TPM available",
+          "value": 20
         },
         "brazilsouth": {
           "status": "green",
@@ -1707,14 +1707,14 @@
       "sku": "Standard",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "150 K TPM available",
+          "value": 150
         },
         "eastus2": {
-          "status": "red",
-          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "150 K TPM available",
+          "value": 150
         },
         "centralus": {
           "status": "green",
@@ -1727,14 +1727,14 @@
           "value": 150
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "150 K TPM available",
+          "value": 150
         },
         "westus": {
-          "status": "red",
-          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "150 K TPM available",
+          "value": 150
         },
         "westus2": {
           "status": "red",
@@ -1742,9 +1742,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "150 K TPM available",
+          "value": 150
         },
         "westcentralus": {
           "status": "red",
@@ -1757,9 +1757,9 @@
           "value": null
         },
         "canadaeast": {
-          "status": "red",
-          "detail": "gpt-4o Standard is Deprecating - blocked for new deployments (retires 2027-04-14)",
-          "value": null
+          "status": "green",
+          "detail": "150 K TPM available",
+          "value": 150
         },
         "brazilsouth": {
           "status": "red",
@@ -8507,73 +8507,73 @@
       "sku": "DataZoneStandard",
       "byRegion": {
         "eastus": {
-          "status": "red",
-          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
+          "status": "unknown",
+          "detail": "capacity query failed",
           "value": null
         },
         "eastus2": {
-          "status": "yellow",
-          "detail": "only 10 K TPM available",
-          "value": 10
+          "status": "unknown",
+          "detail": "capacity query failed",
+          "value": null
         },
         "centralus": {
-          "status": "yellow",
-          "detail": "only 10 K TPM available",
-          "value": 10
+          "status": "unknown",
+          "detail": "capacity query failed",
+          "value": null
         },
         "northcentralus": {
-          "status": "red",
-          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
+          "status": "unknown",
+          "detail": "capacity query failed",
           "value": null
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
+          "status": "unknown",
+          "detail": "capacity query failed",
           "value": null
         },
         "westus": {
-          "status": "red",
-          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
+          "status": "unknown",
+          "detail": "capacity query failed",
           "value": null
         },
         "westus2": {
-          "status": "red",
-          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
+          "status": "unknown",
+          "detail": "capacity query failed",
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
+          "status": "unknown",
+          "detail": "capacity query failed",
           "value": null
         },
         "westcentralus": {
-          "status": "red",
-          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
+          "status": "unknown",
+          "detail": "capacity query failed",
           "value": null
         },
         "canadacentral": {
-          "status": "red",
-          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
+          "status": "unknown",
+          "detail": "capacity query failed",
           "value": null
         },
         "canadaeast": {
-          "status": "red",
-          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
+          "status": "unknown",
+          "detail": "capacity query failed",
           "value": null
         },
         "brazilsouth": {
-          "status": "red",
-          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
+          "status": "unknown",
+          "detail": "capacity query failed",
           "value": null
         },
         "brazilsoutheast": {
-          "status": "red",
-          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
+          "status": "unknown",
+          "detail": "capacity query failed",
           "value": null
         },
         "mexicocentral": {
-          "status": "red",
-          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
+          "status": "unknown",
+          "detail": "capacity query failed",
           "value": null
         }
       }
