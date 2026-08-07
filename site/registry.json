@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-04T06:02:59Z",
+  "generated": "2026-08-07T05:36:46Z",
   "regions": [
     "eastus",
     "eastus2",
@@ -76,20 +76,6 @@
         "provider": "Anthropic",
         "name": "claude-haiku-4-5",
         "version": "20251001",
-        "skus": [
-          "GlobalStandard"
-        ],
-        "regions": [
-          "eastus2",
-          "westcentralus"
-        ],
-        "lifecycle": "GenerallyAvailable",
-        "kind": "chat"
-      },
-      {
-        "provider": "Anthropic",
-        "name": "claude-opus-4-1",
-        "version": "20250805",
         "skus": [
           "GlobalStandard"
         ],
@@ -1188,7 +1174,7 @@
           "westus2",
           "westus3"
         ],
-        "lifecycle": "GenerallyAvailable",
+        "lifecycle": "Preview",
         "kind": "chat"
       },
       {
@@ -1318,15 +1304,26 @@
         "version": "2025-04-14",
         "skus": [
           "DataZoneBatch",
+          "DataZoneProvisionedManaged",
           "DataZoneStandard",
           "DeveloperTier",
           "GlobalBatch",
           "GlobalProvisionedManaged",
           "GlobalStandard",
-          "ProvisionedManaged"
+          "ProvisionedManaged",
+          "Standard"
         ],
         "regions": [
-          "centralus"
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
         ],
         "lifecycle": "Legacy",
         "kind": "chat"
@@ -1337,14 +1334,26 @@
         "version": "2025-04-14",
         "skus": [
           "DataZoneBatch",
+          "DataZoneProvisionedManaged",
           "DataZoneStandard",
           "DeveloperTier",
           "GlobalBatch",
           "GlobalProvisionedManaged",
-          "GlobalStandard"
+          "GlobalStandard",
+          "ProvisionedManaged",
+          "Standard"
         ],
         "regions": [
-          "centralus"
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
         ],
         "lifecycle": "Legacy",
         "kind": "chat"
@@ -1355,6 +1364,7 @@
         "version": "2024-11-20",
         "skus": [
           "DataZoneBatch",
+          "DataZoneProvisionedManaged",
           "DataZoneStandard",
           "GlobalBatch",
           "GlobalProvisionedManaged",
@@ -1363,7 +1373,16 @@
           "Standard"
         ],
         "regions": [
-          "centralus"
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
         ],
         "lifecycle": "Legacy",
         "kind": "chat"
@@ -2281,7 +2300,6 @@
         ],
         "regions": [
           "brazilsouth",
-          "canadacentral",
           "canadaeast",
           "centralus",
           "eastus",
@@ -2304,7 +2322,6 @@
         ],
         "regions": [
           "brazilsouth",
-          "canadacentral",
           "canadaeast",
           "centralus",
           "eastus",
@@ -2327,7 +2344,6 @@
         ],
         "regions": [
           "brazilsouth",
-          "canadacentral",
           "canadaeast",
           "centralus",
           "eastus",
