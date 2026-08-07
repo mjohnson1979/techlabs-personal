@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-06T07:08:21Z",
+  "generated": "2026-08-07T06:37:09Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -254,6 +254,86 @@
         "mexicocentral": {
           "status": "red",
           "detail": "DataZoneBatch SKU not offered for gpt-4.1 in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1:2025-04-14:datazoneprovisionedmanaged": {
+      "label": "Azure OpenAI - gpt-4.1 2025-04-14 [DataZoneProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1",
+      "version": "2025-04-14",
+      "sku": "DataZoneProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "eastus2": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "centralus": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "northcentralus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "southcentralus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1 in this region",
           "value": null
         }
       }
@@ -738,6 +818,86 @@
         }
       }
     },
+    "openai:gpt-4.1:2025-04-14:standard": {
+      "label": "Azure OpenAI - gpt-4.1 2025-04-14 [Standard]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1",
+      "version": "2025-04-14",
+      "sku": "Standard",
+      "byRegion": {
+        "eastus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "eastus2": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "centralus": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "northcentralus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "southcentralus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "westus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1 in this region",
+          "value": null
+        }
+      }
+    },
     "openai:gpt-4.1-mini:2025-04-14:datazonebatch": {
       "label": "Azure OpenAI - gpt-4.1-mini 2025-04-14 [DataZoneBatch]",
       "provider": "Microsoft.CognitiveServices/accounts/deployments",
@@ -814,6 +974,86 @@
         "mexicocentral": {
           "status": "red",
           "detail": "DataZoneBatch SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1-mini:2025-04-14:datazoneprovisionedmanaged": {
+      "label": "Azure OpenAI - gpt-4.1-mini 2025-04-14 [DataZoneProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1-mini",
+      "version": "2025-04-14",
+      "sku": "DataZoneProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "eastus2": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "centralus": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "northcentralus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "southcentralus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
           "value": null
         }
       }
@@ -1218,6 +1458,166 @@
         }
       }
     },
+    "openai:gpt-4.1-mini:2025-04-14:provisionedmanaged": {
+      "label": "Azure OpenAI - gpt-4.1-mini 2025-04-14 [ProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1-mini",
+      "version": "2025-04-14",
+      "sku": "ProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "eastus2": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "centralus": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "northcentralus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "southcentralus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "ProvisionedManaged SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4.1-mini:2025-04-14:standard": {
+      "label": "Azure OpenAI - gpt-4.1-mini 2025-04-14 [Standard]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4.1-mini",
+      "version": "2025-04-14",
+      "sku": "Standard",
+      "byRegion": {
+        "eastus": {
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
+        },
+        "eastus2": {
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
+        },
+        "centralus": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "northcentralus": {
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
+        },
+        "southcentralus": {
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
+        },
+        "westus": {
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "green",
+          "detail": "5000 K TPM available",
+          "value": 5000
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "Standard SKU not offered for gpt-4.1-mini in this region",
+          "value": null
+        }
+      }
+    },
     "openai:gpt-4o:2024-11-20:datazonebatch": {
       "label": "Azure OpenAI - gpt-4o 2024-11-20 [DataZoneBatch]",
       "provider": "Microsoft.CognitiveServices/accounts/deployments",
@@ -1294,6 +1694,86 @@
         "mexicocentral": {
           "status": "red",
           "detail": "DataZoneBatch SKU not offered for gpt-4o in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-4o:2024-11-20:datazoneprovisionedmanaged": {
+      "label": "Azure OpenAI - gpt-4o 2024-11-20 [DataZoneProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-4o",
+      "version": "2024-11-20",
+      "sku": "DataZoneProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "eastus2": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "centralus": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "northcentralus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "southcentralus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4o in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-4o in this region",
           "value": null
         }
       }
@@ -8507,73 +8987,73 @@
       "sku": "DataZoneStandard",
       "byRegion": {
         "eastus": {
-          "status": "unknown",
-          "detail": "capacity query failed",
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
           "value": null
         },
         "eastus2": {
-          "status": "unknown",
-          "detail": "capacity query failed",
-          "value": null
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
         },
         "centralus": {
-          "status": "unknown",
-          "detail": "capacity query failed",
-          "value": null
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
         },
         "northcentralus": {
-          "status": "unknown",
-          "detail": "capacity query failed",
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
           "value": null
         },
         "southcentralus": {
-          "status": "unknown",
-          "detail": "capacity query failed",
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
           "value": null
         },
         "westus": {
-          "status": "unknown",
-          "detail": "capacity query failed",
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
           "value": null
         },
         "westus2": {
-          "status": "unknown",
-          "detail": "capacity query failed",
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
           "value": null
         },
         "westus3": {
-          "status": "unknown",
-          "detail": "capacity query failed",
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
           "value": null
         },
         "westcentralus": {
-          "status": "unknown",
-          "detail": "capacity query failed",
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
           "value": null
         },
         "canadacentral": {
-          "status": "unknown",
-          "detail": "capacity query failed",
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
           "value": null
         },
         "canadaeast": {
-          "status": "unknown",
-          "detail": "capacity query failed",
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
           "value": null
         },
         "brazilsouth": {
-          "status": "unknown",
-          "detail": "capacity query failed",
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
           "value": null
         },
         "brazilsoutheast": {
-          "status": "unknown",
-          "detail": "capacity query failed",
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
           "value": null
         },
         "mexicocentral": {
-          "status": "unknown",
-          "detail": "capacity query failed",
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-realtime-1.5 in this region",
           "value": null
         }
       }
