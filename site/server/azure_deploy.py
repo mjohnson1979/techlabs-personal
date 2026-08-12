@@ -21,15 +21,21 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import time
+import uuid
 from pathlib import Path
 from typing import Any
+
+import httpx
 
 import db
 
 SERVER_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = SERVER_DIR / "_templates"
+
+_LOG = logging.getLogger(__name__)
 
 # Keep references to in-flight tasks so they are not garbage-collected mid-run.
 _TASKS: set[asyncio.Task] = set()
@@ -58,6 +64,196 @@ def portal_rg_url(subscription_id: str, resource_group: str) -> str:
         "https://portal.azure.com/#@/resource/subscriptions/"
         f"{subscription_id}/resourceGroups/{resource_group}/overview"
     )
+
+
+# --------------------------------------------------------------------------- #
+# Deployer view access (Reader role assignment on the deployment's RG)
+# --------------------------------------------------------------------------- #
+# This does NOT change how resources are provisioned — it runs after a
+# successful deploy so the signed-in user can VIEW their resources in the Azure
+# portal. Built-in "Reader" is grantable under the deployer identity's
+# constrained RBAC-Admin condition (which blocks Owner/Contributor/UAA/RBAC
+# Admin). Scoped to the resource group, so it is removed automatically when the
+# group is torn down. Users signing in from another tenant have no principal in
+# the subscription's tenant, so they are first invited as a B2B guest (Microsoft
+# Graph) before the assignment. Best-effort: a failure never fails the deployment.
+_READER_ROLE_ID = "acdd72a7-3385-48ef-bd42-f606fba81ae7"
+
+_GRAPH_BASE = "https://graph.microsoft.com/v1.0"
+_GRAPH_SCOPE = "https://graph.microsoft.com/.default"
+
+
+def _view_grant_enabled() -> bool:
+    val = os.environ.get("GALLERY_GRANT_VIEW_ACCESS", "true").strip().lower()
+    return val not in ("false", "0", "no", "off")
+
+
+def _invite_enabled() -> bool:
+    val = os.environ.get("GALLERY_INVITE_GUEST", "true").strip().lower()
+    return val not in ("false", "0", "no", "off")
+
+
+def _graph_headers() -> dict[str, str]:
+    # Reuse the deploy credential (managed identity in prod). It needs the Graph
+    # application permissions User.Invite.All and User.ReadBasic.All, admin
+    # consented on id-techlabs-deployer.
+    token = _get_credential().get_token(_GRAPH_SCOPE).token
+    return {"Authorization": f"Bearer {token}"}
+
+
+def _principal_exists(object_id: str) -> bool:
+    """True if object_id is already a principal in the subscription's tenant."""
+    with httpx.Client(timeout=15) as client:
+        resp = client.get(
+            f"{_GRAPH_BASE}/users/{object_id}",
+            params={"$select": "id"},
+            headers=_graph_headers(),
+        )
+    if resp.status_code == 404:
+        return False
+    resp.raise_for_status()
+    return True
+
+
+def _find_directory_user(email: str) -> str | None:
+    """Object id of an existing member/guest matching email, or None.
+
+    Guests keep the original address in otherMails (and in mail once redeemed);
+    members match on mail or userPrincipalName. Query all three defensively.
+    """
+    safe = email.replace("'", "''")
+    headers = {**_graph_headers(), "ConsistencyLevel": "eventual"}
+    params = {
+        "$select": "id",
+        "$count": "true",
+        "$top": "1",
+        "$filter": (
+            f"mail eq '{safe}' or userPrincipalName eq '{safe}' "
+            f"or otherMails/any(x:x eq '{safe}')"
+        ),
+    }
+    with httpx.Client(timeout=15) as client:
+        resp = client.get(f"{_GRAPH_BASE}/users", params=params, headers=headers)
+    resp.raise_for_status()
+    values = resp.json().get("value") or []
+    return values[0]["id"] if values else None
+
+
+def _invite_guest(email: str, redirect_url: str) -> str:
+    """Invite email as a B2B guest; return the new guest's object id."""
+    body = {
+        "invitedUserEmailAddress": email,
+        "inviteRedirectUrl": redirect_url,
+        "sendInvitationMessage": True,
+    }
+    with httpx.Client(timeout=30) as client:
+        resp = client.post(
+            f"{_GRAPH_BASE}/invitations", json=body, headers=_graph_headers()
+        )
+    resp.raise_for_status()
+    return resp.json()["invitedUser"]["id"]
+
+
+def _resolve_principal_id(user_oid: str, email: str, redirect_url: str) -> str | None:
+    """Object id to grant Reader to, resolved in the subscription's own tenant.
+
+    RBAC can only reference principals in the subscription's tenant, so a user
+    signing in from another tenant (whose home oid is meaningless here) must be
+    resolved to — or invited as — a B2B guest first.
+    """
+    if user_oid and _principal_exists(user_oid):
+        return user_oid  # native member (or a guest whose oid we already hold)
+    if not email:
+        return None
+    existing = _find_directory_user(email)
+    if existing:
+        return existing
+    if not _invite_enabled():
+        return None
+    return _invite_guest(email, redirect_url)
+
+
+def _auth_client(subscription_id: str) -> Any:
+    from azure.mgmt.authorization import AuthorizationManagementClient
+
+    return AuthorizationManagementClient(_get_credential(), subscription_id)
+
+
+def grant_view_access(dep: dict[str, Any]) -> None:
+    """Give the deploying user Reader on their deployment's resource group.
+
+    Resolves the user to a principal in the subscription's tenant first
+    (inviting them as a B2B guest when they sign in from another tenant), then
+    assigns Reader. Idempotent: an already-existing assignment is success.
+    """
+    subscription_id = dep["subscription_id"]
+    resource_group = dep["resource_group"]
+    scope = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group}"
+
+    principal_id = _resolve_principal_id(
+        (dep.get("user_oid") or "").strip(),
+        (dep.get("user_upn") or "").strip(),
+        portal_rg_url(subscription_id, resource_group),
+    )
+    if not principal_id:
+        return  # nothing to grant (system deploy, or invite disabled/unresolved)
+
+    role_definition_id = (
+        f"/subscriptions/{subscription_id}"
+        f"/providers/Microsoft.Authorization/roleDefinitions/{_READER_ROLE_ID}"
+    )
+    # Deterministic name so retries reuse the same assignment instead of
+    # creating duplicates.
+    name = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{scope}|{principal_id}|reader"))
+
+    from azure.core.exceptions import HttpResponseError, ResourceExistsError
+
+    client = _auth_client(subscription_id)
+    try:
+        client.role_assignments.create(
+            scope,
+            name,
+            {
+                "role_definition_id": role_definition_id,
+                "principal_id": principal_id,
+                # Declaring the type avoids replication races where Azure cannot
+                # yet resolve a just-created principal.
+                "principal_type": "User",
+            },
+        )
+    except ResourceExistsError:
+        return  # already granted — idempotent success
+    except HttpResponseError as exc:
+        if getattr(getattr(exc, "error", None), "code", "") == "RoleAssignmentExists":
+            return
+        raise
+
+
+async def _grant_view_access(dep: dict[str, Any]) -> None:
+    """Best-effort wrapper: grant view access without ever failing the deploy."""
+    if not _view_grant_enabled():
+        return
+    dep_id = dep["id"]
+    try:
+        await asyncio.to_thread(grant_view_access, dep)
+        db.record_event(
+            type="view_access_granted",
+            user_oid=dep["user_oid"],
+            user_upn=dep["user_upn"],
+            use_case=dep["use_case"],
+            deployment_id=dep_id,
+        )
+    except Exception as exc:  # viewing is a convenience, not the deployment
+        reason = _clean_error(exc)
+        _LOG.warning("could not grant view access for %s: %s", dep_id, reason)
+        db.record_event(
+            type="view_access_grant_failed",
+            user_oid=dep["user_oid"],
+            user_upn=dep["user_upn"],
+            use_case=dep["use_case"],
+            deployment_id=dep_id,
+            meta={"error": reason},
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -375,6 +571,7 @@ async def run_deploy(dep: dict[str, Any]) -> None:
                 use_case=dep["use_case"],
                 deployment_id=dep_id,
             )
+            await _grant_view_access(dep)
             return
 
         ok, reason = executor_available()
@@ -409,6 +606,7 @@ async def run_deploy(dep: dict[str, Any]) -> None:
             use_case=dep["use_case"],
             deployment_id=dep_id,
         )
+        await _grant_view_access(dep)
     except Exception as exc:
         # A failed deploy can still leave the resource group and partially
         # created resources behind; say so and log it so an operator can clean up.
