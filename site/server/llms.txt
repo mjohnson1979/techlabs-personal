@@ -13,7 +13,7 @@
 - [identity.py](identity.py): Resolves the caller's identity + role for `/api/*` routes; fails closed.
 - [api.py](api.py): `/api/*` JSON endpoints (deployments, users, telemetry).
 - [db.py](db.py): All persistence — SQLite schema plus every read/write helper.
-- [azure_deploy.py](azure_deploy.py): In-process executor that provisions/destroys Azure resources with the app's managed identity; branches on the deployment `engine`.
+- [azure_deploy.py](azure_deploy.py): In-process executor that provisions/destroys Azure resources with the app's managed identity; branches on the deployment `engine`. After a successful deploy it grants the signed-in user Reader on their resource group (best-effort, RG-scoped) so they can view it in the portal; cross-tenant users are first invited as a B2B guest (Microsoft Graph).
 - [terraform_exec.py](terraform_exec.py): Terraform engine — runs a use case's Terraform module (`_tf/<use_case>/`) with the managed identity (azurerm + `ARM_USE_MSI`) instead of submitting ARM JSON.
 - [terraform_bootstrap.py](terraform_bootstrap.py): Opt-in, best-effort provisioning of the `terraform` binary into the persistent `/home` share on startup (pinned release, SHA256-verified).
 - [scheduler.py](scheduler.py): Background asyncio task that tears down deployments past their end time.

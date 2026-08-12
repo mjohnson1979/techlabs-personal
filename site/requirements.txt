@@ -9,3 +9,6 @@ azure-identity>=1.17
 # separate client and the resources client lost those operation groups, which
 # breaks the executor (see site/server/tests/test_executor_sdk.py).
 azure-mgmt-resource>=23.1,<24
+# Create the Reader role assignment that lets each deployer view their own
+# resource group in the portal (see azure_deploy.grant_view_access).
+azure-mgmt-authorization>=4.0
