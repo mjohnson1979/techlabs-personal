@@ -61,7 +61,7 @@ def fake_auth(monkeypatch):
 
 
 def test_grant_targets_rg_scope_as_user_reader(fake_auth) -> None:
-    azure_deploy.grant_view_access(_DEP)
+    assert azure_deploy.grant_view_access(_DEP) is True
 
     assert len(fake_auth.role_assignments.calls) == 1
     scope, _name, params = fake_auth.role_assignments.calls[0]
@@ -78,11 +78,11 @@ def test_grant_is_idempotent_on_existing_assignment(fake_auth) -> None:
     from azure.core.exceptions import ResourceExistsError
 
     fake_auth.role_assignments.raise_exc = ResourceExistsError("already there")
-    azure_deploy.grant_view_access(_DEP)  # must not raise
+    assert azure_deploy.grant_view_access(_DEP) is True  # idempotent success
 
 
 def test_grant_skips_without_principal(fake_auth) -> None:
-    azure_deploy.grant_view_access({**_DEP, "user_oid": ""})
+    assert azure_deploy.grant_view_access({**_DEP, "user_oid": ""}) is False
     assert fake_auth.role_assignments.calls == []
 
 
@@ -97,6 +97,16 @@ def test_best_effort_disabled_by_env(fake_auth, monkeypatch) -> None:
     monkeypatch.setenv("GALLERY_GRANT_VIEW_ACCESS", "false")
     asyncio.run(azure_deploy._grant_view_access(_DEP))
     assert fake_auth.role_assignments.calls == []
+
+
+def test_best_effort_records_skipped_when_no_principal(fake_auth, monkeypatch) -> None:
+    monkeypatch.setenv("GALLERY_GRANT_VIEW_ACCESS", "true")
+    recorded: list[str] = []
+    monkeypatch.setattr(azure_deploy.db, "record_event", lambda **kw: recorded.append(kw["type"]))
+
+    asyncio.run(azure_deploy._grant_view_access({**_DEP, "user_oid": ""}))
+    assert fake_auth.role_assignments.calls == []
+    assert recorded == ["view_access_skipped"]
 
 
 def test_best_effort_swallows_failure(fake_auth, monkeypatch) -> None:

@@ -179,12 +179,16 @@ def _auth_client(subscription_id: str) -> Any:
     return AuthorizationManagementClient(_get_credential(), subscription_id)
 
 
-def grant_view_access(dep: dict[str, Any]) -> None:
+def grant_view_access(dep: dict[str, Any]) -> bool:
     """Give the deploying user Reader on their deployment's resource group.
 
     Resolves the user to a principal in the subscription's tenant first
     (inviting them as a B2B guest when they sign in from another tenant), then
     assigns Reader. Idempotent: an already-existing assignment is success.
+
+    Returns True when an assignment exists after the call (created or already
+    present), False when the grant was skipped because no principal could be
+    resolved (system deploy, or invite disabled for a cross-tenant user).
     """
     subscription_id = dep["subscription_id"]
     resource_group = dep["resource_group"]
@@ -196,7 +200,7 @@ def grant_view_access(dep: dict[str, Any]) -> None:
         portal_rg_url(subscription_id, resource_group),
     )
     if not principal_id:
-        return  # nothing to grant (system deploy, or invite disabled/unresolved)
+        return False  # nothing to grant (system deploy, or invite disabled/unresolved)
 
     role_definition_id = (
         f"/subscriptions/{subscription_id}"
@@ -222,11 +226,12 @@ def grant_view_access(dep: dict[str, Any]) -> None:
             },
         )
     except ResourceExistsError:
-        return  # already granted — idempotent success
+        return True  # already granted — idempotent success
     except HttpResponseError as exc:
         if getattr(getattr(exc, "error", None), "code", "") == "RoleAssignmentExists":
-            return
+            return True
         raise
+    return True
 
 
 async def _grant_view_access(dep: dict[str, Any]) -> None:
@@ -235,9 +240,9 @@ async def _grant_view_access(dep: dict[str, Any]) -> None:
         return
     dep_id = dep["id"]
     try:
-        await asyncio.to_thread(grant_view_access, dep)
+        granted = await asyncio.to_thread(grant_view_access, dep)
         db.record_event(
-            type="view_access_granted",
+            type="view_access_granted" if granted else "view_access_skipped",
             user_oid=dep["user_oid"],
             user_upn=dep["user_upn"],
             use_case=dep["use_case"],
