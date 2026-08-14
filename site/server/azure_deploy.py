@@ -165,7 +165,16 @@ def _resolve_principal_id(user_oid: str, email: str, redirect_url: str) -> str |
         return user_oid  # native member (or a guest whose oid we already hold)
     if not email:
         return None
-    existing = _find_directory_user(email)
+    try:
+        existing = _find_directory_user(email)
+    except httpx.HTTPStatusError as exc:
+        # Directory search may be blocked by tenant policy even when the app
+        # is allowed to create invitations. Continue so Graph can evaluate the
+        # invitation request itself instead of failing before POST /invitations.
+        if exc.response.status_code != 403:
+            raise
+        _LOG.warning("directory lookup forbidden for %s; attempting invitation", email)
+        existing = None
     if existing:
         return existing
     if not _invite_enabled():
@@ -190,6 +199,11 @@ def grant_view_access(dep: dict[str, Any]) -> bool:
     present), False when the grant was skipped because no principal could be
     resolved (system deploy, or invite disabled for a cross-tenant user).
     """
+    # External deployments are authorized by the user's own subscription role;
+    # the TechLabs identity must not grant RBAC in that subscription.
+    if dep.get("_delegated_arm_token"):
+        return False
+
     subscription_id = dep["subscription_id"]
     resource_group = dep["resource_group"]
     scope = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group}"
@@ -292,6 +306,30 @@ def load_template(use_case: str, environment: str) -> tuple[dict, dict]:
 _credential: Any = None
 
 
+class DelegatedTokenCredential:
+    """Azure credential backed by one user-delegated ARM access token."""
+
+    def __init__(self, token: str, expires_on: int | float) -> None:
+        self._token = token
+        self._expires_on = float(expires_on)
+
+    def get_token(self, *scopes: str, **kwargs: Any) -> Any:
+        from azure.core.credentials import AccessToken
+
+        if self._expires_on <= time.time() + 60:
+            raise RuntimeError("delegated Azure access token expired")
+        return AccessToken(self._token, int(self._expires_on))
+
+
+def _credential_for_deployment(dep: dict[str, Any]) -> Any:
+    token = dep.get("_delegated_arm_token")
+    if token:
+        return DelegatedTokenCredential(
+            str(token), float(dep.get("_delegated_arm_expires_at", 0.0))
+        )
+    return _get_credential()
+
+
 def _get_credential() -> Any:
     global _credential
     if _credential is None:
@@ -305,7 +343,7 @@ def _get_credential() -> Any:
     return _credential
 
 
-def _client(subscription_id: str) -> Any:
+def _client(subscription_id: str, credential: Any = None) -> Any:
     # The unified ``ResourceManagementClient`` (top-level import) exposes the
     # ``deployments``, ``deployment_operations`` and ``resource_groups`` operation
     # groups the executor relies on. This holds for azure-mgmt-resource 23.x
@@ -313,7 +351,7 @@ def _client(subscription_id: str) -> Any:
     # separate client and dropped them from the resources client.
     from azure.mgmt.resource import ResourceManagementClient
 
-    return ResourceManagementClient(_get_credential(), subscription_id)
+    return ResourceManagementClient(credential or _get_credential(), subscription_id)
 
 
 def _innermost_arm_error(err: Any) -> tuple[str | None, str | None]:
@@ -390,7 +428,7 @@ def _do_deploy(dep: dict[str, Any]) -> None:
     _merge_parameter_overrides(template, parameters, params_meta.get("parameterValues"))
 
     location = params_meta.get("location") or _location()
-    client = _client(subscription_id)
+    client = _client(subscription_id, _credential_for_deployment(dep))
     client.resource_groups.create_or_update(
         resource_group,
         {
@@ -478,7 +516,7 @@ def _resource_label(rtype: str, name: str) -> str:
 
 def _deploy_progress(dep: dict[str, Any]) -> str | None:
     """Summarise in-flight ARM deployment operations for the live log."""
-    client = _client(dep["subscription_id"])
+    client = _client(dep["subscription_id"], _credential_for_deployment(dep))
     name = f"techlabs-{dep['id']}"
     try:
         ops = list(client.deployment_operations.list(dep["resource_group"], name))
@@ -529,7 +567,7 @@ def _deploy_progress(dep: dict[str, Any]) -> str | None:
 def _do_destroy(dep: dict[str, Any]) -> None:
     from azure.core.exceptions import ResourceNotFoundError
 
-    client = _client(dep["subscription_id"])
+    client = _client(dep["subscription_id"], _credential_for_deployment(dep))
     resource_group = dep["resource_group"]
     try:
         existing = client.resource_groups.get(resource_group)

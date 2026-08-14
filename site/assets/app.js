@@ -662,6 +662,25 @@
 
     const status = el("div", { class: "deploy-status", role: "status" });
     const btn = el("button", { class: "deploy-btn", type: "button", text: "Deploy to my subscription" });
+    const externalBtn = el("button", {
+      class: "deploy-btn-secondary",
+      type: "button",
+      text: "Deploy to external subscription",
+    });
+    const externalSubInput = el("input", {
+      type: "text",
+      class: "deploy-input deploy-external-subscription",
+      placeholder: "External subscription ID",
+      "aria-label": "External Azure subscription ID",
+    });
+    const externalHint = el("p", {
+      class: "deploy-note",
+      text: "You must already have deployment access to this subscription.",
+    });
+    const externalControls = el("div", { class: "deploy-external-controls", hidden: true }, [
+      externalSubInput,
+      externalHint,
+    ]);
 
     const maxLabel = maxHours % 24 === 0 ? `${maxHours / 24} day${maxHours / 24 === 1 ? "" : "s"}` : `${maxHours}h`;
     const lifeNote = me && me.isAdmin
@@ -676,11 +695,13 @@
       if (!me) return;
       if (engineSelect.value === "terraform" && !tfExec) {
         btn.disabled = true;
+        externalBtn.disabled = true;
         engineHint.textContent =
           "In-app Terraform deploy isn't enabled on this server yet - copy the CLI below to run it locally.";
         engineHint.style.display = "";
       } else {
         btn.disabled = false;
+        externalBtn.disabled = false;
         engineHint.textContent = "";
         engineHint.style.display = "none";
       }
@@ -689,9 +710,10 @@
     if (!me) {
       status.textContent = "Sign in to deploy from the gallery.";
       btn.disabled = true;
+      externalBtn.disabled = true;
     }
 
-    btn.addEventListener("click", () => {
+    function requestDeployment(external) {
       status.classList.remove("err", "ok");
       const endVal = endInput.value;
       if (!endVal) {
@@ -699,16 +721,26 @@
         status.classList.add("err");
         return;
       }
+      const subscriptionId = externalSubInput.value.trim();
+      if (external && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(subscriptionId)) {
+        status.textContent = "Enter a valid Azure subscription ID first.";
+        status.classList.add("err");
+        return;
+      }
+      if (external && !window.confirm("Deploy using your Azure identity to this subscription?")) return;
       const payload = {
         useCase: it.path,
         environment: envSelect.value,
         engine: engineSelect.value,
         location: region.select.value,
         endAt: new Date(endVal).toISOString(),
+        externalSubscription: external,
       };
+      if (external) payload.subscriptionId = subscriptionId;
       const parameterValues = Object.assign({}, advValues);
       if (Object.keys(parameterValues).length) payload.parameterValues = parameterValues;
       btn.disabled = true;
+      externalBtn.disabled = true;
       status.textContent = "Requesting deployment…";
       window.TechlabsApi.createDeployment(payload)
         .then((dep) => {
@@ -717,9 +749,27 @@
         })
         .catch((err) => {
           status.classList.add("err");
+          if (external && err && err.status === 401) {
+            status.textContent = "Azure authorization is required. Redirecting to sign-in…";
+            window.setTimeout(() => {
+              window.location.href = "/api/auth/entra/start?redirect=1&external=1";
+            }, 400);
+            return;
+          }
           status.textContent = err && err.message ? err.message : "Deployment request failed.";
           btn.disabled = false;
+          externalBtn.disabled = false;
         });
+    }
+
+    btn.addEventListener("click", () => requestDeployment(false));
+    externalBtn.addEventListener("click", () => {
+      if (externalControls.hidden) {
+        externalControls.hidden = false;
+        externalSubInput.focus();
+        return;
+      }
+      requestDeployment(true);
     });
 
     // Advanced deployment options: dynamic controls generated from the template
@@ -1252,10 +1302,11 @@
     syncEngine();
     const manual = el("details", { class: "deploy-manual" }, [manualSummary, manualCode]);
 
-    const footer = el("div", { class: "deploy-foot" }, [btn, status]);
+    const footer = el("div", { class: "deploy-foot" }, [btn, externalBtn, status]);
     // Advanced options under Region (left); deploy button under Environment (right).
     topRow.appendChild(advSection);
     topRow.appendChild(footer);
+    topRow.appendChild(externalControls);
 
     const card = el("div", { class: "modal-section modal-card deploy-card is-open" });
     const header = el("div", { class: "deploy-head deploy-head-static" }, [el("h3", { text: "Deploy" })]);
