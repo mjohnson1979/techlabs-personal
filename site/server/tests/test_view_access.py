@@ -175,3 +175,16 @@ def test_resolve_without_email_returns_none(monkeypatch) -> None:
     monkeypatch.setattr(azure_deploy, "_principal_exists", lambda _oid: False)
     pid = azure_deploy._resolve_principal_id("home-oid", "", "http://rg")
     assert pid is None
+
+
+def test_delegated_credential_returns_access_token(monkeypatch) -> None:
+    credential = azure_deploy.DelegatedTokenCredential("arm-token", 2_000_000_000)
+    token = credential.get_token("https://management.azure.com/.default")
+    assert token.token == "arm-token"
+    assert token.expires_on == 2_000_000_000
+
+
+def test_delegated_credential_rejects_expired_token() -> None:
+    credential = azure_deploy.DelegatedTokenCredential("expired", 0)
+    with pytest.raises(RuntimeError, match="access token expired"):
+        credential.get_token("https://management.azure.com/.default")

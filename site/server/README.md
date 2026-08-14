@@ -21,7 +21,7 @@ survives restarts and redeploys.
 | `identity.py` | Resolves the caller's identity + role for `/api/*` routes (fails closed). |
 | `api.py` | The `/api/*` JSON endpoints (deployments, users, telemetry). |
 | `db.py` | **All persistence.** SQLite schema + every read/write helper. |
-| `azure_deploy.py` | In-process executor that provisions/destroys Azure resources with the app's managed identity. Branches on the deployment **engine**. After a successful deploy it grants the signed-in user the Reader role on their resource group so they can view it in the portal (best-effort, RG-scoped); cross-tenant users are first invited as a B2B guest via Microsoft Graph. |
+| `azure_deploy.py` | In-process executor that provisions/destroys Azure resources with the app's managed identity by default. External Bicep deployments use the signed-in user's delegated ARM token instead; Terraform remains managed-identity-only. |
 | `terraform_exec.py` | Terraform engine: runs a use case's Terraform module with the managed identity (azurerm + `ARM_USE_MSI`) instead of submitting ARM JSON. |
 | `terraform_bootstrap.py` | Opt-in, best-effort provisioning of the `terraform` binary into the persistent `/home` share on startup. |
 | `scheduler.py` | Background task that tears down deployments whose end time has passed. |
@@ -126,6 +126,20 @@ sqlite3 .\data\techlabs.db "SELECT upn, role, datetime(last_seen,'unixepoch') FR
 ```
 
 ## Deployment engines (Bicep and Terraform)
+
+### External subscription deployments
+
+The deploy modal keeps the existing managed-identity path as **Deploy to my
+subscription** and offers **Deploy to external subscription** for a customer
+or user-owned subscription. The external path requires the signed-in user to
+already have the necessary Azure permissions on that subscription; entering a
+subscription ID does not grant access. It uses the user's delegated ARM token,
+so the gallery managed identity does not need access to that subscription.
+
+External deployments currently support Bicep only. The delegated token remains
+in process memory and is never written to SQLite. Manual cleanup must be started
+while the user's gallery session is active; scheduled cleanup after a restart
+cannot authenticate as the user and will fail closed.
 
 Every catalog use case ships **both** a Bicep module (`catalog/<uc>/main.bicep`)
 and a Terraform module (`catalog/<uc>/terraform/`). Each deployment records which

@@ -815,6 +815,24 @@ details[open] > .collapse-summary .collapse-caret {
   margin-top: 12px;
 }
 
+.deploy-external-controls {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.deploy-external-controls[hidden] {
+  display: none;
+}
+
+.deploy-external-subscription {
+  min-width: 280px;
+}
+
 .deploy-form {
   display: grid;
   gap: 8px;
@@ -977,6 +995,10 @@ details[open] > .collapse-summary .collapse-caret {
   .deploy-toprow > .deploy-group:not(.deploy-region-box),
   .deploy-toprow .deploy-foot,
   .deploy-toprow .deploy-advanced-section {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .deploy-toprow .deploy-external-controls {
     grid-column: 1;
     grid-row: auto;
   }
