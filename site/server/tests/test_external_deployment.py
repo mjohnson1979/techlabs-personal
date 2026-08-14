@@ -62,3 +62,15 @@ def test_invitation_proceeds_when_directory_lookup_is_forbidden(monkeypatch) -> 
     assert azure_deploy._resolve_principal_id(
         "home-oid", "u@microsoft.com", "http://rg"
     ) == "guest-oid"
+
+
+def test_portal_resource_group_link_uses_subscription_tenant(monkeypatch) -> None:
+    monkeypatch.setenv("ARM_TENANT_ID", "2929f0bd-f87b-47ae-bb73-ec22b65de557")
+
+    url = azure_deploy.portal_rg_url(
+        "8ad2703f-069c-4c1a-8f4f-850c2a4c2676", "rg-techlabs-web-app-dev-5d6d6f"
+    )
+
+    assert url.startswith(
+        "https://portal.azure.com/#@2929f0bd-f87b-47ae-bb73-ec22b65de557/"
+    )
