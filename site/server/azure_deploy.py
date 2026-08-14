@@ -59,9 +59,15 @@ def executor_available() -> tuple[bool, str]:
 
 
 def portal_rg_url(subscription_id: str, resource_group: str) -> str:
-    """Azure portal link to the deployment's resource group."""
+    """Azure portal link to the deployment's resource group.
+
+    Pin the directory when configured so a B2B guest does not receive a portal
+    token from an unrelated home tenant.
+    """
+    tenant_id = os.environ.get("ARM_TENANT_ID", "").strip()
+    tenant_fragment = f"@{tenant_id}" if tenant_id else "@"
     return (
-        "https://portal.azure.com/#@/resource/subscriptions/"
+        f"https://portal.azure.com/#{tenant_fragment}/resource/subscriptions/"
         f"{subscription_id}/resourceGroups/{resource_group}/overview"
     )
 
