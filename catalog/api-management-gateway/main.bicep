@@ -47,7 +47,7 @@ param retentionInDays int = 30
 
 var vnetAddressPrefix = '10.4.0.0/16'
 
-module law '../../modules/log-analytics.bicep' = {
+module law '../../modules/log-analytics/main.bicep' = {
   name: 'law'
   params: {
     name: '${namePrefix}-law'
@@ -57,7 +57,7 @@ module law '../../modules/log-analytics.bicep' = {
   }
 }
 
-module appInsights '../../modules/app-insights.bicep' = {
+module appInsights '../../modules/app-insights/main.bicep' = {
   name: 'appInsights'
   params: {
     name: '${namePrefix}-ai'
@@ -116,7 +116,7 @@ resource apimNsg 'Microsoft.Network/networkSecurityGroups@2024-01-01' = {
   }
 }
 
-module network '../../modules/virtual-network.bicep' = {
+module network '../../modules/virtual-network/main.bicep' = {
   name: 'network'
   params: {
     name: '${namePrefix}-vnet'

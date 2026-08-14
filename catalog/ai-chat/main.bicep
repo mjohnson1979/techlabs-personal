@@ -28,7 +28,10 @@ param appZoneRedundant bool = false
 param chatModelName string = 'gpt-5-mini'
 
 @description('Chat model version.')
-param chatModelVersion string = '2024-07-18'
+param chatModelVersion string = '2025-08-07'
+
+@description('Model deployment SKU. GlobalStandard is the generally-available tier for current GPT-5 models.')
+param chatModelSku string = 'GlobalStandard'
 
 @description('Tokens-per-minute capacity (thousands) for the model deployment.')
 @minValue(1)
@@ -41,7 +44,7 @@ var tags = {
   UseCase: 'ai-chat'
 }
 
-module logAnalytics '../../modules/log-analytics.bicep' = {
+module logAnalytics '../../modules/log-analytics/main.bicep' = {
   name: 'logAnalytics'
   params: {
     name: '${prefix}-${environment}-law'
@@ -50,7 +53,7 @@ module logAnalytics '../../modules/log-analytics.bicep' = {
   }
 }
 
-module appInsights '../../modules/app-insights.bicep' = {
+module appInsights '../../modules/app-insights/main.bicep' = {
   name: 'appInsights'
   params: {
     name: '${prefix}-${environment}-ai'
@@ -79,7 +82,7 @@ resource chatDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-1
   parent: openAi
   name: chatModelName
   sku: {
-    name: 'Standard'
+    name: chatModelSku
     capacity: chatModelCapacity
   }
   properties: {

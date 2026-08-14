@@ -45,7 +45,7 @@ var tags = {
   UseCase: 'sql-data-api'
 }
 
-module logAnalytics '../../modules/log-analytics.bicep' = {
+module logAnalytics '../../modules/log-analytics/main.bicep' = {
   name: 'logAnalytics'
   params: {
     name: '${prefix}-${environment}-law'
@@ -54,7 +54,7 @@ module logAnalytics '../../modules/log-analytics.bicep' = {
   }
 }
 
-module appInsights '../../modules/app-insights.bicep' = {
+module appInsights '../../modules/app-insights/main.bicep' = {
   name: 'appInsights'
   params: {
     name: '${prefix}-${environment}-ai'

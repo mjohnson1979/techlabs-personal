@@ -1,8 +1,9 @@
 using '../main.bicep'
 
 param namePrefix = 'ragprod'
-param chatModel = 'gpt-4o-mini'
-param chatModelVersion = '2024-07-18'
+param chatModel = 'gpt-5-mini'
+param chatModelVersion = '2025-08-07'
+param chatModelSku = 'GlobalStandard'
 param chatCapacity = 60
 param embeddingModel = 'text-embedding-3-large'
 param embeddingModelVersion = '1'

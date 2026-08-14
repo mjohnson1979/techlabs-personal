@@ -1,0 +1,10 @@
+environment              = "dev"
+name_prefix              = "swadev"
+app_service_sku          = "P0v3"
+app_service_capacity     = 1
+zone_redundant           = false
+sql_sku_name             = "GP_S_Gen5_1"
+sql_admin_object_id      = "00000000-0000-0000-0000-000000000000"
+sql_admin_login          = "sql-admins"
+app_gateway_max_capacity = 2
+retention_in_days        = 30

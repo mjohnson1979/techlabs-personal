@@ -40,6 +40,19 @@
       "Connection pooling via managed identity tokens"
     ]
   },
+  "quota": {
+    "summary": "App Service compute is needed in the target region. Azure SQL (vCore serverless) has no blocking regional quota gate.",
+    "requirements": [
+      {
+        "service": "Azure App Service",
+        "provider": "Microsoft.Web/serverFarms",
+        "kind": "compute",
+        "sku": "B1 (dev) / P1v3 x3 (prod)",
+        "detail": "The App Service plan needs available compute (vCPU) quota for the chosen SKU in the region.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",
@@ -53,17 +66,27 @@
         "productNameContains": "Linux",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "appServiceSku",
+        "instanceParam": "appCapacity",
+        "zoneRedundantParam": "appZoneRedundant",
+        "hoursPerInstance": 730,
         "notes": "3 instances x 730 hours."
       },
       {
-        "name": "Azure SQL Database (GP Gen5 2 vCore)",
+        "name": "Azure SQL Database (GP Gen5, vCores)",
         "billing": "fixed",
         "serviceName": "SQL Database",
-        "productNameContains": "Single Database General Purpose - Compute Gen5",
+        "productNameContains": "General Purpose - Compute Gen5",
         "meterNameContains": "vCore",
+        "meterNameExact": "vCore",
         "unitOfMeasure": "1 Hour",
-        "quantityPerMonth": 1460,
-        "notes": "2 vCores x 730 hours. Meter matching is approximate - verify against your bill."
+        "quantityPerMonth": 730,
+        "skuQuantityParam": "sqlSkuName",
+        "skuQuantityMap": { "GP_S_Gen5_1": 1, "GP_S_Gen5_2": 2, "GP_S_Gen5_4": 4, "GP_S_Gen5_8": 8, "GP_Gen5_2": 2, "GP_Gen5_4": 4, "GP_Gen5_8": 8, "BC_Gen5_2": 2, "BC_Gen5_4": 4, "BC_Gen5_8": 8, "HS_Gen5_2": 2, "HS_Gen5_4": 4, "HS_Gen5_8": 8 },
+        "skuPriceMultiplierParam": "sqlSkuName",
+        "skuPriceMultiplierMap": { "BC_Gen5_2": 2, "BC_Gen5_4": 2, "BC_Gen5_8": 2 },
+        "hoursPerInstance": 730,
+        "notes": "vCore-hours at the GP Gen5 rate (default GP serverless 1 vCore, always-on upper bound). Business Critical is ~2x per vCore; serverless auto-pauses so real cost is lower."
       },
       {
         "name": "Application Insights ingestion",

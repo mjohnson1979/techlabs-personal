@@ -2,8 +2,8 @@
   "name": "ai-chat",
   "displayName": "AI Chat (Azure OpenAI + App Service + Cosmos DB)",
   "category": "AI / GenAI",
-  "description": "A chat API on App Service that calls an Azure OpenAI gpt-4o-mini deployment and persists conversations in serverless Cosmos DB. All access is keyless via managed identity.",
-  "what": "A chat API on App Service that calls an Azure OpenAI gpt-4o-mini deployment and stores conversation history in serverless Cosmos DB. Access to both OpenAI and Cosmos is keyless via the app's managed identity (local auth disabled). Dev is cheap; prod is zone-redundant with higher model throughput.",
+  "description": "A chat API on App Service that calls an Azure OpenAI gpt-5-mini deployment and persists conversations in serverless Cosmos DB. All access is keyless via managed identity.",
+  "what": "A chat API on App Service that calls an Azure OpenAI gpt-5-mini deployment and stores conversation history in serverless Cosmos DB. Access to both OpenAI and Cosmos is keyless via the app's managed identity (local auth disabled). Dev is cheap; prod is zone-redundant with higher model throughput.",
   "why": "Conversational AI is the most requested GenAI pattern. This wires the three pieces every chatbot needs - a model endpoint, a stateless app tier, and durable conversation storage - with keyless security and pay-per-use billing that matches spiky chat traffic.",
   "potentialUseCases": [
     "A customer-support or internal helpdesk chatbot",
@@ -40,6 +40,45 @@
       "Premium v3 app compute in prod"
     ]
   },
+  "quota": {
+    "summary": "Needs Azure OpenAI gpt-5-mini TPM capacity and App Service compute quota in the target region. Some subscriptions/regions have 0 App Service quota (e.g. East US on this lab subscription), which blocks the App Service plan at preflight.",
+    "requirements": [
+      {
+        "service": "Azure OpenAI",
+        "provider": "Microsoft.CognitiveServices/accounts/deployments",
+        "kind": "model-tpm",
+        "model": "gpt-5-mini",
+        "modelVersion": "2025-08-07",
+        "sku": "GlobalStandard",
+        "detail": "The model deployment requires tokens-per-minute (TPM) quota for gpt-5-mini in the region (10K TPM in dev). gpt-5-mini is offered on the GlobalStandard SKU, which is not available in every region.",
+        "checkUrl": "https://learn.microsoft.com/azure/ai-services/openai/how-to/quota"
+      },
+      {
+        "service": "Azure App Service",
+        "provider": "Microsoft.Web/serverFarms",
+        "kind": "compute",
+        "sku": "B1 (dev) / P1v3 x3 (prod)",
+        "detail": "The App Service plan needs available compute (vCPU) quota for the chosen SKU in the region. Premium v3 zone redundancy in prod requires capacity >= 3.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
+  "architecture": {
+    "summary": "Stateless chat API on App Service calls a keyless Azure OpenAI deployment and persists conversation history in serverless Cosmos DB, with telemetry to Application Insights.",
+    "nodes": [
+      { "id": "user", "label": "Users", "sublabel": "HTTPS clients", "icon": "client", "col": 0 },
+      { "id": "app", "label": "Chat API", "sublabel": "App Service (managed identity)", "icon": "appservice", "col": 1 },
+      { "id": "oai", "label": "Azure OpenAI", "sublabel": "gpt-5-mini, keyless", "icon": "openai", "col": 2 },
+      { "id": "cosmos", "label": "Cosmos DB", "sublabel": "serverless chat history", "icon": "cosmos", "col": 2 },
+      { "id": "obs", "label": "App Insights", "sublabel": "Log Analytics", "icon": "monitor", "col": 2 }
+    ],
+    "edges": [
+      { "from": "user", "to": "app", "label": "HTTPS" },
+      { "from": "app", "to": "oai", "label": "token auth" },
+      { "from": "app", "to": "cosmos", "label": "RBAC" },
+      { "from": "app", "to": "obs", "label": "telemetry" }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",
@@ -53,33 +92,38 @@
         "productNameContains": "Linux",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "appServiceSku",
+        "instanceParam": "appCapacity",
+        "zoneRedundantParam": "appZoneRedundant",
+        "hoursPerInstance": 730,
         "notes": "3 instances x 730 hours."
       },
       {
-        "name": "Azure OpenAI gpt-4o-mini input tokens",
+        "name": "Azure OpenAI gpt-5-mini input tokens",
         "billing": "usage",
-        "serviceName": "Cognitive Services",
-        "productNameContains": "Azure OpenAI",
-        "meterNameContains": "gpt-4o-mini-0718 Input",
+        "serviceName": "Foundry Models",
+        "productNameContains": "GPT5",
+        "meterNameContains": "GPT 5 Mini Inpt Glbl 1M Tokens",
         "unitOfMeasure": "1M",
         "quantityPerMonth": 20,
-        "notes": "Assumes ~20M input tokens/month. Meter naming varies - verify."
+        "notes": "Assumes ~20M input tokens/month on GlobalStandard. Meter naming varies - verify."
       },
       {
-        "name": "Azure OpenAI gpt-4o-mini output tokens",
+        "name": "Azure OpenAI gpt-5-mini output tokens",
         "billing": "usage",
-        "serviceName": "Cognitive Services",
-        "productNameContains": "Azure OpenAI",
-        "meterNameContains": "gpt-4o-mini-0718 Output",
+        "serviceName": "Foundry Models",
+        "productNameContains": "GPT5",
+        "meterNameContains": "GPT 5 Mini outpt Glbl 1M Tokens",
         "unitOfMeasure": "1M",
         "quantityPerMonth": 5,
-        "notes": "Assumes ~5M output tokens/month. Meter naming varies - verify."
+        "notes": "Assumes ~5M output tokens/month on GlobalStandard. Meter naming varies - verify."
       },
       {
         "name": "Cosmos DB serverless request units",
         "billing": "usage",
         "serviceName": "Azure Cosmos DB",
-        "meterNameContains": "Serverless",
+        "productNameContains": "serverless",
+        "meterNameContains": "RUs",
         "unitOfMeasure": "1M",
         "quantityPerMonth": 50,
         "notes": "Assumes ~50M RUs/month."

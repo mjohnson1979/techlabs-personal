@@ -20,13 +20,17 @@ param avdSubnetPrefix string = '10.40.1.0/24'
 @description('Subnet prefix reserved for private endpoints.')
 param privateEndpointSubnetPrefix string = '10.40.2.0/24'
 
-module vnet '../../../../modules/virtual-network.bicep' = {
+@description('Optional NSG resource ID to associate with the session-hosts subnet. Leave empty to skip.')
+param sessionHostsNsgId string = ''
+
+module vnet '../../../../modules/virtual-network/main.bicep' = {
   name: 'vnet'
   params: {
     name: '${namePrefix}-vnet'
     location: location
     tags: tags
     addressPrefixes: vnetAddressPrefixes
+    defaultNsgId: sessionHostsNsgId
     subnets: [
       {
         name: 'session-hosts'
@@ -36,6 +40,7 @@ module vnet '../../../../modules/virtual-network.bicep' = {
         name: 'private-endpoints'
         prefix: privateEndpointSubnetPrefix
         privateEndpointPolicies: true
+        associateNsg: false
       }
     ]
   }
@@ -43,5 +48,5 @@ module vnet '../../../../modules/virtual-network.bicep' = {
 
 output vnetId string = vnet.outputs.id
 output vnetName string = vnet.outputs.name
-output sessionHostsSubnetId string = [for subnet in vnet.outputs.subnets: if (subnet.name == 'session-hosts') subnet.id][0]
-output privateEndpointsSubnetId string = [for subnet in vnet.outputs.subnets: if (subnet.name == 'private-endpoints') subnet.id][0]
+output sessionHostsSubnetId string = first(filter(vnet.outputs.subnets, subnet => subnet.name == 'session-hosts')).id
+output privateEndpointsSubnetId string = first(filter(vnet.outputs.subnets, subnet => subnet.name == 'private-endpoints')).id

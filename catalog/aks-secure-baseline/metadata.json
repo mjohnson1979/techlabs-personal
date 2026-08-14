@@ -58,6 +58,19 @@
       "Overlay networking conserves VNet address space"
     ]
   },
+  "quota": {
+    "summary": "The AKS system-node pool needs available VM (vCPU) quota for the chosen size's family in the target region. The registry and monitoring have no blocking regional quota.",
+    "requirements": [
+      {
+        "service": "Virtual Machines (system nodes)",
+        "provider": "Microsoft.Compute/virtualMachines",
+        "kind": "compute",
+        "sku": "Standard_D4s_v5 x3",
+        "detail": "The system node pool needs vCPU quota for the selected VM size's family (e.g. DSv5) in the region. New subscriptions often start at 0 for a family and must request quota.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",
@@ -79,8 +92,12 @@
         "serviceName": "Virtual Machines",
         "armSkuName": "Standard_D4s_v5",
         "meterNameContains": "D4s v5",
+        "meterNameExact": "D4s v5",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "systemNodeVmSize",
+        "instanceParam": "systemNodeCount",
+        "hoursPerInstance": 730,
         "notes": "Three nodes x 730 hours."
       },
       {

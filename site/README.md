@@ -75,6 +75,8 @@ sign-in the gallery loads. Sign out via `POST /api/auth/entra/signout`.
 > so a non-localhost hostname requires registering your own Entra app and pointing
 > `redirect_uri` at it — swap the `client_id` in [`server/entra_auth.py`](server/entra_auth.py).
 
+_Maintenance note: this README received a docs-only update to trigger the deployment workflow._
+
 ### Endpoints
 
 | Route | Purpose |

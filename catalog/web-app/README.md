@@ -23,8 +23,8 @@ footprint.
 
 | Component | Purpose | Module |
 | --- | --- | --- |
-| Log Analytics workspace | Central log/metric store | [log-analytics](../../modules/log-analytics.bicep) |
-| Application Insights | App performance monitoring | [app-insights](../../modules/app-insights.bicep) |
+| Log Analytics workspace | Central log/metric store | [log-analytics](../../modules/log-analytics/main.bicep) |
+| Application Insights | App performance monitoring | [app-insights](../../modules/app-insights/main.bicep) |
 | App Service plan (Linux) | Compute tier | inline |
 | Web App | HTTPS-only site with managed identity | inline |
 

@@ -20,7 +20,7 @@ param gatewaySubnetPrefix string = '10.60.0.0/27'
 @description('Subnet prefix for shared services or jumpbox resources.')
 param sharedServicesSubnetPrefix string = '10.60.1.0/24'
 
-module vnet '../../../../modules/virtual-network.bicep' = {
+module vnet '../../../../modules/virtual-network/main.bicep' = {
   name: 'vnet'
   params: {
     name: '${namePrefix}-vnet'
@@ -42,4 +42,4 @@ module vnet '../../../../modules/virtual-network.bicep' = {
 
 output vnetId string = vnet.outputs.id
 output vnetName string = vnet.outputs.name
-output gatewaySubnetId string = [for subnet in vnet.outputs.subnets: if (subnet.name == 'GatewaySubnet') subnet.id][0]
+output gatewaySubnetId string = first(filter(vnet.outputs.subnets, subnet => subnet.name == 'GatewaySubnet')).id

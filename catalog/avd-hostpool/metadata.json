@@ -58,6 +58,19 @@
       "Breadth-first balancing spreads load during peak"
     ]
   },
+  "quota": {
+    "summary": "Session-host VMs require regional vCPU (compute) quota for the chosen VM size. The host pool/app group control plane is free, but adding session hosts needs Compute cores quota in the region.",
+    "requirements": [
+      {
+        "service": "Virtual Machines (session hosts)",
+        "provider": "Microsoft.Compute/virtualMachines",
+        "kind": "compute",
+        "sku": "Dav4 / Dsv5 family (per session-host size)",
+        "detail": "Each session host consumes regional vCPU quota for its VM family. Size x host count must fit the subscription's Compute cores limit in the region.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",
@@ -77,8 +90,10 @@
         "name": "Session host managed disks (Premium SSD)",
         "billing": "usage",
         "serviceName": "Storage",
-        "skuNameContains": "Premium SSD",
-        "meterNameContains": "P10",
+        "productNameContains": "Premium SSD Managed Disks",
+        "skuNameContains": "P10 LRS",
+        "meterNameContains": "P10 LRS Disk",
+        "meterNameExact": "P10 LRS Disk",
         "unitOfMeasure": "1/Month",
         "quantityPerMonth": 2,
         "notes": "One OS disk per session host."

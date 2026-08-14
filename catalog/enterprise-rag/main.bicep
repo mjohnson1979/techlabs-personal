@@ -10,10 +10,13 @@ param location string = resourceGroup().location
 param tags object = {}
 
 @description('Chat completion model to deploy.')
-param chatModel string = 'gpt-4o-mini'
+param chatModel string = 'gpt-5-mini'
 
 @description('Chat model version.')
-param chatModelVersion string = '2024-07-18'
+param chatModelVersion string = '2025-08-07'
+
+@description('Chat deployment SKU. GlobalStandard is the generally-available tier for current GPT-5 models.')
+param chatModelSku string = 'GlobalStandard'
 
 @description('Chat deployment capacity (thousands of TPM).')
 @minValue(1)
@@ -73,7 +76,7 @@ var cosmosDataContributorRoleId = '00000000-0000-0000-0000-000000000002'
 
 var documentsStorageName = toLower('${namePrefix}docs')
 
-module law '../../modules/log-analytics.bicep' = {
+module law '../../modules/log-analytics/main.bicep' = {
   name: 'law'
   params: {
     name: '${namePrefix}-law'
@@ -83,7 +86,7 @@ module law '../../modules/log-analytics.bicep' = {
   }
 }
 
-module appInsights '../../modules/app-insights.bicep' = {
+module appInsights '../../modules/app-insights/main.bicep' = {
   name: 'appInsights'
   params: {
     name: '${namePrefix}-ai'
@@ -93,7 +96,7 @@ module appInsights '../../modules/app-insights.bicep' = {
   }
 }
 
-module documents '../../modules/storage-account.bicep' = {
+module documents '../../modules/storage-account/main.bicep' = {
   name: 'documents'
   params: {
     name: documentsStorageName
@@ -125,7 +128,7 @@ resource chatDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-1
   parent: openAi
   name: chatModel
   sku: {
-    name: 'Standard'
+    name: chatModelSku
     capacity: chatCapacity
   }
   properties: {

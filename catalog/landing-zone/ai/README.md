@@ -24,9 +24,9 @@ networking, and observability.
 
 | Component | Purpose | Module |
 | --- | --- | --- |
-| Log Analytics workspace | Central AI telemetry | [log-analytics](../../../modules/log-analytics.bicep) |
-| Key Vault | Secrets, RBAC + soft delete | [key-vault](../../../modules/key-vault.bicep) |
-| Storage account | Grounding/document storage | [storage-account](../../../modules/storage-account.bicep) |
+| Log Analytics workspace | Central AI telemetry | [log-analytics](../../../modules/log-analytics/main.bicep) |
+| Key Vault | Secrets, RBAC + soft delete | [key-vault](../../../modules/key-vault/main.bicep) |
+| Storage account | Grounding/document storage | [storage-account](../../../modules/storage-account/main.bicep) |
 | Azure AI Services (Foundry) | Model endpoint, keyless | inline |
 | Azure AI Search | Retrieval / RAG index, keyless | inline |
 

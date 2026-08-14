@@ -56,6 +56,19 @@
       "Gateway autoscale matches capacity to load"
     ]
   },
+  "quota": {
+    "summary": "App Service Premium v3 compute is needed in the target region. Azure SQL and Application Gateway have no blocking regional quota gate.",
+    "requirements": [
+      {
+        "service": "Azure App Service",
+        "provider": "Microsoft.Web/serverFarms",
+        "kind": "compute",
+        "sku": "P1v3 x3",
+        "detail": "The App Service plan needs available compute (vCPU) quota for the chosen SKU. Zone redundancy requires >= 3 instances.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",
@@ -69,14 +82,18 @@
         "meterNameContains": "P1 v3",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "appServiceSku",
+        "instanceParam": "appServiceCapacity",
+        "zoneRedundantParam": "zoneRedundant",
+        "hoursPerInstance": 730,
         "notes": "Three instances x 730 hours."
       },
       {
         "name": "Application Gateway WAF_v2",
         "billing": "fixed",
         "serviceName": "Application Gateway",
-        "skuNameContains": "WAF",
-        "meterNameContains": "Gateway",
+        "productNameContains": "Application Gateway WAF v2",
+        "meterNameContains": "Fixed Cost",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 730,
         "notes": "Fixed gateway hours; capacity units billed separately."
@@ -85,21 +102,27 @@
         "name": "Application Gateway capacity units",
         "billing": "usage",
         "serviceName": "Application Gateway",
-        "skuNameContains": "WAF",
-        "meterNameContains": "Capacity Unit",
+        "productNameContains": "Application Gateway WAF v2",
+        "meterNameContains": "Capacity Units",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 1460,
         "notes": "Assumes ~2 capacity units sustained."
       },
       {
-        "name": "Azure SQL (GP_Gen5_2)",
+        "name": "Azure SQL Database (GP Gen5, vCores)",
         "billing": "fixed",
         "serviceName": "SQL Database",
-        "skuNameContains": "GP_Gen5",
+        "productNameContains": "General Purpose - Compute Gen5",
         "meterNameContains": "vCore",
+        "meterNameExact": "vCore",
         "unitOfMeasure": "1 Hour",
-        "quantityPerMonth": 1460,
-        "notes": "2 vCores x 730 hours, General Purpose provisioned."
+        "quantityPerMonth": 730,
+        "skuQuantityParam": "sqlSkuName",
+        "skuQuantityMap": { "GP_S_Gen5_1": 1, "GP_S_Gen5_2": 2, "GP_S_Gen5_4": 4, "GP_S_Gen5_8": 8, "GP_Gen5_2": 2, "GP_Gen5_4": 4, "GP_Gen5_8": 8, "BC_Gen5_2": 2, "BC_Gen5_4": 4, "BC_Gen5_8": 8, "HS_Gen5_2": 2, "HS_Gen5_4": 4, "HS_Gen5_8": 8 },
+        "skuPriceMultiplierParam": "sqlSkuName",
+        "skuPriceMultiplierMap": { "BC_Gen5_2": 2, "BC_Gen5_4": 2, "BC_Gen5_8": 2 },
+        "hoursPerInstance": 730,
+        "notes": "vCore-hours at the GP Gen5 rate (default GP serverless 1 vCore, always-on upper bound). Business Critical is ~2x per vCore; serverless auto-pauses so real cost is lower."
       },
       {
         "name": "Private Endpoints (SQL + Key Vault)",

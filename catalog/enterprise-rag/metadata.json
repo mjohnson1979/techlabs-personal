@@ -56,28 +56,63 @@
       "Embedding and chat deployments scaled independently"
     ]
   },
+  "quota": {
+    "summary": "Needs Azure OpenAI TPM capacity for BOTH a chat and an embedding model, plus App Service compute and an AI Search service, in the target region. OpenAI models are region-restricted and TPM quota is per-model.",
+    "requirements": [
+      {
+        "service": "Azure OpenAI (chat)",
+        "provider": "Microsoft.CognitiveServices/accounts/deployments",
+        "kind": "model-tpm",
+        "model": "gpt-5-mini",
+        "modelVersion": "2025-08-07",
+        "sku": "GlobalStandard",
+        "detail": "Chat model deployment requires tokens-per-minute (TPM) quota in the region. gpt-5-mini is offered on the GlobalStandard SKU.",
+        "checkUrl": "https://learn.microsoft.com/azure/ai-services/openai/how-to/quota"
+      },
+      {
+        "service": "Azure OpenAI (embeddings)",
+        "provider": "Microsoft.CognitiveServices/accounts/deployments",
+        "kind": "model-tpm",
+        "model": "text-embedding-3-small",
+        "modelVersion": "1",
+        "sku": "Standard",
+        "detail": "Embedding model deployment requires its own TPM quota in the region.",
+        "checkUrl": "https://learn.microsoft.com/azure/ai-services/openai/how-to/quota"
+      },
+      {
+        "service": "Azure App Service",
+        "provider": "Microsoft.Web/serverFarms",
+        "kind": "compute",
+        "sku": "App Service plan",
+        "detail": "App Service plan needs available compute (vCPU) quota for the chosen SKU in the region.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",
-    "profile": "Prod profile: gpt-4o-mini @60K TPM, Standard Search x3, P1v3 x3, Premium APIM.",
+    "profile": "Prod profile: gpt-5-mini @60K TPM GlobalStandard, Standard Search x3, P1v3 x3, Premium APIM.",
     "components": [
       {
-        "name": "Azure OpenAI - gpt-4o-mini input",
+        "name": "Azure OpenAI - gpt-5-mini input",
         "billing": "usage",
-        "serviceName": "Azure OpenAI",
-        "meterNameContains": "gpt-4o-mini-0718 Inp",
+        "serviceName": "Foundry Models",
+        "productNameContains": "GPT5",
+        "meterNameContains": "GPT 5 Mini Inpt Glbl 1M Tokens",
         "unitOfMeasure": "1M",
         "quantityPerMonth": 50,
-        "notes": "Assumes ~50M input tokens/month."
+        "notes": "Assumes ~50M input tokens/month on GlobalStandard."
       },
       {
-        "name": "Azure OpenAI - gpt-4o-mini output",
+        "name": "Azure OpenAI - gpt-5-mini output",
         "billing": "usage",
-        "serviceName": "Azure OpenAI",
-        "meterNameContains": "gpt-4o-mini-0718 Outp",
+        "serviceName": "Foundry Models",
+        "productNameContains": "GPT5",
+        "meterNameContains": "GPT 5 Mini outpt Glbl 1M Tokens",
         "unitOfMeasure": "1M",
         "quantityPerMonth": 15,
-        "notes": "Assumes ~15M output tokens/month."
+        "notes": "Assumes ~15M output tokens/month on GlobalStandard."
       },
       {
         "name": "Azure OpenAI - text-embedding-3-large",
@@ -96,6 +131,8 @@
         "meterNameContains": "Standard",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "instanceParam": "searchReplicas",
+        "hoursPerInstance": 730,
         "notes": "Three replicas x 730 hours."
       },
       {
@@ -106,6 +143,7 @@
         "meterNameContains": "P1 v3",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "appServiceSku",
         "notes": "Three orchestrator instances."
       },
       {

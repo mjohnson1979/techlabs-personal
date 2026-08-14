@@ -1,0 +1,123 @@
+<#
+.SYNOPSIS
+    Compile every catalog use case's Bicep into ARM JSON for the gallery backend.
+
+.DESCRIPTION
+    Option B: the gallery backend deploys use cases directly with its App Service
+    managed identity, so it needs ready-to-submit ARM templates at runtime (it has
+    no Bicep CLI). For each catalog/<use_case>/parameters/<env>.bicepparam this
+    runs `bicep build-params` and writes
+    site/server/_templates/<use_case>/<env>.json with the shape
+        { "template": <arm template>, "parameters": <arm parameters> }
+
+    Run this locally before testing deploys, and in CI before publishing the site
+    (see .github/workflows/deploy-gallery.yml). Requires the standalone `bicep`
+    CLI or the Azure CLI (`az bicep`) on PATH.
+
+.EXAMPLE
+    ./tools/Build-Templates.ps1
+#>
+[CmdletBinding()]
+param(
+    [string]$CatalogDir,
+    [string]$OutDir
+)
+
+$ErrorActionPreference = 'Stop'
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+if (-not $CatalogDir) { $CatalogDir = Join-Path $RepoRoot 'catalog' }
+if (-not $OutDir) { $OutDir = Join-Path $RepoRoot 'site/server/_templates' }
+
+# Relative path of a descendant under a base directory, with forward slashes.
+# [IO.Path]::GetRelativePath is .NET Core only, so it is unavailable in Windows
+# PowerShell 5.1; this works there and in pwsh 7 alike.
+function Get-RelativeUnder {
+    param([string]$Base, [string]$Full)
+    $trimmedBase = $Base.TrimEnd('\', '/')
+    if ($Full.StartsWith($trimmedBase, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $Full.Substring($trimmedBase.Length).TrimStart('\', '/').Replace('\', '/')
+    }
+    return (Split-Path -Leaf $Full)
+}
+
+# Resolve how to invoke Bicep: prefer the standalone CLI, fall back to az bicep.
+$bicepMode = $null
+if (Get-Command bicep -ErrorAction SilentlyContinue) { $bicepMode = 'bicep' }
+elseif (Get-Command az -ErrorAction SilentlyContinue) { $bicepMode = 'az' }
+else {
+    throw "Bicep is required. Install the standalone 'bicep' CLI or the Azure CLI."
+}
+
+function Get-CompiledParams {
+    param([string]$ParamFile)
+    if ($bicepMode -eq 'bicep') {
+        $raw = & bicep build-params $ParamFile --stdout 2>$null | Out-String
+    }
+    else {
+        $raw = & az bicep build-params --file $ParamFile --stdout 2>$null | Out-String
+    }
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($raw)) {
+        throw "bicep build-params failed for $ParamFile"
+    }
+    return $raw | ConvertFrom-Json
+}
+
+if (Test-Path $OutDir) { Remove-Item -Recurse -Force $OutDir }
+New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+
+$paramFiles = Get-ChildItem -Path $CatalogDir -Recurse -Filter '*.bicepparam' -File |
+    Sort-Object FullName
+$count = 0
+
+foreach ($pf in $paramFiles) {
+    $envName = [IO.Path]::GetFileNameWithoutExtension($pf.Name)   # dev / prod
+    $useCaseDir = Split-Path -Parent $pf.DirectoryName            # .../catalog/<use_case>
+    $rel = Get-RelativeUnder -Base $CatalogDir -Full $useCaseDir
+
+    $doc = Get-CompiledParams -ParamFile $pf.FullName
+    if (-not $doc.templateJson -or -not $doc.parametersJson) {
+        throw "Unexpected bicep output for $($pf.FullName) (missing templateJson/parametersJson)"
+    }
+    $template = $doc.templateJson | ConvertFrom-Json
+    $parameters = ($doc.parametersJson | ConvertFrom-Json).parameters
+
+    $out = [ordered]@{ template = $template; parameters = $parameters }
+    $destDir = Join-Path $OutDir $rel
+    New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+    $out | ConvertTo-Json -Depth 100 |
+        Set-Content -Path (Join-Path $destDir "$envName.json") -Encoding UTF8
+
+    Write-Host "  built $rel/$envName.json"
+    $count++
+}
+
+Write-Host "Built $count compiled template(s) into $OutDir"
+
+# --------------------------------------------------------------------------- #
+# Terraform: the runtime app tree has no catalog/, so materialize each use
+# case's terraform/ module under site/server/_tf/<use_case>/ for the executor.
+# (Bicep is precompiled to ARM JSON above; Terraform ships as-is and runs via
+# the terraform CLI at deploy time.)
+# --------------------------------------------------------------------------- #
+$TfOutDir = Join-Path $RepoRoot 'site/server/_tf'
+if (Test-Path $TfOutDir) { Remove-Item -Recurse -Force $TfOutDir }
+
+$tfDirs = Get-ChildItem -Path $CatalogDir -Recurse -Directory -Filter 'terraform' |
+    Where-Object { Test-Path (Join-Path $_.FullName 'main.tf') } |
+    Sort-Object FullName
+$tfCount = 0
+
+foreach ($tf in $tfDirs) {
+    $useCaseDir = Split-Path -Parent $tf.FullName             # .../catalog/<use_case>
+    $rel = Get-RelativeUnder -Base $CatalogDir -Full $useCaseDir
+    $destDir = Join-Path $TfOutDir $rel
+    New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+    Get-ChildItem -Path $tf.FullName -File |
+        Where-Object { $_.Extension -in '.tf', '.tfvars', '.json' } |
+        ForEach-Object { Copy-Item $_.FullName (Join-Path $destDir $_.Name) -Force }
+    Write-Host "  staged $rel/terraform"
+    $tfCount++
+}
+
+Write-Host "Staged $tfCount Terraform module(s) into $TfOutDir"
+

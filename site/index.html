@@ -18,8 +18,10 @@
         <span class="brand-name">Techlabs</span>
       </div>
       <nav class="header-links">
-        <a href="https://github.com/sebaclem/azure-tech-labs" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/mcaps-microsoft/TechLabs" target="_blank" rel="noopener">GitHub</a>
         <a href="https://learn.microsoft.com/azure/well-architected/" target="_blank" rel="noopener">Well-Architected</a>
+        <button id="nav-roadmap" class="header-link-btn" type="button">Roadmap &amp; retirements</button>
+        <button id="nav-capacity" class="header-link-btn" type="button">Capacity</button>
         <div id="user-menu" class="user-menu" hidden>
           <button id="user-button" class="user-button" type="button" aria-haspopup="true"
             aria-expanded="false" aria-label="Account">
@@ -38,6 +40,12 @@
                 <div id="user-card-upn" class="user-card-upn"></div>
               </div>
             </div>
+            <button id="menu-deployments" class="menu-item" type="button" role="menuitem">
+              My deployments
+            </button>
+            <button id="nav-admin" class="menu-item" type="button" role="menuitem" hidden>
+              Admin
+            </button>
             <button id="signout-button" class="signout-button" type="button" role="menuitem">
               Sign out
             </button>
@@ -58,24 +66,34 @@
       <div class="hero-actions">
         <input id="search" type="search" placeholder="Search use cases…" aria-label="Search use cases" />
         <span id="result-count" class="result-count"></span>
+        <button id="submit-usecase" class="submit-cta" type="button">+ Submit a use case</button>
       </div>
     </div>
   </section>
 
   <main class="wrap layout">
     <aside class="filters" aria-label="Filters">
-      <div class="filter-group">
-        <h3>Category</h3>
+      <details class="filter-group" data-filter-key="category">
+        <summary class="filter-summary">
+          <span class="collapse-title" role="heading" aria-level="3">Category</span>
+          <span class="collapse-caret" aria-hidden="true"></span>
+        </summary>
         <div id="filter-category" class="filter-options"></div>
-      </div>
-      <div class="filter-group">
-        <h3>Industry</h3>
+      </details>
+      <details class="filter-group" data-filter-key="industry">
+        <summary class="filter-summary">
+          <span class="collapse-title" role="heading" aria-level="3">Industry</span>
+          <span class="collapse-caret" aria-hidden="true"></span>
+        </summary>
         <div id="filter-industry" class="filter-options"></div>
-      </div>
-      <div class="filter-group">
-        <h3>Compliance</h3>
+      </details>
+      <details class="filter-group" data-filter-key="compliance">
+        <summary class="filter-summary">
+          <span class="collapse-title" role="heading" aria-level="3">Compliance</span>
+          <span class="collapse-caret" aria-hidden="true"></span>
+        </summary>
         <div id="filter-compliance" class="filter-options"></div>
-      </div>
+      </details>
       <button id="clear-filters" class="clear-btn" type="button">Clear filters</button>
     </aside>
 
@@ -84,9 +102,17 @@
 
   <div id="modal" class="modal" hidden>
     <div class="modal-backdrop" data-close></div>
-    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-panel modal-panel-full" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <button class="modal-close" data-close aria-label="Close">&times;</button>
-      <div id="modal-body"></div>
+      <div id="modal-body" class="modal-body-full"></div>
+    </div>
+  </div>
+
+  <div id="panel" class="modal" hidden>
+    <div class="modal-backdrop" data-panel-close></div>
+    <div class="modal-panel modal-panel-wide" role="dialog" aria-modal="true">
+      <button class="modal-close" data-panel-close aria-label="Close">&times;</button>
+      <div id="panel-body"></div>
     </div>
   </div>
 
@@ -97,8 +123,13 @@
     </div>
   </footer>
 
+  <script src="assets/api.js"></script>
+  <script src="assets/panel.js"></script>
+  <script src="assets/azure-icons.js"></script>
   <script src="assets/app.js"></script>
   <script src="assets/user-menu.js"></script>
+  <script src="assets/account.js"></script>
+  <script src="assets/admin.js"></script>
 </body>
 
 </html>

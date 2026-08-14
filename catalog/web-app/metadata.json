@@ -40,6 +40,19 @@
       "Horizontal autoscale-ready (capacity parameter)"
     ]
   },
+  "quota": {
+    "summary": "Needs App Service compute quota for the chosen plan SKU in the target region. Some subscriptions/regions have 0 App Service quota (e.g. East US on this lab subscription), which blocks the plan at preflight.",
+    "requirements": [
+      {
+        "service": "Azure App Service",
+        "provider": "Microsoft.Web/serverFarms",
+        "kind": "compute",
+        "sku": "B1 (dev) / P1v3 (prod)",
+        "detail": "The App Service plan needs available compute (vCPU) quota for the chosen SKU in the region. Premium v3 zone redundancy requires capacity >= 3.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",
@@ -53,6 +66,10 @@
         "productNameContains": "Linux",
         "unitOfMeasure": "1 Hour",
         "quantityPerMonth": 2190,
+        "skuParam": "sku",
+        "instanceParam": "capacity",
+        "zoneRedundantParam": "zoneRedundant",
+        "hoursPerInstance": 730,
         "notes": "3 instances x 730 hours for zone redundancy."
       },
       {
@@ -67,7 +84,8 @@
       {
         "name": "Log Analytics analytics logs",
         "billing": "usage",
-        "serviceName": "Azure Monitor",
+        "serviceName": "Log Analytics",
+        "skuNameContains": "Analytics Logs",
         "meterNameContains": "Analytics Logs Data Ingestion",
         "unitOfMeasure": "1 GB",
         "quantityPerMonth": 5,

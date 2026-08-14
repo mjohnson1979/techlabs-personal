@@ -40,6 +40,19 @@
       "Scales out to maxReplicas under load"
     ]
   },
+  "quota": {
+    "summary": "Needs Container Apps managed-environment (vCPU/memory) quota in the target region. New regions or constrained subscriptions can hit per-region Container Apps quota at preflight.",
+    "requirements": [
+      {
+        "service": "Azure Container Apps",
+        "provider": "Microsoft.App/managedEnvironments",
+        "kind": "compute",
+        "sku": "Consumption",
+        "detail": "The managed environment needs available vCPU/memory quota for the requested replica sizing in the region.",
+        "checkUrl": "https://learn.microsoft.com/azure/container-apps/quotas"
+      }
+    ]
+  },
   "cost": {
     "currency": "USD",
     "region": "eastus",
@@ -52,6 +65,8 @@
         "meterNameContains": "vCPU Active Usage",
         "unitOfMeasure": "1 Second",
         "quantityPerMonth": 5256000,
+        "instanceParam": "minReplicas",
+        "hoursPerInstance": 2628000,
         "notes": "2 warm replicas x 1 vCPU x 730h x 3600s. Active rate (resource-allocated)."
       },
       {
@@ -61,12 +76,15 @@
         "meterNameContains": "Memory Active Usage",
         "unitOfMeasure": "1 GiB Second",
         "quantityPerMonth": 10512000,
+        "instanceParam": "minReplicas",
+        "hoursPerInstance": 5256000,
         "notes": "2 warm replicas x 2 GiB x 730h x 3600s."
       },
       {
         "name": "Log Analytics analytics logs ingestion",
         "billing": "usage",
-        "serviceName": "Azure Monitor",
+        "serviceName": "Log Analytics",
+        "skuNameContains": "Analytics Logs",
         "meterNameContains": "Analytics Logs Data Ingestion",
         "unitOfMeasure": "1 GB",
         "quantityPerMonth": 5,

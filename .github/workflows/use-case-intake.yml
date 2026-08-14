@@ -1,0 +1,204 @@
+name: Use case intake
+
+# Turns a "Submit a use case" issue (use-case-submission.yml form) into a draft
+# pull request. AI (GitHub Models, via actions/ai-inference) structures the
+# submitter's natural-language description into metadata; this workflow then
+# scaffolds catalog/<slug>/metadata.json, regenerates catalog.json, and opens a
+# PR for a maintainer to author the Bicep and merge. Secretless - uses the
+# built-in GITHUB_TOKEN only (plus the models:read permission).
+
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Issue number to (re)process
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  models: read
+
+concurrency:
+  group: use-case-intake-${{ github.event.issue.number || github.event.inputs.issue }}
+  cancel-in-progress: true
+
+jobs:
+  intake:
+    # Run for manual dispatch, issues carrying the "use-case" label, or issues
+    # whose title uses the submission form's "[Use case] " prefix. The title
+    # fallback keeps intake working even if the "use-case" label is missing from
+    # the repo (issue-form templates silently drop labels that don't exist).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.issue.labels.*.name, 'use-case') ||
+      startsWith(github.event.issue.title, '[Use case]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Resolve issue payload
+        id: issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_ISSUE: ${{ github.event.inputs.issue }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            NUM="$DISPATCH_ISSUE"
+          else
+            NUM="${{ github.event.issue.number }}"
+          fi
+          echo "number=$NUM" >> "$GITHUB_OUTPUT"
+          # Fetch authoritative title/body/author via the API (handles dispatch).
+          gh issue view "$NUM" --repo "$GITHUB_REPOSITORY" \
+            --json title,body,author > issue.json
+          echo "author=$(jq -r '.author.login' issue.json)" >> "$GITHUB_OUTPUT"
+          # The full issue body (title + free-form description) is the AI's input.
+          {
+            echo "Title: $(jq -r '.title' issue.json)"
+            echo
+            jq -r '.body' issue.json
+          } > submission.txt
+
+      - name: Structure the submission with AI
+        id: extract
+        # v2 parses the prompt YAML first and then substitutes {{submission}}
+        # into the already-parsed message content. v1 substituted into the raw
+        # YAML text before parsing, so any multi-line submission corrupted the
+        # block scalar and failed with "a multiline key may not be an implicit
+        # key". Keep this at v2 (or newer) so multi-line submissions work.
+        #
+        # continue-on-error: GitHub Models can be unavailable (e.g. the org has
+        # not granted Models access to Actions, so the endpoint returns 403).
+        # The scaffold step degrades to a raw-issue draft in that case, so a PR
+        # is still opened rather than the whole submission silently failing.
+        continue-on-error: true
+        uses: actions/ai-inference@v2
+        with:
+          # The built-in GITHUB_TOKEN can only call GitHub Models if the org has
+          # enabled Models access for Actions; otherwise the endpoint returns
+          # 403. Set a MODELS_TOKEN repo/org secret (a fine-grained PAT with the
+          # "Models" permission) to use it instead; it falls back to the
+          # built-in token when the secret is absent.
+          token: ${{ secrets.MODELS_TOKEN || github.token }}
+          prompt-file: .github/prompts/use-case.prompt.yml
+          file_input: |
+            submission: submission.txt
+
+      - name: Scaffold catalog entry
+        id: scaffold
+        env:
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          ISSUE_AUTHOR: ${{ steps.issue.outputs.author }}
+          # Empty when the AI step failed/was skipped; the scaffolder then falls
+          # back to ISSUE_TITLE + the raw body to still produce a draft entry.
+          EXTRACTED_JSON_FILE: ${{ steps.extract.outputs.response-file }}
+        run: |
+          set -euo pipefail
+          export ISSUE_TITLE="$(jq -r '.title' issue.json)"
+          export ORIGINAL_DESCRIPTION="$(jq -r '.body' issue.json)"
+          python tools/new_use_case_from_issue.py
+
+      - name: Regenerate catalog.json
+        shell: pwsh
+        run: ./tools/Build-Catalog.ps1
+
+      - name: Open draft pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SLUG: ${{ steps.scaffold.outputs.slug }}
+          DISPLAY_NAME: ${{ steps.scaffold.outputs.display_name }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          ISSUE_AUTHOR: ${{ steps.issue.outputs.author }}
+        run: |
+          set -euo pipefail
+          BRANCH="usecase-intake/issue-${ISSUE_NUMBER}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add "catalog/${SLUG}" site/catalog.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit; skipping PR."
+            exit 0
+          fi
+          git commit -m "feat(catalog): scaffold '${SLUG}' from issue #${ISSUE_NUMBER}"
+          git push --force-with-lease origin "$BRANCH"
+
+          BODY=$(printf '%s\n' \
+            "Scaffolds the ${DISPLAY_NAME} use case from #${ISSUE_NUMBER} (submitted by @${ISSUE_AUTHOR})." \
+            "" \
+            "This is an automated draft. Before merging, a maintainer should author the Bicep (catalog/${SLUG}/main.bicep) and parameters/dev.bicepparam, fill in the Well-Architected pillars, quota and priced cost components in metadata.json, then re-run ./tools/Build-Catalog.ps1 and ./tools/Build-Templates.ps1." \
+            "" \
+            "Closes #${ISSUE_NUMBER}.")
+
+          # The branch is pushed above regardless. Opening the PR can still be
+          # blocked when "Allow GitHub Actions to create and approve pull
+          # requests" is disabled for the repo/org (gh fails with "GitHub
+          # Actions is not permitted to create or approve pull requests"). Treat
+          # that as non-fatal: fall back to a one-click compare link so the work
+          # is never lost and the job still succeeds. The compare link carries
+          # the same title/body as the auto-PR (url-encoded), so a maintainer
+          # lands on a fully pre-filled PR form and only has to click "Create" -
+          # no special permissions needed for a human to open the PR.
+          PR_URL=""
+          PR_TITLE="feat(catalog): ${DISPLAY_NAME}"
+          ENC_TITLE=$(printf '%s' "$PR_TITLE" | jq -sRr @uri)
+          ENC_BODY=$(printf '%s' "$BODY" | jq -sRr @uri)
+          COMPARE_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/compare/main...${BRANCH}?expand=1&title=${ENC_TITLE}&body=${ENC_BODY}"
+          EXISTING=$(gh pr list --head "$BRANCH" --state open --json url \
+            --jq '.[0].url // ""' --repo "$GITHUB_REPOSITORY" 2>/dev/null || echo "")
+          if [ -n "$EXISTING" ]; then
+            echo "PR for $BRANCH already exists: $EXISTING"
+            PR_URL="$EXISTING"
+          elif PR_URL=$(gh pr create --draft --base main --head "$BRANCH" \
+              --title "$PR_TITLE" \
+              --body "$BODY" --repo "$GITHUB_REPOSITORY" 2>pr_err.txt); then
+            echo "Opened draft PR: $PR_URL"
+          else
+            echo "::warning::Could not open the PR automatically:"
+            cat pr_err.txt || true
+            PR_URL=""
+          fi
+          {
+            echo "branch=$BRANCH"
+            echo "pr_url=$PR_URL"
+            echo "compare_url=$COMPARE_URL"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Comment back on the issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          SLUG: ${{ steps.scaffold.outputs.slug }}
+          PR_URL: ${{ steps.pr.outputs.pr_url }}
+          COMPARE_URL: ${{ steps.pr.outputs.compare_url }}
+          BRANCH: ${{ steps.pr.outputs.branch }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ISSUE_NUMBER:-}" ]; then exit 0; fi
+          if [ "$JOB_STATUS" = "success" ] && [ -n "${SLUG:-}" ]; then
+            if [ -n "${PR_URL:-}" ]; then
+              MSG="Thanks! A draft pull request was opened that scaffolds \`catalog/${SLUG}\` from this submission: ${PR_URL} A maintainer will complete the Infrastructure as Code and merge it to publish the use case to the gallery."
+            else
+              MSG="Thanks! I scaffolded \`catalog/${SLUG}\` on branch \`${BRANCH}\`, but this repo does not currently allow GitHub Actions to open pull requests. Open it in one click: ${COMPARE_URL} (A maintainer can fully automate this by enabling Settings -> Actions -> General -> Workflow permissions -> 'Allow GitHub Actions to create and approve pull requests'.)"
+            fi
+          else
+            MSG="The intake automation could not process this submission automatically (status: ${JOB_STATUS}). A maintainer will follow up manually. You can also edit the issue and re-run the workflow."
+          fi
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$MSG"

@@ -1,0 +1,111 @@
+{
+  "name": "azure-virtual-desktop-enterprise",
+  "displayName": "Azure Virtual Desktop Enterprise",
+  "category": "End-User Computing",
+  "description": "Enterprise Azure Virtual Desktop baseline with pooled host pool, FSLogix profile storage, landing network, Key Vault and NSG baseline, and centralized monitoring.",
+  "what": "A starter AVD landing zone that provisions the core building blocks for pooled desktops in Azure: a host pool with application group and workspace, an optional scaling plan, FSLogix profile storage on Azure Files, a landing virtual network with session-host and private-endpoint subnets, baseline security controls, and centralized monitoring in Azure Monitor.",
+  "why": "Organizations standardizing remote and hybrid work need a governed, repeatable way to stand up AVD with profile persistence, secure networking, and observability from day one. Composing the host pool, FSLogix storage, landing network, secret management, and diagnostics into one template accelerates rollout while preserving operational consistency across environments.",
+  "potentialUseCases": [
+    "Pooled desktops for knowledge workers and contractors",
+    "Secure access to corporate apps for unmanaged or BYO devices",
+    "Seasonal or burst capacity for call centers and task workers",
+    "Standardized desktop estate during mergers, acquisitions, or datacenter exits"
+  ],
+  "industries": [
+    "Banking",
+    "Insurance",
+    "Health Provider",
+    "Central, Federal and Regional Government",
+    "Retailers",
+    "Education",
+    "Cross-industry"
+  ],
+  "compliance": [
+    "Baseline",
+    "SOC 2",
+    "ISO 27001",
+    "GDPR"
+  ],
+  "wellArchitected": {
+    "reliability": [
+      "Pooled host pool with breadth-first load balancing across session hosts",
+      "FSLogix profile containers on Azure Files for stateless, roaming user profiles",
+      "Environment-specific parameterization for controlled dev/prod rollout"
+    ],
+    "security": [
+      "RBAC-enabled Key Vault baseline for secret management",
+      "Network segmentation with dedicated session-host and private-endpoint subnets plus NSG",
+      "Storage hardened with TLS 1.2, HTTPS-only, and no public blob access"
+    ],
+    "costOptimization": [
+      "Optional scaling plan ramps session hosts down off-peak to cut compute spend",
+      "Start-VM-on-connect avoids running idle session hosts",
+      "Use the dev profile for early validation before production scale"
+    ],
+    "operationalExcellence": [
+      "Infrastructure as Code modules for repeatable deployment",
+      "Unified logging via Log Analytics and Application Insights",
+      "dev/prod parameter files for promotion across environments"
+    ],
+    "performanceEfficiency": [
+      "Tunable max session limit per host to balance density and experience",
+      "Breadth-first load balancing spreads users for consistent performance",
+      "TransactionOptimized Azure Files tier for responsive profile I/O"
+    ]
+  },
+  "quota": {
+    "summary": "Session-host VMs require significant regional vCPU (compute) quota for the chosen VM size and host count. This is the most common blocker for AVD at scale \u2014 confirm Compute cores quota in the region before deploying.",
+    "requirements": [
+      {
+        "service": "Virtual Machines (session hosts)",
+        "provider": "Microsoft.Compute/virtualMachines",
+        "kind": "compute",
+        "sku": "Dsv5 / Dav4 family (per session-host size)",
+        "detail": "VM size x session-host count must fit the subscription's regional Compute cores quota. Enterprise host counts can require a quota increase.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
+  "cost": {
+    "currency": "USD",
+    "region": "eastus",
+    "profile": "prod",
+    "components": [
+      {
+        "name": "Session host VMs (D4s v5) x5",
+        "billing": "usage",
+        "serviceName": "Virtual Machines",
+        "productNameContains": "Dsv5 Series Windows",
+        "meterNameContains": "D4s v5",
+        "meterNameExact": "D4s v5",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 3650,
+        "skuParam": "sessionHostVmSize",
+        "instanceParam": "sessionHostCount",
+        "hoursPerInstance": 730,
+        "notes": "Example assumes 5 session hosts x 730 hours. A scaling plan reduces this materially; replace with your host count and schedule."
+      },
+      {
+        "name": "FSLogix profile storage (Azure Files)",
+        "billing": "usage",
+        "serviceName": "Storage",
+        "productNameContains": "Files",
+        "skuNameContains": "Standard LRS",
+        "meterNameContains": "LRS Data Stored",
+        "unitOfMeasure": "1 GB/Month",
+        "quantityPerMonth": 500,
+        "notes": "Example assumes ~500 GB of pooled user profiles."
+      },
+      {
+        "name": "Log Analytics ingestion",
+        "billing": "usage",
+        "serviceName": "Log Analytics",
+        "skuNameContains": "Analytics Logs",
+        "meterNameContains": "Analytics Logs Data Ingestion",
+        "unitOfMeasure": "1 GB",
+        "quantityPerMonth": 20,
+        "notes": "Example monthly diagnostic and platform telemetry ingestion."
+      }
+    ]
+  }
+}
