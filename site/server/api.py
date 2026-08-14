@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 
 import azure_deploy as az
 import db
+from entra_auth import COOKIE_NAME, EntraAuthError, acquire_arm_token_for_session
 import github_intake
 import pricing
 import submissions
@@ -312,6 +313,9 @@ class DeployIn(BaseModel):
     # (as a string). Validated against the use case's declared parameters and
     # merged into the ARM parameters at deploy time.
     parameterValues: dict[str, str] | None = None
+    # External deployments use the signed-in user's delegated ARM token.
+    externalSubscription: bool = False
+    subscriptionId: str = ""
 
 
 class EstimateIn(BaseModel):
@@ -442,6 +446,38 @@ def build_api_router() -> APIRouter:
                 detail="in-app Terraform execution is not enabled on this server; use the CLI",
             )
 
+        subscription_id = DEFAULT_SUBSCRIPTION
+        delegated_token: tuple[str, int] | None = None
+        if body.externalSubscription:
+            if engine != "bicep":
+                raise HTTPException(
+                    status_code=400,
+                    detail="external subscription deployment currently supports Bicep only",
+                )
+            subscription_id = body.subscriptionId.strip().lower()
+            if not re.fullmatch(
+                r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+                subscription_id,
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail="a valid external Azure subscription ID is required",
+                )
+            try:
+                delegated_token = await acquire_arm_token_for_session(
+                    request, request.cookies.get(COOKIE_NAME)
+                )
+            except EntraAuthError as exc:
+                raise HTTPException(
+                    status_code=401,
+                    detail="your sign-in session has no usable Azure access; sign in again",
+                ) from exc
+            if delegated_token is None:
+                raise HTTPException(
+                    status_code=401,
+                    detail="external deployment requires a gallery sign-in session",
+                )
+
         now = time.time()
         end_at = _resolve_end_at(body, now, user)
 
@@ -461,7 +497,7 @@ def build_api_router() -> APIRouter:
             user_oid=user.oid,
             user_upn=user.upn,
             user_name=user.name,
-            subscription_id=DEFAULT_SUBSCRIPTION,
+            subscription_id=subscription_id,
             resource_group=rg,
             end_at=end_at,
             engine=engine,
@@ -469,6 +505,7 @@ def build_api_router() -> APIRouter:
                 "template": item.get("template", ""),
                 "location": location,
                 "parameterValues": parameter_values,
+                "externalSubscription": body.externalSubscription,
             },
         )
         db.record_event(
@@ -477,7 +514,12 @@ def build_api_router() -> APIRouter:
             user_upn=user.upn,
             use_case=body.useCase,
             deployment_id=dep_id,
-            meta={"environment": env, "resourceGroup": rg, "engine": engine},
+            meta={
+                "environment": env,
+                "resourceGroup": rg,
+                "engine": engine,
+                "externalSubscription": body.externalSubscription,
+            },
         )
 
         dep = db.get_deployment(dep_id)
@@ -488,9 +530,13 @@ def build_api_router() -> APIRouter:
         db.update_deployment(
             dep_id,
             status="deploying",
-            gh_run_url=az.portal_rg_url(DEFAULT_SUBSCRIPTION, rg),
+            gh_run_url=az.portal_rg_url(subscription_id, rg),
             detail="queued for provisioning",
         )
+        if delegated_token is not None:
+            token, expires_in = delegated_token
+            dep["_delegated_arm_token"] = token
+            dep["_delegated_arm_expires_at"] = time.time() + expires_in
         az.schedule(az.run_deploy(dep))
         dep = db.get_deployment(dep_id)
         assert dep is not None
@@ -536,6 +582,24 @@ def build_api_router() -> APIRouter:
         if dep["status"] in ("destroyed", "destroying"):
             return {"deployment": _deployment_view(dep),
                     "detail": f"already {dep['status']}"}
+        if (dep.get("params") or {}).get("externalSubscription"):
+            try:
+                delegated_token = await acquire_arm_token_for_session(
+                    request, request.cookies.get(COOKIE_NAME)
+                )
+            except EntraAuthError as exc:
+                raise HTTPException(
+                    status_code=401,
+                    detail="sign in again before cleaning up this external deployment",
+                ) from exc
+            if delegated_token is None:
+                raise HTTPException(
+                    status_code=401,
+                    detail="sign in again before cleaning up this external deployment",
+                )
+            token, expires_in = delegated_token
+            dep["_delegated_arm_token"] = token
+            dep["_delegated_arm_expires_at"] = time.time() + expires_in
         db.update_deployment(deployment_id, status="destroying",
                              detail="teardown started")
         db.record_event(

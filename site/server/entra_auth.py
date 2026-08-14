@@ -37,10 +37,7 @@ AZURE_CLI_CLIENT_ID = "04b07795-8ddb-461a-bbee-02f9e1bf7b46"
 AUTHORITY = "https://login.microsoftonline.com"
 USER_AGENT = "TechlabsGallery/1.0"
 
-# Identity only — no resource scope on sign-in. `offline_access` yields a
-# refresh token; because the Azure CLI client's refresh tokens are
-# multi-audience we can later mint a Graph token from it *just* to read the
-# user's profile photo (see acquire_graph_token / the /photo route).
+ARM_SCOPE = "https://management.azure.com/user_impersonation"
 SCOPE = "openid profile offline_access"
 GRAPH_PHOTO_SCOPE = "https://graph.microsoft.com/.default offline_access openid profile"
 
@@ -248,13 +245,16 @@ class EntraClient:
     def _endpoint(self, path: str) -> str:
         return f"{AUTHORITY}/{self._tenant}/oauth2/v2.0/{path}"
 
-    def build_authorize_url(self, redirect_uri: str, state: str, challenge: str) -> str:
+    def build_authorize_url(
+        self, redirect_uri: str, state: str, challenge: str, arm: bool = False
+    ) -> str:
+        scope = f"{SCOPE} {ARM_SCOPE}" if arm else SCOPE
         params = {
             "client_id": self._client_id,
             "response_type": "code",
             "redirect_uri": redirect_uri,
             "response_mode": "query",
-            "scope": SCOPE,
+            "scope": scope,
             "state": state,
             "code_challenge": challenge,
             "code_challenge_method": "S256",
@@ -262,15 +262,16 @@ class EntraClient:
         return f"{self._endpoint('authorize')}?{urlencode(params)}"
 
     async def exchange_code(
-        self, code: str, verifier: str, redirect_uri: str
+        self, code: str, verifier: str, redirect_uri: str, arm: bool = False
     ) -> tuple[Identity, str]:
+        scope = f"{SCOPE} {ARM_SCOPE}" if arm else SCOPE
         data = {
             "client_id": self._client_id,
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": redirect_uri,
             "code_verifier": verifier,
-            "scope": SCOPE,
+            "scope": scope,
         }
         async with httpx.AsyncClient(
             timeout=httpx.Timeout(15.0),
@@ -318,6 +319,29 @@ class EntraClient:
         if not token:
             raise EntraAuthError("refresh returned no access token")
         return token, str(body.get("refresh_token", ""))
+
+    async def acquire_arm_token(self, refresh_token: str) -> tuple[str, str, int]:
+        """Mint a short-lived ARM token from the in-memory refresh token."""
+        data = {
+            "client_id": self._client_id,
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "scope": ARM_SCOPE,
+        }
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(15.0),
+            headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+        ) as http:
+            resp = await http.post(self._endpoint("token"), data=data)
+        body = resp.json() if resp.content else {}
+        if body.get("error"):
+            raise EntraAuthError(
+                f"{body['error']}: {body.get('error_description', '').strip()}".strip(": ")
+            )
+        token = str(body.get("access_token", ""))
+        if not token:
+            raise EntraAuthError("refresh returned no ARM access token")
+        return token, str(body.get("refresh_token", "")), int(body.get("expires_in", 3600))
 
     async def begin_device_code(self) -> dict[str, object]:
         """Start the device authorization flow against the configured tenant.
@@ -409,6 +433,23 @@ def _store(request: Request) -> SessionStore:
     return request.app.state.session_store
 
 
+async def acquire_arm_token_for_session(
+    request: Request, session_id: str | None
+) -> tuple[str, int] | None:
+    """Return a delegated ARM token for the self-hosted OAuth session."""
+    if not session_id:
+        return None
+    rec = _store(request).get(session_id)
+    if rec is None or not rec.signed_in or not rec.refresh_token:
+        return None
+    token, rotated, expires_in = await request.app.state.entra_client.acquire_arm_token(
+        rec.refresh_token
+    )
+    if rotated:
+        _store(request).set_refresh_token(rec.session_id, rotated)
+    return token, expires_in
+
+
 def _client(request: Request) -> EntraClient:
     return request.app.state.entra_client
 
@@ -463,6 +504,7 @@ def build_router(secure_cookie: bool) -> APIRouter:
         request: Request,
         response: Response,
         redirect: int = 0,
+        external: int = 0,
         session: str | None = Cookie(default=None, alias=COOKIE_NAME),
     ) -> StartResponse | RedirectResponse:
         sid = session or SessionStore.new_session_id()
@@ -474,10 +516,11 @@ def build_router(secure_cookie: bool) -> APIRouter:
             "code_verifier": verifier,
             "redirect_uri": redirect_uri,
             "session_id": sid,
+            "arm": bool(external),
             "expires_at": time.time() + PKCE_TTL_SECONDS,
         }
         auth_url = _client(request).build_authorize_url(
-            redirect_uri, state, pkce_challenge(verifier)
+            redirect_uri, state, pkce_challenge(verifier), arm=bool(external)
         )
         if redirect:
             r = RedirectResponse(auth_url, status_code=302)
@@ -698,6 +741,7 @@ async def finalize_oauth_landing(
             code,
             str(entry.get("code_verifier") or ""),
             str(entry.get("redirect_uri") or _redirect_uri(request)),
+            arm=bool(entry.get("arm")),
         )
     except EntraAuthError as exc:
         return _signin_error_redirect(str(exc))
