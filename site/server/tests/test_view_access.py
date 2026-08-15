@@ -93,6 +93,31 @@ def test_grant_name_is_deterministic(fake_auth) -> None:
     assert len(names) == 1  # same (scope, principal) -> same assignment name
 
 
+def test_repeat_deployments_create_distinct_resource_group_assignments(
+    fake_auth, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        azure_deploy, "_resolve_principal_id", lambda _oid, _email, _url: "guest-oid"
+    )
+
+    first_dep = {**_DEP, "resource_group": "rg-techlabs-webapp-111111"}
+    second_dep = {**_DEP, "resource_group": "rg-techlabs-webapp-222222"}
+
+    assert azure_deploy.grant_view_access(first_dep) is True
+    assert azure_deploy.grant_view_access(second_dep) is True
+
+    scopes = [scope for scope, _name, _params in fake_auth.role_assignments.calls]
+    names = [name for _scope, name, _params in fake_auth.role_assignments.calls]
+
+    assert scopes == [
+        "/subscriptions/00000000-0000-0000-0000-000000000000"
+        "/resourceGroups/rg-techlabs-webapp-111111",
+        "/subscriptions/00000000-0000-0000-0000-000000000000"
+        "/resourceGroups/rg-techlabs-webapp-222222",
+    ]
+    assert len(set(names)) == 2
+
+
 def test_best_effort_disabled_by_env(fake_auth, monkeypatch) -> None:
     monkeypatch.setenv("GALLERY_GRANT_VIEW_ACCESS", "false")
     asyncio.run(azure_deploy._grant_view_access(_DEP))
@@ -102,11 +127,37 @@ def test_best_effort_disabled_by_env(fake_auth, monkeypatch) -> None:
 def test_best_effort_records_skipped_when_no_principal(fake_auth, monkeypatch) -> None:
     monkeypatch.setenv("GALLERY_GRANT_VIEW_ACCESS", "true")
     recorded: list[str] = []
-    monkeypatch.setattr(azure_deploy.db, "record_event", lambda **kw: recorded.append(kw["type"]))
+    monkeypatch.setattr(
+        azure_deploy.db, "record_event", lambda **kw: recorded.append(kw["type"])
+    )
 
     asyncio.run(azure_deploy._grant_view_access({**_DEP, "user_oid": ""}))
     assert fake_auth.role_assignments.calls == []
     assert recorded == ["view_access_skipped"]
+
+
+def test_best_effort_records_deployment_scope(fake_auth, monkeypatch) -> None:
+    monkeypatch.setenv("GALLERY_GRANT_VIEW_ACCESS", "true")
+    recorded: list[dict] = []
+    monkeypatch.setattr(
+        azure_deploy.db, "record_event", lambda **kw: recorded.append(kw)
+    )
+
+    asyncio.run(azure_deploy._grant_view_access(_DEP))
+
+    assert recorded == [
+        {
+            "type": "view_access_granted",
+            "user_oid": "11111111-1111-1111-1111-111111111111",
+            "user_upn": "user@contoso.com",
+            "use_case": "web-app",
+            "deployment_id": "abc123",
+            "meta": {
+                "subscriptionId": "00000000-0000-0000-0000-000000000000",
+                "resourceGroup": "rg-techlabs-webapp-abc123",
+            },
+        }
+    ]
 
 
 def test_best_effort_swallows_failure(fake_auth, monkeypatch) -> None:
@@ -114,7 +165,9 @@ def test_best_effort_swallows_failure(fake_auth, monkeypatch) -> None:
     fake_auth.role_assignments.raise_exc = RuntimeError("boom")
 
     recorded: list[str] = []
-    monkeypatch.setattr(azure_deploy.db, "record_event", lambda **kw: recorded.append(kw["type"]))
+    monkeypatch.setattr(
+        azure_deploy.db, "record_event", lambda **kw: recorded.append(kw["type"])
+    )
 
     asyncio.run(azure_deploy._grant_view_access(_DEP))  # must not raise
     assert recorded == ["view_access_grant_failed"]
@@ -140,6 +193,30 @@ def test_resolve_uses_existing_guest(monkeypatch) -> None:
     )
     pid = azure_deploy._resolve_principal_id("home-oid", "u@microsoft.com", "http://rg")
     assert pid == "guest-oid"
+
+
+def test_existing_guest_is_reused_for_new_deployment_access(monkeypatch) -> None:
+    client = _FakeAuthClient()
+    invite_calls: list[tuple[str, str]] = []
+
+    monkeypatch.setattr(azure_deploy, "_auth_client", lambda _sub: client)
+    monkeypatch.setattr(azure_deploy, "_principal_exists", lambda _oid: False)
+    monkeypatch.setattr(azure_deploy, "_find_directory_user", lambda _e: "guest-oid")
+    monkeypatch.setattr(
+        azure_deploy,
+        "_invite_guest",
+        lambda email, url: invite_calls.append((email, url)),
+    )
+
+    dep = {**_DEP, "resource_group": "rg-techlabs-webapp-newdeploy"}
+
+    assert azure_deploy.grant_view_access(dep) is True
+    assert invite_calls == []
+    assert len(client.role_assignments.calls) == 1
+    scope, _name, params = client.role_assignments.calls[0]
+    assert scope.endswith("/resourceGroups/rg-techlabs-webapp-newdeploy")
+    assert params["principal_id"] == "guest-oid"
+    assert params["principal_type"] == "User"
 
 
 def test_resolve_invites_new_guest(monkeypatch) -> None:

@@ -259,6 +259,10 @@ async def _grant_view_access(dep: dict[str, Any]) -> None:
     if not _view_grant_enabled():
         return
     dep_id = dep["id"]
+    event_meta = {
+        "subscriptionId": dep.get("subscription_id", ""),
+        "resourceGroup": dep.get("resource_group", ""),
+    }
     try:
         granted = await asyncio.to_thread(grant_view_access, dep)
         db.record_event(
@@ -267,6 +271,7 @@ async def _grant_view_access(dep: dict[str, Any]) -> None:
             user_upn=dep["user_upn"],
             use_case=dep["use_case"],
             deployment_id=dep_id,
+            meta=event_meta,
         )
     except Exception as exc:  # viewing is a convenience, not the deployment
         reason = _clean_error(exc)
@@ -277,7 +282,7 @@ async def _grant_view_access(dep: dict[str, Any]) -> None:
             user_upn=dep["user_upn"],
             use_case=dep["use_case"],
             deployment_id=dep_id,
-            meta={"error": reason},
+            meta={**event_meta, "error": reason},
         )
 
 
