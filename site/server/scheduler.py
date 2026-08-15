@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time
 
 import azure_deploy as az
 import db
@@ -20,7 +21,41 @@ _INTERVAL = max(
 )
 
 
+async def _reconcile_destroying() -> None:
+    """Mark deleted managed resource groups as destroyed in the local DB."""
+    for dep in db.deployments_by_status("destroying"):
+        if (dep.get("params") or {}).get("externalSubscription"):
+            continue
+        try:
+            exists = await asyncio.to_thread(az.resource_group_exists, dep)
+            if exists:
+                continue
+            db.update_deployment(
+                dep["id"],
+                status="destroyed",
+                destroyed_at=time.time(),
+                detail="resource group already deleted; status reconciled",
+            )
+            db.record_event(
+                type="destroy_reconciled",
+                user_oid=dep["user_oid"],
+                user_upn=dep["user_upn"],
+                use_case=dep["use_case"],
+                deployment_id=dep["id"],
+            )
+        except Exception as exc:
+            db.record_event(
+                type="destroy_reconcile_failed",
+                user_oid=dep["user_oid"],
+                user_upn=dep["user_upn"],
+                use_case=dep["use_case"],
+                deployment_id=dep["id"],
+                meta={"error": str(exc)[:500]},
+            )
+
+
 async def _sweep_once() -> None:
+    await _reconcile_destroying()
     for dep in db.due_deployments():
         try:
             db.update_deployment(dep["id"], status="destroying",
