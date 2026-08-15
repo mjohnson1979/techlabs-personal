@@ -593,6 +593,18 @@ def _do_destroy(dep: dict[str, Any]) -> None:
     client.resource_groups.begin_delete(resource_group).result()
 
 
+def resource_group_exists(dep: dict[str, Any]) -> bool:
+    """Return whether the deployment's resource group still exists in Azure."""
+    from azure.core.exceptions import ResourceNotFoundError
+
+    client = _client(dep["subscription_id"], _credential_for_deployment(dep))
+    try:
+        client.resource_groups.get(dep["resource_group"])
+    except ResourceNotFoundError:
+        return False
+    return True
+
+
 # --------------------------------------------------------------------------- #
 # Async orchestration
 # --------------------------------------------------------------------------- #
