@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-15T06:15:27Z",
+  "generated": "2026-08-16T06:16:46Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -8405,6 +8405,86 @@
           "status": "red",
           "detail": "GlobalStandard SKU not offered for gpt-chat-latest in this region",
           "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-chat-latest in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-chat-latest in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-chat-latest:2026-08-06:globalstandard": {
+      "label": "Azure OpenAI - gpt-chat-latest 2026-08-06 [GlobalStandard]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-chat-latest",
+      "version": "2026-08-06",
+      "sku": "GlobalStandard",
+      "byRegion": {
+        "eastus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "eastus2": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "northcentralus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "southcentralus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "westus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-chat-latest in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-chat-latest in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "canadaeast": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "brazilsouth": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
         },
         "brazilsoutheast": {
           "status": "red",
