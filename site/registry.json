@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-13T05:37:42Z",
+  "generated": "2026-08-16T05:13:01Z",
   "regions": [
     "eastus",
     "eastus2",
@@ -527,6 +527,30 @@
       },
       {
         "provider": "DeepSeek",
+        "name": "DeepSeek-V4-Flash-0731",
+        "version": "2026-07-31",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "DeepSeek",
         "name": "DeepSeek-V4-Pro",
         "version": "2026-04-23",
         "skus": [
@@ -818,7 +842,6 @@
         "name": "Phi-4",
         "version": "2",
         "skus": [
-          "Arc",
           "GlobalStandard"
         ],
         "regions": [
@@ -2108,6 +2131,28 @@
         "regions": [
           "eastus2",
           "southcentralus",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-chat-latest",
+        "version": "2026-08-06",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
           "westus3"
         ],
         "lifecycle": "Preview",
