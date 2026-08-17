@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-10T05:28:56Z",
+  "generated": "2026-08-17T05:12:00Z",
   "source": "https://azure.microsoft.com/updates",
   "pagesScanned": 40,
   "updatesScanned": 4000,
@@ -494,10 +494,22 @@
       ],
       "launched": [
         {
+          "id": "568830",
+          "title": "Generally Available: Control plane metrics collection for AKS with Managed Prometheus",
+          "url": "https://azure.microsoft.com/updates?id=568830",
+          "date": "2026-08"
+        },
+        {
           "id": "567944",
           "title": "Generally Available: Application Routing with Gateway API",
           "url": "https://azure.microsoft.com/updates?id=567944",
           "date": "2026-07"
+        },
+        {
+          "id": "564849",
+          "title": "Generally Available: Azure Red Hat OpenShift in Belgium Central",
+          "url": "https://azure.microsoft.com/updates?id=564849",
+          "date": "2026-06"
         },
         {
           "id": "562919",
@@ -512,21 +524,9 @@
           "date": "2026-06"
         },
         {
-          "id": "564849",
-          "title": "Generally Available: Azure Red Hat OpenShift in Belgium Central",
-          "url": "https://azure.microsoft.com/updates?id=564849",
-          "date": "2026-06"
-        },
-        {
           "id": "561135",
           "title": "Generally Available: Microsoft Azure Red Hat OpenShift is now available in Austria East ",
           "url": "https://azure.microsoft.com/updates?id=561135",
-          "date": "2026-04"
-        },
-        {
-          "id": "560521",
-          "title": "Generally Available: Configure AKS backup using a single Azure CLI command",
-          "url": "https://azure.microsoft.com/updates?id=560521",
           "date": "2026-04"
         }
       ]
@@ -724,6 +724,12 @@
       ],
       "previews": [
         {
+          "id": "568979",
+          "title": "Public Preview: Markdown for Agents in Azure App Service",
+          "url": "https://azure.microsoft.com/updates?id=568979",
+          "date": "2026-08"
+        },
+        {
           "id": "567218",
           "title": "Public Preview: Exceptions in WAF for Azure Application Gateway and Azure Front Door",
           "url": "https://azure.microsoft.com/updates?id=567218",
@@ -751,12 +757,6 @@
           "id": "523623",
           "title": "Public Preview: Managed Instance on Azure App Service",
           "url": "https://azure.microsoft.com/updates?id=523623",
-          "date": "2025-11"
-        },
-        {
-          "id": "530609",
-          "title": "Public Preview: Microsoft HTTP DDoS Ruleset 1.0 on Application Gateway WAF v2",
-          "url": "https://azure.microsoft.com/updates?id=530609",
           "date": "2025-11"
         }
       ],
@@ -1188,6 +1188,12 @@
           "date": "2026-08"
         },
         {
+          "id": "569256",
+          "title": "Generally Available: 2.2X IDPS performance optimization in Azure Firewall",
+          "url": "https://azure.microsoft.com/updates?id=569256",
+          "date": "2026-08"
+        },
+        {
           "id": "568115",
           "title": "Generally Available: HTTP header insertion in Azure Firewall ",
           "url": "https://azure.microsoft.com/updates?id=568115",
@@ -1210,12 +1216,6 @@
           "title": "Generally Available: Default Ruleset 2.2 in WAF for Azure Application Gateway",
           "url": "https://azure.microsoft.com/updates?id=553532",
           "date": "2026-02"
-        },
-        {
-          "id": "513802",
-          "title": "Generally Available: Azure WAF JavaScript challenge on Azure Front Door",
-          "url": "https://azure.microsoft.com/updates?id=513802",
-          "date": "2025-11"
         }
       ]
     },
@@ -1229,6 +1229,12 @@
         }
       ],
       "previews": [
+        {
+          "id": "569251",
+          "title": "Public Preview: Azure Front Door mutual TLS ",
+          "url": "https://azure.microsoft.com/updates?id=569251",
+          "date": "2026-08"
+        },
         {
           "id": "567218",
           "title": "Public Preview: Exceptions in WAF for Azure Application Gateway and Azure Front Door",
@@ -1255,6 +1261,12 @@
         }
       ],
       "launched": [
+        {
+          "id": "569246",
+          "title": "Generally Available: Batch rule updates for Azure Front Door ",
+          "url": "https://azure.microsoft.com/updates?id=569246",
+          "date": "2026-08"
+        },
         {
           "id": "558016",
           "title": "Generally Available: Default Rule Set 2.2 and updates to ruleset support policy",
@@ -1569,6 +1581,12 @@
       ],
       "launched": [
         {
+          "id": "568830",
+          "title": "Generally Available: Control plane metrics collection for AKS with Managed Prometheus",
+          "url": "https://azure.microsoft.com/updates?id=568830",
+          "date": "2026-08"
+        },
+        {
           "id": "561564",
           "title": "Generally Available: Azure Monitor dashboards with Grafana in Public, Government (Fairfax) and China",
           "url": "https://azure.microsoft.com/updates?id=561564",
@@ -1597,12 +1615,6 @@
           "title": "Generally Available: Azure Monitor for Azure Arc-enabled Kubernetes with OpenShift and Azure Red Hat OpenShift",
           "url": "https://azure.microsoft.com/updates?id=560358",
           "date": "2026-04"
-        },
-        {
-          "id": "558825",
-          "title": "Generally Available: Azure Monitor Prometheus community recommended alerts for Azure Arc-enabled Kubernetes",
-          "url": "https://azure.microsoft.com/updates?id=558825",
-          "date": "2026-03"
         }
       ]
     },
