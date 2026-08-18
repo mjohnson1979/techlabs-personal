@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-17T06:20:45Z",
+  "generated": "2026-08-18T06:18:21Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -2037,9 +2037,9 @@
           "value": 450
         },
         "centralus": {
-          "status": "red",
-          "detail": "GlobalStandard SKU not offered for gpt-4o in this region",
-          "value": null
+          "status": "green",
+          "detail": "450 K TPM available",
+          "value": 450
         },
         "northcentralus": {
           "status": "green",
