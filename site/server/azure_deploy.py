@@ -365,6 +365,12 @@ def _client(subscription_id: str, credential: Any = None) -> Any:
     return ResourceManagementClient(credential or _get_credential(), subscription_id)
 
 
+def get_resource_group(dep: dict[str, Any]) -> Any:
+    """Return an existing resource group using the deployment credential."""
+    client = _client(dep["subscription_id"], _credential_for_deployment(dep))
+    return client.resource_groups.get(dep["resource_group"])
+
+
 def _innermost_arm_error(err: Any) -> tuple[str | None, str | None]:
     """Walk an ARM error tree to the deepest, most specific code/message.
 
@@ -440,18 +446,21 @@ def _do_deploy(dep: dict[str, Any]) -> None:
 
     location = params_meta.get("location") or _location()
     client = _client(subscription_id, _credential_for_deployment(dep))
-    client.resource_groups.create_or_update(
-        resource_group,
-        {
-            "location": location,
-            "tags": {
-                "techlabs-managed": "true",
-                "techlabs-deployment": dep["id"],
-                "techlabs-usecase": dep["use_case"],
-                "techlabs-owner": dep.get("user_upn", ""),
+    if dep.get("cleanup_policy", "delete_resource_group") == "none":
+        client.resource_groups.get(resource_group)
+    else:
+        client.resource_groups.create_or_update(
+            resource_group,
+            {
+                "location": location,
+                "tags": {
+                    "techlabs-managed": "true",
+                    "techlabs-deployment": dep["id"],
+                    "techlabs-usecase": dep["use_case"],
+                    "techlabs-owner": dep.get("user_upn", ""),
+                },
             },
-        },
-    )
+        )
     # Pass a plain dict rather than importing the SDK model classes
     # (Deployment/DeploymentProperties/DeploymentMode). Their import location
     # moved across azure-mgmt-resource major versions; the SDK serializes this
@@ -578,6 +587,8 @@ def _deploy_progress(dep: dict[str, Any]) -> str | None:
 def _do_destroy(dep: dict[str, Any]) -> None:
     from azure.core.exceptions import ResourceNotFoundError
 
+    if dep.get("cleanup_policy") == "none":
+        raise RuntimeError("refusing to delete an externally managed resource group")
     client = _client(dep["subscription_id"], _credential_for_deployment(dep))
     resource_group = dep["resource_group"]
     try:

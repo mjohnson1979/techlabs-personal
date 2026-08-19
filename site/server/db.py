@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS deployments (
     resource_group  TEXT NOT NULL,
     status          TEXT NOT NULL,  -- requested|deploying|active|expiring|destroying|destroyed|failed
     engine          TEXT NOT NULL DEFAULT 'bicep',  -- bicep | terraform
+    cleanup_policy  TEXT NOT NULL DEFAULT 'delete_resource_group',
     created_at      REAL NOT NULL,
     end_at          REAL NOT NULL,
     destroyed_at    REAL,
@@ -141,6 +142,11 @@ def _migrate(conn: sqlite3.Connection) -> None:
     if "engine" not in dep_cols:
         conn.execute(
             "ALTER TABLE deployments ADD COLUMN engine TEXT NOT NULL DEFAULT 'bicep'"
+        )
+    if "cleanup_policy" not in dep_cols:
+        conn.execute(
+            "ALTER TABLE deployments ADD COLUMN cleanup_policy TEXT NOT NULL"
+            " DEFAULT 'delete_resource_group'"
         )
 
 
@@ -300,6 +306,7 @@ def create_deployment(
     resource_group: str,
     end_at: float,
     engine: str = "bicep",
+    cleanup_policy: str = "delete_resource_group",
     params: dict[str, Any] | None = None,
 ) -> None:
     now = time.time()
@@ -307,9 +314,9 @@ def create_deployment(
         conn = _conn()
         conn.execute(
             "INSERT INTO deployments(id, use_case, environment, user_oid, user_upn,"
-            " user_name, subscription_id, resource_group, status, engine, created_at, end_at,"
-            " destroyed_at, gh_run_url, detail, params_json)"
-            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            " user_name, subscription_id, resource_group, status, engine, cleanup_policy,"
+            " created_at, end_at, destroyed_at, gh_run_url, detail, params_json)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 deployment_id,
                 use_case,
@@ -321,6 +328,7 @@ def create_deployment(
                 resource_group,
                 "requested",
                 engine,
+                cleanup_policy,
                 now,
                 end_at,
                 None,
@@ -404,6 +412,7 @@ def due_deployments(now: float | None = None) -> list[dict[str, Any]]:
         conn = _conn()
         rows = conn.execute(
             "SELECT * FROM deployments WHERE status IN ('requested','deploying','active')"
+            " AND cleanup_policy = 'delete_resource_group'"
             " AND end_at <= ? ORDER BY end_at ASC",
             (now,),
         ).fetchall()

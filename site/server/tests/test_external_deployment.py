@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from httpx import HTTPStatusError, Request, Response
 
 SERVER_DIR = Path(__file__).resolve().parent.parent
@@ -13,6 +15,9 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 import azure_deploy  # noqa: E402
+import api  # noqa: E402
+import db  # noqa: E402
+from identity import CurrentUser, require_user  # noqa: E402
 
 
 def test_delegated_credential_returns_arm_token() -> None:
@@ -74,3 +79,109 @@ def test_portal_resource_group_link_uses_subscription_tenant(monkeypatch) -> Non
     assert url.startswith(
         "https://portal.azure.com/#@2929f0bd-f87b-47ae-bb73-ec22b65de557/"
     )
+
+
+def test_existing_resource_group_deployment_skips_group_creation(monkeypatch) -> None:
+    class ResourceGroups:
+        def __init__(self) -> None:
+            self.got: list[str] = []
+
+        def get(self, name: str) -> object:
+            self.got.append(name)
+            return object()
+
+        def create_or_update(self, *_args, **_kwargs) -> None:
+            raise AssertionError("existing resource group must not be created or tagged")
+
+    class Poller:
+        def result(self) -> None:
+            return None
+
+    class Deployments:
+        def begin_create_or_update(self, *_args, **_kwargs) -> Poller:
+            return Poller()
+
+    client = type(
+        "Client",
+        (),
+        {"resource_groups": ResourceGroups(), "deployments": Deployments()},
+    )()
+    monkeypatch.setattr(azure_deploy, "_client", lambda *_args, **_kwargs: client)
+    monkeypatch.setattr(azure_deploy, "load_template", lambda *_args: ({}, {}))
+
+    azure_deploy._do_deploy(
+        {
+            "id": "deployment-id",
+            "use_case": "web-app",
+            "environment": "dev",
+            "subscription_id": "subscription-id",
+            "resource_group": "existing-rg",
+            "cleanup_policy": "none",
+            "params": {},
+        }
+    )
+
+    assert client.resource_groups.got == ["existing-rg"]
+
+
+def test_external_existing_resource_group_has_no_cleanup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GALLERY_DB_PATH", str(tmp_path / "external.db"))
+    db._CONN = None
+    connection = db.init_db()
+    app = FastAPI()
+    app.include_router(api.build_api_router())
+    app.dependency_overrides[require_user] = lambda: CurrentUser(
+        oid="user-oid",
+        upn="user@example.com",
+        name="User",
+        tenant_id="tenant-id",
+        role="guest",
+    )
+
+    async def acquire_token(*_args, **_kwargs) -> tuple[str, int]:
+        return "arm-token", 3600
+
+    monkeypatch.setattr(api, "acquire_arm_token_for_session", acquire_token)
+    monkeypatch.setattr(
+        api,
+        "_catalog_items",
+        lambda: {
+            "web-app": {
+                "path": "web-app",
+                "hasProd": True,
+                "engines": ["bicep"],
+                "parameters": [],
+            }
+        },
+    )
+    monkeypatch.setattr(api.az, "get_resource_group", lambda _dep: object())
+    monkeypatch.setattr(api.az, "schedule", lambda _coro: _coro.close())
+
+    client = TestClient(app)
+    response = client.post(
+        "/api/deployments",
+        json={
+            "useCase": "web-app",
+            "externalSubscription": True,
+            "subscriptionId": "00000000-0000-0000-0000-000000000001",
+            "resourceGroupName": "shared-external-rg",
+            "lifetimeHours": 1,
+        },
+    )
+
+    assert response.status_code == 200
+    deployment = response.json()["deployment"]
+    assert deployment["resourceGroup"] == "shared-external-rg"
+    assert deployment["cleanupPolicy"] == "none"
+    assert deployment["externallyManaged"] is True
+    assert deployment["endAt"] is None
+    assert db.due_deployments(now=10**12) == []
+
+    destroy = client.post(f"/api/deployments/{deployment['id']}/destroy")
+    assert destroy.status_code == 409
+    assert "managed outside TechLabs" in destroy.json()["detail"]
+
+    connection.close()
+    db._CONN = None
