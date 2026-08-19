@@ -57,6 +57,8 @@ async def _reconcile_destroying() -> None:
 async def _sweep_once() -> None:
     await _reconcile_destroying()
     for dep in db.due_deployments():
+        if dep.get("cleanup_policy") == "none":
+            continue
         try:
             db.update_deployment(dep["id"], status="destroying",
                                  detail="end time reached; tearing down")

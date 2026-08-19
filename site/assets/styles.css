@@ -829,6 +829,11 @@ details[open] > .collapse-summary .collapse-caret {
   display: none;
 }
 
+.deploy-external-controls > [hidden],
+.deploy-field[hidden] {
+  display: none;
+}
+
 .deploy-external-subscription {
   min-width: 280px;
 }

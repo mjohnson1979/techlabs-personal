@@ -113,7 +113,7 @@
     // Offer cleanup for anything that may still hold resources, including a
     // failed deploy that created partial resources; an in-flight teardown is
     // already excluded from CLEANABLE.
-    if (CLEANABLE.indexOf(dep.status) !== -1) {
+    if (!dep.externallyManaged && CLEANABLE.indexOf(dep.status) !== -1) {
       const btn = el("button", { type: "button", class: "danger-btn", text: "Clean up" });
       btn.addEventListener("click", () => {
         const who = dep.userName || dep.userUpn;

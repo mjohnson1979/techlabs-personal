@@ -21,7 +21,7 @@ survives restarts and redeploys.
 | `identity.py` | Resolves the caller's identity + role for `/api/*` routes (fails closed). |
 | `api.py` | The `/api/*` JSON endpoints (deployments, users, telemetry). |
 | `db.py` | **All persistence.** SQLite schema + every read/write helper. |
-| `azure_deploy.py` | In-process executor that provisions/destroys Azure resources with the app's managed identity by default. External Bicep deployments use the signed-in user's delegated ARM token instead; Terraform remains managed-identity-only. |
+| `azure_deploy.py` | In-process executor that provisions/destroys Azure resources with the app's managed identity. Branches on the deployment **engine**. After a successful deploy it grants the signed-in user the Reader role on their resource group so they can view it in the portal (best-effort, RG-scoped); cross-tenant users are first invited as a B2B guest via Microsoft Graph. |
 | `terraform_exec.py` | Terraform engine: runs a use case's Terraform module with the managed identity (azurerm + `ARM_USE_MSI`) instead of submitting ARM JSON. |
 | `terraform_bootstrap.py` | Opt-in, best-effort provisioning of the `terraform` binary into the persistent `/home` share on startup. |
 | `scheduler.py` | Background task that tears down deployments whose end time has passed. |
@@ -71,6 +71,7 @@ Three tables. The full DDL is in `SCHEMA` in [`db.py`](db.py).
 | `use_case` | TEXT | Catalog use case being deployed (e.g. `web-app`). |
 | `environment` | TEXT | Parameter profile used (`dev` / `prod`). |
 | `engine` | TEXT | Which IaC engine ran the deploy: `bicep` (default) or `terraform`. |
+| `cleanup_policy` | TEXT | `delete_resource_group` for TechLabs-owned groups or `none` for an existing external resource group. |
 | `user_oid` / `user_upn` / `user_name` | TEXT | **Who** requested it, denormalized so history survives even if the user row changes. Indexed by `idx_deploy_user`. |
 | `subscription_id` | TEXT | Target Azure subscription. |
 | `resource_group` | TEXT | Resource group the executor created. |
@@ -127,20 +128,6 @@ sqlite3 .\data\techlabs.db "SELECT upn, role, datetime(last_seen,'unixepoch') FR
 
 ## Deployment engines (Bicep and Terraform)
 
-### External subscription deployments
-
-The deploy modal keeps the existing managed-identity path as **Deploy to my
-subscription** and offers **Deploy to external subscription** for a customer
-or user-owned subscription. The external path requires the signed-in user to
-already have the necessary Azure permissions on that subscription; entering a
-subscription ID does not grant access. It uses the user's delegated ARM token,
-so the gallery managed identity does not need access to that subscription.
-
-External deployments currently support Bicep only. The delegated token remains
-in process memory and is never written to SQLite. Manual cleanup must be started
-while the user's gallery session is active; scheduled cleanup after a restart
-cannot authenticate as the user and will fail closed.
-
 Every catalog use case ships **both** a Bicep module (`catalog/<uc>/main.bicep`)
 and a Terraform module (`catalog/<uc>/terraform/`). Each deployment records which
 one ran in the `engine` column. The gallery card shows a "Bicep + Terraform" chip,
@@ -152,6 +139,22 @@ and the deploy modal lets the user pick the engine.
 - **Terraform** is the second engine. The same script materializes each module under
   `_tf/<use_case>/` (the runtime tree has no `catalog/`), and `terraform_exec.py`
   runs `init`/`apply`/`destroy` with the managed identity.
+
+### Existing resource groups in external subscriptions
+
+External Bicep deployments can target an existing resource group with the
+signed-in user's delegated Azure token. The executor verifies that the group is
+visible, skips resource-group creation and tagging, and submits an incremental
+resource-group deployment. TechLabs does not schedule or offer cleanup for this
+mode because the resource group is externally owned and may contain unrelated
+resources.
+
+Contributor on the target resource group is normally sufficient. Templates that
+create `Microsoft.Authorization/roleAssignments` also require User Access
+Administrator or Role Based Access Control Administrator at the relevant scope.
+Provider registration and other subscription-scoped operations remain the
+external subscription owner's responsibility. Terraform is not supported for
+delegated external deployments.
 
 ### The deploy modal always shows the Terraform CLI
 
