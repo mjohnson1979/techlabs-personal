@@ -149,6 +149,15 @@ resource-group deployment. TechLabs does not schedule or offer cleanup for this
 mode because the resource group is externally owned and may contain unrelated
 resources.
 
+External Azure authorization is separate from gallery sign-in. The browser uses
+Microsoft device login with the Azure CLI public client, then the backend
+discovers the user's accessible tenants and subscriptions. Access and refresh
+tokens remain only in the single worker's memory and are never written to the
+database, logs, events, or API responses. The executor fails closed when a
+delegated token is absent; it never falls back to the TechLabs managed identity
+for an external deployment. The target tenant can still block Azure CLI or
+device-code authentication through Conditional Access.
+
 Contributor on the target resource group is normally sufficient. Templates that
 create `Microsoft.Authorization/roleAssignments` also require User Access
 Administrator or Role Based Access Control Administrator at the relevant scope.

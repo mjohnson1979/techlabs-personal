@@ -179,11 +179,22 @@ class Identity:
 
 
 @dataclass
+class ExternalAzureAuthorization:
+    identity: Identity
+    access_token: str
+    refresh_token: str
+    expires_at: float
+    subscriptions: dict[str, dict[str, str]] = field(default_factory=dict)
+    tenant_tokens: dict[str, tuple[str, float]] = field(default_factory=dict)
+
+
+@dataclass
 class Session:
     session_id: str
     identity: Identity | None = None
     # Kept only in process memory to read the Graph profile photo on demand.
     refresh_token: str = ""
+    external_azure: ExternalAzureAuthorization | None = None
     created_at: float = field(default_factory=time.time)
 
     @property
@@ -219,6 +230,17 @@ class SessionStore:
         if rec is not None and refresh_token:
             rec.refresh_token = refresh_token
 
+    def set_external_azure(
+        self, sid: str, authorization: ExternalAzureAuthorization
+    ) -> None:
+        rec = self._sessions.setdefault(sid, Session(session_id=sid))
+        rec.external_azure = authorization
+
+    def clear_external_azure(self, sid: str | None) -> None:
+        rec = self.get(sid)
+        if rec is not None:
+            rec.external_azure = None
+
     def clear(self, sid: str | None) -> None:
         if sid:
             self._sessions.pop(sid, None)
@@ -246,9 +268,9 @@ class EntraClient:
         return f"{AUTHORITY}/{self._tenant}/oauth2/v2.0/{path}"
 
     def build_authorize_url(
-        self, redirect_uri: str, state: str, challenge: str, arm: bool = False
+        self, redirect_uri: str, state: str, challenge: str
     ) -> str:
-        scope = f"{SCOPE} {ARM_SCOPE}" if arm else SCOPE
+        scope = SCOPE
         params = {
             "client_id": self._client_id,
             "response_type": "code",
@@ -262,9 +284,9 @@ class EntraClient:
         return f"{self._endpoint('authorize')}?{urlencode(params)}"
 
     async def exchange_code(
-        self, code: str, verifier: str, redirect_uri: str, arm: bool = False
+        self, code: str, verifier: str, redirect_uri: str
     ) -> tuple[Identity, str]:
-        scope = f"{SCOPE} {ARM_SCOPE}" if arm else SCOPE
+        scope = SCOPE
         data = {
             "client_id": self._client_id,
             "grant_type": "authorization_code",
@@ -319,29 +341,6 @@ class EntraClient:
         if not token:
             raise EntraAuthError("refresh returned no access token")
         return token, str(body.get("refresh_token", ""))
-
-    async def acquire_arm_token(self, refresh_token: str) -> tuple[str, str, int]:
-        """Mint a short-lived ARM token from the in-memory refresh token."""
-        data = {
-            "client_id": self._client_id,
-            "grant_type": "refresh_token",
-            "refresh_token": refresh_token,
-            "scope": ARM_SCOPE,
-        }
-        async with httpx.AsyncClient(
-            timeout=httpx.Timeout(15.0),
-            headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
-        ) as http:
-            resp = await http.post(self._endpoint("token"), data=data)
-        body = resp.json() if resp.content else {}
-        if body.get("error"):
-            raise EntraAuthError(
-                f"{body['error']}: {body.get('error_description', '').strip()}".strip(": ")
-            )
-        token = str(body.get("access_token", ""))
-        if not token:
-            raise EntraAuthError("refresh returned no ARM access token")
-        return token, str(body.get("refresh_token", "")), int(body.get("expires_in", 3600))
 
     async def begin_device_code(self) -> dict[str, object]:
         """Start the device authorization flow against the configured tenant.
@@ -401,6 +400,166 @@ class EntraClient:
         return identity, str(body.get("refresh_token", ""))
 
 
+class ExternalAzureClient:
+    """User-delegated Azure authorization through Microsoft's public client."""
+
+    def __init__(self) -> None:
+        self._tenant = "organizations"
+        self._client_id = AZURE_CLI_CLIENT_ID
+
+    def _endpoint(self, path: str, tenant_id: str | None = None) -> str:
+        tenant = (tenant_id or self._tenant).strip()
+        return f"{AUTHORITY}/{tenant}/oauth2/v2.0/{path}"
+
+    async def begin_device_code(self) -> dict[str, object]:
+        data = {
+            "client_id": self._client_id,
+            "scope": f"{SCOPE} {ARM_SCOPE}",
+        }
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(15.0),
+            headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+        ) as http:
+            response = await http.post(self._endpoint("devicecode"), data=data)
+        body = response.json() if response.content else {}
+        if body.get("error"):
+            raise EntraAuthError(str(body["error"]))
+        if not body.get("device_code") or not body.get("user_code"):
+            raise EntraAuthError("device authorization returned no code")
+        return body
+
+    async def poll_device_code(
+        self, device_code: str
+    ) -> ExternalAzureAuthorization | None:
+        data = {
+            "client_id": self._client_id,
+            "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+            "device_code": device_code,
+        }
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(15.0),
+            headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+        ) as http:
+            response = await http.post(self._endpoint("token"), data=data)
+        body = response.json() if response.content else {}
+        error = str(body.get("error", ""))
+        if error in ("authorization_pending", "slow_down"):
+            return None
+        if error:
+            raise EntraAuthError(error)
+        identity = _identity_from_id_token(str(body.get("id_token", "")))
+        access_token = str(body.get("access_token", ""))
+        refresh_token = str(body.get("refresh_token", ""))
+        if identity is None or not identity.oid or not access_token or not refresh_token:
+            raise EntraAuthError("external Azure authorization returned incomplete tokens")
+        expires_in = max(60, int(body.get("expires_in", 3600)))
+        return ExternalAzureAuthorization(
+            identity=identity,
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_at=time.time() + expires_in,
+            tenant_tokens={
+                identity.tenant_id.lower(): (
+                    access_token,
+                    time.time() + expires_in,
+                )
+            },
+        )
+
+    async def acquire_arm_token(
+        self, refresh_token: str, tenant_id: str
+    ) -> tuple[str, str, int]:
+        data = {
+            "client_id": self._client_id,
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "scope": f"{ARM_SCOPE}",
+        }
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(15.0),
+            headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+        ) as http:
+            response = await http.post(
+                self._endpoint("token", tenant_id=tenant_id), data=data
+            )
+        body = response.json() if response.content else {}
+        if body.get("error"):
+            raise EntraAuthError(str(body["error"]))
+        token = str(body.get("access_token", ""))
+        if not token:
+            raise EntraAuthError("tenant token exchange returned no ARM token")
+        return (
+            token,
+            str(body.get("refresh_token", "")),
+            max(60, int(body.get("expires_in", 3600))),
+        )
+
+    async def _arm_get(self, token: str, path: str) -> list[dict[str, object]]:
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(20.0),
+            headers={
+                "User-Agent": USER_AGENT,
+                "Accept": "application/json",
+                "Authorization": f"Bearer {token}",
+            },
+        ) as http:
+            response = await http.get(f"https://management.azure.com{path}")
+        if response.status_code >= 400:
+            raise EntraAuthError("Azure account discovery failed")
+        body = response.json() if response.content else {}
+        values = body.get("value", [])
+        return [item for item in values if isinstance(item, dict)]
+
+    async def discover_subscriptions(
+        self, authorization: ExternalAzureAuthorization
+    ) -> None:
+        tenant_rows = await self._arm_get(
+            authorization.access_token, "/tenants?api-version=2020-01-01"
+        )
+        tenant_ids = {
+            str(row.get("tenantId", "")).strip().lower()
+            for row in tenant_rows[:50]
+            if row.get("tenantId")
+        }
+        tenant_ids.add(authorization.identity.tenant_id.lower())
+
+        refresh_token = authorization.refresh_token
+        subscriptions: dict[str, dict[str, str]] = {}
+        for tenant_id in sorted(tenant_ids):
+            cached = authorization.tenant_tokens.get(tenant_id)
+            if cached and cached[1] > time.time() + 60:
+                token = cached[0]
+            else:
+                try:
+                    token, rotated, expires_in = await self.acquire_arm_token(
+                        refresh_token, tenant_id
+                    )
+                except EntraAuthError:
+                    continue
+                if rotated:
+                    refresh_token = rotated
+                authorization.tenant_tokens[tenant_id] = (
+                    token,
+                    time.time() + expires_in,
+                )
+            try:
+                rows = await self._arm_get(
+                    token, "/subscriptions?api-version=2020-01-01"
+                )
+            except EntraAuthError:
+                continue
+            for row in rows[:200]:
+                subscription_id = str(row.get("subscriptionId", "")).strip().lower()
+                if subscription_id:
+                    subscriptions[subscription_id] = {
+                        "subscriptionId": subscription_id,
+                        "displayName": str(row.get("displayName", ""))[:200],
+                        "tenantId": tenant_id,
+                    }
+        authorization.refresh_token = refresh_token
+        authorization.subscriptions = subscriptions
+
+
 # --------------------------------------------------------------------------- #
 # Router: /api/auth/entra/*
 # --------------------------------------------------------------------------- #
@@ -421,6 +580,12 @@ class DevicePollResponse(BaseModel):
     message: str = ""
 
 
+class ExternalAzureStatusResponse(BaseModel):
+    authorized: bool
+    account: str = ""
+    subscriptions: list[dict[str, str]] = []
+
+
 class WhoamiResponse(BaseModel):
     signed_in: bool
     upn: str = ""
@@ -433,20 +598,30 @@ def _store(request: Request) -> SessionStore:
     return request.app.state.session_store
 
 
-async def acquire_arm_token_for_session(
-    request: Request, session_id: str | None
+async def acquire_external_arm_token_for_subscription(
+    request: Request, session_id: str | None, subscription_id: str
 ) -> tuple[str, int] | None:
-    """Return a delegated ARM token for the self-hosted OAuth session."""
-    if not session_id:
-        return None
     rec = _store(request).get(session_id)
-    if rec is None or not rec.signed_in or not rec.refresh_token:
+    authorization = rec.external_azure if rec is not None else None
+    subscription = (
+        authorization.subscriptions.get(subscription_id.lower())
+        if authorization is not None
+        else None
+    )
+    if authorization is None or subscription is None:
         return None
-    token, rotated, expires_in = await request.app.state.entra_client.acquire_arm_token(
-        rec.refresh_token
+    tenant_id = subscription["tenantId"].lower()
+    cached = authorization.tenant_tokens.get(tenant_id)
+    if cached and cached[1] > time.time() + 60:
+        return cached[0], int(cached[1] - time.time())
+    token, rotated, expires_in = (
+        await request.app.state.external_azure_client.acquire_arm_token(
+            authorization.refresh_token, tenant_id
+        )
     )
     if rotated:
-        _store(request).set_refresh_token(rec.session_id, rotated)
+        authorization.refresh_token = rotated
+    authorization.tenant_tokens[tenant_id] = (token, time.time() + expires_in)
     return token, expires_in
 
 
@@ -460,6 +635,10 @@ def _pkce(request: Request) -> dict[str, dict[str, object]]:
 
 def _device(request: Request) -> dict[str, dict[str, object]]:
     return request.app.state.entra_device
+
+
+def _external_device(request: Request) -> dict[str, dict[str, object]]:
+    return request.app.state.external_azure_device
 
 
 def _photo_cache(request: Request) -> dict[str, dict[str, object]]:
@@ -504,7 +683,6 @@ def build_router(secure_cookie: bool) -> APIRouter:
         request: Request,
         response: Response,
         redirect: int = 0,
-        external: int = 0,
         session: str | None = Cookie(default=None, alias=COOKIE_NAME),
     ) -> StartResponse | RedirectResponse:
         sid = session or SessionStore.new_session_id()
@@ -516,11 +694,10 @@ def build_router(secure_cookie: bool) -> APIRouter:
             "code_verifier": verifier,
             "redirect_uri": redirect_uri,
             "session_id": sid,
-            "arm": bool(external),
             "expires_at": time.time() + PKCE_TTL_SECONDS,
         }
         auth_url = _client(request).build_authorize_url(
-            redirect_uri, state, pkce_challenge(verifier), arm=bool(external)
+            redirect_uri, state, pkce_challenge(verifier)
         )
         if redirect:
             r = RedirectResponse(auth_url, status_code=302)
@@ -599,6 +776,94 @@ def build_router(secure_cookie: bool) -> APIRouter:
         dev.pop(session, None)
         _store(request).set_identity(session, identity, refresh_token)
         return DevicePollResponse(status="complete")
+
+    @router.post("/external/start", response_model=DeviceStartResponse)
+    async def external_start(
+        request: Request,
+        session: str | None = Cookie(default=None, alias=COOKIE_NAME),
+    ) -> DeviceStartResponse:
+        rec = _store(request).get(session)
+        if rec is None or not rec.signed_in:
+            raise HTTPException(status_code=401, detail="gallery sign-in required")
+        try:
+            body = await request.app.state.external_azure_client.begin_device_code()
+        except EntraAuthError as exc:
+            raise HTTPException(
+                status_code=502, detail="could not start Azure authorization"
+            ) from exc
+        interval = int(body.get("interval", 5) or 5)
+        expires_in = int(body.get("expires_in", 900) or 900)
+        _external_device(request)[session] = {
+            "device_code": str(body.get("device_code", "")),
+            "expires_at": time.time() + expires_in,
+        }
+        return DeviceStartResponse(
+            user_code=str(body.get("user_code", "")),
+            verification_uri=str(
+                body.get("verification_uri")
+                or body.get("verification_url")
+                or "https://microsoft.com/devicelogin"
+            ),
+            expires_in=expires_in,
+            interval=interval,
+        )
+
+    @router.post("/external/poll", response_model=DevicePollResponse)
+    async def external_poll(
+        request: Request,
+        session: str | None = Cookie(default=None, alias=COOKIE_NAME),
+    ) -> DevicePollResponse:
+        entry = _external_device(request).get(session) if session else None
+        if entry is None:
+            return DevicePollResponse(
+                status="error", message="no authorization in progress"
+            )
+        if float(entry.get("expires_at", 0.0)) < time.time():
+            _external_device(request).pop(session, None)
+            return DevicePollResponse(
+                status="error", message="authorization code expired"
+            )
+        try:
+            authorization = (
+                await request.app.state.external_azure_client.poll_device_code(
+                    str(entry.get("device_code", ""))
+                )
+            )
+            if authorization is None:
+                return DevicePollResponse(status="pending")
+            await request.app.state.external_azure_client.discover_subscriptions(
+                authorization
+            )
+        except EntraAuthError:
+            _external_device(request).pop(session, None)
+            return DevicePollResponse(
+                status="error", message="Azure authorization failed"
+            )
+        _external_device(request).pop(session, None)
+        _store(request).set_external_azure(session, authorization)
+        return DevicePollResponse(status="complete")
+
+    @router.get("/external/status", response_model=ExternalAzureStatusResponse)
+    async def external_status(
+        request: Request,
+        session: str | None = Cookie(default=None, alias=COOKIE_NAME),
+    ) -> ExternalAzureStatusResponse:
+        rec = _store(request).get(session)
+        authorization = rec.external_azure if rec is not None else None
+        if authorization is None:
+            return ExternalAzureStatusResponse(authorized=False)
+        return ExternalAzureStatusResponse(
+            authorized=True,
+            account=authorization.identity.upn,
+            subscriptions=list(authorization.subscriptions.values()),
+        )
+
+    @router.post("/external/clear", status_code=204)
+    async def external_clear(
+        request: Request,
+        session: str | None = Cookie(default=None, alias=COOKIE_NAME),
+    ) -> None:
+        _store(request).clear_external_azure(session)
 
     @router.post("/signout")
     async def signout(  # type: ignore[unused-ignore]
@@ -741,7 +1006,6 @@ async def finalize_oauth_landing(
             code,
             str(entry.get("code_verifier") or ""),
             str(entry.get("redirect_uri") or _redirect_uri(request)),
-            arm=bool(entry.get("arm")),
         )
     except EntraAuthError as exc:
         return _signin_error_redirect(str(exc))

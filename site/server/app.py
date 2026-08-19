@@ -30,6 +30,7 @@ from terraform_bootstrap import ensure_terraform
 from entra_auth import (
     COOKIE_NAME,
     EntraClient,
+    ExternalAzureClient,
     SessionStore,
     build_router,
     finalize_oauth_landing,
@@ -113,6 +114,8 @@ app.state.entra_client = (
 )
 app.state.entra_pkce = {}
 app.state.entra_device = {}
+app.state.external_azure_client = ExternalAzureClient()
+app.state.external_azure_device = {}
 # Mount the /api/auth/entra/* router so the user badge can read whoami/photo and
 # trigger sign-out. Behind Easy Auth the request gate ignores the self-hosted
 # session cookie entirely (it trusts the platform identity headers instead), so

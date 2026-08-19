@@ -691,12 +691,37 @@
       class: "deploy-note",
       text: "You must already have deployment access to this subscription.",
     });
+    const externalAuthorizeBtn = el("button", {
+      class: "deploy-btn-secondary",
+      type: "button",
+      text: "Authorize Azure account",
+    });
+    const externalAuthStatus = el("p", {
+      class: "deploy-note",
+      text: "Authorize with Microsoft before deploying.",
+    });
+    const externalCodeValue = el("strong", { text: "" });
+    const externalCodeLink = el("a", {
+      href: "https://microsoft.com/devicelogin",
+      target: "_blank",
+      rel: "noopener",
+      text: "Open Microsoft device login",
+    });
+    const externalCode = el("div", { class: "deploy-external-code", hidden: true }, [
+      el("span", { text: "Code: " }),
+      externalCodeValue,
+      externalCodeLink,
+    ]);
     const externalControls = el("div", { class: "deploy-external-controls", hidden: true }, [
       externalSubInput,
       externalTargetSelect,
       externalRgInput,
+      externalAuthorizeBtn,
+      externalAuthStatus,
+      externalCode,
       externalHint,
     ]);
+    const externalAuthorization = { authorized: false, subscriptions: [] };
 
     const maxLabel = maxHours % 24 === 0 ? `${maxHours / 24} day${maxHours / 24 === 1 ? "" : "s"}` : `${maxHours}h`;
     const lifeNote = me && me.isAdmin
@@ -729,6 +754,78 @@
       externalBtn.disabled = true;
     }
 
+    function applyExternalAuthorization(data) {
+      externalAuthorization.authorized = !!(data && data.authorized);
+      externalAuthorization.subscriptions = data && Array.isArray(data.subscriptions)
+        ? data.subscriptions
+        : [];
+      externalAuthStatus.textContent = externalAuthorization.authorized
+        ? "Authorized as " + (data.account || "Azure user") + "."
+        : "Authorize with Microsoft before deploying.";
+      externalAuthorizeBtn.textContent = externalAuthorization.authorized
+        ? "Use another Azure account"
+        : "Authorize Azure account";
+    }
+
+    function refreshExternalAuthorization() {
+      return window.TechlabsApi.externalAzureStatus()
+        .then(applyExternalAuthorization)
+        .catch(() => applyExternalAuthorization(null));
+    }
+
+    function pollExternalAuthorization(intervalMs, expiresAt) {
+      if (Date.now() >= expiresAt) {
+        externalAuthorizeBtn.disabled = false;
+        externalAuthStatus.textContent = "Azure authorization code expired. Start again.";
+        return;
+      }
+      window.setTimeout(() => {
+        window.TechlabsApi.externalAzurePoll()
+          .then((result) => {
+            if (result.status === "pending") {
+              pollExternalAuthorization(intervalMs, expiresAt);
+              return;
+            }
+            if (result.status === "complete") {
+              externalCode.hidden = true;
+              externalAuthorizeBtn.disabled = false;
+              refreshExternalAuthorization();
+              return;
+            }
+            externalAuthorizeBtn.disabled = false;
+            externalAuthStatus.textContent = result.message || "Azure authorization failed.";
+          })
+          .catch((err) => {
+            externalAuthorizeBtn.disabled = false;
+            externalAuthStatus.textContent = err && err.message ? err.message : "Azure authorization failed.";
+          });
+      }, intervalMs);
+    }
+
+    function beginExternalAuthorization() {
+      externalAuthorizeBtn.disabled = true;
+      externalCode.hidden = true;
+      externalAuthStatus.textContent = "Starting Microsoft device login…";
+      window.TechlabsApi.externalAzureStart()
+        .then((info) => {
+          externalCodeValue.textContent = info.user_code;
+          externalCodeLink.href = info.verification_uri;
+          externalCode.hidden = false;
+          externalAuthStatus.textContent = "Open Microsoft device login and enter the code.";
+          const intervalMs = Math.max(3000, Number(info.interval || 5) * 1000);
+          pollExternalAuthorization(
+            intervalMs,
+            Date.now() + Number(info.expires_in || 900) * 1000
+          );
+        })
+        .catch((err) => {
+          externalAuthorizeBtn.disabled = false;
+          externalAuthStatus.textContent = err && err.message ? err.message : "Could not start Azure authorization.";
+        });
+    }
+
+    externalAuthorizeBtn.addEventListener("click", beginExternalAuthorization);
+
     function requestDeployment(external) {
       status.classList.remove("err", "ok");
       const endVal = endInput.value;
@@ -741,6 +838,20 @@
       const subscriptionId = externalSubInput.value.trim();
       if (external && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(subscriptionId)) {
         status.textContent = "Enter a valid Azure subscription ID first.";
+        status.classList.add("err");
+        return;
+      }
+      const discoveredSubscription = externalAuthorization.subscriptions.find(
+        (subscription) => String(subscription.subscriptionId).toLowerCase() === subscriptionId.toLowerCase()
+      );
+      if (external && !externalAuthorization.authorized) {
+        status.textContent = "Authorize your Azure account before deploying.";
+        status.classList.add("err");
+        beginExternalAuthorization();
+        return;
+      }
+      if (external && !discoveredSubscription) {
+        status.textContent = "This subscription was not found for the authorized Azure account.";
         status.classList.add("err");
         return;
       }
@@ -779,10 +890,8 @@
         .catch((err) => {
           status.classList.add("err");
           if (external && err && err.status === 401) {
-            status.textContent = "Azure authorization is required. Redirecting to sign-in…";
-            window.setTimeout(() => {
-              window.location.href = "/api/auth/entra/start?redirect=1&external=1";
-            }, 400);
+            status.textContent = "Azure authorization expired. Authorize again.";
+            beginExternalAuthorization();
             return;
           }
           status.textContent = err && err.message ? err.message : "Deployment request failed.";
@@ -795,6 +904,7 @@
     externalBtn.addEventListener("click", () => {
       if (externalControls.hidden) {
         externalControls.hidden = false;
+        refreshExternalAuthorization();
         externalSubInput.focus();
         return;
       }

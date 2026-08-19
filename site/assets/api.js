@@ -44,6 +44,18 @@
     createDeployment: (payload) =>
       request("POST", "/api/deployments", payload).then((d) => d.deployment),
 
+    externalAzureStart: () =>
+      request("POST", "/api/auth/entra/external/start"),
+
+    externalAzurePoll: () =>
+      request("POST", "/api/auth/entra/external/poll"),
+
+    externalAzureStatus: () =>
+      request("GET", "/api/auth/entra/external/status"),
+
+    externalAzureClear: () =>
+      request("POST", "/api/auth/entra/external/clear"),
+
     estimateCost: (payload) => request("POST", "/api/estimate", payload),
 
     getDeployment: (id) =>

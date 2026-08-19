@@ -49,6 +49,21 @@ def test_external_deployment_credential_uses_delegated_token() -> None:
     assert isinstance(credential, azure_deploy.DelegatedTokenCredential)
 
 
+def test_external_deployment_never_falls_back_to_managed_identity(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        azure_deploy,
+        "_get_credential",
+        lambda: pytest.fail("managed identity must not authorize external deployment"),
+    )
+
+    with pytest.raises(RuntimeError, match="requires delegated Azure authorization"):
+        azure_deploy._credential_for_deployment(
+            {"params": {"externalSubscription": True}}
+        )
+
+
 def test_invitation_proceeds_when_directory_lookup_is_forbidden(monkeypatch) -> None:
     monkeypatch.setattr(azure_deploy, "_principal_exists", lambda _oid: False)
     response = Response(
@@ -143,7 +158,9 @@ def test_external_existing_resource_group_has_no_cleanup(
     async def acquire_token(*_args, **_kwargs) -> tuple[str, int]:
         return "arm-token", 3600
 
-    monkeypatch.setattr(api, "acquire_arm_token_for_session", acquire_token)
+    monkeypatch.setattr(
+        api, "acquire_external_arm_token_for_subscription", acquire_token
+    )
     monkeypatch.setattr(
         api,
         "_catalog_items",
