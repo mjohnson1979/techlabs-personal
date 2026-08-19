@@ -338,6 +338,8 @@ def _credential_for_deployment(dep: dict[str, Any]) -> Any:
         return DelegatedTokenCredential(
             str(token), float(dep.get("_delegated_arm_expires_at", 0.0))
         )
+    if (dep.get("params") or {}).get("externalSubscription"):
+        raise RuntimeError("external deployment requires delegated Azure authorization")
     return _get_credential()
 
 
