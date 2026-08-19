@@ -22,6 +22,8 @@ _INTERVAL = max(
 
 async def _sweep_once() -> None:
     for dep in db.due_deployments():
+        if dep.get("cleanup_policy") == "none":
+            continue
         try:
             db.update_deployment(dep["id"], status="destroying",
                                  detail="end time reached; tearing down")

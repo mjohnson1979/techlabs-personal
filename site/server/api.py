@@ -8,6 +8,7 @@ azure_deploy.py). No GitHub PAT, no stored Azure secret.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import re
@@ -254,6 +255,7 @@ def _iso(ts: float | None) -> str | None:
 
 
 def _deployment_view(d: dict[str, Any]) -> dict[str, Any]:
+    cleanup_policy = d.get("cleanup_policy", "delete_resource_group")
     return {
         "id": d["id"],
         "useCase": d["use_case"],
@@ -264,11 +266,13 @@ def _deployment_view(d: dict[str, Any]) -> dict[str, Any]:
         "resourceGroup": d["resource_group"],
         "status": d["status"],
         "createdAt": _iso(d["created_at"]),
-        "endAt": _iso(d["end_at"]),
+        "endAt": None if cleanup_policy == "none" else _iso(d["end_at"]),
         "destroyedAt": _iso(d.get("destroyed_at")),
         "ghRunUrl": d["gh_run_url"],
         "detail": d["detail"],
         "engine": d.get("engine", "bicep"),
+        "cleanupPolicy": cleanup_policy,
+        "externallyManaged": cleanup_policy == "none",
     }
 
 
@@ -316,6 +320,7 @@ class DeployIn(BaseModel):
     # External deployments use the signed-in user's delegated ARM token.
     externalSubscription: bool = False
     subscriptionId: str = ""
+    resourceGroupName: str = ""
 
 
 class EstimateIn(BaseModel):
@@ -448,6 +453,12 @@ def build_api_router() -> APIRouter:
 
         subscription_id = DEFAULT_SUBSCRIPTION
         delegated_token: tuple[str, int] | None = None
+        existing_resource_group = body.resourceGroupName.strip()
+        if existing_resource_group and not body.externalSubscription:
+            raise HTTPException(
+                status_code=400,
+                detail="an existing resource group is supported only for external subscriptions",
+            )
         if body.externalSubscription:
             if engine != "bicep":
                 raise HTTPException(
@@ -478,6 +489,42 @@ def build_api_router() -> APIRouter:
                     detail="external deployment requires a gallery sign-in session",
                 )
 
+            if existing_resource_group:
+                if (
+                    len(existing_resource_group) > 90
+                    or existing_resource_group.endswith(".")
+                    or not re.fullmatch(r"[\w.()\-]+", existing_resource_group)
+                ):
+                    raise HTTPException(
+                        status_code=400, detail="invalid external resource group name"
+                    )
+                token, expires_in = delegated_token
+                preflight_dep = {
+                    "subscription_id": subscription_id,
+                    "resource_group": existing_resource_group,
+                    "_delegated_arm_token": token,
+                    "_delegated_arm_expires_at": time.time() + expires_in,
+                }
+                try:
+                    await asyncio.to_thread(az.get_resource_group, preflight_dep)
+                except Exception as exc:
+                    from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
+
+                    if isinstance(exc, ResourceNotFoundError):
+                        raise HTTPException(
+                            status_code=404,
+                            detail="the external resource group does not exist or is not visible",
+                        ) from exc
+                    if isinstance(exc, HttpResponseError) and exc.status_code == 403:
+                        raise HTTPException(
+                            status_code=403,
+                            detail="you do not have access to the external resource group",
+                        ) from exc
+                    raise HTTPException(
+                        status_code=502,
+                        detail="could not verify the external resource group",
+                    ) from exc
+
         now = time.time()
         end_at = _resolve_end_at(body, now, user)
 
@@ -489,7 +536,8 @@ def build_api_router() -> APIRouter:
 
         dep_id = secrets.token_hex(8)
         short_id = dep_id[:6]
-        rg = _resource_group_name(body.useCase, env, short_id)
+        rg = existing_resource_group or _resource_group_name(body.useCase, env, short_id)
+        cleanup_policy = "none" if existing_resource_group else "delete_resource_group"
         db.create_deployment(
             deployment_id=dep_id,
             use_case=body.useCase,
@@ -501,11 +549,13 @@ def build_api_router() -> APIRouter:
             resource_group=rg,
             end_at=end_at,
             engine=engine,
+            cleanup_policy=cleanup_policy,
             params={
                 "template": item.get("template", ""),
                 "location": location,
                 "parameterValues": parameter_values,
                 "externalSubscription": body.externalSubscription,
+                "existingResourceGroup": bool(existing_resource_group),
             },
         )
         db.record_event(
@@ -519,6 +569,7 @@ def build_api_router() -> APIRouter:
                 "resourceGroup": rg,
                 "engine": engine,
                 "externalSubscription": body.externalSubscription,
+                "existingResourceGroup": bool(existing_resource_group),
             },
         )
 
@@ -579,6 +630,11 @@ def build_api_router() -> APIRouter:
             raise HTTPException(status_code=404, detail="not found")
         if dep["user_oid"] != user.oid and not user.is_admin:
             raise HTTPException(status_code=403, detail="not your deployment")
+        if dep.get("cleanup_policy") == "none":
+            raise HTTPException(
+                status_code=409,
+                detail="cleanup is managed outside TechLabs for this resource group",
+            )
         if dep["status"] in ("destroyed", "destroying"):
             return {"deployment": _deployment_view(dep),
                     "detail": f"already {dep['status']}"}

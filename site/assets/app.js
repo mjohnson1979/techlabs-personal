@@ -673,12 +673,28 @@
       placeholder: "External subscription ID",
       "aria-label": "External Azure subscription ID",
     });
+    const externalTargetSelect = el("select", {
+      class: "deploy-input",
+      "aria-label": "External deployment target",
+    }, [
+      el("option", { value: "dedicated", text: "Create a dedicated resource group" }),
+      el("option", { value: "existing", text: "Use an existing resource group" }),
+    ]);
+    const externalRgInput = el("input", {
+      type: "text",
+      class: "deploy-input deploy-external-subscription",
+      placeholder: "Existing resource group name",
+      "aria-label": "Existing external resource group name",
+      hidden: true,
+    });
     const externalHint = el("p", {
       class: "deploy-note",
       text: "You must already have deployment access to this subscription.",
     });
     const externalControls = el("div", { class: "deploy-external-controls", hidden: true }, [
       externalSubInput,
+      externalTargetSelect,
+      externalRgInput,
       externalHint,
     ]);
 
@@ -716,7 +732,8 @@
     function requestDeployment(external) {
       status.classList.remove("err", "ok");
       const endVal = endInput.value;
-      if (!endVal) {
+      const useExistingRg = external && externalTargetSelect.value === "existing";
+      if (!useExistingRg && !endVal) {
         status.textContent = "Pick an end time first.";
         status.classList.add("err");
         return;
@@ -727,16 +744,28 @@
         status.classList.add("err");
         return;
       }
-      if (external && !window.confirm("Deploy using your Azure identity to this subscription?")) return;
+      const existingRg = externalRgInput.value.trim();
+      if (useExistingRg && !existingRg) {
+        status.textContent = "Enter the existing resource group name first.";
+        status.classList.add("err");
+        return;
+      }
+      const confirmation = useExistingRg
+        ? "Deploy into this existing resource group using your Azure identity? TechLabs will not clean up these resources."
+        : "Deploy using your Azure identity to this subscription?";
+      if (external && !window.confirm(confirmation)) return;
       const payload = {
         useCase: it.path,
         environment: envSelect.value,
         engine: engineSelect.value,
         location: region.select.value,
-        endAt: new Date(endVal).toISOString(),
         externalSubscription: external,
       };
-      if (external) payload.subscriptionId = subscriptionId;
+      if (!useExistingRg) payload.endAt = new Date(endVal).toISOString();
+      if (external) {
+        payload.subscriptionId = subscriptionId;
+        if (useExistingRg) payload.resourceGroupName = existingRg;
+      }
       const parameterValues = Object.assign({}, advValues);
       if (Object.keys(parameterValues).length) payload.parameterValues = parameterValues;
       btn.disabled = true;
@@ -1231,15 +1260,27 @@
       el("legend", { class: "deploy-legend", text: "Region" }),
       el("div", { class: "deploy-field" }, [region.select, region.note]),
     ]);
+    const endField = deployField("End time (auto-cleanup)", endInput, el("p", { class: "deploy-note", text: lifeNote }));
     const envBox = el("fieldset", { class: "deploy-group" }, [
       el("legend", { class: "deploy-legend", text: "Environment" }),
       el("div", { class: "deploy-grid" }, [
         deployField("Type", envSelect),
         deployField("IaC engine", engineSelect, engineHint),
         deployField("Resource group", rgInput),
-        deployField("End time (auto-cleanup)", endInput, el("p", { class: "deploy-note", text: lifeNote })),
+        endField,
       ]),
     ]);
+
+    function syncExternalTarget() {
+      const existing = externalTargetSelect.value === "existing";
+      externalRgInput.hidden = !existing;
+      endField.hidden = existing;
+      externalHint.textContent = existing
+        ? "Contributor access on this resource group is normally sufficient. TechLabs will not clean up the deployed resources."
+        : "Creating a dedicated resource group requires subscription-level deployment access.";
+    }
+    externalTargetSelect.addEventListener("change", syncExternalTarget);
+    syncExternalTarget();
     const topRow = el("div", { class: "deploy-toprow" }, [regionBox, envBox]);
 
     // Advanced options sit below the deploy button; the CLI snippet comes last.
