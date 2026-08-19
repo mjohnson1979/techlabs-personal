@@ -419,6 +419,18 @@ def due_deployments(now: float | None = None) -> list[dict[str, Any]]:
     return [_row_to_deployment(r) for r in rows]
 
 
+def deployments_by_status(status: str, limit: int = 200) -> list[dict[str, Any]]:
+    """Return recent deployments with the requested lifecycle status."""
+    with _LOCK:
+        conn = _conn()
+        rows = conn.execute(
+            "SELECT * FROM deployments WHERE status = ?"
+            " ORDER BY created_at DESC LIMIT ?",
+            (status, limit),
+        ).fetchall()
+    return [_row_to_deployment(r) for r in rows]
+
+
 # --------------------------------------------------------------------------- #
 # Telemetry events
 # --------------------------------------------------------------------------- #
