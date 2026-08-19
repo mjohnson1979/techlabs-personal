@@ -24,7 +24,11 @@ from pydantic import BaseModel, Field
 
 import azure_deploy as az
 import db
-from entra_auth import COOKIE_NAME, EntraAuthError, acquire_arm_token_for_session
+from entra_auth import (
+    COOKIE_NAME,
+    EntraAuthError,
+    acquire_external_arm_token_for_subscription,
+)
 import github_intake
 import pricing
 import submissions
@@ -475,18 +479,18 @@ def build_api_router() -> APIRouter:
                     detail="a valid external Azure subscription ID is required",
                 )
             try:
-                delegated_token = await acquire_arm_token_for_session(
-                    request, request.cookies.get(COOKIE_NAME)
+                delegated_token = await acquire_external_arm_token_for_subscription(
+                    request, request.cookies.get(COOKIE_NAME), subscription_id
                 )
             except EntraAuthError as exc:
                 raise HTTPException(
                     status_code=401,
-                    detail="your sign-in session has no usable Azure access; sign in again",
+                    detail="Azure authorization expired; authorize your Azure account again",
                 ) from exc
             if delegated_token is None:
                 raise HTTPException(
                     status_code=401,
-                    detail="external deployment requires a gallery sign-in session",
+                    detail="authorize an Azure account that can access this subscription",
                 )
 
             if existing_resource_group:
@@ -640,18 +644,20 @@ def build_api_router() -> APIRouter:
                     "detail": f"already {dep['status']}"}
         if (dep.get("params") or {}).get("externalSubscription"):
             try:
-                delegated_token = await acquire_arm_token_for_session(
-                    request, request.cookies.get(COOKIE_NAME)
+                delegated_token = await acquire_external_arm_token_for_subscription(
+                    request,
+                    request.cookies.get(COOKIE_NAME),
+                    dep["subscription_id"],
                 )
             except EntraAuthError as exc:
                 raise HTTPException(
                     status_code=401,
-                    detail="sign in again before cleaning up this external deployment",
+                    detail="authorize your Azure account again before cleanup",
                 ) from exc
             if delegated_token is None:
                 raise HTTPException(
                     status_code=401,
-                    detail="sign in again before cleaning up this external deployment",
+                    detail="authorize your Azure account again before cleanup",
                 )
             token, expires_in = delegated_token
             dep["_delegated_arm_token"] = token

@@ -838,6 +838,28 @@ details[open] > .collapse-summary .collapse-caret {
   min-width: 280px;
 }
 
+.deploy-external-code {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-size: 0.86rem;
+}
+
+.deploy-external-code strong {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: 0;
+}
+
+.deploy-external-code a {
+  margin-left: auto;
+  color: var(--accent);
+}
+
 .deploy-form {
   display: grid;
   gap: 8px;
