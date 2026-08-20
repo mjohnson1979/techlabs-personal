@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-19T06:19:31Z",
+  "generated": "2026-08-20T06:18:47Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -2157,9 +2157,9 @@
           "value": null
         },
         "canadaeast": {
-          "status": "yellow",
-          "detail": "only 20 K TPM available",
-          "value": 20
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "brazilsouth": {
           "status": "green",
@@ -4477,9 +4477,9 @@
           "value": null
         },
         "canadaeast": {
-          "status": "green",
-          "detail": "50 K TPM available",
-          "value": 50
+          "status": "yellow",
+          "detail": "only 45 K TPM available",
+          "value": 45
         },
         "brazilsouth": {
           "status": "red",
