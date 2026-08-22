@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-19T05:14:14Z",
+  "generated": "2026-08-22T05:12:15Z",
   "regions": [
     "eastus",
     "eastus2",
@@ -23,12 +23,14 @@
         "name": "qwen3-32b",
         "version": "1",
         "skus": [
+          "DataZoneStandard",
           "GlobalStandard"
         ],
         "regions": [
           "brazilsouth",
           "canadacentral",
           "canadaeast",
+          "centralus",
           "eastus",
           "eastus2",
           "northcentralus",
@@ -700,6 +702,7 @@
         "version": "9",
         "skus": [
           "DataZoneProvisionedManaged",
+          "DataZoneStandard",
           "GlobalProvisionedManaged",
           "GlobalStandard"
         ],
@@ -1106,6 +1109,7 @@
         "name": "Ministral-3B",
         "version": "1",
         "skus": [
+          "DataZoneStandard",
           "GlobalStandard"
         ],
         "regions": [
@@ -2580,6 +2584,7 @@
         "name": "gpt-oss-20b",
         "version": "11",
         "skus": [
+          "DataZoneStandard",
           "GlobalStandard"
         ],
         "regions": [
