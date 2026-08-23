@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-22T06:17:11Z",
+  "generated": "2026-08-23T06:17:33Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -6508,13 +6508,13 @@
       "byRegion": {
         "eastus": {
           "status": "green",
-          "detail": "52 K TPM available",
-          "value": 52
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "eastus2": {
           "status": "green",
-          "detail": "52 K TPM available",
-          "value": 52
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "centralus": {
           "status": "green",
@@ -6523,8 +6523,8 @@
         },
         "northcentralus": {
           "status": "green",
-          "detail": "52 K TPM available",
-          "value": 52
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "southcentralus": {
           "status": "green",
@@ -6553,8 +6553,8 @@
         },
         "canadacentral": {
           "status": "green",
-          "detail": "52 K TPM available",
-          "value": 52
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "canadaeast": {
           "status": "green",
@@ -6563,8 +6563,8 @@
         },
         "brazilsouth": {
           "status": "green",
-          "detail": "52 K TPM available",
-          "value": 52
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "brazilsoutheast": {
           "status": "red",
