@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-22T05:12:15Z",
+  "generated": "2026-08-25T05:16:21Z",
   "regions": [
     "eastus",
     "eastus2",
@@ -110,7 +110,8 @@
           "GlobalStandard"
         ],
         "regions": [
-          "eastus2"
+          "eastus2",
+          "westcentralus"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -123,7 +124,8 @@
           "GlobalStandard"
         ],
         "regions": [
-          "eastus2"
+          "eastus2",
+          "westcentralus"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -136,7 +138,8 @@
           "GlobalStandard"
         ],
         "regions": [
-          "eastus2"
+          "eastus2",
+          "westcentralus"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -170,7 +173,8 @@
           "GlobalStandard"
         ],
         "regions": [
-          "eastus2"
+          "eastus2",
+          "westcentralus"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -218,7 +222,8 @@
           "GlobalStandard"
         ],
         "regions": [
-          "eastus2"
+          "eastus2",
+          "westcentralus"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -231,7 +236,8 @@
           "GlobalStandard"
         ],
         "regions": [
-          "eastus2"
+          "eastus2",
+          "westcentralus"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -1435,6 +1441,35 @@
       },
       {
         "provider": "OpenAI",
+        "name": "gpt-4.1-nano",
+        "version": "2025-04-14",
+        "skus": [
+          "DataZoneBatch",
+          "DataZoneProvisionedManaged",
+          "DataZoneStandard",
+          "DeveloperTier",
+          "GlobalBatch",
+          "GlobalProvisionedManaged",
+          "GlobalStandard",
+          "ProvisionedManaged"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "Legacy",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
         "name": "gpt-4o",
         "version": "2024-11-20",
         "skus": [
@@ -2397,6 +2432,7 @@
         ],
         "regions": [
           "brazilsouth",
+          "canadacentral",
           "canadaeast",
           "centralus",
           "eastus",
@@ -2419,6 +2455,7 @@
         ],
         "regions": [
           "brazilsouth",
+          "canadacentral",
           "canadaeast",
           "centralus",
           "eastus",
@@ -2441,6 +2478,7 @@
         ],
         "regions": [
           "brazilsouth",
+          "canadacentral",
           "canadaeast",
           "centralus",
           "eastus",
