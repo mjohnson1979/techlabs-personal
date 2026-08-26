@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-25T06:19:59Z",
+  "generated": "2026-08-26T06:19:30Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -28,33 +28,33 @@
       "byRegion": {
         "eastus": {
           "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "detail": "990 K TPM available",
+          "value": 990
         },
         "eastus2": {
           "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "detail": "990 K TPM available",
+          "value": 990
         },
         "centralus": {
           "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "detail": "990 K TPM available",
+          "value": 990
         },
         "northcentralus": {
           "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "detail": "990 K TPM available",
+          "value": 990
         },
         "southcentralus": {
           "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "detail": "990 K TPM available",
+          "value": 990
         },
         "westus": {
           "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "detail": "990 K TPM available",
+          "value": 990
         },
         "westus2": {
           "status": "red",
@@ -63,8 +63,8 @@
         },
         "westus3": {
           "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "detail": "990 K TPM available",
+          "value": 990
         },
         "westcentralus": {
           "status": "red",
@@ -78,13 +78,13 @@
         },
         "canadaeast": {
           "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "detail": "990 K TPM available",
+          "value": 990
         },
         "brazilsouth": {
           "status": "green",
-          "detail": "1000 K TPM available",
-          "value": 1000
+          "detail": "990 K TPM available",
+          "value": 990
         },
         "brazilsoutheast": {
           "status": "red",
