@@ -111,7 +111,7 @@ def _validate_parameter_values(
     is checked against the parameter's allowed set / type / min-max bounds. Returns
     a clean name->string map (empty values dropped). Raises 400 on any violation."""
     if not raw:
-        return {}
+        raw = {}
     declared = {
         p["name"]: p
         for p in (item.get("parameters") or [])
@@ -154,7 +154,39 @@ def _validate_parameter_values(
                 raise HTTPException(status_code=400, detail=f"invalid value for {name}")
         out[name] = sval
     _validate_model_params(out, item)
+    _validate_required_use_case_parameters(out, item)
     return out
+
+
+def _validate_required_use_case_parameters(
+    values: dict[str, str], item: dict[str, Any]
+) -> None:
+    if item.get("name") != "azure-sre-agent-demo":
+        return
+    sponsor_group_id = values.get("sponsorGroupObjectId", "")
+    if not sponsor_group_id:
+        sponsor_spec = next(
+            (
+                parameter
+                for parameter in (item.get("parameters") or [])
+                if parameter.get("name") == "sponsorGroupObjectId"
+            ),
+            {},
+        )
+        sponsor_group_id = str(sponsor_spec.get("default") or "")
+    sponsor_group_id = sponsor_group_id.strip().lower()
+    if not re.fullmatch(
+        r"(?!00000000-0000-0000-0000-000000000000$)"
+        r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        sponsor_group_id,
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "sponsorGroupObjectId must be the Microsoft Entra object ID "
+                "of the group that will administer the SRE Agent"
+            ),
+        )
 
 
 # Model name/version/SKU params carry no template @allowed set (the registry is

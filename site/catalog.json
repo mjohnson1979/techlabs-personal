@@ -1,8 +1,8 @@
 ﻿{
     "name":  "SME\u0026C Techlabs",
     "description":  "Templatized Azure use cases as Infrastructure as Code - resilient, Well-Architected, with built-in cost estimation.",
-    "generated":  "2026-08-01T14:49:31Z",
-    "count":  22,
+    "generated":  "2026-08-26T18:13:43Z",
+    "count":  23,
     "items":  [
                   {
                       "name":  "ai-chat",
@@ -219,7 +219,7 @@
                                    "usageMonthly":  28.00,
                                    "totalMonthly":  367.45,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -428,7 +428,7 @@
                                    "usageMonthly":  5.00,
                                    "totalMonthly":  548.48,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -602,7 +602,7 @@
                                    "usageMonthly":  0,
                                    "totalMonthly":  5929.79,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -801,7 +801,7 @@
                                    "usageMonthly":  319.74,
                                    "totalMonthly":  319.74,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -854,6 +854,185 @@
                                              "type":  "int",
                                              "default":  30,
                                              "description":  "Log Analytics retention in days."
+                                         }
+                                     ]
+                  },
+                  {
+                      "name":  "azure-sre-agent-demo",
+                      "displayName":  "Azure SRE Agent Operations Demo",
+                      "category":  "Management \u0026 Governance",
+                      "description":  "An Azure SRE Agent with a scoped Container Apps workload, Application Insights, Log Analytics, synthetic availability monitoring, and guarded operational runbooks.",
+                      "what":  "An Azure SRE Agent and disposable Container Apps workload with three idle replicas, HTTPS ingress, centralized telemetry, a multi-location availability test, and an Azure Monitor alert. The agent uses a dedicated managed identity with access limited to the demo resource group.",
+                      "why":  "Teams evaluating agentic operations need a safe, repeatable environment that demonstrates incident response, FinOps analysis, and configuration hardening without granting an autonomous agent subscription-wide access or targeting production services.",
+                      "potentialUseCases":  [
+                                                "Autonomous investigation and recovery from a Container App availability incident",
+                                                "Utilization-based Container Apps right-sizing and cost optimization",
+                                                "Detection and correction of insecure HTTP ingress",
+                                                "SRE Agent workshops, evaluations, and operational governance reviews"
+                                            ],
+                      "industries":  [
+                                         "Cross-industry"
+                                     ],
+                      "compliance":  [
+                                         "Baseline"
+                                     ],
+                      "wellArchitected":  {
+                                              "reliability":  [
+                                                                  "Multi-location synthetic availability testing",
+                                                                  "Azure Monitor alert provides a deterministic incident trigger",
+                                                                  "Every scenario includes post-action verification and an idempotent reset"
+                                                              ],
+                                              "security":  [
+                                                               "Autonomous access is constrained to the disposable demo resource group",
+                                                               "Healthy baseline enforces HTTPS-only ingress",
+                                                               "Runbooks prohibit deletion, role changes, Key Vault access, and out-of-scope writes"
+                                                           ],
+                                              "costOptimization":  [
+                                                                       "Three idle replicas create a visible right-sizing opportunity",
+                                                                       "Consumption-based Container Apps avoid fixed compute infrastructure",
+                                                                       "The complete environment has a single resource-group cleanup boundary"
+                                                                   ],
+                                              "operationalExcellence":  [
+                                                                            "Log Analytics and Application Insights centralize workload and agent evidence",
+                                                                            "Stable alert naming supports repeatable Azure Monitor response plans",
+                                                                            "Documented trigger and reset controls make demonstrations reproducible"
+                                                                        ],
+                                              "performanceEfficiency":  [
+                                                                            "HTTP concurrency scaling remains available above the baseline replica floor",
+                                                                            "The cost scenario uses measured CPU, memory, requests, and replica data",
+                                                                            "Bounded min/max replica settings prevent uncontrolled scaling"
+                                                                        ]
+                                          },
+                      "quota":  {
+                                    "summary":  "Requires Azure Container Apps and Azure SRE Agent availability in the selected region. Agent deployment also requires an Entra administrator group and permission to create resource-group role assignments.",
+                                    "requirements":  [
+                                                         {
+                                                             "service":  "Azure Container Apps",
+                                                             "provider":  "Microsoft.App/managedEnvironments",
+                                                             "kind":  "compute",
+                                                             "detail":  "The managed environment must be available in the target region.",
+                                                             "checkUrl":  "https://learn.microsoft.com/azure/container-apps/quotas"
+                                                         },
+                                                         {
+                                                             "service":  "Azure SRE Agent",
+                                                             "provider":  "Microsoft.App/agents",
+                                                             "kind":  "service",
+                                                             "detail":  "The subscription must be registered for Azure SRE Agent and the selected region must be available.",
+                                                             "checkUrl":  "https://learn.microsoft.com/azure/sre-agent/supported-regions"
+                                                         }
+                                                     ]
+                                },
+                      "architecture":  null,
+                      "path":  "azure-sre-agent-demo",
+                      "readme":  "catalog/azure-sre-agent-demo/README.md",
+                      "template":  "catalog/azure-sre-agent-demo/main.bicep",
+                      "templateTf":  null,
+                      "engines":  [
+                                      "bicep"
+                                  ],
+                      "hasProd":  true,
+                      "componentCount":  3,
+                      "costProfile":  "Workshop profile with three continuously available 0.5-vCPU, 1-GiB replicas. Azure SRE Agent AAU charges are separate and are not included.",
+                      "cost":  {
+                                   "currency":  "USD",
+                                   "region":  "eastus2",
+                                   "profile":  "Workshop profile with three continuously available 0.5-vCPU, 1-GiB replicas. Azure SRE Agent AAU charges are separate and are not included.",
+                                   "components":  [
+                                                      {
+                                                          "name":  "Container Apps vCPU (active)",
+                                                          "billing":  "usage",
+                                                          "serviceName":  "Azure Container Apps",
+                                                          "unitOfMeasure":  "1 Second",
+                                                          "quantityPerMonth":  3942000,
+                                                          "notes":  "Three replicas x 0.5 vCPU x 730 hours x 3600 seconds.",
+                                                          "unitPrice":  0.00002,
+                                                          "monthly":  94.61,
+                                                          "meterNameContains":  "vCPU Active Usage"
+                                                      },
+                                                      {
+                                                          "name":  "Container Apps memory (active)",
+                                                          "billing":  "usage",
+                                                          "serviceName":  "Azure Container Apps",
+                                                          "unitOfMeasure":  "1 GiB Second",
+                                                          "quantityPerMonth":  7884000,
+                                                          "notes":  "Three replicas x 1 GiB x 730 hours x 3600 seconds.",
+                                                          "unitPrice":  0.00000,
+                                                          "monthly":  23.65,
+                                                          "meterNameContains":  "Memory Active Usage"
+                                                      },
+                                                      {
+                                                          "name":  "Log Analytics analytics logs ingestion",
+                                                          "billing":  "usage",
+                                                          "serviceName":  "Log Analytics",
+                                                          "unitOfMeasure":  "1 GB",
+                                                          "quantityPerMonth":  2,
+                                                          "notes":  "Assumes approximately 2 GB of workshop telemetry per month. SRE Agent consumption uses separate AAU billing.",
+                                                          "unitPrice":  2.3,
+                                                          "monthly":  4.6,
+                                                          "meterNameContains":  "Analytics Logs Data Ingestion",
+                                                          "skuNameContains":  "Analytics Logs"
+                                                      }
+                                                  ],
+                                   "fixedMonthly":  0,
+                                   "usageMonthly":  122.86,
+                                   "totalMonthly":  122.86,
+                                   "complete":  true,
+                                   "pricedAt":  "2026-08-26"
+                               },
+                      "parameters":  [
+                                         {
+                                             "name":  "workloadName",
+                                             "type":  "string",
+                                             "default":  "sredemo",
+                                             "description":  "Short workload name used in resource names."
+                                         },
+                                         {
+                                             "name":  "containerImage",
+                                             "type":  "string",
+                                             "default":  "mcr.microsoft.com/k8se/quickstart:latest",
+                                             "description":  "Container image for the disposable demo workload."
+                                         },
+                                         {
+                                             "name":  "targetPort",
+                                             "type":  "int",
+                                             "default":  80,
+                                             "description":  "Target port exposed by the container image.",
+                                             "min":  1,
+                                             "max":  65535
+                                         },
+                                         {
+                                             "name":  "minReplicas",
+                                             "type":  "int",
+                                             "default":  3,
+                                             "description":  "Minimum replicas used to demonstrate idle overprovisioning and right-sizing.",
+                                             "min":  1,
+                                             "max":  5
+                                         },
+                                         {
+                                             "name":  "maxReplicas",
+                                             "type":  "int",
+                                             "default":  5,
+                                             "description":  "Maximum replicas available to the demo workload.",
+                                             "min":  1,
+                                             "max":  10
+                                         },
+                                         {
+                                             "name":  "sponsorGroupObjectId",
+                                             "type":  "string",
+                                             "default":  "5734b843-4ae2-4e07-8334-e3572f0b833d",
+                                             "description":  "Microsoft Entra object ID of the group assigned the SRE Agent Administrator role."
+                                         },
+                                         {
+                                             "name":  "agentModelProvider",
+                                             "type":  "string",
+                                             "default":  "MicrosoftFoundry",
+                                             "description":  "AI model provider used by the SRE Agent."
+                                         },
+                                         {
+                                             "name":  "agentModelName",
+                                             "type":  "string",
+                                             "default":  "Automatic",
+                                             "description":  "AI model selection used by the SRE Agent."
                                          }
                                      ]
                   },
@@ -988,7 +1167,7 @@
                                    "usageMonthly":  1448.40,
                                    "totalMonthly":  1448.40,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -1265,7 +1444,7 @@
                                    "usageMonthly":  16610.67,
                                    "totalMonthly":  16610.67,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -1472,7 +1651,7 @@
                                    "usageMonthly":  169.18,
                                    "totalMonthly":  169.18,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -1664,7 +1843,7 @@
                                    "usageMonthly":  1139.22,
                                    "totalMonthly":  1139.22,
                                    "complete":  false,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -1903,7 +2082,7 @@
                                    "usageMonthly":  42.50,
                                    "totalMonthly":  3912.96,
                                    "complete":  false,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -2194,7 +2373,7 @@
                                    "usageMonthly":  16.50,
                                    "totalMonthly":  2155.44,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -2359,7 +2538,7 @@
                                    "usageMonthly":  0,
                                    "totalMonthly":  262.80,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -2523,7 +2702,7 @@
                                    "usageMonthly":  16.00,
                                    "totalMonthly":  1338.76,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -2692,7 +2871,7 @@
                                    "usageMonthly":  0.05,
                                    "totalMonthly":  677.13,
                                    "complete":  false,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -2858,7 +3037,7 @@
                                    "usageMonthly":  16.28,
                                    "totalMonthly":  752.12,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -3010,7 +3189,7 @@
                                    "usageMonthly":  13.56,
                                    "totalMonthly":  13.56,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -3168,7 +3347,7 @@
                                    "usageMonthly":  163.93,
                                    "totalMonthly":  841.01,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -3384,7 +3563,7 @@
                                    "usageMonthly":  116.80,
                                    "totalMonthly":  795.70,
                                    "complete":  false,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -3548,7 +3727,7 @@
                                    "usageMonthly":  0,
                                    "totalMonthly":  735.91,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -3682,7 +3861,7 @@
                                    "usageMonthly":  25.20,
                                    "totalMonthly":  325.23,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -3895,7 +4074,7 @@
                                    "usageMonthly":  21.02,
                                    "totalMonthly":  748.99,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -4113,7 +4292,7 @@
                                    "usageMonthly":  0.50,
                                    "totalMonthly":  451.07,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
@@ -4300,7 +4479,7 @@
                                    "usageMonthly":  12.00,
                                    "totalMonthly":  351.45,
                                    "complete":  true,
-                                   "pricedAt":  "2026-08-01"
+                                   "pricedAt":  "2026-08-26"
                                },
                       "parameters":  [
                                          {
