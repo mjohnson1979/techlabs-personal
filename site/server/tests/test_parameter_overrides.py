@@ -7,6 +7,7 @@ it. These tests cover that cast/merge step (a pure function, no Azure SDK).
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -25,6 +26,21 @@ _TEMPLATE = {
         "appServiceSku": {"type": "string"},
     }
 }
+
+
+def test_load_template_accepts_utf8_bom(tmp_path: Path, monkeypatch) -> None:
+    template_dir = tmp_path / "demo"
+    template_dir.mkdir()
+    artifact = {"template": _TEMPLATE, "parameters": {"prefix": {"value": "demo"}}}
+    (template_dir / "dev.json").write_text(
+        json.dumps(artifact), encoding="utf-8-sig"
+    )
+    monkeypatch.setattr(azure_deploy, "TEMPLATES_DIR", tmp_path)
+
+    template, parameters = azure_deploy.load_template("demo", "dev")
+
+    assert template == _TEMPLATE
+    assert parameters == {"prefix": {"value": "demo"}}
 
 
 def test_merge_casts_types() -> None:
