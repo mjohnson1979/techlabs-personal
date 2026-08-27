@@ -100,6 +100,43 @@ def test_non_scalar_param_rejected() -> None:
     assert ei.value.status_code == 400
 
 
+_SRE_AGENT_ITEM = {
+    "name": "azure-sre-agent-demo",
+    "parameters": [
+        {
+            "name": "sponsorGroupObjectId",
+            "type": "string",
+            "default": "5734b843-4ae2-4e07-8334-e3572f0b833d",
+        }
+    ],
+}
+
+
+def test_sre_agent_requires_sponsor_group() -> None:
+    item_without_sponsor = {
+        "name": "azure-sre-agent-demo",
+        "parameters": [
+            {"name": "sponsorGroupObjectId", "type": "string", "default": ""}
+        ],
+    }
+    with pytest.raises(HTTPException) as exc_info:
+        api._validate_parameter_values({}, item_without_sponsor)
+    assert exc_info.value.status_code == 400
+    assert "sponsorGroupObjectId" in exc_info.value.detail
+
+
+def test_sre_agent_accepts_declared_sponsor_group_default() -> None:
+    assert api._validate_parameter_values({}, _SRE_AGENT_ITEM) == {}
+
+
+def test_sre_agent_accepts_valid_sponsor_group() -> None:
+    sponsor_group_id = "11111111-2222-3333-4444-555555555555"
+    result = api._validate_parameter_values(
+        {"sponsorGroupObjectId": sponsor_group_id}, _SRE_AGENT_ITEM
+    )
+    assert result["sponsorGroupObjectId"] == sponsor_group_id
+
+
 
 _AKS_ITEM = {
     "parameters": [

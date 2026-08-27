@@ -296,7 +296,7 @@ def _template_path(use_case: str, environment: str) -> Path:
 def load_template(use_case: str, environment: str) -> tuple[dict, dict]:
     path = _template_path(use_case, environment)
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
     except FileNotFoundError as exc:
         raise RuntimeError(
             f"No compiled template for {use_case}/{environment}. "
