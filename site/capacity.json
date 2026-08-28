@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-27T09:14:47Z",
+  "generated": "2026-08-28T09:22:19Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -8357,9 +8357,9 @@
           "value": 100
         },
         "centralus": {
-          "status": "red",
-          "detail": "GlobalProvisionedManaged SKU not offered for gpt-5.6-terra in this region",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "northcentralus": {
           "status": "green",
