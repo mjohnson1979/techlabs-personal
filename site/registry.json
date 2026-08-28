@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-25T05:16:21Z",
+  "generated": "2026-08-28T07:42:42Z",
   "regions": [
     "eastus",
     "eastus2",
@@ -82,8 +82,14 @@
           "GlobalStandard"
         ],
         "regions": [
+          "centralus",
+          "eastus",
           "eastus2",
-          "westcentralus"
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus3"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -96,8 +102,14 @@
           "GlobalStandard"
         ],
         "regions": [
+          "centralus",
+          "eastus",
           "eastus2",
-          "westcentralus"
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus3"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -110,8 +122,14 @@
           "GlobalStandard"
         ],
         "regions": [
+          "centralus",
+          "eastus",
           "eastus2",
-          "westcentralus"
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus3"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -124,8 +142,14 @@
           "GlobalStandard"
         ],
         "regions": [
+          "centralus",
+          "eastus",
           "eastus2",
-          "westcentralus"
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus3"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -138,8 +162,14 @@
           "GlobalStandard"
         ],
         "regions": [
+          "centralus",
+          "eastus",
           "eastus2",
-          "westcentralus"
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus3"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -173,8 +203,14 @@
           "GlobalStandard"
         ],
         "regions": [
+          "centralus",
+          "eastus",
           "eastus2",
-          "westcentralus"
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus3"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -208,8 +244,14 @@
           "GlobalStandard"
         ],
         "regions": [
+          "centralus",
+          "eastus",
           "eastus2",
-          "westcentralus"
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus3"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -222,8 +264,14 @@
           "GlobalStandard"
         ],
         "regions": [
+          "centralus",
+          "eastus",
           "eastus2",
-          "westcentralus"
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus3"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -236,8 +284,14 @@
           "GlobalStandard"
         ],
         "regions": [
+          "centralus",
+          "eastus",
           "eastus2",
-          "westcentralus"
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus3"
         ],
         "lifecycle": "GenerallyAvailable",
         "kind": "chat"
@@ -389,6 +443,30 @@
       {
         "provider": "Cohere",
         "name": "Cohere-command-a-plus-05-2026",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "Cohere",
+        "name": "Cohere-parse-v5",
         "version": "1",
         "skus": [
           "GlobalStandard"
@@ -2745,6 +2823,30 @@
         "version": "1",
         "skus": [
           "DataZoneStandard",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westcentralus",
+          "westus",
+          "westus2",
+          "westus3"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "xAI",
+        "name": "grok-4.6",
+        "version": "1",
+        "skus": [
           "GlobalStandard"
         ],
         "regions": [
