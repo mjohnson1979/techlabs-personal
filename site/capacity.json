@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-28T09:22:19Z",
+  "generated": "2026-08-29T06:25:26Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -3812,9 +3812,9 @@
           "value": 100
         },
         "westus": {
-          "status": "green",
-          "detail": "100 K TPM available",
-          "value": 100
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-5 in this region",
+          "value": null
         },
         "westus2": {
           "status": "red",
@@ -5117,9 +5117,9 @@
           "value": null
         },
         "canadaeast": {
-          "status": "yellow",
-          "detail": "only 45 K TPM available",
-          "value": 45
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "brazilsouth": {
           "status": "red",
@@ -8367,14 +8367,14 @@
           "value": 100
         },
         "southcentralus": {
-          "status": "red",
-          "detail": "GlobalProvisionedManaged SKU not offered for gpt-5.6-terra in this region",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westus": {
-          "status": "red",
-          "detail": "GlobalProvisionedManaged SKU not offered for gpt-5.6-terra in this region",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westus2": {
           "status": "red",
@@ -8382,9 +8382,9 @@
           "value": null
         },
         "westus3": {
-          "status": "red",
-          "detail": "GlobalProvisionedManaged SKU not offered for gpt-5.6-terra in this region",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westcentralus": {
           "status": "red",
@@ -8397,9 +8397,9 @@
           "value": 100
         },
         "canadaeast": {
-          "status": "red",
-          "detail": "GlobalProvisionedManaged SKU not offered for gpt-5.6-terra in this region",
-          "value": null
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "brazilsouth": {
           "status": "green",
