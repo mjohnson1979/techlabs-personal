@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-30T06:26:09Z",
+  "generated": "2026-08-31T06:35:22Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -7938,6 +7938,86 @@
         }
       }
     },
+    "openai:gpt-5.6-luna:2026-07-09:datazoneprovisionedmanaged": {
+      "label": "Azure OpenAI - gpt-5.6-luna 2026-07-09 [DataZoneProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-5.6-luna",
+      "version": "2026-07-09",
+      "sku": "DataZoneProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "eastus2": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "centralus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "northcentralus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "southcentralus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "westus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-luna in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-luna in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-luna in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-luna in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-luna in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-luna in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-luna in this region",
+          "value": null
+        }
+      }
+    },
     "openai:gpt-5.6-luna:2026-07-09:datazonestandard": {
       "label": "Azure OpenAI - gpt-5.6-luna 2026-07-09 [DataZoneStandard]",
       "provider": "Microsoft.CognitiveServices/accounts/deployments",
@@ -8018,6 +8098,86 @@
         }
       }
     },
+    "openai:gpt-5.6-luna:2026-07-09:globalprovisionedmanaged": {
+      "label": "Azure OpenAI - gpt-5.6-luna 2026-07-09 [GlobalProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-5.6-luna",
+      "version": "2026-07-09",
+      "sku": "GlobalProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "eastus2": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "centralus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "northcentralus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "southcentralus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "westus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-5.6-luna in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-5.6-luna in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "canadaeast": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "brazilsouth": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-5.6-luna in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-5.6-luna in this region",
+          "value": null
+        }
+      }
+    },
     "openai:gpt-5.6-luna:2026-07-09:globalstandard": {
       "label": "Azure OpenAI - gpt-5.6-luna 2026-07-09 [GlobalStandard]",
       "provider": "Microsoft.CognitiveServices/accounts/deployments",
@@ -8094,6 +8254,86 @@
         "mexicocentral": {
           "status": "red",
           "detail": "GlobalStandard SKU not offered for gpt-5.6-luna in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-5.6-sol:2026-07-09:datazoneprovisionedmanaged": {
+      "label": "Azure OpenAI - gpt-5.6-sol 2026-07-09 [DataZoneProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-5.6-sol",
+      "version": "2026-07-09",
+      "sku": "DataZoneProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "eastus2": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "centralus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "northcentralus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "southcentralus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "westus": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-sol in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-sol in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-sol in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-sol in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-sol in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-sol in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-sol in this region",
           "value": null
         }
       }
@@ -8254,6 +8494,86 @@
         "mexicocentral": {
           "status": "red",
           "detail": "GlobalStandard SKU not offered for gpt-5.6-sol in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-5.6-terra:2026-07-09:datazoneprovisionedmanaged": {
+      "label": "Azure OpenAI - gpt-5.6-terra 2026-07-09 [DataZoneProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-5.6-terra",
+      "version": "2026-07-09",
+      "sku": "DataZoneProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "eastus2": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "northcentralus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "southcentralus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westus": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-terra in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-terra in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-terra in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-terra in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-terra in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-terra in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-5.6-terra in this region",
           "value": null
         }
       }
