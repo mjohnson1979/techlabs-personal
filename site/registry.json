@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-01T05:21:20Z",
+  "generated": "2026-09-04T05:20:13Z",
   "regions": [
     "eastus",
     "eastus2",
@@ -44,6 +44,19 @@
       {
         "provider": "Anthropic",
         "name": "claude-fable-5",
+        "version": "1",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus2"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "Anthropic",
+        "name": "claude-fable-5-1",
         "version": "1",
         "skus": [
           "GlobalStandard"
@@ -889,6 +902,36 @@
         "provider": "Microsoft",
         "name": "MAI-Image-2.5-Pro",
         "version": "2026-06-19",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus",
+          "westcentralus",
+          "westus"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "MAI-Image-2.6",
+        "version": "2026-07-31",
+        "skus": [
+          "GlobalStandard"
+        ],
+        "regions": [
+          "eastus",
+          "westcentralus",
+          "westus"
+        ],
+        "lifecycle": "Preview",
+        "kind": "chat"
+      },
+      {
+        "provider": "Microsoft",
+        "name": "MAI-Image-2.6-Flash",
+        "version": "2026-07-31",
         "skus": [
           "GlobalStandard"
         ],
