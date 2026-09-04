@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-03T06:28:28Z",
+  "generated": "2026-09-04T06:27:13Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -372,9 +372,9 @@
           "value": 300
         },
         "westus": {
-          "status": "green",
-          "detail": "300 K TPM available",
-          "value": 300
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-4.1 in this region",
+          "value": null
         },
         "westus2": {
           "status": "red",
@@ -7947,34 +7947,34 @@
       "sku": "DataZoneProvisionedManaged",
       "byRegion": {
         "eastus": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "eastus2": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "centralus": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "northcentralus": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "southcentralus": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "westus": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "westus2": {
           "status": "red",
@@ -7982,9 +7982,9 @@
           "value": null
         },
         "westus3": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "green",
+          "detail": "50 K TPM available",
+          "value": 50
         },
         "westcentralus": {
           "status": "red",
@@ -8107,34 +8107,34 @@
       "sku": "GlobalProvisionedManaged",
       "byRegion": {
         "eastus": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "red",
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "eastus2": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "red",
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "centralus": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "northcentralus": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "red",
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "southcentralus": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westus": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westus2": {
           "status": "red",
@@ -8142,9 +8142,9 @@
           "value": null
         },
         "westus3": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "westcentralus": {
           "status": "red",
@@ -8152,19 +8152,19 @@
           "value": null
         },
         "canadacentral": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "red",
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "canadaeast": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "green",
+          "detail": "100 K TPM available",
+          "value": 100
         },
         "brazilsouth": {
-          "status": "yellow",
-          "detail": "only 5 K TPM available",
-          "value": 5
+          "status": "red",
+          "detail": "no TPM capacity in this region",
+          "value": 0
         },
         "brazilsoutheast": {
           "status": "red",
@@ -14221,8 +14221,8 @@
           "value": null
         },
         "mexicocentral": {
-          "status": "red",
-          "detail": "not offered in this region",
+          "status": "green",
+          "detail": "offered in this region",
           "value": null
         }
       }
