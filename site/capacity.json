@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-04T06:27:13Z",
+  "generated": "2026-09-05T06:25:41Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -372,9 +372,9 @@
           "value": 300
         },
         "westus": {
-          "status": "red",
-          "detail": "DataZoneStandard SKU not offered for gpt-4.1 in this region",
-          "value": null
+          "status": "green",
+          "detail": "300 K TPM available",
+          "value": 300
         },
         "westus2": {
           "status": "red",
