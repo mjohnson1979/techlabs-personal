@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-31T05:01:11Z",
+  "generated": "2026-09-07T05:01:31Z",
   "source": "https://azure.microsoft.com/updates",
   "pagesScanned": 40,
   "updatesScanned": 4000,
@@ -518,16 +518,22 @@
           "date": "2026-08"
         },
         {
+          "id": "570030",
+          "title": "Generally Available: Connect to AKS clusters using Azure Bastion",
+          "url": "https://azure.microsoft.com/updates?id=570030",
+          "date": "2026-08"
+        },
+        {
           "id": "568830",
           "title": "Generally Available: Control plane metrics collection for AKS with Managed Prometheus",
           "url": "https://azure.microsoft.com/updates?id=568830",
           "date": "2026-08"
         },
         {
-          "id": "570030",
-          "title": "Generally Available: Connect to AKS clusters using Azure Bastion",
-          "url": "https://azure.microsoft.com/updates?id=570030",
-          "date": "2026-08"
+          "id": "570095",
+          "title": "Generally Available: Artifact Streaming on AKS",
+          "url": "https://azure.microsoft.com/updates?id=570095",
+          "date": "2026-07"
         },
         {
           "id": "567944",
@@ -536,15 +542,9 @@
           "date": "2026-07"
         },
         {
-          "id": "566732",
-          "title": "Generally Available: Azure Red Hat OpenShift in Chile Central",
-          "url": "https://azure.microsoft.com/updates?id=566732",
-          "date": "2026-06"
-        },
-        {
-          "id": "564849",
-          "title": "Generally Available: Azure Red Hat OpenShift in Belgium Central",
-          "url": "https://azure.microsoft.com/updates?id=564849",
+          "id": "569873",
+          "title": "Generally Available: eBPF host routing in Advanced Container Networking Services for AKS",
+          "url": "https://azure.microsoft.com/updates?id=569873",
           "date": "2026-06"
         }
       ]
@@ -742,6 +742,12 @@
       ],
       "previews": [
         {
+          "id": "569804",
+          "title": "Public Preview: Azure Front Door profile and route level WAF policies",
+          "url": "https://azure.microsoft.com/updates?id=569804",
+          "date": "2026-09"
+        },
+        {
           "id": "568979",
           "title": "Public Preview: Markdown for Agents in Azure App Service",
           "url": "https://azure.microsoft.com/updates?id=568979",
@@ -770,12 +776,6 @@
           "title": "Public Preview: WAF Insights for Application Gateway ",
           "url": "https://azure.microsoft.com/updates?id=557416",
           "date": "2026-02"
-        },
-        {
-          "id": "523623",
-          "title": "Public Preview: Managed Instance on Azure App Service",
-          "url": "https://azure.microsoft.com/updates?id=523623",
-          "date": "2025-11"
         }
       ],
       "launched": [
@@ -926,6 +926,12 @@
       ],
       "launched": [
         {
+          "id": "570282",
+          "title": "Generally Available: Microsoft Defender for Cloud support for Azure Container Apps (Serverless Containers Posture)",
+          "url": "https://azure.microsoft.com/updates?id=570282",
+          "date": "2026-07"
+        },
+        {
           "id": "562511",
           "title": "Generally Available: Override Scale Rules in Azure Functions on Azure Container Apps",
           "url": "https://azure.microsoft.com/updates?id=562511",
@@ -953,12 +959,6 @@
           "id": "512813",
           "title": "Generally Available: Premium Ingress in Azure Container Apps",
           "url": "https://azure.microsoft.com/updates?id=512813",
-          "date": "2025-11"
-        },
-        {
-          "id": "512850",
-          "title": "Generally Available: Rule-based routing in Azure Container Apps",
-          "url": "https://azure.microsoft.com/updates?id=512850",
           "date": "2025-11"
         }
       ]
@@ -1162,6 +1162,12 @@
           "date": "2026-08"
         },
         {
+          "id": "570364",
+          "title": "Public Preview: Azure Multicloud Interconnect",
+          "url": "https://azure.microsoft.com/updates?id=570364",
+          "date": "2026-08"
+        },
+        {
           "id": "562813",
           "title": "Public Preview: Summarized advertised gateway prefixes for route advertisement ",
           "url": "https://azure.microsoft.com/updates?id=562813",
@@ -1199,6 +1205,12 @@
       "retirements": [],
       "previews": [
         {
+          "id": "569804",
+          "title": "Public Preview: Azure Front Door profile and route level WAF policies",
+          "url": "https://azure.microsoft.com/updates?id=569804",
+          "date": "2026-09"
+        },
+        {
           "id": "569520",
           "title": "Public Preview: Ipv6 support in Azure Firewall",
           "url": "https://azure.microsoft.com/updates?id=569520",
@@ -1227,19 +1239,19 @@
           "title": "Public Preview: WAF Insights for Application Gateway ",
           "url": "https://azure.microsoft.com/updates?id=557416",
           "date": "2026-02"
-        },
-        {
-          "id": "530609",
-          "title": "Public Preview: Microsoft HTTP DDoS Ruleset 1.0 on Application Gateway WAF v2",
-          "url": "https://azure.microsoft.com/updates?id=530609",
-          "date": "2025-11"
         }
       ],
       "launched": [
         {
-          "id": "569504",
-          "title": "Generally Available: Custom block response code and body for Application Gateway WAF ",
-          "url": "https://azure.microsoft.com/updates?id=569504",
+          "id": "570474",
+          "title": "Generally Available: Azure Firewall auto-learn SNAT routes ",
+          "url": "https://azure.microsoft.com/updates?id=570474",
+          "date": "2026-09"
+        },
+        {
+          "id": "569256",
+          "title": "Generally Available: 2.2X IDPS performance optimization in Azure Firewall",
+          "url": "https://azure.microsoft.com/updates?id=569256",
           "date": "2026-08"
         },
         {
@@ -1249,9 +1261,9 @@
           "date": "2026-08"
         },
         {
-          "id": "569256",
-          "title": "Generally Available: 2.2X IDPS performance optimization in Azure Firewall",
-          "url": "https://azure.microsoft.com/updates?id=569256",
+          "id": "569504",
+          "title": "Generally Available: Custom block response code and body for Application Gateway WAF ",
+          "url": "https://azure.microsoft.com/updates?id=569504",
           "date": "2026-08"
         },
         {
@@ -1264,12 +1276,6 @@
           "id": "558072",
           "title": "Generally Available: Draft & Deploy on Azure Firewall",
           "url": "https://azure.microsoft.com/updates?id=558072",
-          "date": "2026-03"
-        },
-        {
-          "id": "558016",
-          "title": "Generally Available: Default Rule Set 2.2 and updates to ruleset support policy",
-          "url": "https://azure.microsoft.com/updates?id=558016",
           "date": "2026-03"
         }
       ]
@@ -1284,6 +1290,12 @@
         }
       ],
       "previews": [
+        {
+          "id": "569804",
+          "title": "Public Preview: Azure Front Door profile and route level WAF policies",
+          "url": "https://azure.microsoft.com/updates?id=569804",
+          "date": "2026-09"
+        },
         {
           "id": "569251",
           "title": "Public Preview: Azure Front Door mutual TLS ",
@@ -1339,12 +1351,6 @@
           "title": "Generally Available: Azure WAF CAPTCHA Challenge for Azure Front Door ",
           "url": "https://azure.microsoft.com/updates?id=512751",
           "date": "2025-10"
-        },
-        {
-          "id": "501200",
-          "title": "Generally Available: Azure Front Door Standard and Premium are now available in Azure China. ",
-          "url": "https://azure.microsoft.com/updates?id=501200",
-          "date": "2025-09"
         }
       ]
     },
@@ -1642,6 +1648,24 @@
           "date": "2026-08"
         },
         {
+          "id": "569899",
+          "title": "Generally Available: Azure Monitor Auxiliary Logs Plan in Azure Government and China regions",
+          "url": "https://azure.microsoft.com/updates?id=569899",
+          "date": "2026-08"
+        },
+        {
+          "id": "569904",
+          "title": "Generally Available: Azure Monitor Auxiliary Logs Plan support for Azure tables and plan switching",
+          "url": "https://azure.microsoft.com/updates?id=569904",
+          "date": "2026-08"
+        },
+        {
+          "id": "570250",
+          "title": "Generally Available: Azure Copilot Observability Agent supports Basic and Auxiliary table plans",
+          "url": "https://azure.microsoft.com/updates?id=570250",
+          "date": "2026-08"
+        },
+        {
           "id": "561564",
           "title": "Generally Available: Azure Monitor dashboards with Grafana in Public, Government (Fairfax) and China",
           "url": "https://azure.microsoft.com/updates?id=561564",
@@ -1652,24 +1676,6 @@
           "title": "Generally Available: Application Insights Auto-instrumentation for Azure Kubernetes Service apps",
           "url": "https://azure.microsoft.com/updates?id=562049",
           "date": "2026-05"
-        },
-        {
-          "id": "559886",
-          "title": "Generally Available: Azure Monitor pipeline",
-          "url": "https://azure.microsoft.com/updates?id=559886",
-          "date": "2026-04"
-        },
-        {
-          "id": "560039",
-          "title": "Generally Available: Observability in AKS Namespace and Workload Views",
-          "url": "https://azure.microsoft.com/updates?id=560039",
-          "date": "2026-04"
-        },
-        {
-          "id": "560358",
-          "title": "Generally Available: Azure Monitor for Azure Arc-enabled Kubernetes with OpenShift and Azure Red Hat OpenShift",
-          "url": "https://azure.microsoft.com/updates?id=560358",
-          "date": "2026-04"
         }
       ]
     },
@@ -1874,9 +1880,9 @@
           "date": "2026-08"
         },
         {
-          "id": "566895",
-          "title": "Generally Available: Client-side data integrity protections in Azure Blob Storage",
-          "url": "https://azure.microsoft.com/updates?id=566895",
+          "id": "567085",
+          "title": "Generally Available: Microsoft Entra ID-based access for Azure Blob Storage SFTP",
+          "url": "https://azure.microsoft.com/updates?id=567085",
           "date": "2026-06"
         },
         {
@@ -1886,21 +1892,21 @@
           "date": "2026-06"
         },
         {
-          "id": "567085",
-          "title": "Generally Available: Microsoft Entra ID-based access for Azure Blob Storage SFTP",
-          "url": "https://azure.microsoft.com/updates?id=567085",
+          "id": "566895",
+          "title": "Generally Available: Client-side data integrity protections in Azure Blob Storage",
+          "url": "https://azure.microsoft.com/updates?id=566895",
           "date": "2026-06"
         },
         {
-          "id": "559494",
-          "title": "Generally Available: Mock runs for Azure Storage Actions – Validate before you execute",
-          "url": "https://azure.microsoft.com/updates?id=559494",
+          "id": "562753",
+          "title": "Generally Available: Azure Storage Mover Blob-to-Blob migration",
+          "url": "https://azure.microsoft.com/updates?id=562753",
           "date": "2026-05"
         },
         {
-          "id": "561722",
-          "title": "Generally Available: Support for workloads with large files in Azure NetApp Files ",
-          "url": "https://azure.microsoft.com/updates?id=561722",
+          "id": "562622",
+          "title": "Generally Available: Schedule one-time or recurring migrations with Azure Storage Mover",
+          "url": "https://azure.microsoft.com/updates?id=562622",
           "date": "2026-05"
         }
       ]
@@ -2063,6 +2069,12 @@
       ],
       "launched": [
         {
+          "id": "570557",
+          "title": "Generally Available: Azure Virtual Network Manager IPAM in additional Azure regions ",
+          "url": "https://azure.microsoft.com/updates?id=570557",
+          "date": "2026-09"
+        },
+        {
           "id": "568605",
           "title": "Generally Available: Azure Virtual Network routing appliance",
           "url": "https://azure.microsoft.com/updates?id=568605",
@@ -2090,12 +2102,6 @@
           "id": "526145",
           "title": "Generally Available: Azure Virtual Network Manager UseExisting Mode for UDR management ",
           "url": "https://azure.microsoft.com/updates?id=526145",
-          "date": "2025-11"
-        },
-        {
-          "id": "526155",
-          "title": "Generally Available: Azure Virtual Network Manager peering compliance ",
-          "url": "https://azure.microsoft.com/updates?id=526155",
           "date": "2025-11"
         }
       ]
