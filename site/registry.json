@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-04T05:20:13Z",
+  "generated": "2026-09-07T05:21:17Z",
   "regions": [
     "eastus",
     "eastus2",
@@ -1501,30 +1501,6 @@
         "kind": "chat"
       },
       {
-        "provider": "MoonshotAI",
-        "name": "Kimi-K3",
-        "version": "2026-07-29",
-        "skus": [
-          "GlobalStandard"
-        ],
-        "regions": [
-          "brazilsouth",
-          "canadacentral",
-          "canadaeast",
-          "centralus",
-          "eastus",
-          "eastus2",
-          "northcentralus",
-          "southcentralus",
-          "westcentralus",
-          "westus",
-          "westus2",
-          "westus3"
-        ],
-        "lifecycle": "Preview",
-        "kind": "chat"
-      },
-      {
         "provider": "OpenAI",
         "name": "gpt-4.1",
         "version": "2025-04-14",
@@ -2195,6 +2171,31 @@
         "provider": "OpenAI",
         "name": "gpt-5.6-terra",
         "version": "2026-07-09",
+        "skus": [
+          "DataZoneProvisionedManaged",
+          "DataZoneStandard",
+          "GlobalProvisionedManaged",
+          "GlobalStandard"
+        ],
+        "regions": [
+          "brazilsouth",
+          "canadacentral",
+          "canadaeast",
+          "centralus",
+          "eastus",
+          "eastus2",
+          "northcentralus",
+          "southcentralus",
+          "westus",
+          "westus3"
+        ],
+        "lifecycle": "GenerallyAvailable",
+        "kind": "chat"
+      },
+      {
+        "provider": "OpenAI",
+        "name": "gpt-6-astra",
+        "version": "2026-09-03",
         "skus": [
           "DataZoneProvisionedManaged",
           "DataZoneStandard",
