@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-06T06:25:14Z",
+  "generated": "2026-09-07T06:33:09Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -8814,6 +8814,326 @@
         "mexicocentral": {
           "status": "red",
           "detail": "GlobalStandard SKU not offered for gpt-5.6-terra in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-6-astra:2026-09-03:datazoneprovisionedmanaged": {
+      "label": "Azure OpenAI - gpt-6-astra 2026-09-03 [DataZoneProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-6-astra",
+      "version": "2026-09-03",
+      "sku": "DataZoneProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "eastus2": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "centralus": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "northcentralus": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "southcentralus": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "westus": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneProvisionedManaged SKU not offered for gpt-6-astra in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-6-astra:2026-09-03:datazonestandard": {
+      "label": "Azure OpenAI - gpt-6-astra 2026-09-03 [DataZoneStandard]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-6-astra",
+      "version": "2026-09-03",
+      "sku": "DataZoneStandard",
+      "byRegion": {
+        "eastus": {
+          "status": "green",
+          "detail": "333 K TPM available",
+          "value": 333
+        },
+        "eastus2": {
+          "status": "green",
+          "detail": "333 K TPM available",
+          "value": 333
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "333 K TPM available",
+          "value": 333
+        },
+        "northcentralus": {
+          "status": "green",
+          "detail": "333 K TPM available",
+          "value": 333
+        },
+        "southcentralus": {
+          "status": "green",
+          "detail": "333 K TPM available",
+          "value": 333
+        },
+        "westus": {
+          "status": "green",
+          "detail": "333 K TPM available",
+          "value": 333
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "green",
+          "detail": "333 K TPM available",
+          "value": 333
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "canadaeast": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "brazilsouth": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "DataZoneStandard SKU not offered for gpt-6-astra in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-6-astra:2026-09-03:globalprovisionedmanaged": {
+      "label": "Azure OpenAI - gpt-6-astra 2026-09-03 [GlobalProvisionedManaged]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-6-astra",
+      "version": "2026-09-03",
+      "sku": "GlobalProvisionedManaged",
+      "byRegion": {
+        "eastus": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "eastus2": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "centralus": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "northcentralus": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "southcentralus": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "westus": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "canadaeast": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "brazilsouth": {
+          "status": "yellow",
+          "detail": "only 8 K TPM available",
+          "value": 8
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "GlobalProvisionedManaged SKU not offered for gpt-6-astra in this region",
+          "value": null
+        }
+      }
+    },
+    "openai:gpt-6-astra:2026-09-03:globalstandard": {
+      "label": "Azure OpenAI - gpt-6-astra 2026-09-03 [GlobalStandard]",
+      "provider": "Microsoft.CognitiveServices/accounts/deployments",
+      "kind": "model-tpm",
+      "model": "gpt-6-astra",
+      "version": "2026-09-03",
+      "sku": "GlobalStandard",
+      "byRegion": {
+        "eastus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "eastus2": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "centralus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "northcentralus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "southcentralus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "westus": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "westus2": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "westus3": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "westcentralus": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "canadacentral": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "canadaeast": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "brazilsouth": {
+          "status": "green",
+          "detail": "1000 K TPM available",
+          "value": 1000
+        },
+        "brazilsoutheast": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-6-astra in this region",
+          "value": null
+        },
+        "mexicocentral": {
+          "status": "red",
+          "detail": "GlobalStandard SKU not offered for gpt-6-astra in this region",
           "value": null
         }
       }
