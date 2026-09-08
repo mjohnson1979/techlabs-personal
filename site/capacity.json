@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-07T06:33:09Z",
+  "generated": "2026-09-08T06:29:38Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -8107,14 +8107,14 @@
       "sku": "GlobalProvisionedManaged",
       "byRegion": {
         "eastus": {
-          "status": "green",
-          "detail": "100 K TPM available",
-          "value": 100
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
         },
         "eastus2": {
-          "status": "green",
-          "detail": "100 K TPM available",
-          "value": 100
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
         },
         "centralus": {
           "status": "green",
@@ -8122,9 +8122,9 @@
           "value": 100
         },
         "northcentralus": {
-          "status": "green",
-          "detail": "100 K TPM available",
-          "value": 100
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
         },
         "southcentralus": {
           "status": "green",
@@ -8152,9 +8152,9 @@
           "value": null
         },
         "canadacentral": {
-          "status": "green",
-          "detail": "100 K TPM available",
-          "value": 100
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
         },
         "canadaeast": {
           "status": "green",
@@ -8162,9 +8162,9 @@
           "value": 100
         },
         "brazilsouth": {
-          "status": "green",
-          "detail": "100 K TPM available",
-          "value": 100
+          "status": "yellow",
+          "detail": "only 10 K TPM available",
+          "value": 10
         },
         "brazilsoutheast": {
           "status": "red",
