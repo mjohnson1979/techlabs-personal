@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-09T06:28:26Z",
+  "generated": "2026-09-10T06:27:42Z",
   "subscriptionId": "8ad2703f-069c-4c1a-8f4f-850c2a4c2676",
   "regions": [
     "eastus",
@@ -2028,13 +2028,13 @@
       "byRegion": {
         "eastus": {
           "status": "yellow",
-          "detail": "only 42 K TPM available",
-          "value": 42
+          "detail": "only 40 K TPM available",
+          "value": 40
         },
         "eastus2": {
           "status": "yellow",
-          "detail": "only 42 K TPM available",
-          "value": 42
+          "detail": "only 40 K TPM available",
+          "value": 40
         },
         "centralus": {
           "status": "green",
@@ -2043,8 +2043,8 @@
         },
         "northcentralus": {
           "status": "yellow",
-          "detail": "only 42 K TPM available",
-          "value": 42
+          "detail": "only 40 K TPM available",
+          "value": 40
         },
         "southcentralus": {
           "status": "green",
@@ -2073,8 +2073,8 @@
         },
         "canadacentral": {
           "status": "yellow",
-          "detail": "only 42 K TPM available",
-          "value": 42
+          "detail": "only 40 K TPM available",
+          "value": 40
         },
         "canadaeast": {
           "status": "green",
@@ -2083,8 +2083,8 @@
         },
         "brazilsouth": {
           "status": "yellow",
-          "detail": "only 42 K TPM available",
-          "value": 42
+          "detail": "only 40 K TPM available",
+          "value": 40
         },
         "brazilsoutheast": {
           "status": "red",
@@ -2188,13 +2188,13 @@
       "byRegion": {
         "eastus": {
           "status": "yellow",
-          "detail": "only 42 K TPM available",
-          "value": 42
+          "detail": "only 40 K TPM available",
+          "value": 40
         },
         "eastus2": {
           "status": "yellow",
-          "detail": "only 42 K TPM available",
-          "value": 42
+          "detail": "only 40 K TPM available",
+          "value": 40
         },
         "centralus": {
           "status": "red",
@@ -2203,8 +2203,8 @@
         },
         "northcentralus": {
           "status": "yellow",
-          "detail": "only 42 K TPM available",
-          "value": 42
+          "detail": "only 40 K TPM available",
+          "value": 40
         },
         "southcentralus": {
           "status": "green",
