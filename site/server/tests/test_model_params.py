@@ -2,7 +2,7 @@
 
 Model name/version/SKU params carry no template @allowed set (the registry is
 their source of truth), so the API validates them against site/registry.json.
-These tests use the committed registry seed (OpenAI models).
+These tests use a small offline registry fixture, not a shipped model catalog.
 """
 
 from __future__ import annotations
@@ -18,6 +18,22 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 import api  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def registry_fixture(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(api, "_registry", lambda: {
+        "models": {"chat": [{
+            "provider": "OpenAI", "name": "test-chat-model", "version": "test-version",
+            "skus": ["GlobalStandard"],
+        }]},
+        "skus": {
+            "kubernetesVersion": {"values": [{"value": "1.30"}, {"value": "1.31"}]},
+            "vmSize": {"values": [{"value": "Standard_D4s_v5"}, {"value": "Standard_D8s_v5"}]},
+            "sqlTier": {"values": [{"value": "GeneralPurpose"}, {"value": "BusinessCritical"}]},
+            "sqlSkuName": {"values": [{"value": "GP_S_Gen5_1"}, {"value": "BC_Gen5_2"}]},
+        },
+    })
 
 _ITEM = {
     "parameters": [
@@ -98,44 +114,6 @@ def test_non_scalar_param_rejected() -> None:
     with pytest.raises(HTTPException) as ei:
         api._validate_parameter_values({"tags": "x=y"}, item)
     assert ei.value.status_code == 400
-
-
-_SRE_AGENT_ITEM = {
-    "name": "azure-sre-agent-demo",
-    "parameters": [
-        {
-            "name": "sponsorGroupObjectId",
-            "type": "string",
-            "default": "5734b843-4ae2-4e07-8334-e3572f0b833d",
-        }
-    ],
-}
-
-
-def test_sre_agent_requires_sponsor_group() -> None:
-    item_without_sponsor = {
-        "name": "azure-sre-agent-demo",
-        "parameters": [
-            {"name": "sponsorGroupObjectId", "type": "string", "default": ""}
-        ],
-    }
-    with pytest.raises(HTTPException) as exc_info:
-        api._validate_parameter_values({}, item_without_sponsor)
-    assert exc_info.value.status_code == 400
-    assert "sponsorGroupObjectId" in exc_info.value.detail
-
-
-def test_sre_agent_accepts_declared_sponsor_group_default() -> None:
-    assert api._validate_parameter_values({}, _SRE_AGENT_ITEM) == {}
-
-
-def test_sre_agent_accepts_valid_sponsor_group() -> None:
-    sponsor_group_id = "11111111-2222-3333-4444-555555555555"
-    result = api._validate_parameter_values(
-        {"sponsorGroupObjectId": sponsor_group_id}, _SRE_AGENT_ITEM
-    )
-    assert result["sponsorGroupObjectId"] == sponsor_group_id
-
 
 
 _AKS_ITEM = {

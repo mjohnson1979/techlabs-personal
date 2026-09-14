@@ -130,7 +130,7 @@ def _draft_readme(slug: str, display_name: str, user_upn: str, has_metadata: boo
 
 - [ ] Review `main.bicep` and the `parameters/*.bicepparam` files.
 - [ ] Confirm / complete `metadata.json` (category, description, services, cost).
-- [ ] Run `./tools/Build-Catalog.ps1` and `./tools/Build-Templates.ps1` to verify.
+- [ ] Compile with your own toolchain and publish reviewed runtime inputs for catalog sync.
 - [ ] Deploy once to confirm it provisions cleanly, then merge.
 """
 

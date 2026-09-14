@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 
 import azure_deploy as az
 import db
+from distribution import brand_name, is_customer_distribution
 from entra_auth import (
     COOKIE_NAME,
     EntraAuthError,
@@ -31,6 +32,7 @@ from entra_auth import (
 )
 import github_intake
 import pricing
+import setup_config
 import submissions
 from identity import (
     CurrentUser,
@@ -44,7 +46,7 @@ CATALOG_PATH = SITE_ROOT / "catalog.json"
 REGISTRY_PATH = SITE_ROOT / "registry.json"
 
 DEFAULT_SUBSCRIPTION = os.environ.get(
-    "GALLERY_SUBSCRIPTION_ID", "8ad2703f-069c-4c1a-8f4f-850c2a4c2676"
+    "GALLERY_SUBSCRIPTION_ID", ""
 ).strip()
 DEFAULT_MAX_LIFETIME_HOURS = int(
     os.environ.get("GALLERY_MAX_LIFETIME_HOURS", "96").strip() or "96"
@@ -61,6 +63,11 @@ _catalog_cache: dict[str, Any] = {"mtime": 0.0, "items": {}}
 
 def _catalog_items() -> dict[str, dict[str, Any]]:
     """Return {path: item} from catalog.json, reloaded when the file changes."""
+    if is_customer_distribution():
+        import setup_github
+        snapshot = setup_github.catalog_snapshot()
+        if snapshot:
+            return {item["path"]: item for item in snapshot["items"]}
     try:
         mtime = CATALOG_PATH.stat().st_mtime
     except OSError:
@@ -154,39 +161,7 @@ def _validate_parameter_values(
                 raise HTTPException(status_code=400, detail=f"invalid value for {name}")
         out[name] = sval
     _validate_model_params(out, item)
-    _validate_required_use_case_parameters(out, item)
     return out
-
-
-def _validate_required_use_case_parameters(
-    values: dict[str, str], item: dict[str, Any]
-) -> None:
-    if item.get("name") != "azure-sre-agent-demo":
-        return
-    sponsor_group_id = values.get("sponsorGroupObjectId", "")
-    if not sponsor_group_id:
-        sponsor_spec = next(
-            (
-                parameter
-                for parameter in (item.get("parameters") or [])
-                if parameter.get("name") == "sponsorGroupObjectId"
-            ),
-            {},
-        )
-        sponsor_group_id = str(sponsor_spec.get("default") or "")
-    sponsor_group_id = sponsor_group_id.strip().lower()
-    if not re.fullmatch(
-        r"(?!00000000-0000-0000-0000-000000000000$)"
-        r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
-        sponsor_group_id,
-    ):
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "sponsorGroupObjectId must be the Microsoft Entra object ID "
-                "of the group that will administer the SRE Agent"
-            ),
-        )
 
 
 # Model name/version/SKU params carry no template @allowed set (the registry is
@@ -361,6 +336,7 @@ class DeployIn(BaseModel):
 
 class EstimateIn(BaseModel):
     useCase: str
+    subscriptionId: str = ""
     # Region to price for; empty uses the use case's authored cost region.
     location: str = ""
     # Advanced-option overrides (param name -> value) that shift SKU/quantity.
@@ -397,6 +373,10 @@ def build_api_router() -> APIRouter:
         )
         return {
             "signedIn": True,
+            "brandName": brand_name(),
+            "customerOperated": is_customer_distribution(),
+            "subscriptions": setup_config.subscriptions() if is_customer_distribution() else [],
+            "setupRequired": is_customer_distribution() and not setup_config.subscriptions(),
             "upn": user.upn,
             "name": user.name,
             "oid": user.oid,
@@ -416,6 +396,8 @@ def build_api_router() -> APIRouter:
         user: CurrentUser = Depends(require_user),
     ) -> None:
         verify_same_origin(request)
+        if is_customer_distribution():
+            return
         if body.type not in _VALID_EVENT_TYPES:
             raise HTTPException(status_code=400, detail="unsupported event type")
         use_case = body.useCase[:120]
@@ -437,6 +419,13 @@ def build_api_router() -> APIRouter:
         if not (request.headers.get("origin") or request.headers.get("referer")):
             raise HTTPException(status_code=403, detail="browser origin required")
         verify_same_origin(request)
+        selected = None
+        if is_customer_distribution():
+            require_user(request)
+            try:
+                selected = setup_config.subscription_for(body.subscriptionId)
+            except ValueError:
+                raise HTTPException(status_code=403, detail="select a configured customer subscription") from None
         item = _catalog_items().get(body.useCase)
         if item is None:
             raise HTTPException(status_code=404, detail="unknown use case")
@@ -450,6 +439,8 @@ def build_api_router() -> APIRouter:
         for k, v in list((body.parameterValues or {}).items())[:50]:
             pv[str(k)[:64]] = str(v)[:128]
         try:
+            if selected:
+                return await pricing.estimate_for_subscription(cost, region or str(cost.get("region") or ""), pv, selected)
             return await pricing.estimate(cost, region or str(cost.get("region") or ""), pv)
         except Exception as exc:  # network/parse failure -> caller keeps static cost
             raise HTTPException(status_code=502, detail="pricing lookup failed") from exc
@@ -462,10 +453,23 @@ def build_api_router() -> APIRouter:
         user: CurrentUser = Depends(require_user),
     ) -> dict[str, Any]:
         verify_same_origin(request)
+        if is_customer_distribution():
+            if body.externalSubscription:
+                raise HTTPException(status_code=403, detail="only the configured customer subscription is allowed")
+            try:
+                selected_subscription = setup_config.subscription_for(body.subscriptionId)
+            except ValueError:
+                raise HTTPException(status_code=403, detail="select a configured customer subscription") from None
+        else:
+            selected_subscription = None
+        if not selected_subscription and not DEFAULT_SUBSCRIPTION and not body.externalSubscription:
+            raise HTTPException(status_code=503, detail="deployment subscription is not configured")
         items = _catalog_items()
         item = items.get(body.useCase)
         if item is None:
             raise HTTPException(status_code=404, detail="unknown use case")
+        if item.get("deployReady") is False:
+            raise HTTPException(status_code=409, detail="Customer runtime inputs are missing from the repository")
         env = body.environment.lower().strip()
         if env not in _ALLOWED_ENVS:
             raise HTTPException(status_code=400, detail="environment must be dev or prod")
@@ -487,7 +491,7 @@ def build_api_router() -> APIRouter:
                 detail="in-app Terraform execution is not enabled on this server; use the CLI",
             )
 
-        subscription_id = DEFAULT_SUBSCRIPTION
+        subscription_id = selected_subscription["subscriptionId"] if selected_subscription else DEFAULT_SUBSCRIPTION
         delegated_token: tuple[str, int] | None = None
         existing_resource_group = body.resourceGroupName.strip()
         if existing_resource_group and not body.externalSubscription:
@@ -588,6 +592,8 @@ def build_api_router() -> APIRouter:
             cleanup_policy=cleanup_policy,
             params={
                 "template": item.get("template", ""),
+                "catalogVersion": item.get("catalogVersion", ""),
+                "parameterTypes": {entry["name"]: entry.get("type", "string") for entry in item.get("parameters", []) if isinstance(entry, dict) and entry.get("name")},
                 "location": location,
                 "parameterValues": parameter_values,
                 "externalSubscription": body.externalSubscription,

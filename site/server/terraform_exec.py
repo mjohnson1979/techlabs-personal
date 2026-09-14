@@ -3,9 +3,8 @@
 Companion to ``azure_deploy.py``: when a deployment's ``engine`` is ``terraform``
 the executor runs the use case's Terraform module instead of submitting ARM JSON.
 
-Terraform sources are materialized under ``site/server/_tf/<use_case>/`` by
-``tools/Build-Templates.ps1`` (the runtime app tree does not contain ``catalog/``),
-mirroring how Bicep is precompiled into ``_templates``.
+Customer Terraform sources are supplied under ``site/server/_tf/<use_case>/``
+or synchronized from a reviewed customer repository commit.
 
 Execution model
 ---------------
@@ -116,6 +115,8 @@ def _parameter_overrides(dep: dict[str, Any]) -> dict[str, Any]:
     if not raw:
         return {}
     types = _param_types(dep["use_case"])
+    if (dep.get("params") or {}).get("catalogVersion"):
+        types = (dep.get("params") or {}).get("parameterTypes", {})
     out: dict[str, Any] = {}
     for name, value in raw.items():
         sval = str(value)
@@ -163,6 +164,10 @@ def _backend_config(dep: dict[str, Any]) -> list[str] | None:
 
 
 def _use_msi() -> bool:
+    from distribution import is_customer_distribution
+
+    if is_customer_distribution():
+        return True
     return os.environ.get("ARM_USE_MSI", "").strip().lower() in ("1", "true", "yes")
 
 
@@ -176,10 +181,14 @@ def _write_backend_file(work: Path, remote: bool) -> None:
 
 def _prepare_workdir(dep: dict[str, Any]) -> tuple[Path, bool]:
     src = _source_dir(dep["use_case"])
+    version = (dep.get("params") or {}).get("catalogVersion")
+    if version:
+        from setup_github import snapshot_root
+        src = snapshot_root(version) / "_tf" / dep["use_case"]
     if not src.is_dir():
         raise RuntimeError(
             f"No Terraform module for {dep['use_case']}. "
-            "Run tools/Build-Templates.ps1 to materialize site/server/_tf."
+            "Publish the customer module through the configured repository."
         )
     work = _work_root() / dep["id"]
     work.mkdir(parents=True, exist_ok=True)
@@ -207,11 +216,30 @@ def _prepare_workdir(dep: dict[str, Any]) -> tuple[Path, bool]:
 
 
 def _run_env(dep: dict[str, Any]) -> dict[str, str]:
+    from distribution import is_customer_distribution
+
     env = dict(os.environ)
     env["ARM_SUBSCRIPTION_ID"] = dep.get("subscription_id", "") or env.get(
         "ARM_SUBSCRIPTION_ID", ""
     )
     env.setdefault("TF_IN_AUTOMATION", "1")
+    if is_customer_distribution():
+        from setup_config import subscription_for
+
+        try:
+            if not dep.get("subscription_id"):
+                raise ValueError
+            subscription_for(dep["subscription_id"])
+        except ValueError:
+            raise RuntimeError("subscription is outside the customer installation") from None
+        env["ARM_USE_MSI"] = "true"
+        env["ARM_USE_CLI"] = "false"
+        env["ARM_USE_OIDC"] = "false"
+        env["ARM_CLIENT_ID"] = env.get("AZURE_CLIENT_ID", "")
+        env["ARM_TENANT_ID"] = env.get("GALLERY_ENTRA_TENANT_ID", "")
+        for name in tuple(env):
+            if name.startswith(("ARM_CLIENT_SECRET", "ARM_CLIENT_CERTIFICATE", "ARM_OIDC", "ARM_ACCESS_KEY", "ARM_SAS_TOKEN")):
+                env.pop(name)
     env.setdefault("TF_INPUT", "0")
     env.setdefault("CHECKPOINT_DISABLE", "1")
     return env

@@ -79,6 +79,9 @@
     setUserRole: (upn, role) =>
       request("POST", "/api/admin/users", { upn: upn, role: role }),
 
+    setUserRoleById: (oid, role) =>
+      request("PUT", "/api/admin/setup/user-role", { oid: oid, role: role }),
+
     // Multipart upload of a use-case template zip. Lets the browser set the
     // multipart boundary, so we don't reuse the JSON `request` helper.
     uploadUseCase: async (file, displayName) => {

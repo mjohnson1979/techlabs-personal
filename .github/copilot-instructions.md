@@ -1,36 +1,45 @@
-# Tech Labs — Copilot repository instructions
+# Deployment Portal - Customer Branch Instructions
 
-Azure use-case gallery: a static front end plus a FastAPI control-plane backend, with
-Bicep templates for each use case and PowerShell + GitHub Actions automation.
+Customer-operated Azure deployment platform: vanilla JavaScript UI and FastAPI
+control plane. This branch contains no bundled workload or hosting IaC.
 
 ## Layout
 
-- `site/` — deployed web app. Static UI in `site/assets/` (vanilla JS), FastAPI entry point
-  `site/main.py`, backend package `site/server/`. Data snapshots: `site/catalog.json`,
-  `site/updates.json` (service lifecycle), `site/capacity.json` (region capacity).
-- `catalog/` — per-use-case Bicep templates (`main.bicep` + parameters).
-- `tools/` — PowerShell build/validation scripts (`Build-Catalog.ps1`, `Build-Updates.ps1`,
-  `Build-Capacity.ps1`, `Build-Templates.ps1`, `Test-Catalog.ps1`, `Get-CatalogCost.ps1`).
-- `.github/workflows/` — `deploy-gallery.yml` (App Service deploy via OIDC), `updates.yml`
-  (weekly), `capacity.yml` (daily), `bicep-validate.yml`, use-case deploy/destroy/intake.
-- `.github/instructions/` — language/domain best-practice instruction files (auto-applied by `applyTo`).
+- `site/`: runtime, with `main.py`, `assets/`, and the `server/` backend.
+- `site/requirements.txt`: the only runtime dependency declaration.
+- `site/*.json`: empty customer snapshots and the customer distribution marker.
+- `site/server/tests/`: offline tests with temporary databases and mocked cloud calls.
+- `tools/build_customer_distribution.py`: history-free allowlist export and source seed.
+- `tools/preview_customer.py`: loopback-only, read-only synthetic preview.
+- `customer/README.md`: customer setup and operations guide.
+- `customer/RELEASE-CHECKLIST.md`: development-only release gates.
 
-## Critical gotchas
+## Boundaries
 
-- **Two requirements files.** The deploy (Oryx/CI) installs from `site/requirements.txt`.
-  `site/server/requirements.txt` is NOT used by deploy. Any dependency the app imports at
-  boot (e.g. `python-multipart` for upload routes) MUST be in `site/requirements.txt`.
-- **Hosting is Azure App Service** (Linux, `PYTHON|3.12`, gunicorn + uvicorn worker), not
-  GitHub Pages. Deploy is triggered only by `deploy-gallery.yml` on pushes to `main` that
-  touch `site/**`, `catalog/**`, or `tools/Build-Templates.ps1`.
-- `AzureIcons.iconFor(key)` in the front end returns an **SVG string**, not a DOM node —
-  render it with the `html:` prop, never `appendChild`/`cloneNode`.
+- Do not restore bundled catalogs, internal resource IDs, branding, workflows,
+  compiled ARM templates or Terraform samples. Customers supply their own IaC.
+- The existing Git history is not customer-safe. Publish only an approved export
+  into a new repository, never a fork or mirror of this working repository.
+- Preserve the MIT copyright notice. Technical service names are not product branding.
+- Hosting requires customer-owned App Service Authentication and managed identity;
+  the local preview is not a production authentication bypass.
+- First-run installation may precede the primary Entra connection only with the
+  explicitly enabled, expiring setup-code installer. Easy Auth stays enabled;
+  normal APIs/jobs remain locked until same-browser Entra verification completes.
+  Never claim an installation for the user or complete their connection for them.
+- After installation, Setup is admin-only. Subscriptions use ID-only input and Azure metadata lookup.
+  No quota checks during initial setup; use the workload view after setup.
+- GitHub setup uses customer-owned OAuth device authorization. Never reuse a
+  publisher application's client ID or expose tokens to the browser or logs.
+- Secrets are configured via protected host settings or verified customer Key Vault.
+- One worker and one instance are currently required by the database and scheduler.
 
-## Working in this repo (Windows PowerShell)
+## Validation
 
-- Shell is Windows PowerShell 5.1. Chain commands with `;` — never `&&`. Keep scripts ASCII-only.
-- Activate the venv before Python work: `.\.venv\Scripts\Activate.ps1`.
-- Backend tests: `python -m pytest site/server/tests`. Bicep: `az bicep build --file <file>`.
-- `git push` writes progress to stderr (looks like an error but succeeds) — verify with
-  `git log --oneline -1 origin/main`.
-- Take reversible actions freely; confirm before destructive or shared-infra changes.
+- Use Windows PowerShell-compatible commands and the root `.venv`.
+- Run `python -m pytest site/server/tests`. Do not use live cloud data as test fixtures.
+- Check touched JavaScript with `node --check`. Preview checks are desktop-only.
+- Keep generated archives under ignored `runs/`. Do not ship virtual environments,
+  local databases, logs, caches, test files or development instructions.
+- No workflow currently deploys this branch. Do not commit, push, publish or modify
+  shared cloud infrastructure without explicit authorization.

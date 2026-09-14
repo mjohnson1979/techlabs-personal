@@ -370,7 +370,7 @@
         .then((users) => {
           mount.innerHTML = "";
 
-          const upnInput = el("input", { type: "email", class: "deploy-input", placeholder: "user@microsoft.com" });
+          const upnInput = el("input", { type: "email", class: "deploy-input", placeholder: "user@example.com" });
           const roleSel = el("select", { class: "deploy-input" }, [
             el("option", { value: "guest", text: "guest" }),
             el("option", { value: "admin", text: "admin" }),
@@ -441,7 +441,7 @@
     roleSel.addEventListener("change", () => {
       const prev = u.role;
       roleSel.disabled = true;
-      Api.setUserRole(u.upn, roleSel.value)
+      Api.setUserRoleById(u.oid, roleSel.value)
         .then(() => {
           u.role = roleSel.value;
           roleSel.disabled = false;

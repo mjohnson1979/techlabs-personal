@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SME&amp;C Techlabs — Azure Use Case Catalog</title>
+  <title>Deployment Portal</title>
   <meta name="description"
-    content="Templatized Azure use cases as Infrastructure as Code — resilient, Well-Architected, with built-in cost estimation." />
+    content="Customer-operated deployment catalog." />
   <link rel="stylesheet" href="assets/styles.css" />
 </head>
 
@@ -14,12 +14,9 @@
   <header class="site-header">
     <div class="wrap">
       <div class="brand">
-        <span class="brand-mark">SME&amp;C</span>
-        <span class="brand-name">Techlabs</span>
+        <span class="brand-name" data-brand-name>Deployment Portal</span>
       </div>
       <nav class="header-links">
-        <a href="https://github.com/mcaps-microsoft/TechLabs" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://learn.microsoft.com/azure/well-architected/" target="_blank" rel="noopener">Well-Architected</a>
         <button id="nav-roadmap" class="header-link-btn" type="button">Roadmap &amp; retirements</button>
         <button id="nav-capacity" class="header-link-btn" type="button">Capacity</button>
         <div id="user-menu" class="user-menu" hidden>
@@ -46,6 +43,9 @@
             <button id="nav-admin" class="menu-item" type="button" role="menuitem" hidden>
               Admin
             </button>
+            <button id="nav-setup" class="menu-item" type="button" role="menuitem" hidden>
+              Setup
+            </button>
             <button id="signout-button" class="signout-button" type="button" role="menuitem">
               Sign out
             </button>
@@ -57,12 +57,7 @@
 
   <section class="hero">
     <div class="wrap">
-      <h1>Azure Use Case Catalog</h1>
-      <p class="lede">
-        Templatized Azure use cases as Infrastructure as Code. Every scenario is
-        resilient by design, mapped to the Well-Architected Framework, and ships
-        with a live cost estimate. Pick one, deploy it, and build.
-      </p>
+      <h1>Deployment catalog</h1>
       <div class="hero-actions">
         <input id="search" type="search" placeholder="Search use cases…" aria-label="Search use cases" />
         <span id="result-count" class="result-count"></span>
@@ -118,18 +113,17 @@
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>SME&amp;C Techlabs — Azure use case catalog. Cost figures are illustrative retail
-        list prices from the Azure Retail Prices API; verify against your agreement.</p>
+      <p>Customer operated. Cost estimates are indicative; verify against your cloud agreement.</p>
     </div>
   </footer>
 
   <script src="assets/api.js"></script>
   <script src="assets/panel.js"></script>
-  <script src="assets/azure-icons.js"></script>
   <script src="assets/app.js"></script>
   <script src="assets/user-menu.js"></script>
   <script src="assets/account.js"></script>
   <script src="assets/admin.js"></script>
+  <script src="assets/setup.js"></script>
 </body>
 
 </html>

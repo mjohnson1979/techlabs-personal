@@ -13,6 +13,7 @@ in-process per OData filter.
 from __future__ import annotations
 
 import asyncio
+import math
 import re
 from typing import Any
 from urllib.parse import quote
@@ -23,6 +24,55 @@ _RETAIL_API = "https://prices.azure.com/api/retail/prices"
 _MAX_PAGES = 40
 _price_cache: dict[str, list[dict[str, Any]]] = {}
 _DISCOUNT_RE = re.compile(r"discount|reserv|spot|low priority|dev[ /-]?test", re.I)
+
+
+async def estimate_for_subscription(
+    cost: dict[str, Any], region: str, parameter_values: dict[str, str], subscription: dict[str, str]
+) -> dict[str, Any]:
+    import setup_cloud
+
+    result = await estimate(cost, region, parameter_values)
+    mode = subscription.get("pricingMode", "retail")
+    result.update({"subscriptionId": subscription["subscriptionId"], "requestedPricing": mode, "pricingSource": "retail", "fallbackReason": None})
+    if mode != "negotiated":
+        return result
+    try:
+        sheet = await asyncio.wait_for(setup_cloud.price_sheet(subscription["subscriptionId"]), timeout=30)
+        matched = []
+        for source, priced in zip(cost.get("components", []), result["components"], strict=True):
+            if any(parameter_values.get(source.get(key)) for key in ("skuParam", "skuPriceMultiplierParam")):
+                raise ValueError("Negotiated meter matching is unavailable for the selected SKU override")
+            meter = (source.get("meterIdsByRegion") or {}).get(result["region"])
+            if not meter and result["region"] == cost.get("region"):
+                meter = source.get("meterId")
+            if not meter:
+                raise ValueError("The workload does not declare exact meter IDs for this region")
+            candidates = [row for row in sheet if
+                str(row.get("meterId", "")).lower() == str(meter).lower()
+                and row.get("currencyCode") == result["currency"]
+                and row.get("unitOfMeasure") == priced.get("unitOfMeasure")
+            ]
+            if len(candidates) != 1 or candidates[0].get("includedQuantity", 0) != 0:
+                raise ValueError("Price sheet has missing, ambiguous or tiered meter rates")
+            unit = candidates[0].get("unitPrice")
+            if isinstance(unit, bool) or not isinstance(unit, (int, float)) or not math.isfinite(unit) or unit < 0:
+                raise ValueError("Price sheet returned an invalid unit rate")
+            matched.append({**priced, "unitPrice": unit, "monthly": round(unit * priced["quantityPerMonth"], 2)})
+        if not matched:
+            raise ValueError("No price-sheet meters matched this workload")
+        result["components"] = matched
+        result["fixedMonthly"] = round(sum(row["monthly"] for row in matched if row["billing"] == "fixed"), 2)
+        result["usageMonthly"] = round(sum(row["monthly"] for row in matched if row["billing"] != "fixed"), 2)
+        result["totalMonthly"] = round(result["fixedMonthly"] + result["usageMonthly"], 2)
+        result["complete"] = True
+        result["pricingSource"] = "negotiated"
+    except httpx.HTTPStatusError as exc:
+        result["fallbackReason"] = f"Negotiated price sheet unavailable (HTTP {exc.response.status_code}); using public retail estimates. Check billing access and agreement support."
+    except (httpx.RequestError, TimeoutError):
+        result["fallbackReason"] = "Negotiated price lookup timed out or could not connect; using public retail estimates."
+    except ValueError as exc:
+        result["fallbackReason"] = f"{exc}; using public retail estimates."
+    return result
 
 
 def _norm(value: Any) -> str:

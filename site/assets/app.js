@@ -1,8 +1,7 @@
-/* SME&C Techlabs gallery - loads catalog.json and renders filterable cards. */
+/* Deployment catalog. */
 (function () {
   "use strict";
 
-  const REPO = "https://github.com/mcaps-microsoft/TechLabs";
   const state = { items: [], q: "", category: new Set(), industry: new Set(), compliance: new Set(), me: null, capacity: null, updates: null };
 
   // Connector arrow drawn between architecture columns (theme accent).
@@ -307,7 +306,7 @@
     filtered.forEach((it) => cards.appendChild(card(it)));
     $("#result-count").textContent = `${filtered.length} of ${state.items.length} use cases`;
     if (!filtered.length) {
-      cards.appendChild(el("p", { class: "card-desc", text: "No use cases match your filters." }));
+      cards.appendChild(el("p", { class: "card-desc", text: state.items.length ? "No use cases match your filters." : "No use cases published yet." }));
     }
   }
 
@@ -423,7 +422,9 @@
       const meta = [];
       if (cost.region) meta.push(`Region ${cost.region}`);
       if (cost.pricedAt) meta.push(`retail prices as of ${cost.pricedAt}`);
-      meta.push("PAYG list price, excludes tax/reservations/free tiers");
+      meta.push(cost.pricingSource === "negotiated" ? "Negotiated meter rates, estimate only" : "Public retail estimate, excludes tax/reservations/free tiers");
+      if (cost.subscriptionId) meta.push(`Subscription ${cost.subscriptionId}`);
+      if (cost.fallbackReason) meta.push(cost.fallbackReason);
       if (opts && opts.forSelection) meta.push("estimated live for your current selections");
       if (cost.complete === false) meta.push("some components not priced — see notes");
       host.appendChild(el("p", { class: "cost-note", text: meta.join(" · ") }));
@@ -443,9 +444,6 @@
       );
     }
 
-      host.appendChild(
-        el("div", { class: "code", text: `./tools/Get-CatalogCost.ps1 -UseCase ${it.path}` })
-      );
     }
 
     render(baseCost);
@@ -539,6 +537,13 @@
 
   // Color-coded region picker reflecting live capacity for a use case.
   function deployRegionField(it, getSel) {
+    if (state.me?.customerOperated) {
+      return {
+        select: el("select", { class: "deploy-input deploy-region", id: "deploy-region", disabled: true }, [el("option", { value: "", text: "Select subscription first" })]),
+        note: el("div", { class: "deploy-region-note", text: "Region availability and quota have not been checked." }),
+        refreshAll: function () {},
+      };
+    }
     const sel = () => (getSel ? getSel() : null);
     const regions = capacityRegions();
     const select = el("select", { class: "deploy-input deploy-region", id: "deploy-region" });
@@ -620,6 +625,9 @@
 
   function deployBlock(it, estimateCtl) {
     const me = state.me;
+    const customerSubscriptions = me?.subscriptions || [];
+    const subscriptionSelect = el("select", { class: "deploy-input", id: "deploy-subscription", "aria-label": "Deployment subscription" }, customerSubscriptions.map(item => el("option", { value: item.subscriptionId, text: item.displayName })));
+    if (!customerSubscriptions.length) subscriptionSelect.appendChild(el("option", { value: "", text: "No configured subscriptions" }));
     const maxHours = me && me.maxLifetimeHours ? me.maxLifetimeHours : 96;
     const now = new Date();
     const defaultEnd = new Date(now.getTime() + Math.min(48, maxHours) * 3600 * 1000);
@@ -641,8 +649,8 @@
       type: "text",
       class: "deploy-input",
       id: "deploy-rg",
-      value: `rg-techlabs-${it.path}`,
-      placeholder: "rg-techlabs",
+      value: `rg-portal-${it.path}`,
+      placeholder: "rg-portal",
     });
 
     // Advanced-option overrides (param name -> value); shared with the region
@@ -666,6 +674,7 @@
       class: "deploy-btn-secondary",
       type: "button",
       text: "Deploy to external subscription",
+      hidden: !me || !!me.customerOperated,
     });
     const externalSubInput = el("input", {
       type: "text",
@@ -734,6 +743,20 @@
     function syncEngine() {
       manualCode.textContent = manualSnippet(engineSelect.value);
       if (!me) return;
+      if (it.deployReady === false || (me.customerOperated && !customerSubscriptions.length)) {
+        btn.disabled = true;
+        externalBtn.disabled = true;
+        engineHint.textContent = it.deployReady === false ? "Customer runtime inputs have not been published." : "Configure a deployment subscription in Setup.";
+        engineHint.style.display = "";
+        return;
+      }
+      if (me.customerOperated && (region.select.disabled || !region.select.value)) {
+        btn.disabled = true;
+        externalBtn.disabled = true;
+        engineHint.textContent = "Select a region returned by Azure for this subscription.";
+        engineHint.style.display = "";
+        return;
+      }
       if (engineSelect.value === "terraform" && !tfExec) {
         btn.disabled = true;
         externalBtn.disabled = true;
@@ -862,7 +885,7 @@
         return;
       }
       const confirmation = useExistingRg
-        ? "Deploy into this existing resource group using your Azure identity? TechLabs will not clean up these resources."
+        ? "Deploy into this existing resource group using your Azure identity? Automatic cleanup is disabled for these resources."
         : "Deploy using your Azure identity to this subscription?";
       if (external && !window.confirm(confirmation)) return;
       const payload = {
@@ -873,6 +896,7 @@
         externalSubscription: external,
       };
       if (!useExistingRg) payload.endAt = new Date(endVal).toISOString();
+      if (me?.customerOperated) payload.subscriptionId = subscriptionSelect.value;
       if (external) {
         payload.subscriptionId = subscriptionId;
         if (useExistingRg) payload.resourceGroupName = existingRg;
@@ -1340,21 +1364,25 @@
     let estimateSeq = 0;
     function scheduleEstimate() {
       if (!estimateCtl || !estimateCtl.apply || !window.TechlabsApi) return;
+      const seq = ++estimateSeq;
+      clearTimeout(estimateTimer);
+      if (me?.customerOperated && (region.select.disabled || !region.select.value)) {
+        estimateCtl.apply({ ...estimateCtl.baseCost, pricingSource: "retail", fallbackReason: "Choose a region for a live estimate; showing the authored estimate." });
+        return;
+      }
       const baseRegion = (estimateCtl.baseCost && estimateCtl.baseCost.region) || "";
       const loc = region.select.value;
       const values = Object.assign({}, advValues);
-      const changed = Object.keys(values).length > 0 || loc.toLowerCase() !== String(baseRegion).toLowerCase();
+      const changed = me?.customerOperated || Object.keys(values).length > 0 || loc.toLowerCase() !== String(baseRegion).toLowerCase();
       if (!changed) {
         estimateCtl.reset();
         return;
       }
       estimateCtl.pending();
-      clearTimeout(estimateTimer);
       estimateTimer = setTimeout(function () {
-        const seq = ++estimateSeq;
-        window.TechlabsApi.estimateCost({ useCase: it.path, location: loc, parameterValues: values })
+        window.TechlabsApi.estimateCost({ useCase: it.path, location: loc, parameterValues: values, subscriptionId: me?.customerOperated ? subscriptionSelect.value : "" })
           .then(function (est) { if (seq === estimateSeq) estimateCtl.apply(est, { forSelection: true }); })
-          .catch(function () { if (seq === estimateSeq) estimateCtl.reset(); });
+          .catch(function () { if (seq === estimateSeq) estimateCtl.apply({ ...estimateCtl.baseCost, pricingSource: "retail", fallbackReason: "Live pricing unavailable; showing the authored estimate, which may be stale." }); });
       }, 350);
     }
 
@@ -1374,19 +1402,41 @@
     const envBox = el("fieldset", { class: "deploy-group" }, [
       el("legend", { class: "deploy-legend", text: "Environment" }),
       el("div", { class: "deploy-grid" }, [
+        me?.customerOperated ? deployField("Subscription", subscriptionSelect) : null,
         deployField("Type", envSelect),
         deployField("IaC engine", engineSelect, engineHint),
         deployField("Resource group", rgInput),
         endField,
       ]),
     ]);
+    if (me?.customerOperated) {
+      const quotaStatus = el("p", { class: "deploy-note", role: "status" });
+      const quotaButton = el("button", { type: "button", class: "deploy-btn-secondary", text: "Check subscription quota", disabled: !customerSubscriptions.length });
+      quotaButton.addEventListener("click", async () => {
+        if (!region.select.value || region.select.disabled) {
+          quotaStatus.textContent = "Select a region before checking quota.";
+          return;
+        }
+        quotaButton.disabled = true;
+        quotaStatus.textContent = "Checking quota...";
+        try {
+          const response = await fetch(`/api/subscriptions/${encodeURIComponent(subscriptionSelect.value)}/capacity?location=${encodeURIComponent(region.select.value)}`, { credentials: "same-origin" });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.detail || "Quota lookup failed.");
+          const headroom = (result.quotas || []).map(row => `${row.name}: ${row.available === null ? "unknown" : row.available} available`).join("; ");
+          quotaStatus.textContent = `${result.detail} ${headroom}`;
+        } catch (error) { quotaStatus.textContent = error.message; }
+        finally { quotaButton.disabled = false; }
+      });
+      regionBox.append(quotaButton, quotaStatus);
+    }
 
     function syncExternalTarget() {
       const existing = externalTargetSelect.value === "existing";
       externalRgInput.hidden = !existing;
       endField.hidden = existing;
       externalHint.textContent = existing
-        ? "Contributor access on this resource group is normally sufficient. TechLabs will not clean up the deployed resources."
+        ? "Contributor access on this resource group is normally sufficient. Automatic cleanup is disabled for these resources."
         : "Creating a dedicated resource group requires subscription-level deployment access.";
     }
     externalTargetSelect.addEventListener("change", syncExternalTarget);
@@ -1403,7 +1453,7 @@
     function manualSnippet(engine) {
       const env = envSelect.value;
       const location = region.select.value;
-      const rg = (rgInput.value || "rg-techlabs").trim();
+      const rg = (rgInput.value || "rg-portal").trim();
       const overrides = advOverridePairs();
 
       if (engine === "terraform") {
@@ -1450,6 +1500,38 @@
       control.addEventListener("input", syncEngine);
     });
     region.select.addEventListener("change", scheduleEstimate);
+    let locationRequest = 0;
+    async function loadSubscriptionRegions() {
+      const sequence = ++locationRequest;
+      const preferred = region.select.value || it.cost?.region || "";
+      region.select.replaceChildren(el("option", { value: "", text: "Loading regions..." }));
+      region.select.disabled = true;
+      region.note.textContent = "Looking up subscription regions in Azure...";
+      syncEngine();
+      scheduleEstimate();
+      try {
+        if (!subscriptionSelect.value) throw new Error("Configure a subscription in Setup first.");
+        const response = await fetch(`/api/subscriptions/${encodeURIComponent(subscriptionSelect.value)}/locations`, { credentials: "same-origin" });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.detail || "Could not load subscription regions.");
+        if (sequence !== locationRequest) return;
+        const locations = result.locations || [];
+        region.select.replaceChildren(el("option", { value: "", text: "Select region" }), ...locations.map(location => el("option", { value: location.name, text: location.displayName })));
+        region.select.disabled = !locations.length;
+        if (locations.some(location => location.name === preferred)) region.select.value = preferred;
+        region.note.textContent = locations.length ? "Regions returned by Azure; service/SKU availability and physical capacity are not guaranteed." : "Azure returned no regions for this subscription.";
+      } catch (error) {
+        if (sequence !== locationRequest) return;
+        region.select.replaceChildren(el("option", { value: "", text: "Regions unavailable" }));
+        region.note.textContent = error.message;
+      }
+      if (sequence === locationRequest) { syncEngine(); scheduleEstimate(); }
+    }
+    if (me?.customerOperated) {
+      subscriptionSelect.addEventListener("change", loadSubscriptionRegions);
+      setTimeout(loadSubscriptionRegions, 0);
+    }
+    setTimeout(scheduleEstimate, 0);
     syncEngine();
     const manual = el("details", { class: "deploy-manual" }, [manualSummary, manualCode]);
 
@@ -1751,12 +1833,6 @@
     // Cost estimate (boxed).
     const cost = costBlock(it, estimateCtl);
     if (cost) body.appendChild(cost);
-
-    body.appendChild(
-      el("div", { class: "modal-section modal-foot" }, [
-        el("a", { href: `${REPO}/tree/main/catalog/${it.path}`, target: "_blank", rel: "noopener", text: "View on GitHub →" }),
-      ])
-    );
 
     $("#modal").hidden = false;
   }
@@ -2159,19 +2235,6 @@
       bodyEl.appendChild(submit);
       bodyEl.appendChild(status);
 
-      bodyEl.appendChild(
-        e("p", {
-          class: "submit-intro submit-secondary",
-          text:
-            "Don't have the Bicep yet? The describe-it-in-plain-English flow is being reworked \u2014 for now, open a GitHub issue and a maintainer will help.",
-        })
-      );
-      bodyEl.appendChild(
-        e("a", {
-          class: "link-btn", href: REPO + "/issues/new", target: "_blank",
-          rel: "noopener", text: "Open a GitHub issue \u2192",
-        })
-      );
     });
   }
 
@@ -2227,6 +2290,12 @@
     window.TechlabsApi.me()
       .then((me) => {
         state.me = me;
+        if (me && me.brandName) {
+          document.title = me.brandName;
+          document.querySelectorAll("[data-brand-name]").forEach((node) => {
+            node.textContent = me.brandName;
+          });
+        }
         if (me && me.isAdmin) {
           const link = document.getElementById("nav-admin");
           if (link) link.hidden = false;
@@ -2238,7 +2307,15 @@
       });
   }
 
-  loadIdentity();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadIdentity, { once: true });
+  } else {
+    loadIdentity();
+  }
+  document.addEventListener("techlabs:setup-saved", () => {
+    loadIdentity();
+    fetch("catalog.json").then(response => response.json()).then(catalog => { state.items = catalog.items || []; render(); }).catch(() => {});
+  });
   wireCapacityNav();
   wireSubmitNav();
 
@@ -2285,7 +2362,7 @@
     .then(init)
     .catch((err) => {
       $("#cards").appendChild(
-        el("p", { class: "card-desc", text: "Could not load catalog.json. Run ./tools/Build-Catalog.ps1 to generate it." })
+        el("p", { class: "card-desc", text: "Could not load the catalog. Check the customer repository sync in Setup." })
       );
       console.error(err);
     });

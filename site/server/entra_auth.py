@@ -1,11 +1,6 @@
 """Microsoft Entra ID sign-in for the Techlabs gallery.
 
-Server-side OAuth Authorization-Code + PKCE flow, modeled on the
-BusinessAgent web app (web/src/auth + agent/src/agent/auth). Stripped
-down to *just authentication*: identity-only scope, no CRM/Graph calls,
-no Key Vault, no token persistence.
-
-Like BusinessAgent it reuses the **Azure CLI public client**
+The legacy OAuth Authorization-Code + PKCE flow reuses the Azure CLI public client
 (`04b07795-8ddb-461a-bbee-02f9e1bf7b46`) — every user in the tenant has
 already consented to it, so no app registration is required. The public
 client only accepts loopback redirect URIs (`http://localhost[:port]/`),
@@ -128,6 +123,11 @@ def identity_from_easy_auth(request: Request) -> "Identity | None":
     Returns None when the headers are absent (e.g. local dev), letting the
     caller fall back to the self-hosted OAuth session.
     """
+    if os.environ.get("GALLERY_EASY_AUTH", "false").strip().lower() not in (
+        "1", "true", "yes"
+    ):
+        return None
+
     def _first(claims: dict[str, str], keys: tuple[str, ...]) -> str:
         for k in keys:
             if claims.get(k):
@@ -141,28 +141,48 @@ def identity_from_easy_auth(request: Request) -> "Identity | None":
         except (ValueError, json.JSONDecodeError):
             data = None
         if isinstance(data, dict):
+            raw_claims = data.get("claims")
+            if not isinstance(raw_claims, list):
+                return None
             claims = {
                 str(c.get("typ")): str(c.get("val"))
-                for c in data.get("claims", [])
+                for c in raw_claims
                 if isinstance(c, dict)
             }
+            provider = data.get("auth_typ", "aad")
+            if provider != "aad":
+                from distribution import is_customer_distribution
+                if not is_customer_distribution():
+                    return None
+                import db
+                configured = db.get_setup_setting("authentication", {})
+                issuer = claims.get("iss", "")
+                subject = claims.get("sub") or claims.get("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier", "")
+                if (
+                    provider != configured.get("providerName")
+                    or issuer != configured.get("issuer")
+                    or claims.get("aud") != configured.get("clientId")
+                    or not subject or subject == "None"
+                ):
+                    return None
+                oid = "oidc:" + hashlib.sha256(f"{issuer}\n{subject}".encode()).hexdigest()
+                return Identity(
+                    oid=oid,
+                    upn=_first(claims, _EA_UPN_CLAIMS) or claims.get("email", ""),
+                    tenant_id=os.environ.get("GALLERY_ENTRA_TENANT_ID", "").strip(),
+                    name=_first(claims, _EA_NAME_CLAIMS),
+                )
             oid = _first(claims, _EA_OID_CLAIMS)
             upn = _first(claims, _EA_UPN_CLAIMS)
             name = _first(claims, _EA_NAME_CLAIMS) or upn
             tid = _first(claims, _EA_TID_CLAIMS)
-            if oid or upn:
+            expected = os.environ.get("GALLERY_ENTRA_TENANT_ID", "").strip()
+            if expected.lower() not in ("", "organizations", "common", "consumers"):
+                if tid.lower() != expected.lower():
+                    return None
+            if oid and oid != "None":
                 return Identity(oid=oid, upn=upn, tenant_id=tid, name=name)
 
-    # Simple header fallback (set alongside the principal blob).
-    name_hdr = request.headers.get("x-ms-client-principal-name")
-    id_hdr = request.headers.get("x-ms-client-principal-id")
-    if name_hdr or id_hdr:
-        return Identity(
-            oid=str(id_hdr or ""),
-            upn=str(name_hdr or ""),
-            tenant_id="",
-            name=str(name_hdr or ""),
-        )
     return None
 
 
@@ -986,7 +1006,7 @@ async def finalize_oauth_landing(
     so the browser lands on `/?code=...&state=...`. This is called from the
     root route to exchange the code server-side, establish the session, then
     302 to a clean `/`. On any failure it 302s back to the sign-in page with a
-    `?message=` the page surfaces (mirrors the BusinessAgent SPA error UX).
+    `?message=` the page surfaces.
     """
     if error:
         desc = (error_description or "").strip()

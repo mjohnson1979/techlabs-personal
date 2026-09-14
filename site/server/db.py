@@ -25,6 +25,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from distribution import admin_oids, is_customer_distribution
+
 _LOCK = threading.Lock()
 _CONN: sqlite3.Connection | None = None
 
@@ -108,6 +110,11 @@ CREATE TABLE IF NOT EXISTS submissions (
 
 CREATE INDEX IF NOT EXISTS idx_subs_status ON submissions(status);
 CREATE INDEX IF NOT EXISTS idx_subs_created ON submissions(created_at);
+
+CREATE TABLE IF NOT EXISTS setup_settings (
+    name TEXT PRIMARY KEY,
+    value_json TEXT NOT NULL
+);
 """
 
 
@@ -156,6 +163,27 @@ def _conn() -> sqlite3.Connection:
     return _CONN
 
 
+def get_setup_setting(name: str, default: Any = None) -> Any:
+    connection = init_db()
+    with _LOCK:
+        row = connection.execute(
+            "SELECT value_json FROM setup_settings WHERE name = ?", (name,)
+        ).fetchone()
+    return json.loads(row["value_json"]) if row else default
+
+
+def set_setup_setting(name: str, value: Any) -> None:
+    encoded = json.dumps(value)
+    connection = init_db()
+    with _LOCK:
+        connection.execute(
+            "INSERT INTO setup_settings(name,value_json) VALUES(?,?) "
+            "ON CONFLICT(name) DO UPDATE SET value_json=excluded.value_json",
+            (name, encoded),
+        )
+        connection.commit()
+
+
 def has_admin() -> bool:
     """True if at least one admin exists (real or placeholder)."""
     with _LOCK:
@@ -184,6 +212,8 @@ def upsert_user(oid: str, upn: str, name: str) -> str:
         placeholder = conn.execute(
             "SELECT role FROM users WHERE oid = ?", (f"upn:{upn_l}",)
         ).fetchone()
+        if oid.startswith("oidc:"):
+            placeholder = None
         existing = conn.execute(
             "SELECT role FROM users WHERE oid = ?", (oid,)
         ).fetchone()
@@ -197,7 +227,9 @@ def upsert_user(oid: str, upn: str, name: str) -> str:
             admins = conn.execute(
                 "SELECT 1 FROM users WHERE role = 'admin' LIMIT 1"
             ).fetchone()
-            if admins is None:
+            if admins is None and (
+                not is_customer_distribution() or oid.lower() in admin_oids()
+            ):
                 role = "admin"
         if existing is None:
             conn.execute(
@@ -248,7 +280,7 @@ def set_user_role(upn: str, role: str) -> None:
     with _LOCK:
         conn = _conn()
         row = conn.execute(
-            "SELECT oid FROM users WHERE lower(upn) = ?", (upn_l,)
+            "SELECT oid FROM users WHERE lower(upn) = ? AND oid NOT LIKE 'oidc:%'", (upn_l,)
         ).fetchone()
         if row is None:
             conn.execute(
@@ -258,9 +290,20 @@ def set_user_role(upn: str, role: str) -> None:
             )
         else:
             conn.execute(
-                "UPDATE users SET role=? WHERE lower(upn) = ?", (role, upn_l)
+                "UPDATE users SET role=? WHERE lower(upn) = ? AND oid NOT LIKE 'oidc:%'", (role, upn_l)
             )
         conn.commit()
+
+
+def set_user_role_by_oid(oid: str, role: str) -> None:
+    if role not in ("admin", "guest"):
+        raise ValueError("Invalid role")
+    connection = init_db()
+    with _LOCK:
+        cursor = connection.execute("UPDATE users SET role=? WHERE oid=?", (role, oid))
+        if cursor.rowcount != 1:
+            raise ValueError("User must sign in before assigning a role")
+        connection.commit()
 
 
 # --------------------------------------------------------------------------- #

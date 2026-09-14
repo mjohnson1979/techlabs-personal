@@ -13,6 +13,29 @@
   --shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
 }
 
+.setup-content { padding-top: 16px; min-width: 0; max-width: 100%; }
+.setup-content button { max-width: 100%; overflow-wrap: anywhere; }
+.setup-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.setup-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; max-width: 100%; }
+.setup-field[hidden] { display: none; }
+.setup-grid[hidden] { display: none; }
+.setup-device-code { display: block; font-family: Consolas, monospace; font-size: 1.5rem; letter-spacing: 0; }
+.setup-field input, .setup-field select { width: 100%; min-width: 0; }
+.setup-field input[type="checkbox"] { width: 20px; height: 20px; }
+.setup-actions { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 20px 0; }
+.setup-status { overflow-wrap: anywhere; min-height: 24px; }
+.setup-table { overflow-x: auto; max-width: 100%; margin: 20px 0; }
+.setup-table table { width: 100%; border-collapse: collapse; }
+.setup-table td, .setup-table th { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); }
+.setup-table td:first-child { overflow-wrap: anywhere; }
+.setup-tabs [aria-selected="true"] { color: var(--accent); border-bottom: 2px solid var(--accent); }
+.setup-tabs { flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .setup-grid { grid-template-columns: minmax(0, 1fr); }
+  .modal-panel:has(.setup-content) { width: calc(100% - 24px); padding: 20px; max-height: calc(100dvh - 24px); }
+  .setup-tabs .tab { text-align: left; padding: 8px; font-size: 0.85rem; }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -59,11 +82,18 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 60px;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-height: 60px;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .brand {
   display: flex;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   align-items: baseline;
   gap: 8px;
   font-weight: 700;
@@ -87,6 +117,8 @@ a:hover {
 /* User menu */
 .header-links {
   display: flex;
+  flex-wrap: wrap;
+  max-width: 100%;
   align-items: center;
 }
 
@@ -222,8 +254,9 @@ a:hover {
 
 .hero h1 {
   margin: 0 0 12px;
-  font-size: 2.4rem;
-  letter-spacing: -0.02em;
+  font-size: 2rem;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 .lede {
@@ -235,12 +268,14 @@ a:hover {
 
 .hero-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 16px;
 }
 
 #search {
-  flex: 1;
+  flex: 1 1 240px;
+  min-width: 0;
   max-width: 520px;
   padding: 12px 16px;
   border-radius: var(--radius);

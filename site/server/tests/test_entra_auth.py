@@ -11,12 +11,74 @@ from pathlib import Path
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from starlette.requests import Request
 
 SERVER_DIR = Path(__file__).resolve().parent.parent
 if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 import entra_auth  # noqa: E402
+
+
+@pytest.mark.parametrize("enabled,tenant,accepted", [
+    ("false", "customer-tenant", False),
+    ("true", "", False),
+    ("true", "different-tenant", False),
+    ("true", "CUSTOMER-TENANT", True),
+])
+def test_easy_auth_requires_trusted_mode_and_tenant(
+    monkeypatch: pytest.MonkeyPatch, enabled: str, tenant: str, accepted: bool
+) -> None:
+    monkeypatch.setenv("GALLERY_EASY_AUTH", enabled)
+    monkeypatch.setenv("GALLERY_ENTRA_TENANT_ID", "customer-tenant")
+    principal = base64.b64encode(json.dumps({"claims": [
+        {"typ": "oid", "val": "customer-oid"},
+        {"typ": "tid", "val": tenant},
+    ]}).encode())
+    request = Request({"type": "http", "headers": [
+        (b"x-ms-client-principal", principal),
+    ]})
+    assert (entra_auth.identity_from_easy_auth(request) is not None) is accepted
+
+
+def test_easy_auth_does_not_accept_headers_without_tenant(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GALLERY_EASY_AUTH", "true")
+    request = Request({"type": "http", "headers": [
+        (b"x-ms-client-principal-id", b"forged-oid"),
+        (b"x-ms-client-principal-name", b"forged@example.com"),
+    ]})
+    assert entra_auth.identity_from_easy_auth(request) is None
+
+
+@pytest.mark.parametrize("claims", [None, {}, "invalid", [{"typ": "oid", "val": None}]])
+def test_easy_auth_rejects_malformed_claims(
+    monkeypatch: pytest.MonkeyPatch, claims: object,
+) -> None:
+    monkeypatch.setenv("GALLERY_EASY_AUTH", "true")
+    principal = base64.b64encode(json.dumps({"claims": claims}).encode())
+    request = Request({"type": "http", "headers": [(b"x-ms-client-principal", principal)]})
+    assert entra_auth.identity_from_easy_auth(request) is None
+
+
+@pytest.mark.parametrize("easy_auth,tenant", [("true", "home"), ("false", "")])
+def test_api_rejects_session_fallback_or_missing_tenant(
+    monkeypatch: pytest.MonkeyPatch, easy_auth: str, tenant: str
+) -> None:
+    import identity
+
+    monkeypatch.setenv("GALLERY_EASY_AUTH", easy_auth)
+    monkeypatch.setenv("GALLERY_ENTRA_TENANT_ID", "home")
+    application = FastAPI()
+    application.state.session_store = entra_auth.SessionStore()
+    application.state.session_store.set_identity(
+        "session", entra_auth.Identity("user", "user@example.com", tenant)
+    )
+    request = Request({"type": "http", "app": application, "headers": [
+        (b"cookie", f"{entra_auth.COOKIE_NAME}=session".encode()),
+    ]})
+    assert identity.current_user_optional(request) is None
 
 
 def _id_token() -> str:

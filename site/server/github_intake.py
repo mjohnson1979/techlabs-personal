@@ -28,15 +28,28 @@ API_ROOT = "https://api.github.com"
 
 
 def _token() -> str:
-    return os.environ.get("GALLERY_GITHUB_TOKEN", "").strip()
+    from github_device import access_token
+    return access_token()
 
 
 def _repo() -> str:
     # owner/repo the branches are created in.
-    return os.environ.get("GALLERY_GITHUB_REPO", "mcaps-microsoft/TechLabs").strip()
+    from distribution import is_customer_distribution
+    if is_customer_distribution():
+        import db
+        settings = db.get_setup_setting("github")
+        if settings is not None:
+            return f"{settings['owner']}/{settings['repository']}" if settings.get("enabled") else ""
+    return os.environ.get("GALLERY_GITHUB_REPO", "").strip()
 
 
 def _base() -> str:
+    from distribution import is_customer_distribution
+    if is_customer_distribution():
+        import db
+        settings = db.get_setup_setting("github", {})
+        if settings.get("enabled"):
+            return settings["branch"]
     return os.environ.get("GALLERY_GITHUB_BASE", "main").strip() or "main"
 
 

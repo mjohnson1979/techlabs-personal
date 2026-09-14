@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connect Entra | Deployment Portal</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="stylesheet" href="/assets/install.css" />
+  <script src="/assets/install.js" defer></script>
+</head>
+<body>
+  <header class="site-header"><div class="wrap"><span class="brand">Deployment Portal</span><span>Installation</span></div></header>
+  <main class="installation">
+    <ol class="install-steps" aria-label="Installation progress">
+      <li id="step-unlock" aria-current="step">Unlock</li>
+      <li id="step-connect">Connect Entra</li>
+      <li id="step-verify">Verify sign-in</li>
+    </ol>
+    <h1>Connect your Entra tenant</h1>
+    <p id="install-status" class="setup-status" role="status" aria-live="polite">Checking installation...</p>
+    <form id="unlock-form" hidden>
+      <label class="setup-field">One-time setup code
+        <input id="setup-code" type="password" autocomplete="off" minlength="32" maxlength="128" required />
+      </label>
+      <div class="setup-actions"><button type="submit">Unlock installation</button></div>
+    </form>
+    <form id="connect-form" hidden>
+      <div class="setup-grid">
+        <label class="setup-field">Directory (tenant) ID
+          <input id="tenant-id" autocomplete="off" maxlength="36" pattern="[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}" required />
+        </label>
+        <label class="setup-field">Application (client) ID
+          <input id="client-id" autocomplete="off" maxlength="36" pattern="[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}" required />
+        </label>
+        <label class="setup-field install-wide">Web redirect URI
+          <input id="callback-url" readonly />
+        </label>
+        <label class="setup-field">Credential storage
+          <select id="secret-storage"><option value="app_service">App Service settings</option><option value="key_vault">Azure Key Vault</option></select>
+        </label>
+        <label class="setup-field">Host credential setting
+          <input value="PORTAL_ENTRA_CLIENT_SECRET" readonly />
+        </label>
+        <label class="setup-field install-wide" id="vault-resource-field" hidden>Key Vault resource ID
+          <input id="vault-resource" autocomplete="off" maxlength="500" />
+        </label>
+        <label class="setup-field" id="vault-secret-field" hidden>Key Vault secret name
+          <input id="vault-secret" autocomplete="off" maxlength="127" />
+        </label>
+      </div>
+      <label class="install-checkbox"><input id="use-existing" type="checkbox" />Use stored credential</label>
+      <label class="setup-field" id="client-secret-field">Client secret value
+        <input id="client-secret" type="password" autocomplete="new-password" maxlength="4096" required />
+      </label>
+      <div class="setup-actions">
+        <button type="submit">Connect Entra</button>
+        <a href="https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" rel="noopener noreferrer">Entra app registrations</a>
+      </div>
+    </form>
+    <section id="verify-section" hidden aria-labelledby="verify-title">
+      <h2 id="verify-title">Verify your connection</h2>
+      <dl class="install-details"><dt>Tenant</dt><dd id="pending-tenant"></dd><dt>Application</dt><dd id="pending-client"></dd></dl>
+      <div class="setup-actions">
+        <a class="install-signin" href="/.auth/login/aad?post_login_redirect_uri=/install">Sign in with Entra</a>
+        <button id="finish-install" type="button">Verify and finish</button>
+        <button id="edit-connection" type="button">Edit connection</button>
+      </div>
+    </section>
+    <section id="complete-section" hidden>
+      <h2>Entra connection verified</h2>
+      <a href="/">Open portal</a>
+    </section>
+  </main>
+</body>
+</html>

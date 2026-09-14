@@ -6,7 +6,7 @@ Service system-assigned managed identity in production; ``az login`` / developer
 credentials locally) and submits ARM deployments via the resource-management
 SDK. No GitHub PAT, no callback token.
 
-Templates are precompiled from Bicep to ARM JSON by ``tools/Build-Templates.ps1``
+Customer templates are precompiled from Bicep to ARM JSON in their own toolchain
 (run in CI before the site is published, and locally before testing deploys).
 Each use case/environment becomes
 ``site/server/_templates/<use_case>/<env>.json`` with the shape
@@ -90,11 +90,18 @@ _GRAPH_SCOPE = "https://graph.microsoft.com/.default"
 
 
 def _view_grant_enabled() -> bool:
-    val = os.environ.get("GALLERY_GRANT_VIEW_ACCESS", "true").strip().lower()
+    from distribution import is_customer_distribution
+
+    default = "false" if is_customer_distribution() else "true"
+    val = os.environ.get("GALLERY_GRANT_VIEW_ACCESS", default).strip().lower()
     return val not in ("false", "0", "no", "off")
 
 
 def _invite_enabled() -> bool:
+    from distribution import is_customer_distribution
+
+    if is_customer_distribution():
+        return False
     val = os.environ.get("GALLERY_INVITE_GUEST", "true").strip().lower()
     return val not in ("false", "0", "no", "off")
 
@@ -256,7 +263,7 @@ def grant_view_access(dep: dict[str, Any]) -> bool:
 
 async def _grant_view_access(dep: dict[str, Any]) -> None:
     """Best-effort wrapper: grant view access without ever failing the deploy."""
-    if not _view_grant_enabled():
+    if not _view_grant_enabled() or str(dep.get("user_oid", "")).startswith("oidc:"):
         return
     dep_id = dep["id"]
     event_meta = {
@@ -300,7 +307,7 @@ def load_template(use_case: str, environment: str) -> tuple[dict, dict]:
     except FileNotFoundError as exc:
         raise RuntimeError(
             f"No compiled template for {use_case}/{environment}. "
-            "Run tools/Build-Templates.ps1 to generate site/server/_templates."
+            "Publish customer-compiled runtime inputs through the configured repository."
         ) from exc
     except (OSError, ValueError) as exc:
         raise RuntimeError(f"Bad template for {use_case}/{environment}: {exc}") from exc
@@ -333,6 +340,12 @@ class DelegatedTokenCredential:
 
 
 def _credential_for_deployment(dep: dict[str, Any]) -> Any:
+    from distribution import is_customer_distribution
+
+    if is_customer_distribution() and (
+        dep.get("_delegated_arm_token") or (dep.get("params") or {}).get("externalSubscription")
+    ):
+        raise RuntimeError("customer installations require their configured managed identity")
     token = dep.get("_delegated_arm_token")
     if token:
         return DelegatedTokenCredential(
@@ -346,6 +359,21 @@ def _credential_for_deployment(dep: dict[str, Any]) -> Any:
 def _get_credential() -> Any:
     global _credential
     if _credential is None:
+        from distribution import is_customer_distribution, uses_system_identity
+
+        if is_customer_distribution():
+            from azure.identity import ManagedIdentityCredential
+
+            client_id = os.environ.get("AZURE_CLIENT_ID", "").strip()
+            if uses_system_identity():
+                if client_id:
+                    raise RuntimeError("conflicting customer managed identity configuration")
+                _credential = ManagedIdentityCredential()
+                return _credential
+            if not client_id:
+                raise RuntimeError("customer managed identity is not configured")
+            _credential = ManagedIdentityCredential(client_id=client_id)
+            return _credential
         from azure.identity import DefaultAzureCredential
 
         # Managed identity in App Service; az/developer creds locally. Never the
@@ -357,6 +385,17 @@ def _get_credential() -> Any:
 
 
 def _client(subscription_id: str, credential: Any = None) -> Any:
+    from distribution import is_customer_distribution
+
+    if is_customer_distribution():
+        from setup_config import subscription_for
+
+        try:
+            if not subscription_id:
+                raise ValueError
+            subscription_for(subscription_id)
+        except ValueError:
+            raise RuntimeError("subscription is outside the customer installation") from None
     # The unified ``ResourceManagementClient`` (top-level import) exposes the
     # ``deployments``, ``deployment_operations`` and ``resource_groups`` operation
     # groups the executor relies on. This holds for azure-mgmt-resource 23.x
@@ -441,7 +480,14 @@ def _merge_parameter_overrides(
 def _do_deploy(dep: dict[str, Any]) -> None:
     subscription_id = dep["subscription_id"]
     resource_group = dep["resource_group"]
-    template, parameters = load_template(dep["use_case"], dep["environment"])
+    version = (dep.get("params") or {}).get("catalogVersion")
+    if version:
+        from setup_github import snapshot_root
+        path = snapshot_root(version) / "_templates" / dep["use_case"] / f"{dep['environment']}.json"
+        compiled = json.loads(path.read_text(encoding="utf-8-sig"))
+        template, parameters = compiled["template"], compiled.get("parameters", {})
+    else:
+        template, parameters = load_template(dep["use_case"], dep["environment"])
 
     params_meta = dep.get("params") or {}
     _merge_parameter_overrides(template, parameters, params_meta.get("parameterValues"))

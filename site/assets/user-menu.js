@@ -42,13 +42,6 @@
   function setAvatar(text) {
     paintInitials(avatarEl, text);
     paintInitials(avatarLgEl, text);
-    // Try the Microsoft profile photo; keep initials if there isn't one.
-    var img = new Image();
-    img.onload = function () {
-      paintPhoto(avatarEl, "/api/auth/entra/photo");
-      paintPhoto(avatarLgEl, "/api/auth/entra/photo");
-    };
-    img.src = "/api/auth/entra/photo";
   }
 
   function openMenu() {

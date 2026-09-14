@@ -49,6 +49,10 @@ def _resolve_identity(request: Request) -> CurrentUser | None:
     if ea is not None and (ea.oid or ea.upn):
         ident = ea
     else:
+        if os.environ.get("GALLERY_EASY_AUTH", "false").strip().lower() in (
+            "1", "true", "yes"
+        ):
+            return None
         store = getattr(request.app.state, "session_store", None)
         sid = request.cookies.get(COOKIE_NAME)
         rec = store.get(sid) if store is not None else None
@@ -57,7 +61,7 @@ def _resolve_identity(request: Request) -> CurrentUser | None:
         ident = rec.identity
 
     expected = _expected_tenant()
-    if expected and ident.tenant_id and ident.tenant_id.lower() != expected.lower():
+    if expected and ident.tenant_id.lower() != expected.lower():
         return None
 
     # Persist sign-in / refresh last_seen and read the effective role.

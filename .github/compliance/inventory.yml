@@ -1,8 +1,0 @@
-inventory:
-- source: DirectOwners
-  items:
-  - id: sebaclem@microsoft.com
-  - id: micjo@microsoft.com
-  - id: elucht@microsoft.com
-  - id: craigrei@microsoft.com
-  isProduction: false
