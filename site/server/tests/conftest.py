@@ -1,4 +1,4 @@
-"""Keep test state isolated from customer installations and workstation data."""
+"""Keep test state isolated from organization installations and workstation data."""
 
 import sys
 from pathlib import Path

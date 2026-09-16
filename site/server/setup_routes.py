@@ -5,18 +5,21 @@ from __future__ import annotations
 import asyncio
 import csv
 import os
+import time
 from urllib.parse import urlsplit
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Query
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 import db
 import setup_cloud
 import setup_config
 import setup_github
+import catalog_processing
 import setup_auth
 import github_device
+import distribution
 from identity import CurrentUser, require_admin, require_user
 
 _SETUP_LOCK = asyncio.Lock()
@@ -51,6 +54,31 @@ class GitHubOAuthClient(BaseModel):
     confirm: bool = False
 
 
+class WorkflowConfirmation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    confirm: bool = False
+
+
+class BrandingInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    brandName: str = Field(min_length=1, max_length=80)
+    footerText: str = Field(max_length=500)
+
+    @field_validator("brandName", "footerText")
+    @classmethod
+    def plain_text(cls, value: str) -> str:
+        if any(ord(character) < 32 or ord(character) == 127 for character in value):
+            raise ValueError("Use plain text without control characters")
+        return value.strip()
+
+    @field_validator("brandName")
+    @classmethod
+    def nonempty_name(cls, value: str) -> str:
+        if not value:
+            raise ValueError("Enter a site name")
+        return value
+
+
 async def resolve_subscriptions(selections: list[setup_config.SubscriptionSelection]) -> list[dict[str, str]]:
     items = setup_config.validate_subscriptions(selections)
     semaphore = asyncio.Semaphore(4)
@@ -68,6 +96,10 @@ def lookup_failure() -> HTTPException:
     return HTTPException(status_code=502, detail="Subscription lookup failed; check the app managed identity's Reader access. No changes were saved.")
 
 
+class ProcessingInput(catalog_processing.ProcessingSettings):
+    confirm: bool = False
+
+
 def build_setup_router() -> APIRouter:
     router = APIRouter(prefix="/api")
 
@@ -78,6 +110,7 @@ def build_setup_router() -> APIRouter:
     @router.get("/admin/setup")
     async def status(user: CurrentUser = Depends(require_admin)) -> dict:
         return {
+            "branding": distribution.branding(),
             "azureTenantId": os.environ.get("GALLERY_ENTRA_TENANT_ID", ""),
             "primaryAuthentication": {
                 "clientId": os.environ.get("GALLERY_ENTRA_CLIENT_ID", ""),
@@ -95,7 +128,19 @@ def build_setup_router() -> APIRouter:
             "githubConnection": db.get_setup_setting("github_connection", {}),
             "catalogVersion": setup_github.catalog_snapshot().get("version"),
             "syncError": db.get_setup_setting("github_sync_error"),
+            "processing": catalog_processing.settings(),
+            "processingEffective": db.get_setup_setting("processing_effective", {"mode": "container"}),
+            "processingJob": db.get_setup_setting("catalog_job", {"status": "idle"}),
+            "runnerProbe": db.get_setup_setting("runner_probe", {}),
         }
+
+    @router.put("/admin/setup/branding")
+    async def save_branding(body: BrandingInput, request: Request, user: CurrentUser = Depends(require_admin)) -> dict:
+        setup_origin(request)
+        async with _SETUP_LOCK:
+            db.set_setup_setting("branding", body.model_dump())
+            db.record_event(type="setup_branding_saved", user_oid=user.oid)
+        return distribution.branding()
 
     @router.put("/admin/setup/user-role")
     async def user_role(body: IdentityRole, request: Request, user: CurrentUser = Depends(require_admin)) -> dict:
@@ -119,14 +164,14 @@ def build_setup_router() -> APIRouter:
             return result
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from None
-        except httpx.HTTPError:
-            raise HTTPException(status_code=502, detail="GitHub operation failed. Check token permissions, repository ownership and organization policy; inspect the target repository before retrying.") from None
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail=setup_github.repository_failure(exc, body.create)) from None
 
     @router.put("/admin/setup/github/oauth-client")
     async def github_oauth_client(body: GitHubOAuthClient, request: Request, user: CurrentUser = Depends(require_admin)) -> dict:
         setup_origin(request)
         if not body.confirm:
-            raise HTTPException(400, "Confirm the customer-owned GitHub OAuth App")
+            raise HTTPException(400, "Confirm the organization-owned GitHub OAuth App")
         async with _SETUP_LOCK:
             if body.clientId != github_device.client_id() and (
                 github_device.access_token() or github_device._flows
@@ -150,8 +195,19 @@ def build_setup_router() -> APIRouter:
                 return await github_device.start(user.oid, body.model_dump(exclude={"confirm"}))
             except ValueError as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from None
+            except httpx.HTTPStatusError as exc:
+                status = exc.response.status_code
+                if status == 429:
+                    detail = "GitHub rate-limited device sign-in (HTTP 429). Wait before selecting Connect GitHub again."
+                elif status >= 500:
+                    detail = f"GitHub device authorization is unavailable (HTTP {status}). Retry later; no connection was saved."
+                else:
+                    detail = f"GitHub rejected device sign-in (HTTP {status}). Verify the saved OAuth App Client ID, Enable Device Flow, and organization access policy. No connection was saved."
+                raise HTTPException(status_code=502, detail=detail) from None
+            except httpx.TimeoutException:
+                raise HTTPException(status_code=502, detail="The portal timed out contacting GitHub. Check the App Service's outbound HTTPS access to github.com, then retry Connect GitHub.") from None
             except httpx.HTTPError:
-                raise HTTPException(status_code=502, detail="GitHub device sign-in could not start") from None
+                raise HTTPException(status_code=502, detail="The portal could not reach GitHub device authorization. Check the host's DNS, outbound HTTPS and proxy/TLS configuration for github.com; do not disable certificate validation.") from None
 
     @router.post("/admin/setup/github/device/poll")
     async def github_poll(body: GitHubFlowInput, request: Request, user: CurrentUser = Depends(require_admin)) -> dict:
@@ -230,14 +286,62 @@ def build_setup_router() -> APIRouter:
             except httpx.HTTPError:
                 raise HTTPException(status_code=502, detail="Authentication or credential reference configuration failed. Check host write access and, if selected, Key Vault secret access. The bootstrap provider is not intentionally replaced.") from None
 
+    @router.post("/admin/setup/github/workflows")
+    async def workflow_pr(body: WorkflowConfirmation, request: Request, user: CurrentUser = Depends(require_admin)) -> dict:
+        setup_origin(request)
+        if body.confirm:
+            now = time.time()
+            if now - db.get_setup_setting("workflow_pr_requested_at", 0) < 60:
+                raise HTTPException(status_code=429, detail="Wait one minute before requesting another workflow PR.", headers={"Retry-After": "60"})
+            db.set_setup_setting("workflow_pr_requested_at", now)
+        try:
+            result = await asyncio.wait_for(setup_github.create_workflow_pr(body.confirm), timeout=120)
+            db.record_event(type="setup_workflow_pr", user_oid=user.oid, meta={"status": result["status"]})
+            return result
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from None
+        except (httpx.HTTPError, KeyError, OSError, TimeoutError):
+            raise HTTPException(status_code=502, detail="Workflow PR could not be completed. Check repository write/workflow permission and branch policy. Inspect existing portal/workflows branches and PRs before retrying; nothing was merged or deleted.") from None
+
+    @router.get("/admin/setup/github/processing")
+    async def processing_status(user: CurrentUser = Depends(require_admin)) -> dict:
+        return {"settings": catalog_processing.settings(), "effective": db.get_setup_setting("processing_effective", {"mode": "container"}),
+                "job": db.get_setup_setting("catalog_job", {"status": "idle"}), "probe": db.get_setup_setting("runner_probe", {})}
+
+    @router.post("/admin/setup/github/runners/probe")
+    async def runner_probe(request: Request, user: CurrentUser = Depends(require_admin)) -> dict:
+        setup_origin(request)
+        now = time.time()
+        if now - db.get_setup_setting("runner_probe_requested_at", 0) < 60:
+            raise HTTPException(429, "Wait one minute before checking runners again.")
+        db.set_setup_setting("runner_probe_requested_at", now)
+        return await setup_github.processing_probe(force=True)
+
+    @router.put("/admin/setup/github/processing")
+    async def save_processing(body: ProcessingInput, request: Request, user: CurrentUser = Depends(require_admin)) -> dict:
+        setup_origin(request)
+        if not body.confirm:
+            raise HTTPException(400, "Confirm the processing location and capacity regions.")
+        configuration = body.model_dump(exclude={"confirm"})
+        if body.mode != "container":
+            probe = await setup_github.processing_probe(force=True)
+            if not catalog_processing.runner_available(configuration, probe):
+                raise HTTPException(400, "Runner availability could not be verified for this repository and selection. Choose Portal container.")
+        async with _SETUP_LOCK:
+            async with setup_github._SYNC_LOCK:
+                db.set_setup_setting("catalog_processing", configuration)
+                db.record_event(type="setup_processing_saved", user_oid=user.oid, meta={"mode": body.mode})
+        if db.get_setup_setting("github", {}).get("enabled"):
+            setup_github.queue_catalog_refresh()
+        return configuration
+
     @router.post("/admin/setup/github/sync")
     async def sync(request: Request, user: CurrentUser = Depends(require_admin)) -> dict:
         setup_origin(request)
         try:
-            result = await asyncio.wait_for(setup_github.sync_catalog(), timeout=120)
-            return {"version": result["version"], "count": len(result["items"])}
-        except (ValueError, KeyError, httpx.HTTPError, OSError, TimeoutError):
-            raise HTTPException(status_code=502, detail="Repository sync failed; the last good catalog is unchanged. Check branch access and customer runtime inputs.") from None
+            return setup_github.queue_catalog_refresh()
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from None
 
     @router.post("/admin/setup/subscriptions/parse")
     async def parse_csv(body: CSVInput, request: Request, user: CurrentUser = Depends(require_admin)) -> dict:
@@ -249,7 +353,7 @@ def build_setup_router() -> APIRouter:
         try:
             return {"subscriptions": await resolve_subscriptions(selections)}
         except ValueError:
-            raise HTTPException(status_code=400, detail="A subscription could not be verified as enabled in the customer Azure tenant; no changes were saved") from None
+            raise HTTPException(status_code=400, detail="A subscription could not be verified as enabled in the organization Azure tenant; no changes were saved") from None
         except (httpx.HTTPError, TimeoutError):
             raise lookup_failure() from None
 
@@ -259,7 +363,7 @@ def build_setup_router() -> APIRouter:
         try:
             return {"subscription": (await resolve_subscriptions([body]))[0]}
         except ValueError:
-            raise HTTPException(status_code=400, detail="Subscription could not be verified as enabled in the customer Azure tenant") from None
+            raise HTTPException(status_code=400, detail="Subscription could not be verified as enabled in the organization Azure tenant") from None
         except (httpx.HTTPError, TimeoutError):
             raise lookup_failure() from None
 

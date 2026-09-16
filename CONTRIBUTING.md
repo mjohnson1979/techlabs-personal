@@ -1,7 +1,7 @@
 # Contributing
 
-This customer branch is an engineering preview. Review the
-[release checklist](customer/RELEASE-CHECKLIST.md) before external distribution.
+This organization branch is an engineering preview. Review the
+[release checklist](docs/RELEASE-CHECKLIST.md) before external distribution.
 
 ## Validation
 
@@ -16,10 +16,10 @@ node --check site/assets/setup.js
 
 Backend tests use temporary databases, synthetic fixtures and mocked cloud calls.
 Do not restore internal catalogs to make tests pass or include test fixtures in a
-customer package. Keep customer snapshots empty and the distribution marker set
-to `customer`. Test legacy helper behavior only with explicit test configuration.
+organization package. Keep organization snapshots empty and the distribution marker set
+to `organization`. Test legacy helper behavior only with explicit test configuration.
 
-Use the allowlist exporter in [tools/build_customer_distribution.py](tools/build_customer_distribution.py)
+Use the allowlist exporter in [tools/build_distribution.py](tools/build_distribution.py)
 to produce a history-free candidate. Do not commit runtime credentials, generated
-archives, customer workload code, deployment records, Terraform state or logs.
+archives, organization workload code, deployment records, Terraform state or logs.
 Do not add deployment workflows targeting the originating internal environment.

@@ -1,4 +1,4 @@
-"""Customer distribution configuration and fail-closed startup checks."""
+"""Organization distribution configuration and fail-closed startup checks."""
 
 from __future__ import annotations
 
@@ -13,16 +13,27 @@ from urllib.parse import urlsplit
 from uuid import UUID
 
 CUSTOMER_MARKER = Path(__file__).resolve().parent.parent / "distribution.json"
+DEFAULT_FOOTER = "Cost estimates are indicative; verify against your cloud agreement."
 
 
 def is_customer_distribution() -> bool:
     return CUSTOMER_MARKER.is_file() or os.environ.get(
         "GALLERY_DISTRIBUTION", "internal"
-    ).strip().lower() == "customer"
+    ).strip().lower() in ("organization", "customer")
 
 
 def brand_name() -> str:
-    return os.environ.get("GALLERY_BRAND_NAME", "Deployment Portal").strip()[:80] or "Deployment Portal"
+    return branding()["brandName"]
+
+
+def branding() -> dict[str, str]:
+    import db
+
+    saved = db.get_setup_setting("branding", {})
+    return {
+        "brandName": str(saved.get("brandName", os.environ.get("GALLERY_BRAND_NAME", "Deployment Portal"))).strip()[:80] or "Deployment Portal",
+        "footerText": str(saved.get("footerText", os.environ.get("GALLERY_FOOTER_TEXT", DEFAULT_FOOTER))).strip()[:500],
+    }
 
 
 def admin_oids() -> set[str]:
@@ -74,8 +85,8 @@ def customer_configuration_errors() -> list[str]:
     errors: list[str] = []
     if not is_customer_distribution():
         errors.append(
-            "Customer mode is not enabled; use a customer export or set "
-            "GALLERY_DISTRIBUTION=customer"
+            "Organization mode is not enabled; use an organization export or set "
+            "GALLERY_DISTRIBUTION=organization"
         )
     installing = installer_requested()
     if installing:
@@ -95,7 +106,7 @@ def customer_configuration_errors() -> list[str]:
             if value.int == 0:
                 raise ValueError
         except ValueError:
-            errors.append(f"{name} must be a nonzero GUID from your customer configuration")
+            errors.append(f"{name} must be a nonzero GUID from your organization configuration")
     if os.environ.get("GALLERY_SUBSCRIPTION_ID", "").strip():
         try:
             if not UUID(os.environ["GALLERY_SUBSCRIPTION_ID"].strip()).int:
@@ -106,7 +117,7 @@ def customer_configuration_errors() -> list[str]:
         errors.append("Use your own Entra app registration, not the Azure CLI client")
     for name in ("GALLERY_EASY_AUTH", "GALLERY_HTTPS"):
         if os.environ.get(name, "").strip().lower() not in ("1", "true", "yes"):
-            errors.append(f"{name}=true is required for customer installations")
+            errors.append(f"{name}=true is required for organization installations")
     if not installing and not admin_oids():
         errors.append("GALLERY_ADMIN_OIDS must explicitly identify an administrator")
     for oid in admin_oids():
@@ -121,10 +132,10 @@ def customer_configuration_errors() -> list[str]:
     for name, expected in (("ARM_TENANT_ID", tenant), ("ARM_SUBSCRIPTION_ID", subscription)):
         configured = os.environ.get(name, "").strip().lower()
         if configured and configured != expected:
-            errors.append(f"{name} must match the customer installation")
+            errors.append(f"{name} must match the organization installation")
     for name in ("GALLERY_INVITE_GUEST", "GALLERY_TERRAFORM_AUTO_INSTALL"):
         if os.environ.get(name, "false").strip().lower() in ("1", "true", "yes"):
-            errors.append(f"{name} is disabled in customer installations")
+            errors.append(f"{name} is disabled in organization installations")
     return errors
 
 
@@ -138,7 +149,7 @@ def validate_customer_configuration() -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Check customer environment settings locally, without starting the app or contacting Azure."
+        description="Check organization environment settings locally, without starting the app or contacting Azure."
     )
     parser.add_argument("--check", action="store_true", required=True)
     parser.add_argument("--json", action="store_true", dest="as_json")
@@ -156,7 +167,7 @@ def main() -> int:
             "limitations": [limitation],
         }, indent=2) + "\n")
     else:
-        heading = "Customer configuration failed:" if errors else "Customer configuration passed."
+        heading = "Organization configuration failed:" if errors else "Organization configuration passed."
         sys.stdout.write(heading + "\n")
         for error in errors:
             sys.stdout.write(f"- {error}\n")

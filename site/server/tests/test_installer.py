@@ -28,7 +28,7 @@ ORIGIN = "https://portal.example.com"
 @pytest.fixture
 def installation(monkeypatch):
     for key, value in {
-        "GALLERY_DISTRIBUTION": "customer", "GALLERY_INSTALLER_ENABLED": "true",
+        "GALLERY_DISTRIBUTION": "organization", "GALLERY_INSTALLER_ENABLED": "true",
         "GALLERY_SETUP_CODE_SHA256": hashlib.sha256(CODE.encode()).hexdigest(),
         "GALLERY_SETUP_EXPIRES_AT": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(),
         "GALLERY_PUBLIC_URL": ORIGIN, "GALLERY_HOST_RESOURCE_ID": HOST,
@@ -328,8 +328,8 @@ def test_container_rotated_secrets_cannot_be_reused(installation, monkeypatch):
         container_start.prepare_configuration()
 
 
-@pytest.mark.parametrize("failure", [None, "public", "https", "easy_auth", "storage", "identity", "redirect"])
-def test_container_verifies_private_host_before_listening(installation, monkeypatch, failure):
+@pytest.mark.parametrize("failure", [None, "https", "easy_auth", "storage", "identity", "redirect"])
+def test_container_verifies_authenticated_host_before_listening(installation, monkeypatch, failure):
     monkeypatch.setenv("GALLERY_MANAGED_IDENTITY", "system")
     monkeypatch.delenv("AZURE_CLIENT_ID")
     monkeypatch.setenv("WEBSITES_ENABLE_APP_SERVICE_STORAGE", "false" if failure == "storage" else "true")
@@ -342,7 +342,7 @@ def test_container_verifies_private_host_before_listening(installation, monkeypa
             }}
         return {
             "id": HOST, "identity": {"type": "SystemAssigned", "principalId": "" if failure == "identity" else OWNER},
-            "properties": {"httpsOnly": failure != "https", "publicNetworkAccess": "Enabled" if failure == "public" else "Disabled", "hostNames": ["portal.example.com"]},
+            "properties": {"httpsOnly": failure != "https", "publicNetworkAccess": "Enabled", "hostNames": ["portal.example.com"]},
         }
 
     monkeypatch.setattr(container_start.setup_cloud, "arm_request", arm)
@@ -416,7 +416,9 @@ def signin_host(installation, monkeypatch):
     return cloud
 
 
-def test_signin_startup_discovers_customer_entra_without_setup_code(signin_host):
+@pytest.mark.parametrize("network_access", ["Enabled", "Disabled", None])
+def test_signin_startup_discovers_customer_entra_without_setup_code(signin_host, network_access):
+    signin_host["host"]["properties"]["publicNetworkAccess"] = network_access
     container_start.prepare_configuration()
     asyncio.run(container_start.verify_host())
     installer.distribution.validate_customer_configuration()

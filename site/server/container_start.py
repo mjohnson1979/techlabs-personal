@@ -1,4 +1,4 @@
-"""Prepare the customer container before importing the application."""
+"""Prepare the organization container before importing the application."""
 
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ def prepare_configuration() -> None:
         if not re.fullmatch(r"[a-zA-Z0-9-]+\.azurewebsites\.net", hostname):
             raise ValueError("App Service hostname is missing; set GALLERY_PUBLIC_URL")
         os.environ["GALLERY_PUBLIC_URL"] = f"https://{hostname.lower()}"
-    os.environ.setdefault("GALLERY_DISTRIBUTION", "customer")
+    os.environ.setdefault("GALLERY_DISTRIBUTION", "organization")
     os.environ.setdefault("GALLERY_EASY_AUTH", "true")
     os.environ.setdefault("GALLERY_HTTPS", "true")
     os.environ.setdefault("GALLERY_MANAGED_IDENTITY", "user" if os.environ.get("AZURE_CLIENT_ID", "").strip() else "system")
@@ -90,8 +90,6 @@ async def verify_host() -> None:
         raise ValueError("App Service resource identity could not be verified")
     if not properties.get("httpsOnly"):
         raise ValueError("Enable HTTPS-only access on this App Service")
-    if str(properties.get("publicNetworkAccess", "")).lower() != "disabled":
-        raise ValueError("The customer container requires disabled public network access and customer private connectivity")
     if urlsplit(os.environ["GALLERY_PUBLIC_URL"]).hostname not in properties.get("hostNames", []):
         raise ValueError("The application origin must be a hostname on this App Service")
     if os.environ.get("WEBSITES_ENABLE_APP_SERVICE_STORAGE", "").lower() != "true":
@@ -121,7 +119,7 @@ async def verify_host() -> None:
             raise ValueError("Sign-in-first installations require authenticated ingress on every path")
         provider = auth_properties.get("identityProviders", {}).get("azureActiveDirectory", {})
         if provider.get("enabled") is not True:
-            raise ValueError("Configure the customer Entra provider in App Service Authentication first")
+            raise ValueError("Configure the organization Entra provider in App Service Authentication first")
         registration = provider.get("registration", {})
         client_id = canonical_guid(str(registration.get("clientId", "")))
         issuer = str(registration.get("openIdIssuer", ""))
@@ -140,7 +138,7 @@ async def verify_host() -> None:
         for name, value in (("GALLERY_ENTRA_TENANT_ID", tenant_id), ("GALLERY_ENTRA_CLIENT_ID", client_id)):
             configured = os.environ.get(name, "").strip().lower()
             if configured and configured != value:
-                raise ValueError("App Service Authentication does not match the customer Entra configuration")
+                raise ValueError("App Service Authentication does not match the organization Entra configuration")
         os.environ["GALLERY_ENTRA_TENANT_ID"] = tenant_id
         os.environ["GALLERY_ENTRA_CLIENT_ID"] = client_id
 
@@ -152,8 +150,8 @@ def main() -> int:
         distribution.validate_customer_configuration()
     except (ValueError, OSError, httpx.HTTPError, AzureError):
         sys.stderr.write(
-            "Container startup blocked: verify private App Service ingress, HTTPS, Easy Auth, "
-            "persistent storage, managed identity/RBAC, customer Entra provider and GALLERY_ADMIN_OIDS. "
+            "Container startup blocked: verify App Service HTTPS, Easy Auth, "
+            "persistent storage, managed identity/RBAC, organization Entra provider and GALLERY_ADMIN_OIDS. "
             "If explicitly using the code installer, check its unexpired setup secret. "
             "No settings or remote error bodies are printed.\n"
         )

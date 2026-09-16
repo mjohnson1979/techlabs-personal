@@ -1,4 +1,4 @@
-"""Add customer identity providers without replacing bootstrap authentication."""
+"""Add organization identity providers without replacing bootstrap authentication."""
 
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ class SecretStorage(BaseModel):
     def storage_fields(self) -> "SecretStorage":
         if self.secretStorage == "key_vault":
             if not re.fullmatch(r"/subscriptions/[0-9a-fA-F-]{36}/resourceGroups/[A-Za-z0-9_.()-]+/providers/Microsoft.KeyVault/vaults/[a-zA-Z][a-zA-Z0-9-]{1,22}[a-zA-Z0-9]", self.keyVaultResourceId):
-                raise ValueError("Provide the existing customer Key Vault resource ID")
+                raise ValueError("Provide the existing organization Key Vault resource ID")
             if not self.keyVaultSecretName:
                 raise ValueError("Provide a Key Vault secret name")
         elif self.keyVaultResourceId or self.keyVaultSecretName:
@@ -59,7 +59,7 @@ class SecretStorage(BaseModel):
 
 class AuthenticationSettings(SecretStorage):
     kind: Literal["entra", "oidc"] = "entra"
-    providerName: str = Field(default="customer", pattern=r"^[a-z][a-z0-9_]{1,29}$")
+    providerName: str = Field(default="organization", pattern=r"^[a-z][a-z0-9_]{1,29}$")
     clientId: str = Field(min_length=1, max_length=200)
     issuer: str = Field(min_length=1, max_length=400)
     discoveryUrl: str = Field(min_length=1, max_length=500)
@@ -76,7 +76,7 @@ class EntraRegistration(SecretStorage):
     secretStorage: Literal["app_service", "key_vault"] = "app_service"
     displayName: str = Field(min_length=1, max_length=100)
     publicUrl: str
-    providerName: str = Field(default="customer", pattern=r"^[a-z][a-z0-9_]{1,29}$")
+    providerName: str = Field(default="organization", pattern=r"^[a-z][a-z0-9_]{1,29}$")
     confirm: bool = False
 
     @field_validator("publicUrl")
@@ -117,7 +117,7 @@ async def key_vault_target(settings: SecretStorage, host: dict, *, tenant_id: st
         raise ValueError("Key Vault resource identity could not be verified")
     expected_tenant = tenant_id if tenant_id is not None else os.environ.get("GALLERY_ENTRA_TENANT_ID", "").strip()
     if str(vault.get("properties", {}).get("tenantId", "")).lower() != expected_tenant.lower():
-        raise ValueError("Key Vault must belong to the customer Azure tenant")
+        raise ValueError("Key Vault must belong to the organization Azure tenant")
     vault_name = settings.keyVaultResourceId.rsplit("/", 1)[-1].lower()
     uri = str(vault.get("properties", {}).get("vaultUri", "")).rstrip("/").lower()
     if uri != f"https://{vault_name}.vault.azure.net":
@@ -226,7 +226,7 @@ def provider_document(current: dict, settings: AuthenticationSettings) -> dict:
     if settings.kind == "entra":
         tenant = canonical_guid(os.environ.get("GALLERY_ENTRA_TENANT_ID", ""))
         if settings.issuer != f"https://login.microsoftonline.com/{tenant}/v2.0":
-            raise ValueError("Entra issuer must match the customer Azure tenant")
+            raise ValueError("Entra issuer must match the organization Azure tenant")
         canonical_guid(settings.clientId)
         if settings.secretStorage == "none":
             raise ValueError("Entra web authentication requires a client credential; select its storage")

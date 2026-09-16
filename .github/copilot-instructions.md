@@ -1,6 +1,6 @@
-# Deployment Portal - Customer Branch Instructions
+# Deployment Portal - Self-Hosted Branch Instructions
 
-Customer-operated Azure deployment platform: vanilla JavaScript UI and FastAPI
+Organization-operated Azure deployment platform: vanilla JavaScript UI and FastAPI
 control plane. This branch contains no bundled workload or hosting IaC.
 
 ## Layout
@@ -9,10 +9,10 @@ control plane. This branch contains no bundled workload or hosting IaC.
 - `site/requirements.txt`: the only runtime dependency declaration.
 - `site/*.json`: empty customer snapshots and the customer distribution marker.
 - `site/server/tests/`: offline tests with temporary databases and mocked cloud calls.
-- `tools/build_customer_distribution.py`: history-free allowlist export and source seed.
-- `tools/preview_customer.py`: loopback-only, read-only synthetic preview.
-- `customer/README.md`: customer setup and operations guide.
-- `customer/RELEASE-CHECKLIST.md`: development-only release gates.
+- `tools/build_distribution.py`: history-free allowlist export and source seed.
+- `tools/preview_portal.py`: loopback-only, read-only synthetic preview.
+- `docs/OPERATIONS.md`: customer setup and operations guide.
+- `docs/RELEASE-CHECKLIST.md`: development-only release gates.
 
 ## Boundaries
 

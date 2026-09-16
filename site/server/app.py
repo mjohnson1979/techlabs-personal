@@ -224,7 +224,9 @@ async def serve_gallery(
     if is_customer_distribution() and path == "/catalog.json":
         snapshot = setup_github.catalog_snapshot()
         if snapshot:
-            return JSONResponse(snapshot)
+            return JSONResponse({key: value for key, value in snapshot.items() if key != "capacity"})
+    if is_customer_distribution() and path == "/capacity.json":
+        return JSONResponse(setup_github.capacity_snapshot())
 
     # 1. OAuth landing: Entra redirects back to "/?code=...&state=..." because the
     #    Azure CLI public client only allows the loopback root as redirect URI.

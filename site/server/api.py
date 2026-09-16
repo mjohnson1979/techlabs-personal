@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 
 import azure_deploy as az
 import db
-from distribution import brand_name, is_customer_distribution
+from distribution import branding, is_customer_distribution
 from entra_auth import (
     COOKIE_NAME,
     EntraAuthError,
@@ -373,7 +373,7 @@ def build_api_router() -> APIRouter:
         )
         return {
             "signedIn": True,
-            "brandName": brand_name(),
+            **branding(),
             "customerOperated": is_customer_distribution(),
             "subscriptions": setup_config.subscriptions() if is_customer_distribution() else [],
             "setupRequired": is_customer_distribution() and not setup_config.subscriptions(),
@@ -425,7 +425,7 @@ def build_api_router() -> APIRouter:
             try:
                 selected = setup_config.subscription_for(body.subscriptionId)
             except ValueError:
-                raise HTTPException(status_code=403, detail="select a configured customer subscription") from None
+                raise HTTPException(status_code=403, detail="select a configured organization subscription") from None
         item = _catalog_items().get(body.useCase)
         if item is None:
             raise HTTPException(status_code=404, detail="unknown use case")
@@ -455,11 +455,11 @@ def build_api_router() -> APIRouter:
         verify_same_origin(request)
         if is_customer_distribution():
             if body.externalSubscription:
-                raise HTTPException(status_code=403, detail="only the configured customer subscription is allowed")
+                raise HTTPException(status_code=403, detail="only the configured organization subscription is allowed")
             try:
                 selected_subscription = setup_config.subscription_for(body.subscriptionId)
             except ValueError:
-                raise HTTPException(status_code=403, detail="select a configured customer subscription") from None
+                raise HTTPException(status_code=403, detail="select a configured organization subscription") from None
         else:
             selected_subscription = None
         if not selected_subscription and not DEFAULT_SUBSCRIPTION and not body.externalSubscription:
@@ -469,7 +469,7 @@ def build_api_router() -> APIRouter:
         if item is None:
             raise HTTPException(status_code=404, detail="unknown use case")
         if item.get("deployReady") is False:
-            raise HTTPException(status_code=409, detail="Customer runtime inputs are missing from the repository")
+            raise HTTPException(status_code=409, detail="Organization runtime inputs are missing from the repository")
         env = body.environment.lower().strip()
         if env not in _ALLOWED_ENVS:
             raise HTTPException(status_code=400, detail="environment must be dev or prod")

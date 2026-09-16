@@ -6,7 +6,7 @@ Service system-assigned managed identity in production; ``az login`` / developer
 credentials locally) and submits ARM deployments via the resource-management
 SDK. No GitHub PAT, no callback token.
 
-Customer templates are precompiled from Bicep to ARM JSON in their own toolchain
+Organization templates are precompiled from Bicep to ARM JSON in their own toolchain
 (run in CI before the site is published, and locally before testing deploys).
 Each use case/environment becomes
 ``site/server/_templates/<use_case>/<env>.json`` with the shape
@@ -307,7 +307,7 @@ def load_template(use_case: str, environment: str) -> tuple[dict, dict]:
     except FileNotFoundError as exc:
         raise RuntimeError(
             f"No compiled template for {use_case}/{environment}. "
-            "Publish customer-compiled runtime inputs through the configured repository."
+            "Publish organization-compiled runtime inputs through the configured repository."
         ) from exc
     except (OSError, ValueError) as exc:
         raise RuntimeError(f"Bad template for {use_case}/{environment}: {exc}") from exc
@@ -345,7 +345,7 @@ def _credential_for_deployment(dep: dict[str, Any]) -> Any:
     if is_customer_distribution() and (
         dep.get("_delegated_arm_token") or (dep.get("params") or {}).get("externalSubscription")
     ):
-        raise RuntimeError("customer installations require their configured managed identity")
+        raise RuntimeError("organization installations require their configured managed identity")
     token = dep.get("_delegated_arm_token")
     if token:
         return DelegatedTokenCredential(
@@ -367,11 +367,11 @@ def _get_credential() -> Any:
             client_id = os.environ.get("AZURE_CLIENT_ID", "").strip()
             if uses_system_identity():
                 if client_id:
-                    raise RuntimeError("conflicting customer managed identity configuration")
+                    raise RuntimeError("conflicting organization managed identity configuration")
                 _credential = ManagedIdentityCredential()
                 return _credential
             if not client_id:
-                raise RuntimeError("customer managed identity is not configured")
+                raise RuntimeError("organization managed identity is not configured")
             _credential = ManagedIdentityCredential(client_id=client_id)
             return _credential
         from azure.identity import DefaultAzureCredential
@@ -395,7 +395,7 @@ def _client(subscription_id: str, credential: Any = None) -> Any:
                 raise ValueError
             subscription_for(subscription_id)
         except ValueError:
-            raise RuntimeError("subscription is outside the customer installation") from None
+            raise RuntimeError("subscription is outside the organization installation") from None
     # The unified ``ResourceManagementClient`` (top-level import) exposes the
     # ``deployments``, ``deployment_operations`` and ``resource_groups`` operation
     # groups the executor relies on. This holds for azure-mgmt-resource 23.x

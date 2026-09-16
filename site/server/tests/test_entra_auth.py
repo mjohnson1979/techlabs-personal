@@ -21,18 +21,18 @@ import entra_auth  # noqa: E402
 
 
 @pytest.mark.parametrize("enabled,tenant,accepted", [
-    ("false", "customer-tenant", False),
+    ("false", "organization-tenant", False),
     ("true", "", False),
     ("true", "different-tenant", False),
-    ("true", "CUSTOMER-TENANT", True),
+    ("true", "ORGANIZATION-TENANT", True),
 ])
 def test_easy_auth_requires_trusted_mode_and_tenant(
     monkeypatch: pytest.MonkeyPatch, enabled: str, tenant: str, accepted: bool
 ) -> None:
     monkeypatch.setenv("GALLERY_EASY_AUTH", enabled)
-    monkeypatch.setenv("GALLERY_ENTRA_TENANT_ID", "customer-tenant")
+    monkeypatch.setenv("GALLERY_ENTRA_TENANT_ID", "organization-tenant")
     principal = base64.b64encode(json.dumps({"claims": [
-        {"typ": "oid", "val": "customer-oid"},
+        {"typ": "oid", "val": "organization-oid"},
         {"typ": "tid", "val": tenant},
     ]}).encode())
     request = Request({"type": "http", "headers": [

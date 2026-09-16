@@ -97,4 +97,4 @@ def subscription_for(identifier: str = "") -> dict[str, str]:
     for item in items:
         if item["subscriptionId"] == requested:
             return item
-    raise ValueError("Select a configured customer subscription")
+    raise ValueError("Select a configured organization subscription")

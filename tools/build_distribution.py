@@ -1,4 +1,4 @@
-"""Build a history-free, allowlisted customer source archive. No cloud calls."""
+"""Build a history-free, allowlisted organization source archive. No cloud calls."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
 
-_SPEC = importlib.util.spec_from_file_location("customer_source", Path(__file__).with_name("customer_source.py"))
+_SPEC = importlib.util.spec_from_file_location("portal_source", Path(__file__).with_name("portal_source.py"))
 assert _SPEC is not None and _SPEC.loader is not None
 _SOURCE = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(_SOURCE)
@@ -58,8 +58,8 @@ def main() -> None:
     try:
         build_archive(Path(__file__).resolve().parent.parent, args.output)
     except (OSError, ValueError) as exc:
-        parser.exit(1, f"Customer export failed: {exc}\n")
-    print(f"Customer source archive: {args.output}")
+        parser.exit(1, f"Organization export failed: {exc}\n")
+    print(f"Organization source archive: {args.output}")
 
 
 if __name__ == "__main__":

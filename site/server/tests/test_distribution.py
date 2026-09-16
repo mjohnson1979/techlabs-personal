@@ -1,4 +1,4 @@
-"""Offline checks for the customer-operated distribution boundary."""
+"""Offline checks for the organization-operated distribution boundary."""
 
 from __future__ import annotations
 
@@ -41,17 +41,17 @@ def _tool_module(filename: str):
 
 
 def _exporter():
-    return _tool_module("build_customer_distribution.py")
+    return _tool_module("build_distribution.py")
 
 
 @pytest.fixture
 def preview_server(tmp_path: Path) -> Iterator[ThreadingHTTPServer]:
-    archive_path = tmp_path / "customer.zip"
+    archive_path = tmp_path / "organization.zip"
     _exporter().build_archive(SERVER_DIR.parent.parent, archive_path)
     root = tmp_path / "export"
     with ZipFile(archive_path) as archive:
         archive.extractall(root)
-    server = _tool_module("preview_customer.py").create_preview_server(root, port=0)
+    server = _tool_module("preview_portal.py").create_preview_server(root, port=0)
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
@@ -113,16 +113,169 @@ def test_preview_rejects_other_host_headers(preview_server: ThreadingHTTPServer)
 
 
 def test_preview_requires_customer_export(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="extracted customer export"):
-        _tool_module("preview_customer.py").create_preview_server(tmp_path, port=0)
+    with pytest.raises(ValueError, match="extracted organization export"):
+        _tool_module("preview_portal.py").create_preview_server(tmp_path, port=0)
+
+
+def test_workflow_installer_is_idempotent_and_preserves_conflicts(tmp_path):
+    installer = _tool_module("portal_workflows.py")
+    installer.install(tmp_path)
+    installer.install(tmp_path)
+    assert len(list((tmp_path / ".github/workflows").glob("*.yml"))) == 2
+    target = tmp_path / "tools/portal_catalog.py"
+    target.write_text("organization changes")
+    with pytest.raises(ValueError, match="differs"):
+        installer.install(tmp_path)
+    assert target.read_text() == "organization changes"
+
+
+def test_catalog_builder_refreshes_prices_and_compiles_without_cloud_writes(tmp_path, monkeypatch):
+    import asyncio
+    import pricing
+    builder = _tool_module("portal_catalog.py")
+    root = tmp_path / "catalog/example"
+    (root / "parameters").mkdir(parents=True)
+    (root / "main.bicep").write_text("param location string = 'eastus'")
+    (root / "metadata.json").write_text(json.dumps({"displayName": "Example", "cost": {"region": "eastus", "components": [{"name": "Compute", "billing": "fixed", "quantityPerMonth": 10, "unitPrice": 99, "meterId": "example"}]}}))
+    template = {"parameters": {}, "resources": []}
+    calls = []
+    def command(arguments, cwd):
+        calls.append(arguments)
+        if arguments[0] == "git":
+            return "a" * 40
+        assert arguments[:3] == ["az", "bicep", "build"]
+        return json.dumps(template)
+    async def estimate(cost, region, parameters):
+        assert "unitPrice" not in cost["components"][0]
+        return {"complete": True, "components": [{"unitPrice": 2, "monthly": 20}], "totalMonthly": 20}
+    monkeypatch.setattr(builder, "command", command)
+    monkeypatch.setattr(pricing, "estimate", estimate)
+    asyncio.run(builder.build(tmp_path))
+    import base64
+    files = json.loads((tmp_path / "runs/portal-generated/manifest.json").read_bytes())["files"]
+    assert json.loads(base64.b64decode(files["catalog/example/compiled/dev.json"]))["template"] == template
+    assert files["catalog/example/compiled/prod.json"] is None
+    priced = json.loads(base64.b64decode(files["catalog/example/pricing.json"]))
+    assert priced["cost"]["totalMonthly"] == 20
+    assert priced["cost"]["components"][0]["meterId"] == "example"
+    assert len(calls) == 2
+
+
+def test_workflow_publisher_rejects_stale_or_unsafe_outputs_before_writing(tmp_path, monkeypatch):
+    builder = _tool_module("portal_catalog.py")
+    monkeypatch.setattr(builder, "command", lambda arguments, cwd: "a" * 40 if arguments[1] == "rev-parse" else "")
+    target = tmp_path / "runs/portal-generated/manifest.json"
+    target.parent.mkdir(parents=True)
+    for manifest, message in [({"sourceCommit": "b" * 40, "files": {}}, "Branch changed"),
+                              ({"sourceCommit": "a" * 40, "files": {"../escape.json": None}}, "allowlisted")]:
+        target.write_text(json.dumps(manifest))
+        with pytest.raises(ValueError, match=message):
+            builder.publish(tmp_path)
+    assert not (tmp_path / "site").exists()
+
+
+def test_workflow_publication_is_allowlisted_and_noop_safe(tmp_path, monkeypatch):
+    import base64
+    builder = _tool_module("portal_catalog.py")
+    destination = tmp_path / "catalog/example/compiled/prod.json"
+    destination.parent.mkdir(parents=True)
+    destination.write_text('{"old": true}')
+    unrelated = tmp_path / "organization-notes.txt"
+    unrelated.write_text("Keep this")
+    manifest = tmp_path / "runs/portal-generated/manifest.json"
+    manifest.parent.mkdir(parents=True)
+    content = b'{"subscriptions": {}}'
+    manifest.write_text(json.dumps({"sourceCommit": "a" * 40, "files": {"site/capacity.json": base64.b64encode(content).decode(), "catalog/example/compiled/prod.json": None}}))
+    calls = []
+    def command(arguments, root):
+        calls.append(arguments)
+        return "a" * 40 if arguments[1] == "rev-parse" else ""
+    monkeypatch.setattr(builder, "command", command)
+    builder.publish(tmp_path)
+    assert (tmp_path / "site/capacity.json").read_bytes() == content
+    assert not destination.exists()
+    assert unrelated.read_text() == "Keep this"
+    assert ["git", "add", "--", "site/capacity.json", "catalog/example/compiled/prod.json"] in calls
+    assert calls[-1] == ["git", "push", "origin", "HEAD"]
+    calls.clear()
+    builder.publish(tmp_path)
+    assert len(calls) == 2
+
+
+def test_capacity_collector_uses_only_scoped_reads(tmp_path, monkeypatch):
+    import base64
+    builder = _tool_module("portal_catalog.py")
+    tenant = "11111111-1111-4111-8111-111111111111"
+    subscription = "22222222-2222-4222-8222-222222222222"
+    monkeypatch.setenv("AZURE_TENANT_ID", tenant)
+    monkeypatch.setenv("AZURE_CLIENT_ID", "33333333-3333-4333-8333-333333333333")
+    monkeypatch.setenv("PORTAL_SUBSCRIPTION_IDS", subscription)
+    monkeypatch.setenv("PORTAL_CAPACITY_REGIONS", "eastus westus")
+    calls = []
+    def command(arguments, root):
+        if arguments[0] == "git":
+            return "a" * 40
+        calls.append(arguments)
+        assert arguments[:5] == ["az", "rest", "--method", "get", "--url"]
+        assert arguments[5].startswith(f"https://management.azure.com/subscriptions/{subscription}")
+        if "/usages?" not in arguments[5]:
+            return json.dumps({"tenantId": tenant, "subscriptionId": subscription, "state": "Enabled"})
+        return json.dumps({"value": [{"name": {"value": "cores"}, "limit": 10, "currentValue": 2}]})
+    monkeypatch.setattr(builder, "command", command)
+    builder.capacity(tmp_path)
+    assert len(calls) == 3
+    files = json.loads((tmp_path / "runs/portal-generated/manifest.json").read_bytes())["files"]
+    snapshot = json.loads(base64.b64decode(files["site/capacity.json"]))
+    assert snapshot["subscriptions"][subscription]["westus"][0]["available"] == 8
+    assert snapshot["physicalCapacity"] == "unknown"
+    monkeypatch.setenv("PORTAL_CAPACITY_REGIONS", "eastus;injection")
+    with pytest.raises(ValueError):
+        builder.capacity_inputs()
+
+
+@pytest.mark.skipif(os.environ.get("PORTAL_TEST_BICEP") != "1", reason="Explicit local compiler contract check")
+def test_local_bicep_parameter_wrapper_contract(tmp_path):
+    import asyncio
+    import base64
+    builder = _tool_module("portal_catalog.py")
+    root = tmp_path / "catalog/example"
+    (root / "parameters").mkdir(parents=True)
+    (root / "main.bicep").write_text("param location string = 'eastus'\noutput selected string = location\n")
+    (root / "parameters/dev.bicepparam").write_text("using '../main.bicep'\nparam location = 'westus'\n")
+    (root / "metadata.json").write_text('{"displayName":"Compiler contract"}')
+    original = builder.command
+    builder.command = lambda arguments, cwd: "a" * 40 if arguments[0] == "git" else original(arguments, cwd)
+    asyncio.run(builder.build(tmp_path))
+    files = json.loads((tmp_path / "runs/portal-generated/manifest.json").read_bytes())["files"]
+    wrapper = json.loads(base64.b64decode(files["catalog/example/compiled/dev.json"]))
+    assert wrapper["parameters"]["location"] == {"value": "westus"}
+    assert wrapper["template"]["outputs"]["selected"]["type"] == "string"
+
+
+@pytest.mark.parametrize("mode", ["organization", "customer"])
+def test_distribution_mode_accepts_existing_installations(monkeypatch, tmp_path, mode):
+    monkeypatch.setattr(distribution, "CUSTOMER_MARKER", tmp_path / "absent.json")
+    monkeypatch.setenv("GALLERY_DISTRIBUTION", mode)
+    assert distribution.is_customer_distribution()
+
+
+def test_renamed_export_paths_exclude_customer_filenames():
+    exported = _exporter().collect_files(SERVER_DIR.parent.parent)
+    assert not any("customer" in name.lower() for name in exported)
+    assert {"tools/portal_source.py", "tools/portal_workflows.py", "tools/preview_portal.py"} <= set(exported)
+    assert b"GALLERY_FOOTER_TEXT" in exported["site/server/.env.example"]
+    assert b"data-brand-footer" in exported["site/index.html"]
 
 
 def test_customer_export_contains_only_platform_source() -> None:
     files = _exporter().collect_files(SERVER_DIR.parent.parent)
     assert json.loads(files["site/catalog.json"]) == {"items": []}
-    assert json.loads(files["site/distribution.json"])["distribution"] == "customer"
+    assert json.loads(files["site/distribution.json"])["distribution"] == "organization"
+    assert b".portal/" in files[".gitignore"].splitlines()
+    assert not any(name.startswith(".github/workflows/") for name in files)
+    assert "site/server/catalog_workflows.py" in files
     for name in files:
-        assert not name.startswith(("catalog/", "modules/", ".github/", ".git/", "applog/", "src/", "samples/"))
+        assert not name.startswith(("catalog/", "modules/", ".git/", ".portal/", "applog/", "src/", "samples/"))
         assert not name.endswith((".bicep", ".bicepparam", ".tf", ".tfvars", ".db", ".log"))
         assert "/_templates/" not in name and "/_tf/" not in name
         assert "azure-icons" not in name
@@ -136,7 +289,7 @@ def test_customer_export_contains_only_platform_source() -> None:
 def test_customer_export_can_rebuild_itself_and_container_context(tmp_path: Path) -> None:
     root = SERVER_DIR.parent.parent
     exported = _exporter().collect_files(root)
-    archive_path = tmp_path / "customer.zip"
+    archive_path = tmp_path / "organization.zip"
     _exporter().build_archive(root, archive_path)
     cloned = tmp_path / "private-clone"
     with ZipFile(archive_path) as archive:
@@ -145,7 +298,7 @@ def test_customer_export_can_rebuild_itself_and_container_context(tmp_path: Path
     assert rebuilt == exported
     context = (cloned / ".dockerignore").read_text().splitlines()
     assert context[0] == "**"
-    for directory in ("customer", "tools", "site", "site/assets", "site/server"):
+    for directory in ("docs", "tools", "site", "site/assets", "site/server"):
         assert context[context.index(f"!{directory}/") + 1] == f"{directory}/**"
     for relative in _exporter().SOURCE_FILES:
         assert "!" + relative in context
@@ -154,6 +307,10 @@ def test_customer_export_can_rebuild_itself_and_container_context(tmp_path: Path
     assert "COPY --from=source /export/site/" in dockerfile
     assert "USER 10001:10001" in dockerfile
     assert 'ENTRYPOINT ["python", "server/container_start.py"]' in dockerfile
+    assert "tools/Deploy-Portal.ps1" in exported
+    assert "tools/Initialize-Portal.ps1" in exported
+    assert "tools/Portal-Foundation.ps1" in exported
+    assert not any(name.endswith(".Tests.ps1") for name in exported)
     assert "--mount=type=secret,id=pip_config,target=/etc/pip.conf" in dockerfile
     assert "ARG PIP_INDEX_URL" not in dockerfile
     assert "ENV PIP_INDEX_URL" not in dockerfile
@@ -189,8 +346,8 @@ def test_export_scans_and_packages_the_same_source_bytes(monkeypatch) -> None:
 
     monkeypatch.setattr(exporter, "_read_source", read_once)
     files = exporter.collect_files(SERVER_DIR.parent.parent)
-    assert set(reads) == set(exporter.SOURCE_FILES) | {"customer/README.md"}
-    assert "tools/build_customer_distribution.py" not in files
+    assert set(reads) == set(exporter.SOURCE_FILES) | {"docs/OPERATIONS.md"}
+    assert "tools/build_distribution.py" not in files
 
 
 def test_customer_example_contains_no_configured_resource_ids() -> None:
@@ -206,8 +363,8 @@ def test_customer_example_contains_no_configured_resource_ids() -> None:
 
 
 @pytest.fixture
-def customer(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("GALLERY_DISTRIBUTION", "customer")
+def organization(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GALLERY_DISTRIBUTION", "organization")
     for name in (
         "GALLERY_ENTRA_TENANT_ID", "GALLERY_ENTRA_CLIENT_ID",
         "GALLERY_SUBSCRIPTION_ID", "AZURE_CLIENT_ID", "GALLERY_ADMIN_OIDS",
@@ -219,12 +376,12 @@ def customer(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(name, raising=False)
 
 
-def test_customer_configuration_accepts_explicit_settings(customer: None) -> None:
+def test_customer_configuration_accepts_explicit_settings(organization: None) -> None:
     distribution.validate_customer_configuration()
 
 
 def test_installer_can_start_without_entra_only_with_bounded_host_configuration(
-    customer: None, monkeypatch: pytest.MonkeyPatch,
+    organization: None, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     for name in ("GALLERY_ENTRA_TENANT_ID", "GALLERY_ENTRA_CLIENT_ID", "GALLERY_ADMIN_OIDS"):
         monkeypatch.delenv(name)
@@ -250,7 +407,7 @@ def test_preflight_reports_all_missing_settings_without_side_effects(
         name: value for name, value in os.environ.items()
         if not name.startswith(("GALLERY_", "ARM_", "AZURE_"))
     }
-    environment["GALLERY_DISTRIBUTION"] = "customer"
+    environment["GALLERY_DISTRIBUTION"] = "organization"
     environment["GALLERY_DB_PATH"] = str(tmp_path / "must-not-exist.db")
     result = subprocess.run(
         [sys.executable, "-S", str(SERVER_DIR / "distribution.py"), "--check", "--json"],
@@ -265,7 +422,7 @@ def test_preflight_reports_all_missing_settings_without_side_effects(
 
 
 def test_preflight_succeeds_with_standard_library_only(
-    customer: None, tmp_path: Path,
+    organization: None, tmp_path: Path,
 ) -> None:
     result = subprocess.run(
         [sys.executable, "-S", str(SERVER_DIR / "distribution.py"), "--check", "--json"],
@@ -281,7 +438,7 @@ def test_preflight_succeeds_with_standard_library_only(
 
 
 def test_preflight_does_not_print_invalid_values(
-    customer: None, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+    organization: None, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.setenv("GALLERY_ENTRA_CLIENT_ID", "sensitive-value-must-not-be-printed")
     monkeypatch.setenv("GALLERY_ADMIN_OIDS", "another-sensitive-value")
@@ -296,12 +453,12 @@ def test_preflight_does_not_print_invalid_values(
 
 
 def test_preflight_cannot_succeed_in_internal_mode(
-    customer: None, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+    organization: None, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
     monkeypatch.setattr(distribution, "CUSTOMER_MARKER", tmp_path / "missing.json")
     monkeypatch.setenv("GALLERY_DISTRIBUTION", "internal")
     assert distribution.customer_configuration_errors() == [
-        "Customer mode is not enabled; use a customer export or set GALLERY_DISTRIBUTION=customer"
+        "Organization mode is not enabled; use an organization export or set GALLERY_DISTRIBUTION=organization"
     ]
     distribution.validate_customer_configuration()
 
@@ -322,7 +479,7 @@ def test_preflight_cannot_succeed_in_internal_mode(
     ("GALLERY_TERRAFORM_AUTO_INSTALL", "true"),
 ])
 def test_customer_configuration_fails_closed(
-    customer: None, monkeypatch: pytest.MonkeyPatch, setting: str, value: str
+    organization: None, monkeypatch: pytest.MonkeyPatch, setting: str, value: str
 ) -> None:
     monkeypatch.setenv(setting, value)
     with pytest.raises(ValueError):
@@ -333,16 +490,16 @@ def test_packaged_customer_mode_cannot_be_disabled(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     marker = tmp_path / "distribution.json"
-    marker.write_text('{"distribution":"customer"}', encoding="utf-8")
+    marker.write_text('{"distribution":"organization"}', encoding="utf-8")
     monkeypatch.setattr(distribution, "CUSTOMER_MARKER", marker)
     monkeypatch.setenv("GALLERY_DISTRIBUTION", "internal")
     assert distribution.is_customer_distribution()
 
 
 def test_first_visitor_is_not_customer_admin(
-    customer: None, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    organization: None, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("GALLERY_DB_PATH", str(tmp_path / "customer.db"))
+    monkeypatch.setenv("GALLERY_DB_PATH", str(tmp_path / "organization.db"))
     monkeypatch.setattr(db, "_CONN", None)
     connection = db.init_db()
     try:
@@ -358,7 +515,7 @@ def test_no_implicit_github_destination(monkeypatch: pytest.MonkeyPatch) -> None
     assert not github_intake.configured()
 
 
-def test_customer_blocks_legacy_auth_routes(customer: None) -> None:
+def test_customer_blocks_legacy_auth_routes(organization: None) -> None:
     from app import app
 
     client = TestClient(app)
@@ -369,7 +526,7 @@ def test_customer_blocks_legacy_auth_routes(customer: None) -> None:
     assert client.get("/healthz").status_code == 200
 
 
-def test_customer_rejects_external_deploy_before_catalog_lookup(customer: None) -> None:
+def test_customer_rejects_external_deploy_before_catalog_lookup(organization: None) -> None:
     import api
     from identity import CurrentUser, require_user
 
@@ -379,13 +536,13 @@ def test_customer_rejects_external_deploy_before_catalog_lookup(customer: None) 
         "user", "user@example.com", "User", "tenant"
     )
     response = TestClient(application).post("/api/deployments", json={
-        "useCase": "customer-code", "externalSubscription": True,
+        "useCase": "organization-code", "externalSubscription": True,
     })
     assert response.status_code == 403
 
 
 def test_customer_executor_uses_only_explicit_managed_identity(
-    customer: None, monkeypatch: pytest.MonkeyPatch,
+    organization: None, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import azure.identity
     import azure_deploy
@@ -402,7 +559,7 @@ def test_customer_executor_uses_only_explicit_managed_identity(
 
 
 def test_customer_terraform_uses_managed_identity(
-    customer: None, monkeypatch: pytest.MonkeyPatch,
+    organization: None, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import terraform_exec
 
@@ -420,7 +577,7 @@ def test_customer_terraform_uses_managed_identity(
 
 
 def test_customer_does_not_invite_guests_or_grant_access_by_default(
-    customer: None, monkeypatch: pytest.MonkeyPatch,
+    organization: None, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import azure_deploy
 

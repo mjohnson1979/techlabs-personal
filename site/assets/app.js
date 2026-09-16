@@ -246,7 +246,7 @@
     const chips = [el("span", { class: "chip", text: it.path })];
     if (it.hasProd) chips.push(el("span", { class: "chip prod", text: "dev + prod" }));
     if (Array.isArray(it.engines) && it.engines.indexOf("terraform") !== -1) {
-      chips.push(el("span", { class: "chip iac", text: "Bicep + Terraform" }));
+      chips.push(el("span", { class: "chip iac", text: it.engines.includes("bicep") ? "Bicep + Terraform" : "Terraform" }));
     }
     (it.industries || []).slice(0, 2).forEach((i) => chips.push(el("span", { class: "chip", text: i })));
 
@@ -640,9 +640,8 @@
 
     const engines = Array.isArray(it.engines) && it.engines.length ? it.engines : ["bicep"];
     const hasTerraform = engines.indexOf("terraform") !== -1;
-    const engineSelect = el("select", { class: "deploy-input", id: "deploy-engine" }, [
-      el("option", { value: "bicep", text: "Bicep (ARM)" }),
-    ]);
+    const engineSelect = el("select", { class: "deploy-input", id: "deploy-engine" });
+    if (engines.includes("bicep")) engineSelect.appendChild(el("option", { value: "bicep", text: "Bicep (ARM)" }));
     if (hasTerraform) engineSelect.appendChild(el("option", { value: "terraform", text: "Terraform" }));
 
     const rgInput = el("input", {
@@ -746,7 +745,7 @@
       if (it.deployReady === false || (me.customerOperated && !customerSubscriptions.length)) {
         btn.disabled = true;
         externalBtn.disabled = true;
-        engineHint.textContent = it.deployReady === false ? "Customer runtime inputs have not been published." : "Configure a deployment subscription in Setup.";
+        engineHint.textContent = it.deployReady === false ? "Organization runtime inputs have not been published." : "Configure a deployment subscription in Setup.";
         engineHint.style.display = "";
         return;
       }
@@ -1846,6 +1845,50 @@
   function openCapacityPanel() {
     if (!window.TechlabsPanel) return;
     closeModal();
+    if (state.me?.customerOperated) {
+      window.TechlabsPanel.open((bodyEl, e) => {
+        bodyEl.append(e("h2", { text: "Subscription quota snapshots" }));
+        const status = e("p", { role: "status", text: "Loading quota snapshots..." });
+        bodyEl.append(status);
+        Promise.all([
+          fetch("capacity.json", { credentials: "same-origin" }).then(response => { if (!response.ok) throw new Error("Snapshot unavailable."); return response.json(); }),
+          fetch("/api/subscriptions", { credentials: "same-origin" }).then(response => { if (!response.ok) throw new Error("Subscriptions unavailable."); return response.json(); }),
+        ]).then(([snapshot, configured]) => {
+          if (!bodyEl.isConnected) return;
+          const entries = Object.entries(snapshot.subscriptions || {});
+          if (!entries.length) { status.textContent = "No quota snapshot is available for the configured subscriptions."; return; }
+          const generated = new Date(snapshot.generated);
+          status.textContent = `Compute quota headroom only. Physical capacity and other service quotas are unknown. Snapshot: ${generated.toLocaleString()}.`;
+          const subscription = e("select", { class: "deploy-input", "aria-label": "Snapshot subscription" });
+          for (const [identifier] of entries) {
+            const name = (configured.subscriptions || []).find(item => item.subscriptionId === identifier)?.displayName || identifier;
+            subscription.append(e("option", { value: identifier, text: name }));
+          }
+          const region = e("select", { class: "deploy-input", "aria-label": "Snapshot region" });
+          const table = e("div", { class: "setup-table" });
+          const controls = e("div", { class: "setup-grid" }, [
+            e("label", { class: "setup-field" }, [e("span", { text: "Subscription" }), subscription]),
+            e("label", { class: "setup-field" }, [e("span", { text: "Region" }), region]),
+          ]);
+          function draw() {
+            const rows = snapshot.subscriptions[subscription.value]?.[region.value] || [];
+            table.replaceChildren(e("table", { "aria-label": "Compute quota snapshot" }, [
+              e("thead", {}, e("tr", {}, ["Quota", "Used", "Limit", "Available"].map(text => e("th", { scope: "col", text })))),
+              e("tbody", {}, rows.map(row => e("tr", {}, [row.name, row.current, row.limit, row.available].map(value => e("td", { text: String(value) }))))),
+            ]));
+          }
+          function selectSubscription() {
+            region.replaceChildren(...Object.keys(snapshot.subscriptions[subscription.value]).map(name => e("option", { value: name, text: name })));
+            draw();
+          }
+          subscription.addEventListener("change", selectSubscription);
+          region.addEventListener("change", draw);
+          bodyEl.append(controls, table);
+          selectSubscription();
+        }).catch(error => { if (bodyEl.isConnected) status.textContent = error.message; });
+      });
+      return;
+    }
     window.TechlabsPanel.open((bodyEl, e) => {
       bodyEl.appendChild(e("h2", { text: "Region capacity" }));
       const cap = state.capacity;
@@ -2140,11 +2183,6 @@
   }
 
   // -------------------------------------------------------- submit a use case
-  // Primary path: upload a ready-to-deploy template (zip with main.bicep +
-  // parameters). The backend validates + stages it for a maintainer to review
-  // and commit (see GitHub issue #6). The old "describe it in plain English"
-  // flow is parked because AI-drafted Bicep is not deployable without a
-  // maintainer finishing it.
   function openSubmitPanel() {
     if (!window.TechlabsPanel) return;
     closeModal();
@@ -2155,7 +2193,7 @@
         e("p", {
           class: "submit-intro",
           text:
-            "Already have a template? Upload a .zip containing your main.bicep and a parameters folder. We'll validate it and queue it for a maintainer to review and publish to the catalog.",
+            "Bicep, Terraform, or both. Submissions require maintainer review before publication.",
         })
       );
 
@@ -2172,7 +2210,7 @@
           e("label", { class: "submit-label", for: "submit-zip", text: "Template zip *" }),
           e("span", {
             class: "submit-hint",
-            text: "Required inside the zip: main.bicep (at the root) and at least one parameters/<env>.bicepparam. Optional: metadata.json, README.md.",
+            text: "Bicep: main.bicep and parameters/<env>.bicepparam. Terraform: terraform/main.tf with .tf and .tfvars files, or main.tf at the root. Optional: metadata.json, README.md. Exclude secrets, state, saved plans and .terraform caches.",
           }),
           fileInput,
         ]),
@@ -2285,17 +2323,26 @@
     if (rm) rm.addEventListener("click", openRoadmapPanel);
   }
 
+  function applyBranding(branding) {
+    if (typeof branding?.brandName === "string" && branding.brandName) {
+      document.title = branding.brandName;
+      document.querySelectorAll("[data-brand-name]").forEach(node => { node.textContent = branding.brandName; });
+    }
+    if (typeof branding?.footerText === "string") {
+      document.querySelectorAll("[data-brand-footer]").forEach(node => {
+        node.textContent = branding.footerText;
+        node.hidden = !branding.footerText;
+      });
+    }
+  }
+  document.addEventListener("techlabs:branding-saved", event => applyBranding(event.detail));
+
   function loadIdentity() {
     if (!window.TechlabsApi) return;
     window.TechlabsApi.me()
       .then((me) => {
         state.me = me;
-        if (me && me.brandName) {
-          document.title = me.brandName;
-          document.querySelectorAll("[data-brand-name]").forEach((node) => {
-            node.textContent = me.brandName;
-          });
-        }
+        applyBranding(me);
         if (me && me.isAdmin) {
           const link = document.getElementById("nav-admin");
           if (link) link.hidden = false;
@@ -2362,7 +2409,7 @@
     .then(init)
     .catch((err) => {
       $("#cards").appendChild(
-        el("p", { class: "card-desc", text: "Could not load the catalog. Check the customer repository sync in Setup." })
+        el("p", { class: "card-desc", text: "Could not load the catalog. Check the organization repository sync in Setup." })
       );
       console.error(err);
     });

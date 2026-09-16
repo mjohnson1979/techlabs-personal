@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import math
 import os
 import re
@@ -13,7 +14,22 @@ from typing import Any
 
 import httpx
 
-_SCOPES = "repo read:org"
+_SCOPES = "repo read:org workflow"
+_DEVICE_START_ERRORS = {
+    "device_flow_disabled": (
+        "GitHub Device Flow is disabled. Open the saved OAuth App's settings, "
+        "enable Device Flow, save, then select Connect GitHub again."
+    ),
+    "incorrect_client_credentials": (
+        "GitHub rejected the OAuth Client ID. In Setup, save the Client ID from "
+        "your organization-owned GitHub OAuth App, not its name or client secret, "
+        "and enable Device Flow."
+    ),
+    "invalid_client": (
+        "GitHub rejected the OAuth Client ID. Verify that the saved Client ID "
+        "belongs to your organization-owned GitHub OAuth App and that Device Flow is enabled."
+    ),
+}
 
 
 @dataclass
@@ -58,23 +74,35 @@ async def oauth_request(path: str, data: dict[str, str]) -> dict[str, Any]:
         raise ValueError("Invalid GitHub authorization endpoint")
     async with httpx.AsyncClient(timeout=20, follow_redirects=False) as client:
         async with client.stream("POST", "https://github.com" + path, data=data, headers={"Accept": "application/json"}) as response:
-            response.raise_for_status()
             content = bytearray()
             async for chunk in response.aiter_bytes():
                 content.extend(chunk)
                 if len(content) > 16384:
                     raise ValueError("GitHub authorization response exceeds the limit")
-    import json
-    result = json.loads(content)
-    if not isinstance(result, dict):
-        raise ValueError("Invalid GitHub authorization response")
+            try:
+                result = json.loads(content)
+            except (ValueError, UnicodeError):
+                response.raise_for_status()
+                raise ValueError("GitHub returned an invalid authorization response. Retry later; verify the host can reach github.com without an intervening sign-in page.") from None
+            if not isinstance(result, dict):
+                response.raise_for_status()
+                raise ValueError("Invalid GitHub authorization response")
+            error = result.get("error")
+            if (
+                path == "/login/device/code"
+                and response.status_code in (200, 400, 401, 403, 404, 422)
+                and isinstance(error, str)
+                and error in _DEVICE_START_ERRORS
+            ):
+                raise ValueError(_DEVICE_START_ERRORS[error])
+            response.raise_for_status()
     return result
 
 
 async def start(owner: str, storage: dict | None = None) -> dict:
     configured = client_id()
     if not configured:
-        raise ValueError("Save a customer GitHub OAuth App client ID with device flow enabled in Setup")
+        raise ValueError("Save an organization GitHub OAuth App client ID with device flow enabled in Setup")
     now = time.time()
     for identifier, flow in list(_flows.items()):
         if flow.expires_at <= now or flow.owner == owner:
@@ -85,7 +113,9 @@ async def start(owner: str, storage: dict | None = None) -> dict:
         raise ValueError("Too many pending GitHub sign-ins")
     result = await oauth_request("/login/device/code", {"client_id": configured, "scope": _SCOPES})
     if result.get("error"):
-        raise ValueError("GitHub device sign-in is unavailable; verify the customer OAuth App configuration")
+        error = result["error"]
+        message = _DEVICE_START_ERRORS.get(error) if isinstance(error, str) else None
+        raise ValueError(message or "GitHub device sign-in was rejected. Verify the saved OAuth App Client ID, enable Device Flow in that app's settings, and check organization OAuth policy.")
     user_code = str(result.get("user_code", ""))
     device_code = str(result.get("device_code", ""))
     if not re.fullmatch(r"[A-Z0-9]{4}-[A-Z0-9]{4}", user_code) or not device_code or len(device_code) > 1024:

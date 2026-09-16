@@ -1,6 +1,6 @@
-# Customer distribution release gate
+# Organization distribution release gate
 
-Internal working document. Not included in the customer export.
+Internal working document. Not included in the organization export.
 
 Branch: `customer/self-hosted-platform`, based on `dev` at `7e483880`.
 At branch creation `dev`, `origin/dev`, and `origin/main` were equal; local `main`
@@ -12,7 +12,7 @@ From the repository root, in the existing virtual environment:
 
 ```powershell
 python -m pytest site/server/tests
-python tools/build_customer_distribution.py --output runs/customer-platform.zip
+python tools/build_distribution.py --output runs/organization-platform.zip
 ```
 
 The builder refuses to overwrite an existing archive. Use a new filename for a
@@ -21,7 +21,7 @@ Do not release the originating repository, a GitHub branch archive, or a fork.
 Bundled internal IaC, catalog content and internal deployment automation have been
 removed from this branch's working tree. They remain in Git history. Development
 tests, editor instructions and local build output are still excluded by the
-customer export allowlist; a cleaned working tree is not a history-free release.
+organization export allowlist; a cleaned working tree is not a history-free release.
 
 ## Required decisions before external publication
 
@@ -43,19 +43,19 @@ customer export allowlist; a cleaned working tree is not a history-free release.
   policy and approved support/disclaimer language. Do not imply a product SLA.
 - [ ] Manual confidentiality review of every allowlisted file and dependency.
   Regex checks detect known strings, not all possible confidential information.
-- [ ] Live test in an isolated customer-owned tenant/subscription: correct and
+- [ ] Live test in an isolated organization-owned tenant/subscription: correct and
   incorrect tenant sign-in, explicit admin bootstrap, own IaC publishing,
   deployment, cost view, lease cleanup, failed cleanup, and recovery after restart.
-- [ ] Customer retention/deletion, backup/restore and incident runbooks for
+- [ ] Organization retention/deletion, backup/restore and incident runbooks for
   identity claims, audit records, uploaded code, logs and Terraform state.
 
 ## Engineering scope
 
-The initial package has an empty catalog and blank customer IDs, enforced
+The initial package has an empty catalog and blank organization IDs, enforced
 single-Azure-tenant/multiple-subscription configuration, explicit admin bootstrap,
 managed-identity-only deployment, and no publisher telemetry integration.
 Legacy OAuth/external-subscription flows are blocked in the package. It requires
-customer-controlled App Service Authentication and one worker/one app instance.
+organization-controlled App Service Authentication and one worker/one app instance.
 
 The export is an engineering preview, not evidence of release approval or a
 production security certification. Publishing, live deployment and cloud changes
@@ -63,9 +63,9 @@ are separate actions and are not performed by the builder.
 
 ## Hosted setup verification
 
-- [ ] Build the image from a fresh customer export/private clone, scan the final
+- [ ] Build the image from a fresh organization export/private clone, scan the final
   image and dependency licenses, and pin the deployed image/base digests.
-- [ ] Run as UID 10001 on private App Service with persistent `/home/data`, system
+- [ ] Run as UID 10001 on authenticated App Service with persistent `/home/data`, system
   identity, preconfigured Entra and explicit GALLERY_ADMIN_OIDS, without a setup
   secret or manually duplicated tenant/app/host IDs. Confirm startup refuses
   public ingress, disabled Easy Auth, extra audiences, wrong tenant, absent admins,
@@ -86,14 +86,31 @@ are separate actions and are not performed by the builder.
   restart and secrets never appear in validation errors, logs or database records.
 - [ ] Test App Service and Key Vault writes interrupted by host restart, failed
   activation recovery and permanently disabled installer after completion.
-- [ ] Verify additive Entra/OIDC configuration on a disposable customer App Service;
+- [ ] Verify additive Entra/OIDC configuration on a disposable organization App Service;
   retain working bootstrap auth and confirm issuer/audience/subject claims.
 - [ ] Confirm Entra credential storage, expiry/rotation and recovery after app restart.
   Verify generated secrets never appear in API responses, DB records or logs.
 - [ ] Confirm GitHub repository creation permissions, empty-repo seeding and recovery
   from partial writes. Protect the catalog branch before executing imported code.
+- [ ] Verify no active workflows are exported/seeded by default. Validate opt-in
+  generated YAML with actionlint, SHA-pinned actions, reviewed-branch inputs, separate
+  publication permissions, source-commit guards and protected-branch failures.
+- [ ] Test Create workflow PR on an existing repository: admin/origin/confirmation
+  checks, workflow scope, idempotent review links, no automatic merge or setup reset.
+- [ ] Validate Bicep wrapper compilation, metadata-bound public retail refresh and
+  atomic snapshot sync. Confirm invalid feeds retain the last good catalog.
+- [ ] Verify container validation, pricing and quota refresh with runners unavailable
+  and runner probes denied. Test restart recovery, admin/origin checks, rate limits,
+  and immutable deployment artifacts. Verify unavailable choices are disabled.
+- [ ] Exercise real compilers inside the target host's Landlock/seccomp sandbox:
+  local modules/parameters succeed; database/process-environment reads, network
+  access, long-running work and unsupported kernels fail closed. No compiler
+  output or environment may expose credentials. Review compiler/license updates.
+- [ ] Enable capacity only after organization OIDC/Reader approval; verify the selected
+  tenant/subscriptions/regions, GET-only collection, no negotiated rates in Git,
+  snapshot age and configured-subscription filtering in the portal.
 - [ ] Verify CSV atomic failure and allowlist enforcement across multiple subscriptions,
-  including lease cleanup and customer Terraform state.
+  including lease cleanup and organization Terraform state.
 - [ ] Validate supported negotiated price sheets against invoices and verify the UI's
   retail fallback. Compute quota coverage is not all-service or physical capacity.
 - [ ] Review the additional setup identity privileges (Graph app creation and host

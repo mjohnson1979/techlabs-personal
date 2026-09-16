@@ -1,4 +1,4 @@
-"""Bounded customer-owned management API operations used by hosted setup."""
+"""Bounded organization-owned management API operations used by hosted setup."""
 
 from __future__ import annotations
 

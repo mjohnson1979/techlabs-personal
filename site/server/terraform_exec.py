@@ -3,8 +3,8 @@
 Companion to ``azure_deploy.py``: when a deployment's ``engine`` is ``terraform``
 the executor runs the use case's Terraform module instead of submitting ARM JSON.
 
-Customer Terraform sources are supplied under ``site/server/_tf/<use_case>/``
-or synchronized from a reviewed customer repository commit.
+Organization Terraform sources are supplied under ``site/server/_tf/<use_case>/``
+or synchronized from a reviewed organization repository commit.
 
 Execution model
 ---------------
@@ -188,7 +188,7 @@ def _prepare_workdir(dep: dict[str, Any]) -> tuple[Path, bool]:
     if not src.is_dir():
         raise RuntimeError(
             f"No Terraform module for {dep['use_case']}. "
-            "Publish the customer module through the configured repository."
+            "Publish the organization module through the configured repository."
         )
     work = _work_root() / dep["id"]
     work.mkdir(parents=True, exist_ok=True)
@@ -231,7 +231,7 @@ def _run_env(dep: dict[str, Any]) -> dict[str, str]:
                 raise ValueError
             subscription_for(dep["subscription_id"])
         except ValueError:
-            raise RuntimeError("subscription is outside the customer installation") from None
+            raise RuntimeError("subscription is outside the organization installation") from None
         env["ARM_USE_MSI"] = "true"
         env["ARM_USE_CLI"] = "false"
         env["ARM_USE_OIDC"] = "false"

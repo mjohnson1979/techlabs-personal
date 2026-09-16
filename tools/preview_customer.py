@@ -52,6 +52,7 @@ def create_preview_server(root: Path, port: int = 8766) -> ThreadingHTTPServer:
         "/api/me": {
             **user, "signedIn": True, "role": "admin", "isAdmin": True,
             "brandName": "Deployment Portal (Preview)", "customerOperated": True,
+            "footerText": "Read-only preview. Cost estimates are indicative.",
             "deploymentCount": 0, "activeDeployments": 0, "maxLifetimeHours": 48,
             "terraformExecAvailable": False,
             "setupRequired": True,
@@ -59,6 +60,7 @@ def create_preview_server(root: Path, port: int = 8766) -> ThreadingHTTPServer:
         },
         "/api/deployments": {"deployments": []},
         "/api/admin/setup": {
+            "branding": {"brandName": "Deployment Portal (Preview)", "footerText": "Read-only preview. Cost estimates are indicative."},
             "azureTenantId": "11111111-1111-4111-8111-111111111111",
             "primaryAuthentication": {"clientId": "22222222-2222-4222-8222-222222222222", "verified": False},
             "subscriptions": [], "authentication": {}, "github": {"enabled": False},

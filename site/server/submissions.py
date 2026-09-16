@@ -1,15 +1,14 @@
 """Validate and stage community use-case submissions (zip uploads).
 
-A signed-in user uploads a ``.zip`` containing at least a Bicep template and its
-parameter file(s). This module validates the archive (size, zip-slip / path
+A signed-in user uploads a ``.zip`` containing Bicep with parameter files,
+Terraform, or both. This module validates the archive (size, zip-slip / path
 traversal, allowed file types, zip-bomb limits, required files), normalises it
 into the ``catalog/<slug>/`` layout the gallery expects, synthesises a *draft*
 ``metadata.json`` / ``README.md`` when the submitter did not include them, and
 stages the result on disk for a maintainer to review and commit.
 
-The backend holds no GitHub credential, so it never pushes. An admin downloads
-the normalised bundle from the admin panel (or, later, an Action wired to a
-token opens the PR). See GitHub issue #6.
+The caller may publish staged files to a configured organization GitHub review branch.
+Staging does not execute the submitted infrastructure code.
 """
 
 from __future__ import annotations
@@ -36,7 +35,7 @@ MAX_SINGLE_FILE = 5 * 1024 * 1024           # 5 MB per extracted file
 
 # Only these extensions are accepted; anything else in the zip is rejected so we
 # never stage scripts/binaries. Images are allowed for architecture diagrams.
-ALLOWED_EXT = {".bicep", ".bicepparam", ".json", ".md", ".txt", ".png", ".jpg", ".jpeg"}
+ALLOWED_EXT = {".bicep", ".bicepparam", ".tf", ".tfvars", ".json", ".md", ".txt", ".png", ".jpg", ".jpeg"}
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CATALOG_DIR = REPO_ROOT / "catalog"
@@ -128,7 +127,8 @@ def _draft_readme(slug: str, display_name: str, user_upn: str, has_metadata: boo
 
 ## Maintainer checklist
 
-- [ ] Review `main.bicep` and the `parameters/*.bicepparam` files.
+- [ ] Review the submitted Bicep/parameter files and/or `terraform/*.tf` and `terraform/*.tfvars`.
+- [ ] Check Terraform providers, provisioners and variable files for unsafe operations or secrets.
 - [ ] Confirm / complete `metadata.json` (category, description, services, cost).
 - [ ] Compile with your own toolchain and publish reviewed runtime inputs for catalog sync.
 - [ ] Deploy once to confirm it provisions cleanly, then merge.
@@ -175,6 +175,9 @@ def stage_submission(
             raise SubmissionError(f"Unsafe path in archive: {info.filename!r}")
         if info.file_size > MAX_SINGLE_FILE:
             raise SubmissionError(f"File too large in archive: {rel}")
+        parts = [part.lower() for part in rel.split("/")]
+        if ".terraform" in parts or ".git" in parts or re.search(r"\.tfstate(?:\.|$)|\.tfplan(?:\.|$)", parts[-1]):
+            raise SubmissionError("Remove Terraform state, saved plans, provider caches and Git data before uploading.")
         safe[rel] = info
 
     if not safe:
@@ -192,14 +195,23 @@ def stage_submission(
             )
         files[target] = zf.read(safe[original])
 
-    # Required: a main.bicep at the root, plus at least one parameters file.
-    if "main.bicep" not in files:
-        raise SubmissionError("The archive must contain a main.bicep at its root.")
+    if "main.tf" in files and "terraform/main.tf" not in files:
+        for name in list(files):
+            if "/" not in name and name.lower().endswith((".tf", ".tfvars", ".tf.json", ".tfvars.json")):
+                destination = f"terraform/{name}"
+                if destination in files:
+                    raise SubmissionError("Conflicting Terraform files at the root and in terraform/.")
+                files[destination] = files.pop(name)
+
+    has_bicep = "main.bicep" in files
+    has_terraform = "terraform/main.tf" in files
+    if not has_bicep and not has_terraform:
+        raise SubmissionError("Include main.bicep with parameters/<env>.bicepparam, or terraform/main.tf (Terraform-only archives may use main.tf at the root).")
     param_files = [
         p for p in files
         if p.startswith("parameters/") and p.lower().endswith(".bicepparam")
     ]
-    if not param_files:
+    if has_bicep and not param_files:
         raise SubmissionError(
             "Include at least one parameters/<env>.bicepparam file (e.g. parameters/dev.bicepparam)."
         )

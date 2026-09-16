@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import sys
 import asyncio
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -33,6 +35,42 @@ def configured(tmp_path, monkeypatch):
     connection.close()
 
 
+def test_branding_defaults_and_admin_updates_persist(configured, monkeypatch):
+    import distribution
+    monkeypatch.setenv("GALLERY_BRAND_NAME", "Engineering Hub")
+    monkeypatch.setenv("GALLERY_FOOTER_TEXT", "Internal use. Verify estimates.")
+    assert distribution.branding() == {"brandName": "Engineering Hub", "footerText": "Internal use. Verify estimates."}
+    application = FastAPI()
+    application.include_router(setup_routes.build_setup_router())
+    client = TestClient(application)
+    payload = {"brandName": "  Platform Hub  ", "footerText": "<b>Plain text only</b>"}
+    assert client.put("/api/admin/setup/branding", json=payload).status_code in (401, 403)
+    application.dependency_overrides[require_admin] = lambda: CurrentUser("admin", "", "", TENANT, "admin")
+    assert client.put("/api/admin/setup/branding", json=payload).status_code == 403
+    response = client.put("/api/admin/setup/branding", headers={"Origin": "http://testserver"}, json=payload)
+    assert response.status_code == 200
+    assert distribution.brand_name() == "Platform Hub"
+    assert response.json() == db.get_setup_setting("branding")
+    assert client.get("/api/admin/setup").json()["branding"] == response.json()
+    assert client.put("/api/admin/setup/branding", headers={"Origin": "http://testserver"}, json={"brandName": "Hub", "footerText": ""}).json()["footerText"] == ""
+
+
+@pytest.mark.parametrize("fields", [{"brandName": " "}, {"brandName": "a" * 81}, {"footerText": "a" * 501}, {"footerText": "bad\ntext"}, {"logoUrl": "https://untrusted.example"}])
+def test_branding_rejects_invalid_fields(fields):
+    with pytest.raises(ValueError):
+        setup_routes.BrandingInput(**({"brandName": "Hub", "footerText": "Notice"} | fields))
+
+
+def test_branding_guest_cannot_save(configured, monkeypatch):
+    import identity
+    monkeypatch.setattr(identity, "_resolve_identity", lambda request: CurrentUser("guest", "", "", TENANT, "guest"))
+    application = FastAPI()
+    application.include_router(setup_routes.build_setup_router())
+    response = TestClient(application).put("/api/admin/setup/branding", headers={"Origin": "http://testserver"}, json={"brandName": "Hub", "footerText": ""})
+    assert response.status_code == 403
+    assert db.get_setup_setting("branding") is None
+
+
 def test_subscription_csv_and_persistence(configured):
     content = f'subscriptionId,pricingMode\n{SUBSCRIPTION},negotiated\n'.encode()
     items = setup_config.parse_subscriptions_csv(content)
@@ -50,16 +88,16 @@ def test_github_oauth_application_can_be_configured_in_browser(configured, monke
     application.dependency_overrides[require_admin] = lambda: CurrentUser(oid="admin", upn="admin@example.com", name="Admin", tenant_id=TENANT, role="admin")
     client = TestClient(application)
     path = "/api/admin/setup/github/oauth-client"
-    body = {"clientId": "customer-oauth-client", "confirm": True}
+    body = {"clientId": "organization-oauth-client", "confirm": True}
     assert client.put(path, json=body).status_code == 403
     headers = {"Origin": "http://testserver"}
     assert client.put(path, json={**body, "confirm": False}, headers=headers).status_code == 400
     response = client.put(path, json=body, headers=headers)
     assert response.status_code == 200, response.text
-    assert github_device.client_id() == "customer-oauth-client"
+    assert github_device.client_id() == "organization-oauth-client"
     db.set_setup_setting("github", {"enabled": True})
     assert client.put(path, json={**body, "clientId": "another-client"}, headers=headers).status_code == 409
-    assert github_device.client_id() == "customer-oauth-client"
+    assert github_device.client_id() == "organization-oauth-client"
 
 
 @pytest.mark.parametrize("rows", [
@@ -128,6 +166,7 @@ def test_subscription_save_verifies_before_persisting(configured, monkeypatch):
 
 @pytest.mark.parametrize("route,payload,key", [
     ("/resolve", {"subscriptionId": SUBSCRIPTION}, "subscription"),
+    ("/resolve", {"subscriptionId": SUBSCRIPTION, "pricingMode": "retail"}, "subscription"),
     ("/parse", {"csv": f"subscriptionId\n{SUBSCRIPTION}\n"}, "subscriptions"),
 ])
 def test_id_only_requests_resolve_metadata(configured, monkeypatch, route, payload, key):
@@ -142,6 +181,44 @@ def test_id_only_requests_resolve_metadata(configured, monkeypatch, route, paylo
     record = response.json()[key]
     if isinstance(record, list): record = record[0]
     assert record == {"subscriptionId": SUBSCRIPTION, "tenantId": TENANT, "displayName": "Azure-resolved name", "pricingMode": "retail"}
+    assert db.get_setup_setting("subscriptions") is None
+
+
+@pytest.mark.parametrize("method,path,payload,field", [
+    ("POST", "/resolve", {"subscriptionId": "00000000-0000-0000-0000-000000000000", "pricingMode": "retail"}, "subscriptionId"),
+    ("POST", "/resolve", {"subscriptionId": SUBSCRIPTION, "pricingMode": ""}, "pricingMode"),
+    ("POST", "/resolve", {"subscriptionId": SUBSCRIPTION, "displayName": "Supplied name"}, "displayName"),
+    ("PUT", "", {"subscriptions": []}, "subscriptions"),
+    ("PUT", "", {"subscriptions": [{"subscriptionId": SUBSCRIPTION, "pricingMode": "invalid"}]}, "pricingMode"),
+])
+def test_subscription_validation_identifies_field_before_cloud_calls(configured, monkeypatch, method, path, payload, field):
+    async def unexpected_cloud(*args, **kwargs):
+        pytest.fail("Invalid input must not call Azure")
+
+    monkeypatch.setattr(setup_routes.setup_cloud, "arm_request", unexpected_cloud)
+    application = FastAPI()
+    application.include_router(setup_routes.build_setup_router())
+    application.dependency_overrides[require_admin] = lambda: CurrentUser("admin", "", "", TENANT, "admin")
+    response = TestClient(application).request(method, "/api/admin/setup/subscriptions" + path, headers={"Origin": "http://testserver"}, json=payload)
+    assert response.status_code == 422
+    assert any(error["loc"][-1] == field for error in response.json()["detail"])
+    assert db.get_setup_setting("subscriptions") is None
+
+
+def test_subscription_resolution_explains_denied_host_access(configured, monkeypatch):
+    import httpx
+
+    async def forbidden(path):
+        httpx.Response(403, text="private-azure-response", request=httpx.Request("GET", "https://management.azure.com" + path)).raise_for_status()
+
+    monkeypatch.setattr(setup_routes.setup_cloud, "arm_request", forbidden)
+    application = FastAPI()
+    application.include_router(setup_routes.build_setup_router())
+    application.dependency_overrides[require_admin] = lambda: CurrentUser("admin", "", "", TENANT, "admin")
+    response = TestClient(application).post("/api/admin/setup/subscriptions/resolve", headers={"Origin": "http://testserver"}, json={"subscriptionId": SUBSCRIPTION, "pricingMode": "retail"})
+    assert response.status_code == 502
+    assert "managed identity's Reader access" in response.json()["detail"]
+    assert "private-azure-response" not in response.text
     assert db.get_setup_setting("subscriptions") is None
 
 
@@ -160,6 +237,37 @@ def test_save_uses_fresh_azure_metadata(configured, monkeypatch):
     response = client.put("/api/admin/setup/subscriptions", headers=headers, json={"subscriptions": [{"subscriptionId": SUBSCRIPTION, "pricingMode": "negotiated"}]})
     assert response.status_code == 200
     assert db.get_setup_setting("subscriptions")[0] == {"subscriptionId": SUBSCRIPTION, "tenantId": TENANT, "displayName": "Renamed in Azure", "pricingMode": "negotiated"}
+
+
+def test_single_action_add_and_pricing_save_preserve_existing_subscriptions(configured, monkeypatch):
+    monkeypatch.delenv("GALLERY_SUBSCRIPTION_ID", raising=False)
+    second = "33333333-3333-4333-8333-333333333333"
+    paths = []
+
+    async def arm(path):
+        paths.append(path)
+        identifier = path.split("/")[2].split("?")[0]
+        return {"subscriptionId": identifier, "tenantId": TENANT, "displayName": "Azure name", "state": "Enabled"}
+
+    monkeypatch.setattr(setup_routes.setup_cloud, "arm_request", arm)
+    application = FastAPI()
+    application.include_router(setup_routes.build_setup_router())
+    application.dependency_overrides[require_admin] = lambda: CurrentUser("admin", "", "", TENANT, "admin")
+    client = TestClient(application)
+    selections = [{"subscriptionId": SUBSCRIPTION, "pricingMode": "retail"}]
+    for action in ("add", "append", "pricing"):
+        if action == "append":
+            selections.append({"subscriptionId": second, "pricingMode": "retail"})
+        elif action == "pricing":
+            selections[0]["pricingMode"] = "negotiated"
+        paths.clear()
+        response = client.put("/api/admin/setup/subscriptions", headers={"Origin": "http://testserver"}, json={"subscriptions": selections})
+        assert response.status_code == 200
+        assert len(paths) == len(selections)
+        saved = db.get_setup_setting("subscriptions")
+        assert response.json()["subscriptions"] == saved
+        assert [{key: item[key] for key in ("subscriptionId", "pricingMode")} for item in saved] == selections
+        assert all(item["displayName"] == "Azure name" and item["tenantId"] == TENANT for item in saved)
 
 
 def test_batch_failure_keeps_saved_subscriptions(configured, monkeypatch):
@@ -233,19 +341,19 @@ def test_negotiated_failure_preserves_retail(monkeypatch):
     assert "403" in result["fallbackReason"]
 
 
-def test_github_requires_confirmation_and_no_existing_repo_seed(configured):
+def test_github_source_copy_requires_confirmation(configured):
     import setup_github
     with pytest.raises(ValueError, match="confirmation"):
-        asyncio.run(setup_github.configure(setup_github.GitHubSettings(owner="customer", repository="portal")))
-    with pytest.raises(ValueError, match="newly created"):
-        asyncio.run(setup_github.configure(setup_github.GitHubSettings(owner="customer", repository="portal", seed=True, confirm=True)))
+        asyncio.run(setup_github.configure(setup_github.GitHubSettings(owner="organization", repository="portal")))
+    with pytest.raises(ValueError, match="confirmation"):
+        asyncio.run(setup_github.configure(setup_github.GitHubSettings(owner="organization", repository="portal", seed=True)))
 
 
 def test_github_sync_publishes_metadata_without_executing_source(configured, monkeypatch):
     import base64
     import json
     import setup_github
-    db.set_setup_setting("github", {"enabled": True, "owner": "customer", "repository": "portal", "branch": "main"})
+    db.set_setup_setting("github", {"enabled": True, "owner": "organization", "repository": "portal", "branch": "main"})
     async def request(path, *args):
         if "/git/ref/" in path:
             return {"object": {"sha": "a" * 40}}
@@ -257,23 +365,165 @@ def test_github_sync_publishes_metadata_without_executing_source(configured, mon
             return {"tree": [{"path": "example", "sha": "example", "type": "tree"}]}
         if path.endswith("/example"):
             return {"tree": [{"path": "metadata.json", "sha": "meta", "type": "blob", "mode": "100644", "size": 40}]}
-        return {"content": base64.b64encode(json.dumps({"displayName": "Customer example"}).encode()).decode()}
+        return {"content": base64.b64encode(json.dumps({"displayName": "Organization example"}).encode()).decode()}
     monkeypatch.setattr(setup_github, "github_request", request)
     result = asyncio.run(setup_github.sync_catalog())
-    assert result["items"][0]["displayName"] == "Customer example"
+    assert result["items"][0]["displayName"] == "Organization example"
     assert result["items"][0]["deployReady"] is False
-    assert db.get_setup_setting("catalog_snapshot")["version"] == "a" * 40
+    assert db.get_setup_setting("catalog_snapshot")["sourceCommit"] == "a" * 40
+    assert len(result["version"]) == 40
+
+
+def test_generated_prices_require_matching_metadata(configured):
+    import hashlib
+    import setup_github
+    metadata = b'{"displayName":"Example"}'
+    authored = {"region": "eastus", "currency": "USD", "components": [{"billing": "fixed", "quantityPerMonth": 10}]}
+    document = {"metadataSha256": hashlib.sha256(metadata).hexdigest(), "cost": {"pricingSource": "retail", "complete": True, "region": "eastus", "currency": "USD", "pricedAt": "2026-01-01T00:00:00+00:00", "components": [{"unitPrice": 2}]}}
+    assert setup_github.generated_cost(document, metadata, authored)["totalMonthly"] == 20
+    assert setup_github.generated_cost(document, metadata + b" ", authored) is None
+    document["cost"]["components"][0]["unitPrice"] = float("nan")
+    with pytest.raises(ValueError):
+        setup_github.generated_cost(document, metadata, authored)
+
+
+def test_capacity_snapshot_is_validated_and_filtered(configured):
+    import setup_github
+    other = "33333333-3333-4333-8333-333333333333"
+    rows = [{"name": "vCPUs", "limit": 10, "current": 2, "available": 8}]
+    document = {"schemaVersion": 1, "tenantId": TENANT, "generated": "2026-01-01T00:00:00+00:00", "physicalCapacity": "unknown", "subscriptions": {SUBSCRIPTION: {"eastus": rows}, other: {"eastus": rows}}}
+    db.set_setup_setting("subscriptions", [{"subscriptionId": SUBSCRIPTION, "tenantId": TENANT, "displayName": "Organization", "pricingMode": "retail"}])
+    db.set_setup_setting("catalog_snapshot", {"capacity": setup_github.validate_capacity(document)})
+    assert set(setup_github.capacity_snapshot()["subscriptions"]) == {SUBSCRIPTION}
+    for mutation in ({"tenantId": other}, {"generated": None}, {"physicalCapacity": "available"}):
+        with pytest.raises(ValueError):
+            setup_github.validate_capacity({**document, **mutation})
+    rows[0]["available"] = 99
+    with pytest.raises(ValueError):
+        setup_github.validate_capacity(document)
+
+
+def test_workflow_pr_only_changes_review_branch_and_is_idempotent(configured, monkeypatch):
+    import base64
+    import setup_github
+    names = (".github/workflows/portal-catalog.yml", ".github/workflows/portal-capacity.yml", "tools/portal_workflows.py", "tools/portal_catalog.py", "site/server/pricing.py", "site/server/catalog_workflows.py")
+    monkeypatch.setattr(setup_github, "source_seed", lambda: {name: base64.b64encode(b"reviewed").decode() for name in names})
+    db.set_setup_setting("catalog_processing", {"mode": "github-hosted"})
+    async def probe(*args, **kwargs):
+        return {"github-hosted": {"available": True}}
+    monkeypatch.setattr(setup_github, "processing_probe", probe)
+    db.set_setup_setting("github", {"enabled": True, "owner": "organization", "repository": "portal", "branch": "release"})
+    calls = []
+    opened = []
+    async def request(path, method="GET", body=None, **kwargs):
+        calls.append((path, method, body))
+        if path.endswith("/pulls"):
+            if method == "POST":
+                opened.append({"number": 7})
+                assert body["base"] == "release"
+                return opened[0]
+            return opened
+        if "/git/ref/heads/" in path:
+            return {"object": {"sha": "parent"}}
+        if path.endswith("/git/commits/parent"):
+            return {"tree": {"sha": "original-tree"}}
+        if "/contents/" in path:
+            return {}
+        return {"sha": "generated"}
+    monkeypatch.setattr(setup_github, "github_request", request)
+    with pytest.raises(ValueError, match="confirmation"):
+        asyncio.run(setup_github.create_workflow_pr(False))
+    assert not calls
+    first = asyncio.run(setup_github.create_workflow_pr(True))
+    count = len(calls)
+    assert asyncio.run(setup_github.create_workflow_pr(True)) == first
+    assert len(calls) == count + 1
+    assert first["url"] == "https://github.com/organization/portal/pull/7"
+    assert not any(method == "PATCH" for _, method, _ in calls)
+    tree = next(body for path, method, body in calls if path.endswith("/git/trees"))
+    assert tree["base_tree"] == "original-tree"
+    assert {entry["path"] for entry in tree["tree"]} == set(names)
+
+
+def test_generated_feeds_sync_atomically_and_reject_invalid_refresh(configured, monkeypatch):
+    import base64
+    import hashlib
+    import json
+    import setup_github
+    db.set_setup_setting("catalog_processing", {"mode": "github-hosted"})
+    async def probe(*args, **kwargs):
+        return {"github-hosted": {"available": True}}
+    monkeypatch.setattr(setup_github, "processing_probe", probe)
+    metadata = json.dumps({"displayName": "Example", "cost": {"currency": "USD", "region": "eastus", "components": [{"billing": "fixed", "quantityPerMonth": 10}]}}).encode()
+    prices = {"metadataSha256": hashlib.sha256(metadata).hexdigest(), "cost": {"currency": "USD", "region": "eastus", "pricingSource": "retail", "complete": True, "pricedAt": "2026-01-01T00:00:00+00:00", "components": [{"unitPrice": 2}]}}
+    capacity = {"schemaVersion": 1, "tenantId": TENANT, "generated": "2026-01-01T00:00:00+00:00", "physicalCapacity": "unknown", "subscriptions": {SUBSCRIPTION: {"eastus": [{"name": "vCPUs", "limit": 10, "current": 2, "available": 8}]}}}
+    data = {"meta": metadata, "prices": json.dumps(prices).encode(), "capacity": json.dumps(capacity).encode()}
+    version = ["a" * 40]
+    def blob(path, sha):
+        return {"path": path, "sha": sha, "type": "blob", "mode": "100644", "size": len(data[sha])}
+    async def request(path, *args):
+        if "/git/ref/" in path:
+            return {"object": {"sha": version[0]}}
+        if "/git/commits/" in path:
+            return {"tree": {"sha": "root"}}
+        if path.endswith("/root"):
+            return {"tree": [{"path": name, "sha": name, "type": "tree"} for name in ("catalog", "site")]}
+        if path.endswith("/catalog"):
+            return {"tree": [{"path": "example", "sha": "example", "type": "tree"}]}
+        if path.endswith("/example"):
+            return {"tree": [blob("metadata.json", "meta"), blob("pricing.json", "prices")]}
+        if path.endswith("/site"):
+            return {"tree": [blob("capacity.json", "capacity"), {"path": "main.py", "type": "blob", "sha": "never-read"}]}
+        return {"content": base64.b64encode(data[path.rsplit("/", 1)[1]]).decode()}
+    monkeypatch.setattr(setup_github, "github_request", request)
+    db.set_setup_setting("github", {"enabled": True, "owner": "organization", "repository": "portal", "branch": "main"})
+    result = asyncio.run(setup_github.sync_catalog())
+    assert result["items"][0]["cost"]["totalMonthly"] == 20
+    assert result["capacity"]["subscriptions"][SUBSCRIPTION]["eastus"][0]["available"] == 8
+    version[0] = "b" * 40
+    capacity["generated"] = None
+    data["capacity"] = json.dumps(capacity).encode()
+    with pytest.raises(ValueError):
+        asyncio.run(setup_github.sync_catalog())
+    assert setup_github.catalog_snapshot() == result
+
+
+def test_workflow_endpoint_requires_admin_origin_and_confirmation(configured, monkeypatch):
+    application = FastAPI()
+    application.include_router(setup_routes.build_setup_router())
+    client = TestClient(application)
+    assert client.post("/api/admin/setup/github/workflows", json={"confirm": True}).status_code in (401, 403)
+    application.dependency_overrides[require_admin] = lambda: CurrentUser("admin", "", "", TENANT, "admin")
+    assert client.post("/api/admin/setup/github/workflows", json={"confirm": True}).status_code == 403
+    response = client.post("/api/admin/setup/github/workflows", headers={"Origin": "http://testserver"}, json={})
+    assert response.status_code == 400
+    assert "confirmation" in response.json()["detail"]
+    async def create(confirm):
+        return {"status": "current"}
+    monkeypatch.setattr(setup_routes.setup_github, "create_workflow_pr", create)
+    assert client.post("/api/admin/setup/github/workflows", headers={"Origin": "http://testserver"}, json={"confirm": True}).status_code == 200
+    assert client.post("/api/admin/setup/github/workflows", headers={"Origin": "http://testserver"}, json={"confirm": True}).status_code == 429
+
+
+def test_capacity_is_not_leaked_via_catalog_json(configured, monkeypatch):
+    import json
+    import app
+    from starlette.requests import Request
+    monkeypatch.setattr(app, "is_customer_distribution", lambda: True)
+    monkeypatch.setattr(app.setup_github, "catalog_snapshot", lambda: {"items": [], "version": "a" * 40, "capacity": {"private": True}})
+    response = asyncio.run(app.serve_gallery(Request({"type": "http", "headers": []}), "catalog.json"))
+    assert "capacity" not in json.loads(response.body)
 
 
 def test_auth_provider_preserves_bootstrap(configured):
     import setup_auth
-    settings = setup_auth.AuthenticationSettings(kind="oidc", providerName="customer", clientId="app", issuer="https://id.example.com", discoveryUrl="https://id.example.com/.well-known/openid-configuration", publicUrl="https://portal.example.com")
+    settings = setup_auth.AuthenticationSettings(kind="oidc", providerName="organization", clientId="app", issuer="https://id.example.com", discoveryUrl="https://id.example.com/.well-known/openid-configuration", publicUrl="https://portal.example.com")
     current = {"properties": {"platform": {"enabled": True}, "globalValidation": {"requireAuthentication": True, "redirectToProvider": "azureactivedirectory"}, "identityProviders": {"azureActiveDirectory": {"enabled": True, "registration": {"clientId": "bootstrap"}}}}}
     result = setup_auth.provider_document(current, settings)
     assert result["properties"]["identityProviders"]["azureActiveDirectory"] == current["properties"]["identityProviders"]["azureActiveDirectory"]
     assert result["properties"]["globalValidation"]["redirectToProvider"] == "azureactivedirectory"
     assert "customOpenIdConnectProviders" not in current["properties"]["identityProviders"]
-    assert "clientCredential" not in result["properties"]["identityProviders"]["customOpenIdConnectProviders"]["customer"]["registration"]
+    assert "clientCredential" not in result["properties"]["identityProviders"]["customOpenIdConnectProviders"]["organization"]["registration"]
 
 
 @pytest.mark.parametrize("fields", [
@@ -299,10 +549,10 @@ def test_oidc_subject_cannot_claim_entra_role(configured, monkeypatch):
     import json
     import entra_auth
     from starlette.requests import Request
-    monkeypatch.setenv("GALLERY_DISTRIBUTION", "customer")
+    monkeypatch.setenv("GALLERY_DISTRIBUTION", "organization")
     monkeypatch.setenv("GALLERY_EASY_AUTH", "true")
-    db.set_setup_setting("authentication", {"providerName": "customer", "issuer": "https://id.example.com", "clientId": "app"})
-    principal = {"auth_typ": "customer", "claims": [{"typ": "iss", "val": "https://id.example.com"}, {"typ": "aud", "val": "app"}, {"typ": "sub", "val": "123"}, {"typ": "email", "val": "admin@example.com"}, {"typ": "oid", "val": "entra-admin"}]}
+    db.set_setup_setting("authentication", {"providerName": "organization", "issuer": "https://id.example.com", "clientId": "app"})
+    principal = {"auth_typ": "organization", "claims": [{"typ": "iss", "val": "https://id.example.com"}, {"typ": "aud", "val": "app"}, {"typ": "sub", "val": "123"}, {"typ": "email", "val": "admin@example.com"}, {"typ": "oid", "val": "entra-admin"}]}
     request = Request({"type": "http", "headers": [(b"x-ms-client-principal", base64.b64encode(json.dumps(principal).encode()))]})
     identity = entra_auth.identity_from_easy_auth(request)
     assert identity.oid.startswith("oidc:")
@@ -313,26 +563,467 @@ def test_oidc_subject_cannot_claim_entra_role(configured, monkeypatch):
     assert db.get_role(identity.oid) == "admin"
 
 
+@pytest.mark.parametrize("code,message", [("already_exists", "private"), ("custom", "name already exists on this account")])
+def test_github_duplicate_repository_error_has_safe_recovery_guidance(code, message):
+    import httpx
+    import setup_github
+    request = httpx.Request("POST", "https://api.github.com/user/repos")
+    response = httpx.Response(422, request=request, json={"message": "private-response", "errors": [
+        {"resource": "Repository", "field": "name", "code": code, "message": message}
+    ]})
+    failure = httpx.HTTPStatusError("private-exception", request=request, response=response)
+    result = setup_github.repository_failure(failure, creating=True)
+    assert "already exists" in result and "Connect an existing repository" in result
+    assert "Copy portal source" in result
+    assert "LICENSE" in result and "reviewed source import" in result
+    assert "private-response" not in result and "private-exception" not in result
+    assert "already exists" not in setup_github.repository_failure(failure, creating=False)
+
+
+@pytest.mark.parametrize("status,body,expected", [
+    (422, {"errors": "private-response"}, "rejected the repository settings"),
+    (403, {}, "denied access"), (401, {}, "authorization expired"),
+    (404, {}, "not found"), (429, {}, "rate-limited"), (502, [], "service availability"),
+])
+def test_github_repository_failure_reports_http_status_without_raw_content(status, body, expected):
+    import httpx
+    import setup_github
+    request = httpx.Request("POST", "https://api.github.com/user/repos")
+    response = httpx.Response(status, request=request, json=body)
+    result = setup_github.repository_failure(httpx.HTTPStatusError("private", request=request, response=response), True)
+    assert f"HTTP {status}" in result and expected in result
+    assert "private" not in result and "inspect" in result.lower()
+
+
+def test_github_repository_timeout_warns_that_creation_may_have_succeeded():
+    import httpx
+    import setup_github
+    result = setup_github.repository_failure(httpx.ReadTimeout("private"), True)
+    assert "may have succeeded" in result and "do not create another repository" in result
+    assert "private" not in result
+
+
+def test_github_duplicate_create_returns_json_without_seeding_or_saving(configured, monkeypatch):
+    import httpx
+    import setup_github
+    monkeypatch.setattr(setup_github, "source_seed", lambda: {})
+    calls = []
+
+    async def request(path, method="GET", body=None):
+        calls.append((path, method))
+        if path == "/user":
+            return {"login": "organization"}
+        assert path == "/user/repos" and method == "POST"
+        outbound = httpx.Request(method, "https://api.github.com" + path)
+        response = httpx.Response(422, request=outbound, json={"errors": [
+            {"resource": "Repository", "field": "name", "code": "already_exists"}
+        ]})
+        raise httpx.HTTPStatusError("private", request=outbound, response=response)
+
+    monkeypatch.setattr(setup_github, "github_request", request)
+    application = FastAPI()
+    application.include_router(setup_routes.build_setup_router())
+    application.dependency_overrides[require_admin] = lambda: CurrentUser("admin", "", "", TENANT, "admin")
+    response = TestClient(application).put("/api/admin/setup/github", headers={"Origin": "http://testserver"}, json={
+        "owner": "organization", "repository": "portal", "create": True, "confirm": True,
+    })
+    assert response.status_code == 502
+    assert "already exists" in response.json()["detail"]
+    assert calls == [("/user", "GET"), ("/user/repos", "POST")]
+    assert db.get_setup_setting("github") is None
+
+
+def test_setup_client_handles_empty_redirected_and_error_responses():
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js is required for the Setup request helper regression")
+    script = r"""
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const source = fs.readFileSync('site/assets/setup.js', 'utf8');
+const helper = source.slice(source.indexOf('  async function request('), source.indexOf('  function field('));
+async function requestWith(response, method = 'PUT', path = '/github') {
+  const context = { fetch: async () => response };
+  vm.createContext(context);
+  vm.runInContext(helper, context);
+    return context.request(path, method, {create:true});
+}
+(async () => {
+    await assert.rejects(requestWith({status:502, ok:false, text:async()=>''}), /empty or non-JSON.*HTTP 502.*may have completed.*Do not create another repository/);
+  await assert.rejects(requestWith({status:200, ok:true, text:async()=>'<html>private-details</html>'}), error => /non-JSON/.test(error.message) && !/private-details/.test(error.message));
+  await assert.rejects(requestWith({status:200, ok:true, redirected:true, text:async()=>{throw new Error('body must not be read');}}), /session needs sign-in/);
+  await assert.rejects(requestWith({status:401, ok:false, text:async()=>''}), /session needs sign-in/);
+  await assert.rejects(requestWith({status:400, ok:false, text:async()=>JSON.stringify({detail:'Repository already exists'})}), /Repository already exists/);
+  await assert.rejects(requestWith({status:200, ok:true, text:async()=>'null'}), /unexpected response/);
+  await assert.rejects(requestWith({status:422, ok:false, text:async()=>JSON.stringify({detail:[{loc:['body','subscriptionId']}]})}, 'PUT', '/subscriptions'), /Subscription ID must be a nonzero GUID/);
+  assert.equal((await requestWith({status:200, ok:true, text:async()=>JSON.stringify({enabled:true})})).enabled, true);
+})().catch(error => { console.error(error); process.exitCode = 1; });
+"""
+    result = subprocess.run([node, "-e", script], cwd=SERVER_DIR.parent.parent, capture_output=True, text=True, timeout=15)
+    assert result.returncode == 0, result.stderr
+
+
 def test_github_seed_initializes_license_before_bulk_commit(configured, monkeypatch):
     import base64
+    import hashlib
     import setup_github
     files = {"LICENSE": base64.b64encode(b"MIT").decode(), "site/main.py": base64.b64encode(b"app").decode()}
     monkeypatch.setattr(setup_github, "source_seed", lambda: files)
     calls = []
-    async def request(path, method="GET", body=None):
+    async def request(path, method="GET", body=None, **kwargs):
         calls.append((path, method, body))
-        if path == "/user": return {"login": "customer"}
-        if path == "/user/repos": return {"full_name": "customer/portal"}
+        if path == "/user": return {"login": "organization"}
+        if path == "/user/repos": return {"full_name": "organization/portal", "private": True}
+        if path.endswith("/branches"): return [{"name": "main"}]
         if "/contents/" in path: return {"commit": {"sha": "initial"}}
+        if "/git/ref/" in path: return {"object": {"sha": "seeded" if any(verb == "PATCH" for _, verb, _ in calls) else "initial"}}
+        if path.endswith("/commits/initial"): return {"tree": {"sha": "license-tree"}}
+        if path.endswith("/trees/license-tree"): return {"tree": [{"path": "LICENSE", "mode": "100644", "type": "blob", "sha": hashlib.sha1(b"blob 3\0MIT", usedforsecurity=False).hexdigest()}]}
         if path.endswith("/commits"): return {"sha": "seeded"}
         return {"sha": "object"}
     monkeypatch.setattr(setup_github, "github_request", request)
-    result = asyncio.run(setup_github.configure(setup_github.GitHubSettings(owner="customer", repository="portal", create=True, seed=True, confirm=True)))
+    result = asyncio.run(setup_github.configure(setup_github.GitHubSettings(owner="organization", repository="portal", create=True, seed=True, confirm=True)))
     assert result["seeded"]
     assert calls[1][2]["private"] is True
     assert calls[2][0].endswith("/contents/LICENSE")
-    assert calls[-1][1:] == ("PATCH", {"sha": "seeded", "force": False})
+    assert calls[-2][1:] == ("PATCH", {"sha": "seeded", "force": False})
+    assert calls[-1][1] == "GET"
     assert next(body for path, method, body in calls if path.endswith("/commits"))["parents"] == ["initial"]
+    assert next(body for path, method, body in calls if path.endswith("/trees"))["tree"] == [
+        {"path": "LICENSE", "mode": "100644", "type": "blob", "content": "MIT"},
+        {"path": "site/main.py", "mode": "100644", "type": "blob", "content": "app"},
+    ]
+    assert not any(path.endswith("/blobs") for path, _, _ in calls)
+
+
+@pytest.mark.parametrize("status,message,headers,expected", [
+    (403, "refusing to allow an OAuth App to create workflow without workflow scope", {}, "workflow permission"),
+    (403, "protected branch update failed: private repository data", {}, "branch protection"),
+    (422, "Repository rule violations found: private rule data", {}, "repository rules"),
+    (403, "private response", {"x-ratelimit-remaining": "0"}, "rate-limited"),
+    (429, "private response", {}, "rate-limited"),
+    (401, "private response", {}, "authorization expired"),
+    (403, "private response", {}, "denied the write"),
+    (409, "private response", {}, "repository state"),
+    (503, "private response", {}, "service availability"),
+])
+def test_seed_failure_reports_safe_operation_and_guidance(status, message, headers, expected):
+    import httpx
+    import setup_github
+    request = httpx.Request("PATCH", "https://api.github.com/repos/private/repository/git/refs/heads/main", headers={"Authorization": "Bearer private-token"})
+    response = httpx.Response(status, request=request, json={"message": message}, headers=headers)
+    failure = httpx.HTTPStatusError("private exception", request=request, response=response)
+    result = setup_github.seed_failure(failure, "updating the repository branch")
+    assert expected in result
+    assert f"HTTP {status}" in result
+    assert "updating the repository branch" in result
+    assert "private" not in result.replace("private repository", "repository")
+    assert "private-token" not in result
+
+
+def test_partial_seed_failure_identifies_stage_without_deleting_repo(configured, monkeypatch):
+    import base64
+    import httpx
+    import setup_github
+    monkeypatch.setattr(setup_github, "source_seed", lambda: {"LICENSE": base64.b64encode(b"MIT").decode()})
+    async def initial_base(*args):
+        return "initial", False
+    monkeypatch.setattr(setup_github, "source_copy_base", initial_base)
+    calls = []
+    async def request(path, method="GET", body=None):
+        calls.append((path, method))
+        if path == "/user": return {"login": "organization"}
+        if path == "/user/repos": return {"full_name": "organization/portal", "private": True}
+        if "/contents/" in path: return {"commit": {"sha": "initial"}}
+        if path.endswith("/trees"):
+            request = httpx.Request(method, "https://api.github.com" + path)
+            response = httpx.Response(403, request=request, json={"message": "API rate limit exceeded private data"})
+            raise httpx.HTTPStatusError("private", request=request, response=response)
+        raise AssertionError("Unexpected request")
+    monkeypatch.setattr(setup_github, "github_request", request)
+    with pytest.raises(ValueError, match="creating the source tree.*rate-limited"):
+        asyncio.run(setup_github.configure(setup_github.GitHubSettings(owner="organization", repository="portal", create=True, seed=True, confirm=True)))
+    assert db.get_setup_setting("github")["seeded"] is False
+    assert not any(method == "DELETE" for _, method in calls)
+
+
+@pytest.fixture
+def source_copy_remote(configured, monkeypatch):
+    import base64
+    import hashlib
+    import setup_github
+    contents = {"LICENSE": "MIT", "site/main.py": "app\n"}
+    bundle = {name: base64.b64encode(content.encode()).decode() for name, content in contents.items()}
+    entries = [{"path": name, "type": "blob", "mode": "100644", "sha": hashlib.sha1(
+        f"blob {len(content.encode())}\0".encode() + content.encode(), usedforsecurity=False).hexdigest()}
+        for name, content in contents.items()]
+    state = {"head": "initial", "entries": entries[:1], "private": True, "push": True,
+             "archived": False, "truncated": False, "workflow": True, "drift": False,
+             "readback_failure": False, "race_initial": False, "calls": []}
+    monkeypatch.setattr(setup_github, "source_seed", lambda: bundle)
+
+    async def request(path, method="GET", body=None, **kwargs):
+        state["calls"].append((path, method, body))
+        if path == "/user":
+            assert kwargs["require_workflow"] is True
+            if not state["workflow"]:
+                raise ValueError("GitHub workflow permission is missing")
+            return {"login": "organization"}
+        if path == "/repos/organization/portal":
+            return {"full_name": "organization/portal", "private": state["private"],
+                    "archived": state["archived"], "permissions": {"push": state["push"]}}
+        if path.endswith("/branches"):
+            return [{"name": "main"}] if state["head"] else []
+        if "/git/ref/" in path:
+            return {"object": {"sha": state["head"]}}
+        if "/git/commits/" in path:
+            return {"tree": {"sha": "tree"}}
+        if path.endswith("/trees/tree"):
+            return {"tree": state["entries"], "truncated": state["truncated"]}
+        if path.endswith("/contents/LICENSE"):
+            assert method == "PUT" and "sha" not in body
+            state["head"] = "initial"
+            state["entries"] = entries[:1]
+            if state["race_initial"]:
+                state["entries"] = [*state["entries"], {"path": "README.md", "type": "blob", "mode": "100644", "sha": "custom"}]
+            return {"commit": {"sha": "initial"}}
+        if path.endswith("/git/trees"):
+            assert method == "POST"
+            assert {entry["path"]: entry["content"] for entry in body["tree"]} == contents
+            assert all("sha" not in entry for entry in body["tree"])
+            return {"sha": "source-tree"}
+        if path.endswith("/git/commits"):
+            assert body["parents"] == ["initial"]
+            if state["drift"]:
+                state["head"] = "other-user-commit"
+            return {"sha": "copied"}
+        if "/git/refs/heads/" in path:
+            assert method == "PATCH" and body == {"sha": "copied", "force": False}
+            state["head"] = "other-user-commit" if state["readback_failure"] else "copied"
+            state["entries"] = entries
+            return {"object": {"sha": state["head"]}}
+        raise AssertionError(f"Unexpected GitHub call: {method} {path}")
+
+    monkeypatch.setattr(setup_github, "github_request", request)
+    return state
+
+
+@pytest.mark.parametrize("empty", [True, False])
+def test_github_source_copy_recovers_then_retries_without_writes(source_copy_remote, empty):
+    import setup_github
+    state = source_copy_remote
+    if empty:
+        state["head"] = None
+        state["entries"] = []
+    settings = setup_github.GitHubSettings(owner="organization", repository="portal", seed=True, confirm=True)
+    assert asyncio.run(setup_github.configure(settings))["seeded"] is True
+    assert state["head"] == "copied"
+    assert not any(path.endswith("/blobs") or path == "/user/repos" for path, _, _ in state["calls"])
+    assert sum(method == "PUT" for _, method, _ in state["calls"]) == int(empty)
+    state["calls"].clear()
+    assert asyncio.run(setup_github.configure(settings))["seeded"] is True
+    assert all(method == "GET" for _, method, _ in state["calls"])
+    assert asyncio.run(setup_github.configure(settings.model_copy(update={"seed": False})))["seeded"] is True
+
+
+@pytest.mark.parametrize("case", ["code", "license", "symlink", "submodule", "truncated", "public", "no-push", "archived"])
+def test_github_source_copy_refuses_unsafe_targets_without_writes(source_copy_remote, case):
+    import setup_github
+    state = source_copy_remote
+    if case == "code":
+        state["entries"].append({"path": "README.md", "type": "blob", "mode": "100644", "sha": "custom"})
+    elif case == "license":
+        state["entries"][0] = {**state["entries"][0], "sha": "changed"}
+    elif case == "symlink":
+        state["entries"][0] = {**state["entries"][0], "mode": "120000"}
+    elif case == "submodule":
+        state["entries"][0] = {**state["entries"][0], "type": "commit", "mode": "160000"}
+    else:
+        key = {"truncated": "truncated", "public": "private", "no-push": "push", "archived": "archived", "workflow": "workflow"}[case]
+        state[key] = case in ("truncated", "archived")
+    with pytest.raises(ValueError):
+        asyncio.run(setup_github.configure(setup_github.GitHubSettings(owner="organization", repository="portal", seed=True, confirm=True)))
+    assert all(method == "GET" for _, method, _ in state["calls"])
+    assert db.get_setup_setting("github") is None
+
+
+@pytest.mark.parametrize("case", ["drift", "readback_failure", "race_initial"])
+def test_github_source_copy_stops_on_concurrent_change(source_copy_remote, case):
+    import setup_github
+    state = source_copy_remote
+    state[case] = True
+    if case == "race_initial":
+        state["head"] = None
+    with pytest.raises(ValueError, match="source copy did not finish"):
+        asyncio.run(setup_github.configure(setup_github.GitHubSettings(owner="organization", repository="portal", seed=True, confirm=True)))
+    assert db.get_setup_setting("github")["seeded"] is False
+    if case != "readback_failure":
+        assert not any(method == "PATCH" for _, method, _ in state["calls"])
+    assert not any(method == "DELETE" or (body or {}).get("force") for _, method, body in state["calls"])
+
+
+def test_github_source_copy_route_requires_admin_origin_and_confirmation(source_copy_remote, monkeypatch):
+        import identity
+        import setup_github
+        application = FastAPI()
+        application.include_router(setup_routes.build_setup_router())
+        client = TestClient(application)
+        payload = {"owner": "organization", "repository": "portal", "seed": True, "confirm": True}
+        monkeypatch.setattr(identity, "_resolve_identity", lambda request: CurrentUser("guest", "", "", TENANT, "guest"))
+        assert client.put("/api/admin/setup/github", json=payload, headers={"Origin": "http://testserver"}).status_code == 403
+        application.dependency_overrides[require_admin] = lambda: CurrentUser("admin", "", "", TENANT, "admin")
+        assert client.put("/api/admin/setup/github", json=payload).status_code == 403
+        assert client.put("/api/admin/setup/github", json={**payload, "confirm": False}, headers={"Origin": "http://testserver"}).status_code == 400
+        assert not source_copy_remote["calls"]
+        result = client.put("/api/admin/setup/github", json=payload, headers={"Origin": "http://testserver"})
+        assert result.status_code == 200 and result.json()["seeded"] is True
+        assert setup_github.catalog_snapshot() == {}
+
+
+def test_setup_github_copy_action_requires_explicit_selection_and_confirmation():
+        node = shutil.which("node")
+        if not node:
+                pytest.skip("Node.js is required for the Setup UI regression")
+        script = r"""
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const source = fs.readFileSync('site/assets/setup.js', 'utf8');
+const code = source.slice(source.indexOf('  function github('), source.indexOf('  function subscriptions('));
+const controls = new Map();
+const buttons = new Map();
+const requests = [];
+const confirmations = [];
+let approved = true;
+function element(tag, props = {}) {
+    return Object.assign({children:[], isConnected:true, listeners:{}, value:'',
+        append(...items){this.children.push(...items);}, appendChild(item){this.children.push(item);},
+        replaceChildren(...items){this.children=items;},
+        addEventListener(event, handler){this.listeners[event]=handler;}
+    }, props);
+}
+function field(label, value = '') {
+    const control = element('input', {value});
+    controls.set(label, control);
+    return {control, node:element('label')};
+}
+const context = {el:element, field,
+    choice(label, values, selected){const entry=field(label, selected); entry.control.options=values.map(([value,text])=>({value,text})); Object.defineProperty(entry.control,'selectedOptions',{get(){return this.options.filter(option=>option.value===this.value);}}); return entry;},
+    button(label, action){const node=element('button',{textContent:label,action}); buttons.set(label,node); return node;},
+    confirm(message){confirmations.push(message); return approved;},
+    setTimeout, clearTimeout,
+    request:async(path, method='GET', data)=>{
+        requests.push({path,method,data});
+        if(path==='/github/discover') return {account:{login:'organization'},owners:[{login:'organization'}],repositories:[{fullName:'organization/portal',owner:'organization',name:'portal',defaultBranch:'main',private:true}]};
+        if(path==='/github/runners/probe') return {repository:'organization/portal',checkedAt:Date.now()/1000,'github-hosted':{available:false,state:'unverified'},'self-hosted':{available:false,state:'unavailable',candidates:[]}};
+        assert.equal(path,'/github');
+        return {enabled:data.enabled,owner:data.owner,repository:data.repository,branch:data.branch,seeded:data.seed};
+    }
+};
+vm.createContext(context);
+vm.runInContext(code, context);
+(async()=>{
+    const status=element('p');
+    context.github(element('div'), {github:{enabled:true,owner:'organization',repository:'portal'},githubConnected:true,githubDeviceConfigured:true}, status);
+    await new Promise(resolve=>setImmediate(resolve));
+    const mode=controls.get('Repository action');
+    assert.equal(controls.get('Catalog processing').value,'container');
+    assert.equal(controls.get('Catalog processing').options.find(option=>option.value==='github-hosted').disabled,true);
+    assert.equal(controls.get('Catalog processing').options.find(option=>option.value==='self-hosted').disabled,true);
+    const save=buttons.get('Save GitHub configuration');
+    await save.action();
+    assert.equal(requests.at(-1).data.seed,false);
+    assert.match(status.textContent,/No source files were copied/);
+    mode.value='copy'; mode.listeners.change();
+    assert.equal(save.textContent,'Copy portal source');
+    approved=false;
+    const before=requests.length;
+    await save.action();
+    assert.equal(requests.length,before);
+    approved=true;
+    await save.action();
+    const copy=requests.at(-1).data;
+    assert.equal(copy.seed,true); assert.equal(copy.create,false); assert.equal(copy.repository,'portal'); assert.equal(copy.confirm,true);
+    assert.match(confirmations.at(-1),/organization\/portal on branch main.*Existing code will not be overwritten/);
+    assert.match(status.textContent,/Portal source verified in organization\/portal/);
+    mode.value='create'; controls.get('GitHub account').value='organization'; controls.get('New repository name').value='new-portal';
+    await save.action();
+    assert.equal(requests.at(-1).data.seed,true); assert.equal(requests.at(-1).data.create,true);
+    assert.equal(mode.value,'connect'); assert.equal(controls.get('Repository').value,'organization/new-portal');
+})().catch(error=>{console.error(error);process.exitCode=1;});
+"""
+        result = subprocess.run([node, "-e", script], cwd=SERVER_DIR.parent.parent, capture_output=True, text=True, timeout=15)
+        assert result.returncode == 0, result.stderr
+
+
+def test_default_source_copy_does_not_require_workflow_scope(configured, monkeypatch):
+    import base64
+    import setup_github
+    files = {"LICENSE": base64.b64encode(b"MIT").decode(), ".github/workflows/portal.yml": base64.b64encode(b"name: example").decode()}
+    monkeypatch.setattr(setup_github, "source_seed", lambda: files)
+    calls = []
+    async def request(path, method="GET", body=None, **kwargs):
+        calls.append((path, method, kwargs))
+        assert path == "/user" and method == "GET" and not kwargs.get("require_workflow")
+        raise ValueError("Stop at account read")
+    monkeypatch.setattr(setup_github, "github_request", request)
+    with pytest.raises(ValueError, match="Stop at account read"):
+        asyncio.run(setup_github.configure(setup_github.GitHubSettings(owner="organization", repository="portal", create=True, seed=True, confirm=True)))
+    assert len(calls) == 1
+    assert db.get_setup_setting("github") is None
+
+
+@pytest.mark.parametrize("scopes,allowed", [("repo, read:org", False), ("", False), ("repo, read:org, workflow", True)])
+def test_github_request_checks_actual_token_scope_header(monkeypatch, scopes, allowed):
+    import httpx
+    import setup_github
+    real_client = httpx.AsyncClient
+    requests = []
+    def handle(request):
+        requests.append(request)
+        return httpx.Response(200, json={"login": "organization", "id": 1}, headers={"X-OAuth-Scopes": scopes})
+    transport = httpx.MockTransport(handle)
+    monkeypatch.setattr(setup_github.httpx, "AsyncClient", lambda **kwargs: real_client(transport=transport, **kwargs))
+    if allowed:
+        result = asyncio.run(setup_github.github_request("/user", token="synthetic-private-token", require_workflow=True))
+        assert result["login"] == "organization"
+    else:
+        with pytest.raises(ValueError, match="workflow permission") as failure:
+            asyncio.run(setup_github.github_request("/user", token="synthetic-private-token", require_workflow=True))
+        assert "synthetic-private-token" not in str(failure.value)
+    assert len(requests) == 1 and requests[0].method == "GET"
+    assert asyncio.run(setup_github.github_request("/user", token="synthetic-private-token"))["login"] == "organization"
+
+
+def test_streamed_seed_error_is_bounded_and_classified(monkeypatch):
+    import httpx
+    import setup_github
+    real_client = httpx.AsyncClient
+    class Stream(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            yield b'{"message":"refusing workflow update without workflow scope; private details"}'
+    transport = httpx.MockTransport(lambda request: httpx.Response(403, stream=Stream()))
+    monkeypatch.setattr(setup_github.httpx, "AsyncClient", lambda **kwargs: real_client(transport=transport, **kwargs))
+    with pytest.raises(httpx.HTTPStatusError) as failure:
+        asyncio.run(setup_github.github_request("/test", token="synthetic-token"))
+    message = setup_github.seed_failure(failure.value, "updating the repository branch")
+    assert "workflow permission" in message
+    assert "private details" not in message
+    assert "synthetic-token" not in message
+
+
+def test_unread_seed_response_still_reports_status():
+    import httpx
+    import setup_github
+    class Stream(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            yield b"private"
+    request = httpx.Request("POST", "https://api.github.com/test")
+    response = httpx.Response(403, request=request, stream=Stream())
+    failure = httpx.HTTPStatusError("private", request=request, response=response)
+    message = setup_github.seed_failure(failure, "creating the source tree")
+    assert "HTTP 403" in message and "denied the write" in message
 
 
 def test_auth_apply_rejects_wrong_host(configured, monkeypatch):
@@ -399,7 +1090,7 @@ def test_entra_registration_secret_never_leaves_selected_storage(configured, mon
         return
     result = asyncio.run(setup_auth.create_entra_registration(setup_auth.EntraRegistration(displayName="Portal", publicUrl="https://portal.example.com", confirm=True, **fields)))
     expected = "generated-test-secret" if storage_mode == "app_service" else f"@Microsoft.KeyVault(SecretUri={uri}/version1)"
-    assert writes[0]["properties"] == {"EXISTING": "preserve", "PORTAL_CUSTOMER_AUTH_SECRET": expected}
+    assert writes[0]["properties"] == {"EXISTING": "preserve", "PORTAL_ORGANIZATION_AUTH_SECRET": expected}
     assert vault_writes == ([] if storage_mode == "app_service" else ["generated-test-secret"])
     assert result["credentialStored"] is True
     assert result["secretStorage"] == storage_mode
@@ -462,7 +1153,7 @@ def test_key_vault_read_discards_secret_value(monkeypatch):
     uri = "https://customervault.vault.azure.net/secrets/credential"
     def respond(request):
         assert request.url.host == "customervault.vault.azure.net"
-        return httpx.Response(200, json={"id": uri + "/version1", "value": "secret-not-for-browser", "tags": {"owner": "customer"}, "attributes": {"enabled": True}})
+        return httpx.Response(200, json={"id": uri + "/version1", "value": "secret-not-for-browser", "tags": {"owner": "organization"}, "attributes": {"enabled": True}})
     original_client = httpx.AsyncClient
     monkeypatch.setattr(setup_auth.httpx, "AsyncClient", lambda **kwargs: original_client(transport=httpx.MockTransport(respond), **kwargs))
     class Credential:
@@ -471,7 +1162,7 @@ def test_key_vault_read_discards_secret_value(monkeypatch):
             return type("Token", (), {"token": "synthetic"})()
     monkeypatch.setattr(setup_auth.azure_deploy, "_get_credential", lambda: Credential())
     result = asyncio.run(setup_auth.key_vault_secret(uri))
-    assert result == {"id": uri + "/version1", "tags": {"owner": "customer"}}
+    assert result == {"id": uri + "/version1", "tags": {"owner": "organization"}}
 
 
 def test_no_secret_oidc_does_not_read_secret_settings(configured, monkeypatch):
@@ -480,7 +1171,7 @@ def test_no_secret_oidc_does_not_read_secret_settings(configured, monkeypatch):
     async def arm(path, method="GET", body=None, **kwargs):
         assert "/appsettings" not in path
         if method == "PUT":
-            registration = body["properties"]["identityProviders"]["customOpenIdConnectProviders"]["customer"]["registration"]
+            registration = body["properties"]["identityProviders"]["customOpenIdConnectProviders"]["organization"]["registration"]
             assert "clientCredential" not in registration
             return {}
         if "/config/" in path:
@@ -496,7 +1187,7 @@ def test_sync_failure_preserves_catalog(configured, monkeypatch):
     import setup_github
     previous = {"version": "b" * 40, "items": [{"path": "working"}]}
     db.set_setup_setting("catalog_snapshot", previous)
-    db.set_setup_setting("github", {"enabled": True, "owner": "customer", "repository": "portal", "branch": "main"})
+    db.set_setup_setting("github", {"enabled": True, "owner": "organization", "repository": "portal", "branch": "main"})
     async def fail(*args): raise ValueError("network or invalid catalog")
     monkeypatch.setattr(setup_github, "github_request", fail)
     with pytest.raises(ValueError): asyncio.run(setup_github.sync_catalog())
@@ -507,17 +1198,17 @@ def test_multiple_subscription_selection_reaches_deployment_record(configured, m
     import api
     from identity import require_user
     second = "33333333-3333-4333-8333-333333333333"
-    monkeypatch.setenv("GALLERY_DISTRIBUTION", "customer")
+    monkeypatch.setenv("GALLERY_DISTRIBUTION", "organization")
     items = [setup_config.Subscription(subscriptionId=identifier, tenantId=TENANT, displayName=identifier) for identifier in (SUBSCRIPTION, second)]
     db.set_setup_setting("subscriptions", setup_config.validate_subscriptions(items))
-    monkeypatch.setattr(api, "_catalog_items", lambda: {"customer": {"path": "customer", "parameters": [], "engines": ["bicep"]}})
+    monkeypatch.setattr(api, "_catalog_items", lambda: {"organization": {"path": "organization", "parameters": [], "engines": ["bicep"]}})
     monkeypatch.setattr(api.az, "schedule", lambda coroutine: coroutine.close())
     application = FastAPI()
     application.include_router(api.build_api_router())
     application.dependency_overrides[require_user] = lambda: CurrentUser("user", "", "User", TENANT)
     client = TestClient(application)
-    result = client.post("/api/deployments", json={"useCase": "customer", "subscriptionId": second, "lifetimeHours": 1})
+    result = client.post("/api/deployments", json={"useCase": "organization", "subscriptionId": second, "lifetimeHours": 1})
     assert result.status_code == 200
     identifier = result.json()["deployment"]["id"]
     assert db.get_deployment(identifier)["subscription_id"] == second
-    assert client.post("/api/deployments", json={"useCase": "customer", "subscriptionId": "44444444-4444-4444-8444-444444444444"}).status_code == 403
+    assert client.post("/api/deployments", json={"useCase": "organization", "subscriptionId": "44444444-4444-4444-8444-444444444444"}).status_code == 403
