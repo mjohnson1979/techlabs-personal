@@ -16,6 +16,10 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 import azure_deploy  # noqa: E402
+import api
+import setup_github
+import pytest
+from fastapi import HTTPException
 
 
 _TEMPLATE = {
@@ -86,3 +90,34 @@ def test_merge_bad_int_skipped() -> None:
         _TEMPLATE, parameters, {"appCapacity": "not-a-number"}
     )
     assert parameters == {}
+
+
+def test_compiled_parameters_supply_advanced_options_without_secret_or_expression_defaults():
+    template = {"parameters": {
+        "appCapacity": {"type": "int", "defaultValue": 1, "minValue": 1, "maxValue": 5, "metadata": {"description": "Instances"}},
+        "appServiceSku": {"type": "string", "defaultValue": "B1", "allowedValues": ["B1", "S1"]},
+        "enabled": {"type": "bool", "defaultValue": True, "allowedValues": [True]},
+        "prefix": {"type": "string", "defaultValue": "[uniqueString(resourceGroup().id)]"},
+        "required": {"type": "string"},
+        "password": {"type": "secureString", "defaultValue": "private-default"},
+        "secretObject": {"type": "secureObject", "defaultValue": {"secret": "private"}},
+        "configuration": {"type": "object"}, "items": {"type": "array"},
+        "location": {"type": "string"}, "environment": {"type": "string"}, "tags": {"type": "object"},
+    }}
+    parameters = setup_github.template_parameters(template, {"appCapacity": {"value": 3}, "password": {"reference": {"secretName": "private"}}})
+    assert parameters == [
+        {"name": "appCapacity", "type": "int", "default": 3, "min": 1, "max": 5, "description": "Instances"},
+        {"name": "appServiceSku", "type": "string", "default": "B1", "allowed": ["B1", "S1"]},
+        {"name": "enabled", "type": "bool", "default": True, "allowed": [True]},
+        {"name": "prefix", "type": "string"}, {"name": "required", "type": "string"},
+    ]
+    assert "private" not in json.dumps(parameters)
+    item = {"parameters": parameters}
+    values = api._validate_parameter_values({"appCapacity": "4", "appServiceSku": "S1", "enabled": "TRUE"}, item)
+    assert values == {"appCapacity": "4", "appServiceSku": "S1", "enabled": "true"}
+    compiled_values = {}
+    azure_deploy._merge_parameter_overrides(template, compiled_values, values)
+    assert compiled_values == {"appCapacity": {"value": 4}, "appServiceSku": {"value": "S1"}, "enabled": {"value": True}}
+    for invalid in ({"appCapacity": "6"}, {"appServiceSku": "P1v3"}, {"enabled": "false"}, {"password": "private"}, {"location": "eastus"}):
+        with pytest.raises(HTTPException):
+            api._validate_parameter_values(invalid, item)

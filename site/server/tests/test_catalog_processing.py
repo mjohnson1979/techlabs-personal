@@ -75,6 +75,63 @@ def test_container_builds_bicep_and_validates_terraform_without_cloud_credential
     assert calls[1][1][:2] == ["fmt", "-write=false"]
 
 
+def test_organization_region_picker_matches_capacity_breakdown_without_internal_snapshots():
+    import shutil
+    import subprocess
+    from pathlib import Path
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js is required for region picker tests")
+    script = r"""
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const source = fs.readFileSync('site/assets/app.js', 'utf8');
+const start = source.indexOf('  function deployRegionField(');
+const end = source.indexOf('  function deployBlock(', start);
+assert.ok(start >= 0 && end > start);
+function element(tag, props = {}, children = []) {
+    return {tag, ...props, textContent:props.text || '', listeners:{}, children: (Array.isArray(children) ? children : [children]).filter(Boolean),
+        get options(){return this.children;}, getAttribute(key){return this[key];}, addEventListener(event,handler){this.listeners[event]=handler;},
+        setAttribute(key, value){this[key] = value;}, appendChild(child){this.children.push(child);},
+        replaceChildren(...items){this.children = items;}};
+}
+function text(node){return [node.text || '', ...node.children.map(text)].join(' ');}
+const context = {el: element, state: {me: {customerOperated: true}}, capacityRegions(){throw Error('Internal region data must not be read');}};
+vm.runInNewContext(source.slice(start, end), context);
+const picker = context.deployRegionField({path: 'example'});
+assert.equal(picker.select.disabled, true);
+picker.select.appendChild(element('option', {value:'eastus', text:'East US'}));
+picker.select.appendChild(element('option', {value:'westus', text:'West US'}));
+picker.select.value = 'eastus';
+picker.updateCapacity({status:'headroom', checks:[{service:'Compute',status:'headroom',detail:'Quota available'}],
+    quotas:[{name:'Regional vCPUs',available:6,current:4,limit:10}]});
+assert.equal(picker.select['data-status'], 'green');
+assert.match(text(picker.note), /Reported quota headroom in eastus/);
+assert.match(text(picker.note), /Regional vCPUs: 6 free \(4 used \/ 10 limit\)/);
+assert.match(text(picker.note), /do not guarantee/);
+picker.select.listeners.focus();
+assert.match(picker.select.options[1].textContent, /East US.*Reported quota headroom/);
+assert.match(picker.select.options[2].textContent, /West US.*Not verified/);
+picker.select.listeners.blur();
+assert.equal(picker.select.options[1].textContent, 'East US');
+picker.updateCapacity({status:'offered', checks:[{service:'<img src=x>',status:'offered',detail:'Available service'}]});
+assert.equal(picker.select['data-status'], 'yellow');
+assert.match(text(picker.note), /<img src=x>/);
+assert.ok(!('html' in picker.note));
+picker.updateCapacity({status:'unavailable'});
+assert.equal(picker.select['data-status'], 'red');
+picker.updateCapacity(null, 'Checking selected region...');
+assert.equal(picker.select['data-status'], 'unknown');
+assert.doesNotMatch(text(picker.note), /Quota available|Regional vCPUs/);
+assert.match(text(picker.note), /Checking selected region/);
+picker.refreshAll();
+assert.ok(picker.select.options.every(option => option['data-status']==='unknown'));
+"""
+    result = subprocess.run([node, "-e", script], cwd=Path(__file__).resolve().parents[3], capture_output=True, text=True, timeout=15)
+    assert result.returncode == 0, result.stderr
+
+
 def test_container_validation_failure_leaves_inputs_unchanged(monkeypatch):
     async def compiler(*args):
         raise ValueError("Invalid source")
@@ -538,7 +595,7 @@ def test_page_refresh_unchanged_commit_does_not_rebuild(configured, monkeypatch)
     import setup_github
     db.set_setup_setting("github", {"enabled": True, "owner": "organization", "repository": "portal", "branch": "main"})
     snapshot = {"sourceCommit": "a" * 40, "version": "b" * 40, "repository": "organization/portal",
-                "items": [], "processingKey": json.dumps(["container", [], []]), "syncedAt": time.time()}
+                "items": [], "processingKey": json.dumps(["container", [], [], "template-parameters-v1"]), "syncedAt": time.time()}
     db.set_setup_setting("catalog_snapshot", snapshot)
     calls = []
     async def request(path, **kwargs):
@@ -548,6 +605,27 @@ def test_page_refresh_unchanged_commit_does_not_rebuild(configured, monkeypatch)
     monkeypatch.setattr(setup_github, "github_request", request)
     assert asyncio.run(setup_github.sync_catalog(force=False)) == snapshot
     assert len(calls) == 1
+
+
+def test_catalog_rebuilds_old_parameter_metadata_on_unchanged_commit(configured, monkeypatch):
+    import json
+    import db
+    import setup_github
+    db.set_setup_setting("github", {"enabled": True, "owner": "organization", "repository": "portal", "branch": "main"})
+    db.set_setup_setting("catalog_snapshot", {"sourceCommit": "a" * 40, "version": "b" * 40, "repository": "organization/portal",
+        "items": [], "processingKey": json.dumps(["container", [], []]), "syncedAt": time.time()})
+    calls = []
+    async def request(path, **kwargs):
+        calls.append(path)
+        if "/git/ref/" in path:
+            return {"object": {"sha": "a" * 40}}
+        if "/git/commits/" in path:
+            return {"tree": {"sha": "root"}}
+        return {"tree": []}
+    monkeypatch.setattr(setup_github, "github_request", request)
+    result = asyncio.run(setup_github.sync_catalog(force=False))
+    assert len(calls) == 3
+    assert json.loads(result["processingKey"])[-1] == "template-parameters-v1"
 
 
 def test_catalog_refresh_endpoints_allow_guests_require_origin_and_hide_details(configured, monkeypatch):

@@ -469,7 +469,12 @@ def test_staged_single_format_inputs_sync_with_only_uploaded_engine(stage, monke
     import json
     import setup_github
     import catalog_processing
-    template = {"parameters": {"location": {"type": "string", "defaultValue": "eastus"}}, "resources": []}
+    template = {"parameters": {
+        "location": {"type": "string", "defaultValue": "eastus"},
+        "minReplicas": {"type": "int", "defaultValue": 3, "minValue": 1, "maxValue": 5, "metadata": {"description": "Minimum replicas"}},
+        "appServiceSku": {"type": "string", "defaultValue": "B1", "allowedValues": ["B1", "S1"]},
+        "password": {"type": "secureString", "defaultValue": "must-not-be-published"},
+    }, "resources": []}
     validated = []
     async def validate(work, tool, arguments):
         validated.append(tool)
@@ -527,6 +532,11 @@ def test_staged_single_format_inputs_sync_with_only_uploaded_engine(stage, monke
     else:
         assert json.loads((root / "_templates/example/dev.json").read_bytes())["template"] == template
         assert not (root / "_tf/example").exists()
+        assert result["items"][0]["parameters"] == [
+            {"name": "minReplicas", "type": "int", "default": 3, "min": 1, "max": 5, "description": "Minimum replicas"},
+            {"name": "appServiceSku", "type": "string", "default": "B1", "allowed": ["B1", "S1"]},
+        ]
+        assert api._validate_parameter_values({"minReplicas": "4", "appServiceSku": "S1"}, result["items"][0]) == {"minReplicas": "4", "appServiceSku": "S1"}
 
 
 @pytest.fixture

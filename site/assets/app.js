@@ -367,12 +367,18 @@
 
     function render(cost, opts) {
       host.innerHTML = "";
+      const unpriced = Array.isArray(cost.unpricedParameters) ? cost.unpricedParameters.filter(name => typeof name === "string") : [];
       const totalMonthly = typeof cost.totalMonthly === "number" ? cost.totalMonthly : null;
       const totalMoney = totalMonthly !== null ? fmtMoney(totalMonthly, cost.currency) : null;
       summaryTotalSpan.textContent =
         totalMoney && totalMonthly > 0
           ? `for the selected services: ~${totalMoney}/mo`
           : "for the selected services: usage-based";
+      if (unpriced.length) {
+        summaryTotalSpan.textContent += " (some options not priced)";
+        host.appendChild(el("p", { class: "cost-note error-text", role: "status", text:
+          `Not adjusted for: ${unpriced.join(", ")}. The workload cost model has no mapping for these options; their cost impact is not included.` }));
+      }
 
       if (cost.profile) host.appendChild(el("p", { text: cost.profile }));
 
@@ -426,7 +432,7 @@
       meta.push(cost.pricingSource === "negotiated" ? "Negotiated meter rates, estimate only" : "Public retail estimate, excludes tax/reservations/free tiers");
       if (cost.subscriptionId) meta.push(`Subscription ${cost.subscriptionId}`);
       if (cost.fallbackReason) meta.push(cost.fallbackReason);
-      if (opts && opts.forSelection) meta.push("estimated live for your current selections");
+      if (opts && opts.forSelection) meta.push(unpriced.length ? "estimate covers mapped options only" : "estimated live for your current selections");
       if (cost.complete === false) meta.push("some components not priced — see notes");
       host.appendChild(el("p", { class: "cost-note", text: meta.join(" · ") }));
     } else if (components.length) {
@@ -539,10 +545,62 @@
   // Color-coded region picker reflecting live capacity for a use case.
   function deployRegionField(it, getSel) {
     if (state.me?.customerOperated) {
+      const select = el("select", { class: "deploy-input deploy-region", id: "deploy-region", disabled: true }, [el("option", { value: "", text: "Select subscription first" })]);
+      const note = el("div", { class: "deploy-region-note", role: "status" });
+      const colors = { headroom: "green", offered: "yellow", unavailable: "red", unknown: "unknown" };
+      const labels = { headroom: "Reported quota headroom", offered: "Service offered", unavailable: "Unavailable", unknown: "Not verified" };
+      let listOpen = false;
+      function applyLabels(open) {
+        listOpen = open;
+        for (const option of select.options) {
+          if (!option.value) continue;
+          const name = option.getAttribute("data-region-name") || option.textContent;
+          option.setAttribute("data-region-name", name);
+          option.textContent = open ? `${name} \u2014 ${option.getAttribute("data-capacity-label") || labels.unknown}` : name;
+        }
+      }
+      ["mousedown", "focus"].forEach(event => select.addEventListener(event, () => applyLabels(true)));
+      ["change", "blur"].forEach(event => select.addEventListener(event, () => applyLabels(false)));
+      select.addEventListener("keydown", event => { if (event.key === "Escape") applyLabels(false); });
+      function updateCapacity(capacity, message) {
+        const status = Object.hasOwn(colors, capacity?.status) ? capacity.status : "unknown";
+        const color = colors[status];
+        select.setAttribute("data-status", color);
+        for (const option of select.options) {
+          if (option.value && option.value === select.value) {
+            option.setAttribute("data-status", color);
+            option.setAttribute("data-capacity-label", labels[status]);
+          }
+        }
+        applyLabels(listOpen);
+        note.className = "deploy-region-note cap-note-" + color;
+        note.replaceChildren(el("div", { class: "cap-summary" }, [
+          el("span", { class: "cap-dot cap-" + color, "aria-hidden": "true" }),
+          el("span", { text: message || `${labels[status]}${select.value ? " in " + select.value : ""}.` }),
+        ]));
+        const checks = Array.isArray(capacity?.checks) ? capacity.checks : [];
+        if (checks.length) note.appendChild(el("ul", { class: "cap-svc-list" }, checks.map(check => el("li", {}, [
+          el("span", { class: "cap-dot cap-" + (Object.hasOwn(colors, check.status) ? colors[check.status] : "unknown"), "aria-hidden": "true" }),
+          el("span", { text: `${check.service || "Service"}: ${check.detail || labels[check.status] || "Not verified"}` }),
+        ]))));
+        const quotas = Array.isArray(capacity?.quotas) ? capacity.quotas : [];
+        if (quotas.length) note.appendChild(el("ul", { class: "cap-svc-list" }, quotas.map(quota => el("li", {
+          text: `${quota.name || "Quota"}: ${quota.available ?? "unknown"} free (${quota.current ?? "unknown"} used / ${quota.limit ?? "unknown"} limit)`,
+        }))));
+        if (capacity) note.appendChild(el("p", { class: status === "unavailable" ? "deploy-region-hint" : "deploy-note", text: capacity.detail || "Service offering and quota headroom do not guarantee physical allocation." }));
+      }
+      updateCapacity(null, "Select a subscription and region.");
       return {
-        select: el("select", { class: "deploy-input deploy-region", id: "deploy-region", disabled: true }, [el("option", { value: "", text: "Select subscription first" })]),
-        note: el("div", { class: "deploy-region-note", text: "Region availability and quota have not been checked." }),
-        refreshAll: function () {},
+        select,
+        note,
+        updateCapacity,
+        refreshAll() {
+          for (const option of select.options) {
+            option.setAttribute("data-status", "unknown");
+            option.setAttribute("data-capacity-label", labels.unknown);
+          }
+          applyLabels(listOpen);
+        },
       };
     }
     const sel = () => (getSel ? getSel() : null);
@@ -1377,26 +1435,31 @@
         selectionCapacity = null;
         syncEngine();
         if (region.select.disabled || !region.select.value || !subscriptionSelect.value) {
-          selectionStatus.textContent = "Select a subscription and region for automatic price and capacity checks.";
+          region.updateCapacity(null, "Select a subscription and region.");
+          selectionStatus.textContent = "";
           return;
         }
-        selectionStatus.textContent = "Checking selected price and capacity...";
+        region.updateCapacity(null, "Checking selected region...");
+        selectionStatus.textContent = "Checking selected price...";
         estimateCtl?.pending?.();
         estimateTimer = setTimeout(async () => {
           try {
             const response = await fetch("/api/regions/check", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ useCase: it.path, subscriptionId: subscriptionSelect.value, location: region.select.value, parameterValues: { ...advValues } }) });
+            if (response.redirected || response.status === 401) throw new Error("Sign in again to check this selection.");
             const checked = await response.json();
             if (seq !== estimateSeq) return;
             if (!response.ok) throw new Error(typeof checked.detail === "string" ? checked.detail : "Selection checks unavailable.");
             if (checked.price) estimateCtl?.apply?.(checked.price, { forSelection: true });
             else estimateCtl?.apply?.({ ...estimateCtl.baseCost, complete: false, fallbackReason: checked.priceDetail });
             selectionCapacity = checked.capacity?.status || "unknown";
-            selectionStatus.textContent = `Capacity: ${selectionCapacity}. ${checked.priceDetail || ""} ${(checked.capacity?.checks || []).map(check => `${check.service}: ${check.detail}`).join(" ")} ${checked.capacity?.detail || ""}`;
+            region.updateCapacity(checked.capacity);
+            selectionStatus.textContent = checked.priceDetail || "";
             syncEngine();
           } catch (error) {
             if (seq !== estimateSeq) return;
-            selectionStatus.textContent = "Selection check unavailable: " + error.message + " The server will check again before deployment.";
+            region.updateCapacity(null, "Capacity check unavailable: " + error.message);
+            selectionStatus.textContent = "The server will check again before deployment.";
             estimateCtl?.apply?.({ ...estimateCtl.baseCost, complete: false, fallbackReason: "Live selection check unavailable; authored estimate may be stale." });
           }
         }, 350);
@@ -1441,7 +1504,6 @@
     const envBox = el("fieldset", { class: "deploy-group" }, [
       el("legend", { class: "deploy-legend", text: "Environment" }),
       el("div", { class: "deploy-grid" }, [
-        me?.customerOperated ? deployField("Subscription", subscriptionSelect) : null,
         deployField("Type", envSelect),
         deployField("IaC engine", engineSelect, engineHint),
         deployField("Resource group", rgInput),
@@ -1449,7 +1511,7 @@
       ]),
     ]);
     if (me?.customerOperated) {
-      const compare = el("button", { type: "button", class: "deploy-btn-secondary", text: "View scheduled region results" });
+      const compare = el("button", { type: "button", class: "link-btn", text: "View full region capacity \u2192" });
       compare.addEventListener("click", () => { closeModal(); openRegionalComparison(it, subscriptionSelect.value); });
       regionBox.append(compare, selectionStatus);
     }
@@ -1529,12 +1591,13 @@
       const preferred = region.select.value || it.cost?.region || "";
       region.select.replaceChildren(el("option", { value: "", text: "Loading regions..." }));
       region.select.disabled = true;
-      region.note.textContent = "Looking up subscription regions in Azure...";
       syncEngine();
       scheduleEstimate();
+      region.updateCapacity(null, "Looking up subscription regions in Azure...");
       try {
         if (!subscriptionSelect.value) throw new Error("Configure a subscription in Setup first.");
         const response = await fetch(`/api/subscriptions/${encodeURIComponent(subscriptionSelect.value)}/locations`, { credentials: "same-origin" });
+        if (response.redirected || response.status === 401) throw new Error("Sign in again to load subscription regions.");
         const result = await response.json();
         if (!response.ok) throw new Error(result.detail || "Could not load subscription regions.");
         if (sequence !== locationRequest) return;
@@ -1542,13 +1605,16 @@
         region.select.replaceChildren(el("option", { value: "", text: "Select region" }), ...locations.map(location => el("option", { value: location.name, text: location.displayName })));
         region.select.disabled = !locations.length;
         if (locations.some(location => location.name === preferred)) region.select.value = preferred;
-        region.note.textContent = locations.length ? "Regions returned by Azure; service/SKU availability and physical capacity are not guaranteed." : "Azure returned no regions for this subscription.";
+        region.updateCapacity(null, locations.length ? "Select a region to check service availability and quota." : "Azure returned no regions for this subscription.");
       } catch (error) {
         if (sequence !== locationRequest) return;
         region.select.replaceChildren(el("option", { value: "", text: "Regions unavailable" }));
-        region.note.textContent = error.message;
+        region.updateCapacity(null, error.message);
       }
-      if (sequence === locationRequest) { syncEngine(); scheduleEstimate(); }
+      if (sequence === locationRequest) {
+        syncEngine();
+        if (!region.select.disabled) scheduleEstimate();
+      }
     }
     if (me?.customerOperated) {
       subscriptionSelect.addEventListener("change", loadSubscriptionRegions);
@@ -1566,7 +1632,9 @@
 
     const card = el("div", { class: "modal-section modal-card deploy-card is-open" });
     const header = el("div", { class: "deploy-head deploy-head-static" }, [el("h3", { text: "Deploy" })]);
-    [header, topRow, manual].forEach((n) => card.appendChild(n));
+    card.appendChild(header);
+    if (me?.customerOperated) card.appendChild(deployField("Subscription", subscriptionSelect, null, "deploy-subscription-field"));
+    [topRow, manual].forEach((n) => card.appendChild(n));
     return card;
   }
 
@@ -1600,7 +1668,13 @@
     wrap.appendChild(list);
 
     const link = el("button", { class: "link-btn", type: "button", text: "View full region capacity \u2192" });
-    link.addEventListener("click", openCapacityPanel);
+    link.addEventListener("click", () => {
+      if (state.me?.customerOperated) {
+        const subscriptionId = $("#deploy-subscription")?.value;
+        closeModal();
+        openRegionalComparison(it, subscriptionId);
+      } else openCapacityPanel();
+    });
     wrap.appendChild(link);
     return wrap;
   }

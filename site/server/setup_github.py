@@ -789,6 +789,38 @@ def _catalog_failure(error: Exception) -> dict:
             "stage": stage, "code": category, "httpStatus": status, "detail": detail}
 
 
+def template_parameters(template: dict, values: dict) -> list[dict]:
+    declarations = template.get("parameters", {})
+    if not isinstance(declarations, dict):
+        raise ValueError("Invalid template parameter declarations")
+    managed = {"location", "environment", "tags", "resourceGroupName", "resource_group_name"}
+    parameters = []
+    for name, declaration in declarations.items():
+        if name in managed or not isinstance(declaration, dict):
+            continue
+        kind = str(declaration.get("type", "")).lower()
+        if kind not in ("string", "int", "bool") or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", name):
+            continue
+        expected = {"string": str, "int": int, "bool": bool}[kind]
+        parameter = {"name": name, "type": kind}
+        metadata = declaration.get("metadata")
+        if isinstance(metadata, dict) and isinstance(metadata.get("description"), str):
+            parameter["description"] = metadata["description"][:2000]
+        supplied = values.get(name, {})
+        default = supplied.get("value") if isinstance(supplied, dict) and "value" in supplied else declaration.get("defaultValue")
+        if type(default) is expected and not (isinstance(default, str) and (default.startswith("[") or len(default) > 256)):
+            parameter["default"] = default
+        allowed = declaration.get("allowedValues")
+        if isinstance(allowed, list) and allowed and all(type(value) is expected for value in allowed):
+            parameter["allowed"] = allowed
+        if kind == "int":
+            for source, target in (("minValue", "min"), ("maxValue", "max")):
+                if type(declaration.get(source)) is int:
+                    parameter[target] = declaration[source]
+        parameters.append(parameter)
+    return parameters
+
+
 async def sync_catalog(force: bool = False) -> dict:
     async with _SYNC_LOCK:
         _catalog_stage("repository")
@@ -807,7 +839,7 @@ async def sync_catalog(force: bool = False) -> dict:
         version = str(ref["object"]["sha"])
         source_version = version
         current = catalog_snapshot()
-        processing_key = json.dumps([mode, processing["capacityRegions"], setup_config.subscriptions()], sort_keys=True)
+        processing_key = json.dumps([mode, processing["capacityRegions"], setup_config.subscriptions(), "template-parameters-v1"], sort_keys=True)
         if not force and current.get("sourceCommit", current.get("version")) == version and current.get("repository") == repo and current.get("processingKey") == processing_key and time.time() - current.get("syncedAt", 0) < 86400:
             return current
         commit = await github_request(f"/repos/{repo}/git/commits/{version}")
@@ -903,6 +935,7 @@ async def sync_catalog(force: bool = False) -> dict:
                     target.write_bytes(blobs[source])
                     if environment == "dev":
                         engines.append("bicep")
+                        item["parameters"] = template_parameters(compiled["template"], compiled.get("parameters", {}))
             for source, data in blobs.items():
                 prefix = f"catalog/{slug}/terraform/"
                 if source.startswith(prefix):

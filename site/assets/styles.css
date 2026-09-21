@@ -1127,6 +1127,20 @@ details[open] > .collapse-summary .collapse-caret {
   gap: 12px 16px;
 }
 
+.deploy-subscription-field {
+  margin-bottom: 16px;
+}
+
+.deploy-card .deploy-input {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.deploy-region-note,
+.deploy-engine-hint {
+  overflow-wrap: anywhere;
+}
+
 .deploy-region-box .deploy-input {
   width: 100%;
 }

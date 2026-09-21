@@ -83,6 +83,15 @@ def _norm(value: Any) -> str:
     return re.sub(r"[^a-z0-9]", "", str(value or "").lower())
 
 
+def unpriced_parameters(cost: dict, selected: dict[str, str], defaults: dict[str, str]) -> list[str]:
+    mapped = {component[key] for component in cost.get("components", []) if isinstance(component, dict)
+              for key in ("quantityParam", "instanceParam", "skuParam", "skuQuantityParam", "skuPriceMultiplierParam", "zoneRedundantParam")
+              if isinstance(component.get(key), str)}
+    return sorted(name for name, value in selected.items()
+                  if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", name) and value not in (None, "")
+                  and name not in mapped and str(value) != str(defaults.get(name, "")))[:50]
+
+
 def _odata(value: Any) -> str:
     # OData escapes a single quote by doubling it.
     return str(value).replace("'", "''")
@@ -166,7 +175,7 @@ def _pick_unit_price(rows: list[dict[str, Any]], comp: dict[str, Any], sku: str 
             cand = exact
     if not cand:
         return None
-    return round(min(cand, key=lambda r: r["retailPrice"])["retailPrice"], 5)
+    return min(cand, key=lambda r: r["retailPrice"])["retailPrice"]
 
 
 async def estimate(cost: dict[str, Any], region: str, parameter_values: dict[str, str]) -> dict[str, Any]:
@@ -183,6 +192,20 @@ async def estimate(cost: dict[str, Any], region: str, parameter_values: dict[str
     try:
         for comp in components:
             qty = comp.get("quantityPerMonth") or 0
+            quantity_param = comp.get("quantityParam")
+            if quantity_param and pv.get(quantity_param) not in (None, ""):
+                try:
+                    selected = float(pv[quantity_param])
+                    per_unit = comp["quantityPerUnit"]
+                    if (type(per_unit) not in (int, float) or not math.isfinite(per_unit) or per_unit < 0
+                            or isinstance(pv[quantity_param], bool) or not math.isfinite(selected) or selected < 0
+                            or not math.isfinite(selected * per_unit)):
+                        raise ValueError("Invalid quantity")
+                    if any(comp.get(key) for key in ("instanceParam", "skuQuantityParam", "zoneRedundantParam")):
+                        raise ValueError("Conflicting quantity mappings")
+                    qty = selected * per_unit
+                except (KeyError, TypeError, ValueError, OverflowError):
+                    raise ValueError("Invalid cost quantity mapping or parameter value") from None
             inst_param = comp.get("instanceParam")
             if inst_param and pv.get(inst_param) not in (None, ""):
                 try:
@@ -267,6 +290,7 @@ async def estimate(cost: dict[str, Any], region: str, parameter_values: dict[str
     return {
         "currency": currency,
         "region": region,
+        "profile": cost.get("profile", ""),
         "components": out,
         "fixedMonthly": round(fixed, 2),
         "usageMonthly": round(usage, 2),

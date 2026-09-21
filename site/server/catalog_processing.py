@@ -518,7 +518,15 @@ async def check_region(item: dict, subscription: dict, region: str, parameters: 
     arm_token = setup_cloud.FRESH_READ.set(fresh)
     price_token = pricing.FRESH_READ.set(fresh)
     try:
-        return await _check_region(item, subscription, region, {**default_parameters(item), **parameters})
+        defaults = default_parameters(item)
+        result = await _check_region(item, subscription, region, {**defaults, **parameters})
+        if result.get("price") is not None:
+            missing = pricing.unpriced_parameters(item.get("cost") or {}, parameters, defaults)
+            result["price"]["unpricedParameters"] = missing
+            if missing:
+                warning = "Not adjusted for: " + ", ".join(missing) + ". The workload cost model has no mapping for these options."
+                result["priceDetail"] = " ".join(part for part in (result.get("priceDetail"), warning) if part)
+        return result
     finally:
         setup_cloud.FRESH_READ.reset(arm_token)
         pricing.FRESH_READ.reset(price_token)

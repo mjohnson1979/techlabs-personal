@@ -1889,6 +1889,52 @@ dependencies in the upload at its referenced paths or in the configured reposito
 Static checks do not prove deployment feasibility or equivalence between formats.
 There is no automatic merge, publication, or deployment of a submission.
 
+**Advanced deployment options** appear when the catalog entry has editable scalar
+parameters. During connected-repository sync, Bicep options are derived from the
+validated `compiled/dev.json` ARM parameter declarations, rather than requiring
+the uploader to duplicate them in `metadata.json`. This works with container
+compilation and reviewed runner-generated inputs. String, integer and boolean
+parameters supply descriptions, allowed values and numeric bounds; defaults use
+literal dev parameter values when present, otherwise literal template defaults.
+ARM expression defaults are not evaluated or displayed as literal values.
+Secure, object and array parameters and the portal-managed location, environment,
+resource group and tags are excluded. The API validates submitted overrides and
+the executor converts them to ARM types; opening or saving options does not deploy.
+Only explicitly customized values override the selected environment's inputs.
+
+**Price adjustments require cost-model bindings.** Extracting deployment parameters
+does not determine how those parameters affect usage or billing. Saving advanced
+options sends the selection to the pricing check, but each affected cost component
+must declare its relevant parameter. Existing `skuParam`, `instanceParam`,
+`skuQuantityParam`, `skuPriceMultiplierParam` and `zoneRedundantParam` mappings remain
+supported. For usage measured in units other than instance-hours, use `quantityParam`
+and numeric `quantityPerUnit`: monthly quantity is the selected parameter value
+multiplied by monthly billable units per selected unit. Without a selected value,
+`quantityPerMonth` remains the authored baseline. Regional checks merge workload
+defaults before applying overrides, so resetting an option restores that baseline.
+
+For example, a continuously active 0.5-vCPU Container Apps replica over 730 hours
+uses 1,314,000 CPU-seconds. Its component can declare `quantityParam: "minReplicas"`
+and `quantityPerUnit: 1314000`; the matching 1-GiB memory component uses 2628000
+GiB-seconds per replica. These are workload assumptions, not inferred platform
+defaults. Retain the correct meter/unit, describe the activity and billing
+assumptions, and do not combine this mapping with other quantity mappings on the
+same component. Invalid, negative or non-finite quantities fail the pricing check.
+Other components, such as independently modeled log ingestion, remain unchanged.
+
+Changing an autoscaling maximum does not predict the number of running replicas.
+Traffic, idle rates, free grants and separately billed agents need their own model.
+Changed parameters without a pricing binding are shown as **Not adjusted for**;
+this means unmodeled, not free or necessarily cost-neutral. Retail and negotiated
+rates both multiply the resulting modeled quantity. Cost-model corrections belong
+in the reviewed workload metadata, not an app-specific exception in the portal.
+
+Terraform-only workloads continue to use an authored `parameters` array in their
+metadata for this form, using `name`, `type` (`string`, `int` or `bool`), optional
+`default`, `description`, `allowed`, `min` and `max`. Terraform variable schemas
+are not inferred from HCL by this release. Never declare sensitive variables as
+editable metadata. An entry without editable parameters has no Advanced button.
+
 Author and review your infrastructure code in an organization-owned repository. The
 runtime deployment contract is:
 

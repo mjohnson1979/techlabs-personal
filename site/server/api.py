@@ -144,7 +144,9 @@ def _validate_parameter_values(
             raise HTTPException(status_code=400, detail=f"parameter {name} is not overridable")
         allowed = spec.get("allowed")
         if allowed:
-            if sval not in [str(a) for a in allowed]:
+            if ptype == "bool":
+                sval = sval.lower()
+            if sval not in [str(a).lower() if type(a) is bool else str(a) for a in allowed]:
                 raise HTTPException(status_code=400, detail=f"invalid value for {name}")
         elif ptype == "int":
             try:
@@ -526,9 +528,14 @@ def build_api_router() -> APIRouter:
         for k, v in list((body.parameterValues or {}).items())[:50]:
             pv[str(k)[:64]] = str(v)[:128]
         try:
+            defaults = catalog_processing.default_parameters(item)
+            parameters = {**defaults, **pv}
             if selected:
-                return await pricing.estimate_for_subscription(cost, region or str(cost.get("region") or ""), pv, selected)
-            return await pricing.estimate(cost, region or str(cost.get("region") or ""), pv)
+                result = await pricing.estimate_for_subscription(cost, region or str(cost.get("region") or ""), parameters, selected)
+            else:
+                result = await pricing.estimate(cost, region or str(cost.get("region") or ""), parameters)
+            result["unpricedParameters"] = pricing.unpriced_parameters(cost, pv, defaults)
+            return result
         except Exception as exc:  # network/parse failure -> caller keeps static cost
             raise HTTPException(status_code=502, detail="pricing lookup failed") from exc
 
