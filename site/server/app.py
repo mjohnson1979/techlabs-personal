@@ -24,6 +24,7 @@ from fastapi import FastAPI, Cookie, Request, Response
 from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 
 import db
+import lifecycle
 import installer
 from distribution import brand_name, installer_requested, is_customer_distribution, validate_customer_configuration
 from api import build_api_router
@@ -99,11 +100,22 @@ async def lifespan(app: FastAPI):
     stop = asyncio.Event()
     task = asyncio.create_task(run_scheduler(stop))
     sync_task = asyncio.create_task(setup_github.run_catalog_sync(stop)) if is_customer_distribution() else None
+    from catalog_processing import run_regional_schedule
+    regional_task = asyncio.create_task(run_regional_schedule(stop)) if is_customer_distribution() else None
+    lifecycle_task = asyncio.create_task(lifecycle.run_schedule(stop)) if is_customer_distribution() else None
     try:
         yield
     finally:
         stop.set()
         task.cancel()
+        if lifecycle_task:
+            lifecycle_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await lifecycle_task
+        if regional_task:
+            regional_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await regional_task
         if sync_task:
             sync_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -221,10 +233,16 @@ async def serve_gallery(
     session: str | None = Cookie(default=None, alias=COOKIE_NAME),
 ) -> Response:
     path = "/" + full_path
+    if is_customer_distribution() and path == "/updates.json":
+        from identity import require_user
+        require_user(request)
+        return JSONResponse(lifecycle.snapshot(), headers={"Cache-Control": "no-store"})
     if is_customer_distribution() and path == "/catalog.json":
-        snapshot = setup_github.catalog_snapshot()
-        if snapshot:
-            return JSONResponse({key: value for key, value in snapshot.items() if key != "capacity"})
+        from identity import require_user
+        require_user(request)
+        snapshot = setup_github.visible_catalog_snapshot()
+        return JSONResponse({key: value for key, value in snapshot.items() if key != "capacity"} if snapshot else {"items": []},
+                            headers={"Cache-Control": "no-store"})
     if is_customer_distribution() and path == "/capacity.json":
         return JSONResponse(setup_github.capacity_snapshot())
 

@@ -76,6 +76,14 @@
 
     adminUsers: () => request("GET", "/api/admin/users").then((d) => d.users),
 
+    adminCatalog: () => request("GET", "/api/admin/catalog"),
+
+    setCatalogRemoved: (useCase, repository, version, removed) =>
+      request("PUT", "/api/admin/catalog/" + encodeURIComponent(useCase), { repository, version, removed, confirm: true }),
+
+    requestCatalogRepositoryRemoval: (useCase, repository, version, branch, sourceCommit) =>
+      request("POST", "/api/admin/catalog/" + encodeURIComponent(useCase) + "/repository-removal", { action: "delete_from_repository", repository, version, branch, sourceCommit, confirm: true }),
+
     setUserRole: (upn, role) =>
       request("POST", "/api/admin/users", { upn: upn, role: role }),
 

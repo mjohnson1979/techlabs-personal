@@ -28,6 +28,7 @@ SOURCE_FILES = (
     "site/server/setup_github.py", "site/server/setup_auth.py",
     "site/server/catalog_processing.py",
     "site/server/catalog_workflows.py",
+    "site/server/lifecycle.py",
     "site/server/entra_auth.py", "site/server/github_intake.py",
     "site/server/github_device.py", "site/server/identity.py", "site/server/installer.py",
     "site/server/pricing.py", "site/server/scheduler.py", "site/server/submissions.py",

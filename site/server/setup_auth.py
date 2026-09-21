@@ -184,7 +184,14 @@ async def configure_github_credential(settings: GitHubCredential) -> dict:
     return saved
 
 
-async def store_github_device_token(token: str, expires_at: float, account: dict, storage: dict | None = None) -> None:
+async def store_github_device_token(token: str, expires_at: float, account: dict, storage: dict | None = None, renewal: dict | None = None) -> None:
+    import json
+
+    value = token
+    if renewal:
+        value = json.dumps({"version": 1, "accessToken": token, "expiresAt": expires_at,
+                            "refreshToken": renewal["token"], "refreshExpiresAt": renewal["expiresAt"],
+                            "clientId": renewal["clientId"], "accountId": account["id"]}, separators=(",", ":"))
     settings = GitHubCredential.model_validate(storage or db.get_setup_setting("github_credential", {"secretStorage": "app_service"}))
     site_path = auth_path().split("/config/", 1)[0]
     host = await setup_cloud.arm_request(site_path + "?api-version=2024-11-01")
@@ -196,23 +203,25 @@ async def store_github_device_token(token: str, expires_at: float, account: dict
         uri = await key_vault_target(settings, host)
         existing = await key_vault_secret(uri)
         allowed_values = ("", f"@Microsoft.KeyVault(SecretUri={uri})", f"@Microsoft.KeyVault(SecretUri={existing['id']})" if existing else "")
-        if existing_value not in allowed_values:
+        same_secret_version = re.fullmatch(re.escape(f"@Microsoft.KeyVault(SecretUri={uri}/") + r"[a-zA-Z0-9]+\)", str(existing_value))
+        if existing_value not in allowed_values and not same_secret_version:
             raise ValueError("The host token points to another store; reconcile credential storage before reconnecting")
         if existing and existing.get("tags", {}).get("portalPurpose") != "github-device-token":
             raise ValueError("Choose a dedicated Key Vault secret name for device sign-in; setup will not replace an unrelated secret")
-        metadata = await key_vault_secret(uri, value=token, tags={"portalPurpose": "github-device-token"})
+        metadata = await key_vault_secret(uri, value=value, tags={"portalPurpose": "github-device-token"})
         if metadata is None:
             raise ValueError("Key Vault did not confirm token storage")
         properties["GALLERY_GITHUB_TOKEN"] = f"@Microsoft.KeyVault(SecretUri={metadata['id']})"
     else:
         if str(existing_value).startswith("@Microsoft.KeyVault("):
             raise ValueError("The host token uses Key Vault; configure the matching storage before connecting")
-        properties["GALLERY_GITHUB_TOKEN"] = token
+        properties["GALLERY_GITHUB_TOKEN"] = value
     properties["GALLERY_GITHUB_TOKEN_EXPIRES_AT"] = str(expires_at)
     await setup_cloud.arm_request(setting_path + "?api-version=2024-11-01", method="PUT", body={"properties": properties}, etag=app_settings.get("etag"))
-    db.set_setup_setting("github_connection", {"login": account["login"], "id": account["id"], "expiresAt": expires_at or None, "method": "device"})
+    db.set_setup_setting("github_connection", {"login": account["login"], "id": account["id"], "expiresAt": expires_at or None, "method": "device",
+                                               "autoRenew": bool(renewal), "refreshExpiresAt": renewal["expiresAt"] if renewal else None})
     db.set_setup_setting("github_credential", settings.model_dump(exclude={"confirm"}))
-    os.environ["GALLERY_GITHUB_TOKEN"] = token
+    os.environ["GALLERY_GITHUB_TOKEN"] = value
     os.environ["GALLERY_GITHUB_TOKEN_EXPIRES_AT"] = str(expires_at)
 
 

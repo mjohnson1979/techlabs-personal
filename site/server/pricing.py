@@ -15,6 +15,8 @@ from __future__ import annotations
 import asyncio
 import math
 import re
+import time
+from contextvars import ContextVar
 from typing import Any
 from urllib.parse import quote
 
@@ -23,6 +25,8 @@ import httpx
 _RETAIL_API = "https://prices.azure.com/api/retail/prices"
 _MAX_PAGES = 40
 _price_cache: dict[str, list[dict[str, Any]]] = {}
+_price_cached_at: dict[str, float] = {}
+FRESH_READ = ContextVar("fresh_retail_read", default=False)
 _DISCOUNT_RE = re.compile(r"discount|reserv|spot|low priority|dev[ /-]?test", re.I)
 
 
@@ -103,7 +107,7 @@ async def _fetch_rows(
     # Cache key includes currency: the same filter in another currency must not
     # return the previously cached prices.
     cache_key = f"{currency}\n{flt}"
-    if cache_key in _price_cache:
+    if not FRESH_READ.get() and cache_key in _price_cache and time.monotonic() - _price_cached_at.get(cache_key, 0) < 300:
         return _price_cache[cache_key]
 
     rows: list[dict[str, Any]] = []
@@ -130,6 +134,7 @@ async def _fetch_rows(
     # set), the rows are truncated and caching them would poison later lookups.
     if url is None:
         _price_cache[cache_key] = rows
+        _price_cached_at[cache_key] = time.monotonic()
     return rows
 
 

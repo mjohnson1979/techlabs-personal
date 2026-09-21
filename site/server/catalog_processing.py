@@ -24,6 +24,206 @@ import pricing
 import setup_cloud
 import setup_config
 
+REGIONAL_INTERVAL = 86400
+REGIONAL_CONCURRENCY = asyncio.Semaphore(6)
+
+
+def regional_input_key(item: dict, subscription: dict) -> str:
+    cost = item.get("cost") or {}
+    authored_cost = {key: value for key, value in cost.items() if key not in (
+        "components", "fixedMonthly", "usageMonthly", "totalMonthly", "complete", "pricedAt", "pricingSource", "fallbackReason")}
+    authored_cost["components"] = [{key: value for key, value in component.items() if key not in ("unitPrice", "monthly")}
+                                   for component in cost.get("components", [])]
+    payload = {"path": item.get("path", item.get("name")), "cost": authored_cost,
+               "quota": item.get("quota"), "parameters": item.get("parameters"),
+               "subscriptionId": subscription["subscriptionId"], "pricingMode": subscription.get("pricingMode", "retail")}
+    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+
+
+def default_parameters(item: dict) -> dict[str, str]:
+    return {entry["name"]: str(entry["default"]).lower() if isinstance(entry["default"], bool) else str(entry["default"])
+            for entry in item.get("parameters", []) if isinstance(entry, dict) and entry.get("name")
+            and entry.get("default") is not None and entry.get("type", "").lower() not in ("securestring", "secureobject", "object", "array")}
+
+
+def regional_results(items: list[dict], subscriptions: list[dict]) -> dict:
+    stored = db.get_setup_setting("regional_snapshot", {})
+    keys = {(subscription["subscriptionId"], item.get("path", item.get("name"))): regional_input_key(item, subscription)
+            for subscription in subscriptions for item in items}
+    rows = []
+    retail_keys = {(subscription["subscriptionId"], item.get("path", item.get("name"))): regional_input_key(item, {**subscription, "pricingMode": "retail"})
+                   for subscription in subscriptions for item in items}
+    for row in stored.get("rows", []):
+        identity = (row.get("subscriptionId"), row.get("useCase"))
+        if identity not in keys:
+            continue
+        runner_retail = stored.get("source") == "runner" and retail_keys.get(identity) == row.get("inputKey")
+        if keys.get(identity) != row.get("inputKey") and not runner_retail:
+            continue
+        if runner_retail and keys.get(identity) != row.get("inputKey") and row.get("price"):
+            reason = "Runner snapshots contain public retail prices only. Live deployment checks use the saved negotiated pricing preference."
+            row = {**row, "priceDetail": reason, "price": {**row["price"], "fallbackReason": reason, "requestedPricing": "negotiated"}}
+        rows.append({**row, "stale": time.time() - row.get("checkedAt", 0) >= REGIONAL_INTERVAL})
+    allowed = {subscription["subscriptionId"] for subscription in subscriptions}
+    return {"rows": rows, "generatedAt": stored.get("generatedAt"), "intervalSeconds": REGIONAL_INTERVAL,
+            "source": stored.get("source", "container"), "job": db.get_setup_setting("regional_job", {"status": "pending"}),
+            "errors": {key: value for key, value in stored.get("errors", {}).items() if key in allowed}}
+
+
+def validate_runner_snapshot(document: dict) -> dict:
+    import math
+
+    if not isinstance(document, dict) or document.get("schemaVersion") != 1 or document.get("source") != "runner":
+        raise ValueError("Invalid runner regional snapshot")
+    rows = document.get("rows")
+    now = time.time()
+    if not isinstance(rows, list) or len(rows) > 20000:
+        raise ValueError("Invalid regional snapshot rows")
+    clean = []
+    seen = set()
+    for row in rows:
+        if not isinstance(row, dict) or setup_config.canonical_guid(row.get("subscriptionId", "")) != row.get("subscriptionId"):
+            raise ValueError("Invalid regional subscription")
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", row.get("useCase", "")) or not re.fullmatch(r"[a-z][a-z0-9]{2,30}", row.get("location", "")):
+            raise ValueError("Invalid regional target")
+        if not re.fullmatch(r"[a-f0-9]{64}", row.get("inputKey", "")):
+            raise ValueError("Missing workload binding")
+        if type(row.get("checkedAt")) not in (float, int) or not math.isfinite(row["checkedAt"]) or not 0 < row["checkedAt"] <= now + 300:
+            raise ValueError("Invalid regional timestamp")
+        identity = (row["subscriptionId"], row["useCase"], row["location"])
+        if identity in seen:
+            raise ValueError("Duplicate regional result")
+        seen.add(identity)
+        price = row.get("price")
+        if price:
+            if not isinstance(price, dict):
+                raise ValueError("Invalid regional price")
+            if price.get("pricingSource") != "retail" or price.get("requestedPricing") not in (None, "retail"):
+                raise ValueError("Only public retail prices may be imported from runners")
+            if type(price.get("totalMonthly")) not in (float, int) or not math.isfinite(price["totalMonthly"]) or price["totalMonthly"] < 0:
+                raise ValueError("Invalid regional price")
+        capacity = row.get("capacity")
+        if not isinstance(capacity, dict) or capacity.get("physicalCapacity") != "unknown" or capacity.get("status") not in ("headroom", "offered", "unavailable", "unknown"):
+            raise ValueError("Invalid regional capacity")
+        if not isinstance(capacity.get("checks"), list) or not isinstance(capacity.get("quotas"), list):
+            raise ValueError("Invalid regional capacity details")
+        clean.append({key: row.get(key) for key in ("subscriptionId", "useCase", "location", "regionName", "inputKey", "checkedAt", "price", "priceDetail", "capacity")})
+    return {"schemaVersion": 1, "source": "runner", "rows": clean, "generatedAt": max((row["checkedAt"] for row in clean), default=now), "errors": {}}
+
+
+async def collect_regional_snapshot(items: list[dict], subscriptions: list[dict], previous: dict | None = None,
+                                    on_batch: Callable[[dict], None] | None = None, source: str = "container") -> dict:
+    from azure.core.exceptions import AzureError
+
+    old_rows = {(row["subscriptionId"], row["useCase"], row["location"]): row for row in (previous or {}).get("rows", [])}
+    snapshot = {"schemaVersion": 1, "source": source, "generatedAt": time.time(), "rows": [], "errors": {}}
+    jobs = []
+    for subscription in subscriptions:
+        identifier = subscription["subscriptionId"]
+        try:
+            await setup_cloud.verify_subscription(subscription)
+            locations = await setup_cloud.subscription_locations(identifier)
+            if not locations:
+                raise ValueError("No physical regions returned")
+        except (ValueError, httpx.HTTPError, AzureError, TimeoutError):
+            snapshot["errors"][identifier] = "Subscription or region discovery unavailable; prior results may be stale."
+            for item in items:
+                key = regional_input_key(item, subscription)
+                snapshot["rows"].extend(row for row in old_rows.values() if row["subscriptionId"] == identifier
+                                        and row["useCase"] == item.get("path", item.get("name")) and row.get("inputKey") == key)
+            continue
+        for item in items:
+            key = regional_input_key(item, subscription)
+            for region in locations:
+                use_case = item.get("path", item.get("name"))
+                row = old_rows.get((identifier, use_case, region["name"]))
+                if row and row.get("inputKey") == key and time.time() - row.get("checkedAt", 0) < REGIONAL_INTERVAL:
+                    snapshot["rows"].append(row)
+                else:
+                    position = len(snapshot["rows"])
+                    snapshot["rows"].append(row if row and row.get("inputKey") == key else None)
+                    jobs.append((position, item, subscription, region, key))
+
+    def publish() -> None:
+        snapshot["generatedAt"] = time.time()
+        if on_batch:
+            on_batch({**snapshot, "rows": [row for row in snapshot["rows"] if row is not None]})
+
+    async def collect(job: tuple) -> None:
+        position, item, subscription, region, key = job
+        async with REGIONAL_CONCURRENCY:
+            result = await check_region(item, subscription, region["name"], default_parameters(item))
+        price = result.get("price")
+        if price:
+            result["price"] = {name: price.get(name) for name in ("complete", "currency", "totalMonthly", "pricingSource", "fallbackReason", "requestedPricing")}
+        row = {**result, "useCase": item.get("path", item.get("name")), "regionName": region.get("displayName", region["name"]), "inputKey": key}
+        old = snapshot["rows"][position]
+        if old and ((not price or not price.get("complete")) or result["capacity"].get("status") == "unknown"):
+            if (old.get("price") or {}).get("complete") and (old.get("capacity") or {}).get("status") != "unknown":
+                row["lastSuccessful"] = {name: old.get(name) for name in ("price", "capacity", "checkedAt")}
+            elif old.get("lastSuccessful"):
+                row["lastSuccessful"] = old["lastSuccessful"]
+        snapshot["rows"][position] = row
+
+    publish()
+    for offset in range(0, len(jobs), 3):
+        await asyncio.gather(*(collect(job) for job in jobs[offset:offset + 3]))
+        publish()
+    snapshot["rows"] = [row for row in snapshot["rows"] if row is not None]
+    return snapshot
+
+
+async def refresh_regional_schedule() -> None:
+    import setup_github
+    from api import _catalog_items
+
+    items = list(_catalog_items().values())
+    subscriptions = setup_config.subscriptions()
+    if not items or not subscriptions:
+        db.set_setup_setting("regional_job", {"status": "waiting", "detail": "Waiting for published workloads and saved subscriptions."})
+        return
+    configuration = settings()
+    if configuration["mode"] != "container" and runner_available(configuration, await setup_github.processing_probe()):
+        db.set_setup_setting("regional_job", {"status": "runner", "detail": "Scheduled runner results are imported from the reviewed branch; deployment selections are checked live."})
+        return
+    previous = db.get_setup_setting("regional_snapshot", {})
+    scope_key = hashlib.sha256(json.dumps([regional_input_key(item, subscription) for item in items for subscription in subscriptions]).encode()).hexdigest()
+    job = db.get_setup_setting("regional_job", {})
+    if job.get("scopeKey") == scope_key and job.get("nextRunAt", 0) > time.time():
+        return
+    started = time.time()
+    db.set_setup_setting("regional_job", {"status": "running", "startedAt": started, "scopeKey": scope_key,
+                         "detail": "Automatically refreshing regional prices and capacity for saved subscriptions."})
+
+    def save(snapshot: dict) -> None:
+        db.set_setup_setting("regional_snapshot", snapshot)
+        db.set_setup_setting("regional_job", {"status": "running", "startedAt": started, "scopeKey": scope_key,
+                             "completed": len(snapshot["rows"]), "detail": "Regional refresh in progress; completed results are available."})
+
+    snapshot = await collect_regional_snapshot(items, subscriptions, previous, save)
+    now = time.time()
+    next_run = min((row["checkedAt"] + REGIONAL_INTERVAL for row in snapshot["rows"]), default=now + REGIONAL_INTERVAL)
+    db.set_setup_setting("regional_job", {"status": "partial" if snapshot["errors"] else "succeeded", "completedAt": now,
+                         "nextRunAt": now + 300 if snapshot["errors"] else max(now + 300, next_run), "scopeKey": scope_key,
+                         "completed": len(snapshot["rows"]), "detail": "Scheduled refresh finished. Unknown or failed checks are shown explicitly."})
+
+
+async def run_regional_schedule(stop: asyncio.Event) -> None:
+    from azure.core.exceptions import AzureError
+
+    while not stop.is_set():
+        try:
+            await asyncio.wait_for(refresh_regional_schedule(), timeout=1200)
+        except asyncio.CancelledError:
+            db.set_setup_setting("regional_job", {"status": "interrupted", "detail": "Refresh interrupted; completed rows will be reused after restart."})
+            raise
+        except (ValueError, KeyError, TypeError, httpx.HTTPError, AzureError, OSError, TimeoutError):
+            db.set_setup_setting("regional_job", {"status": "failed", "detail": "Scheduled refresh incomplete; saved results retained. Check access and workload metadata. Retrying automatically."})
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=300)
+        except TimeoutError:
+            pass
+
 
 class ProcessingSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -47,7 +247,9 @@ class ProcessingSettings(BaseModel):
 
 
 def settings() -> dict:
-    return ProcessingSettings.model_validate(db.get_setup_setting("catalog_processing", {})).model_dump()
+    configuration = ProcessingSettings.model_validate(db.get_setup_setting("catalog_processing", {})).model_dump()
+    configuration["capacityRegions"] = []
+    return configuration
 
 
 async def probe_runners(repo: str, request: Callable[..., Awaitable]) -> dict:
@@ -176,6 +378,41 @@ def compiler_sandbox(work: Path) -> None:
     resource.setrlimit(resource.RLIMIT_AS, (8 * 1024 * 1024 * 1024, 8 * 1024 * 1024 * 1024))
 
 
+class CatalogValidationError(ValueError):
+    def __init__(self, tool: str, source: str, codes: list[str]) -> None:
+        tool = tool if tool in ("bicep", "terraform") else "source"
+        source = source if re.fullmatch(r"(?:catalog|modules)/(?:[A-Za-z0-9_-]+/){0,8}[A-Za-z0-9_.-]+", source) else "workload input"
+        codes = sorted({code for code in codes if isinstance(code, str) and re.fullmatch(r"BCP\d{3}", code)})[:10]
+        detail = f"{tool} validation failed for {source}"
+        if codes:
+            detail += " (" + ", ".join(codes) + ")"
+        detail += ". "
+        if "BCP091" in codes:
+            detail += "A referenced file could not be read. Include required local modules in the configured repository branch at the paths referenced by the template."
+        else:
+            detail += "Check source syntax, local dependencies and container sandbox prerequisites."
+        self.safe_detail = detail
+        super().__init__(detail)
+
+
+def _bicep_error_codes(content: bytes) -> list[str]:
+    if len(content) > 1024 * 1024:
+        return []
+    try:
+        document = json.loads(content)
+    except (ValueError, UnicodeError):
+        return []
+    if not isinstance(document, dict) or not isinstance(document.get("runs"), list):
+        return []
+    codes = []
+    for run in document["runs"]:
+        if not isinstance(run, dict) or not isinstance(run.get("results"), list):
+            continue
+        codes.extend(result["ruleId"] for result in run["results"] if isinstance(result, dict)
+                     and result.get("level") == "error" and isinstance(result.get("ruleId"), str))
+    return codes
+
+
 async def compile_source(work: Path, tool: str, arguments: list[str]) -> str:
     if tool not in ("bicep", "terraform"):
         raise ValueError("Unsupported compiler")
@@ -183,10 +420,11 @@ async def compile_source(work: Path, tool: str, arguments: list[str]) -> str:
                    "DOTNET_BUNDLE_EXTRACT_BASE_DIR": str(work / ".dotnet"), "DOTNET_EnableDiagnostics": "0",
                    "DOTNET_GCHeapHardLimit": "0x10000000", "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT": "1",
                    "TF_IN_AUTOMATION": "1", "CHECKPOINT_DISABLE": "1", "GOMEMLIMIT": "256MiB"}
-    with tempfile.TemporaryFile() as output:
+    diagnostics_arguments = ["--diagnostics-format", "sarif"] if tool == "bicep" and arguments[0] == "build" else []
+    with tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as diagnostics:
         process = await asyncio.create_subprocess_exec(
-            sys.executable, str(Path(__file__).resolve()), "--sandbox", str(work), tool, *arguments,
-            cwd=work, env=environment, stdin=subprocess.DEVNULL, stdout=output, stderr=subprocess.DEVNULL,
+            sys.executable, str(Path(__file__).resolve()), "--sandbox", str(work), tool, *arguments, *diagnostics_arguments,
+            cwd=work, env=environment, stdin=subprocess.DEVNULL, stdout=output, stderr=diagnostics,
         )
         try:
             await asyncio.wait_for(process.wait(), timeout=60)
@@ -196,7 +434,10 @@ async def compile_source(work: Path, tool: str, arguments: list[str]) -> str:
                 await process.wait()
             raise
         if process.returncode:
-            raise ValueError(f"{tool} validation failed. Check source syntax, local module references and container sandbox prerequisites; compiler output is withheld to protect file contents.")
+            diagnostics.seek(0)
+            codes = _bicep_error_codes(diagnostics.read(1024 * 1024 + 1)) if diagnostics_arguments else []
+            source = arguments[1] if tool == "bicep" else arguments[-1]
+            raise CatalogValidationError(tool, source, codes)
         output.seek(0)
         content = output.read(8 * 1024 * 1024 + 1)
         if len(content) > 8 * 1024 * 1024:
@@ -204,7 +445,7 @@ async def compile_source(work: Path, tool: str, arguments: list[str]) -> str:
         return content.decode("utf-8")
 
 
-async def process_blobs(blobs: dict[str, bytes]) -> dict[str, bytes]:
+async def process_blobs(blobs: dict[str, bytes], *, refresh_prices: bool = True) -> dict[str, bytes]:
     generated = dict(blobs)
     with tempfile.TemporaryDirectory(prefix="portal-validate-") as directory:
         work = Path(directory)
@@ -255,7 +496,7 @@ async def process_blobs(blobs: dict[str, bytes]) -> dict[str, bytes]:
                 validation.append("arm-json-structure")
             generated.pop(f"{prefix}/pricing.json", None)
             cost = metadata.get("cost")
-            if cost and cost.get("components"):
+            if refresh_prices and cost and cost.get("components"):
                 fresh = {**cost, "components": [{key: value for key, value in row.items() if key not in ("unitPrice", "monthly")} for row in cost["components"]]}
                 priced = await asyncio.wait_for(pricing.estimate(fresh, cost.get("region", "eastus"), {}), timeout=120)
                 if not priced.get("complete"):
@@ -273,21 +514,54 @@ async def process_blobs(blobs: dict[str, bytes]) -> dict[str, bytes]:
     return generated
 
 
+async def check_region(item: dict, subscription: dict, region: str, parameters: dict[str, str], *, fresh: bool = False) -> dict:
+    arm_token = setup_cloud.FRESH_READ.set(fresh)
+    price_token = pricing.FRESH_READ.set(fresh)
+    try:
+        return await _check_region(item, subscription, region, {**default_parameters(item), **parameters})
+    finally:
+        setup_cloud.FRESH_READ.reset(arm_token)
+        pricing.FRESH_READ.reset(price_token)
+
+
+async def _check_region(item: dict, subscription: dict, region: str, parameters: dict[str, str]) -> dict:
+    from azure.core.exceptions import AzureError
+
+    result = {"subscriptionId": subscription["subscriptionId"], "location": region,
+              "price": None, "priceDetail": "No component cost model is defined for this workload."}
+    cost = item.get("cost") or {}
+    if cost.get("components"):
+        try:
+            fresh = {**cost, "components": [{key: value for key, value in component.items() if key not in ("unitPrice", "monthly")} for component in cost["components"]]}
+            result["price"] = await asyncio.wait_for(pricing.estimate_for_subscription(fresh, region, parameters, subscription), timeout=60)
+            result["priceDetail"] = result["price"].get("fallbackReason") or ("" if result["price"].get("complete") else "Some regional meters could not be priced.")
+        except (ValueError, RuntimeError, httpx.HTTPError, AzureError, TimeoutError):
+            result["priceDetail"] = "Regional pricing unavailable; retry or check the workload cost model."
+    try:
+        result["capacity"] = await asyncio.wait_for(setup_cloud.workload_capacity(subscription["subscriptionId"], region, item, parameters), timeout=60)
+    except (ValueError, httpx.HTTPError, AzureError, TimeoutError):
+        result["capacity"] = {"status": "unknown", "checks": [], "quotas": [], "physicalCapacity": "unknown", "detail": "Capacity checks unavailable; verify access and retry."}
+    result["checkedAt"] = time.time()
+    return result
+
+
 async def refresh_capacity(regions: list[str]) -> dict | None:
     subscriptions = setup_config.subscriptions()
-    if not regions or not subscriptions:
+    if not subscriptions:
         return None
-    if len(subscriptions) * len(regions) > 100:
-        raise ValueError("Capacity refresh supports at most 100 subscription/region combinations")
     snapshots = {}
     for subscription in subscriptions:
         identifier = subscription["subscriptionId"]
         await setup_cloud.verify_subscription(subscription)
+        selected_regions = regions or [item["name"] for item in await setup_cloud.subscription_locations(identifier)]
         snapshots[identifier] = {}
-        for region in regions:
+        async def read_region(region: str) -> tuple[str, list]:
             if not re.fullmatch(r"[a-z][a-z0-9]{2,30}", region):
                 raise ValueError("Use canonical Azure region names")
-            result = await setup_cloud.arm_request(f"/subscriptions/{identifier}/providers/Microsoft.Compute/locations/{region}/usages?api-version=2024-03-01")
+            try:
+                result = await setup_cloud.arm_request(f"/subscriptions/{identifier}/providers/Microsoft.Compute/locations/{region}/usages?api-version=2024-03-01")
+            except httpx.HTTPError:
+                return region, []
             if result.get("nextLink") or not isinstance(result.get("value"), list):
                 raise ValueError("Incomplete quota response; previous capacity remains active")
             rows = []
@@ -297,7 +571,9 @@ async def refresh_capacity(regions: list[str]) -> dict | None:
                     raise ValueError("Invalid quota counters")
                 rows.append({"name": entry["name"].get("localizedValue") or entry["name"]["value"], "limit": limit,
                              "current": current, "available": max(0, limit - current)})
-            snapshots[identifier][region] = rows
+            return region, rows
+        for offset in range(0, len(selected_regions), 4):
+            snapshots[identifier].update(await asyncio.gather(*(read_region(region) for region in selected_regions[offset:offset + 4])))
     return {"schemaVersion": 1, "generated": datetime.now(timezone.utc).isoformat(),
             "tenantId": os.environ.get("GALLERY_ENTRA_TENANT_ID", ""), "physicalCapacity": "unknown", "subscriptions": snapshots}
 

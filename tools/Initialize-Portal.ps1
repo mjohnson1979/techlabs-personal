@@ -120,52 +120,6 @@ $initializerParameters = @{} + $PSBoundParameters
 . "$PSScriptRoot/Deploy-Portal.ps1"
 . "$PSScriptRoot/Portal-Foundation.ps1"
 
-function Get-PortalPrepareSelectionName {
-    return @('SubscriptionId','ResourceGroupName','Location','AppName','PlanName','RegistryName',
-        'PlanResourceId','RegistryResourceId','ManagedIdentityResourceId','NewManagedIdentityName',
-        'UpgradePlanSku','PlanSku','AdminObjectIds','EntraClientId','EntraMode','EntraDisplayName','CredentialDays')
-}
-
-function Import-PortalPrepareConfiguration {
-    param([string]$Path)
-    try {
-        if ((Get-Item -LiteralPath $Path -ErrorAction Stop).Length -gt 65536) { throw 'Oversized configuration' }
-        $configuration = Get-Content -LiteralPath $Path -Raw -ErrorAction Stop | ConvertFrom-Json -AsHashtable -ErrorAction Stop
-        if ($configuration -isnot [System.Collections.IDictionary] -or $configuration.Count -ne 3 -or
-            $configuration.SchemaVersion -cne 1 -or -not $configuration.Contains('TenantId') -or
-            -not $configuration.Contains('Selections')) { throw 'Invalid schema' }
-        $configuration.TenantId = ConvertTo-PortalGuid $configuration.TenantId
-        $selections = $configuration.Selections
-        $names = @(Get-PortalPrepareSelectionName)
-        if ($selections -isnot [System.Collections.IDictionary] -or $selections.Count -ne $names.Count) { throw 'Invalid selections' }
-        foreach ($name in $names) {
-            if (-not $selections.Contains($name)) { throw 'Missing selection' }
-            $value = $selections[$name]
-            if ($name -eq 'AdminObjectIds') {
-                if ($value -isnot [array] -or $value.Count -eq 0) { throw 'Invalid administrators' }
-                foreach ($administrator in $value) { $null = ConvertTo-PortalGuid $administrator }
-            } elseif ($name -eq 'CredentialDays') {
-                if ($value -isnot [long] -and $value -isnot [int]) { throw 'Invalid lifetime' }
-                if ($value -lt 7 -or $value -gt 180) { throw 'Invalid lifetime' }
-            } elseif ($value -isnot [string] -or $value.Length -gt 2048 -or $value -match '[\x00-\x1f\x7f]') {
-                throw 'Invalid selection value'
-            }
-        }
-        foreach ($name in @('SubscriptionId','ResourceGroupName','Location','AppName','PlanName','RegistryName')) {
-            if ([string]::IsNullOrWhiteSpace($selections[$name])) { throw 'Missing required selection' }
-        }
-        $null = ConvertTo-PortalGuid $selections.SubscriptionId
-        if ($selections.PlanSku -notin @('F1','B1','B2','B3','S1','P1v3') -or
-            ($selections.UpgradePlanSku -and $selections.UpgradePlanSku -notin @('B1','B2','B3','S1','P1v3')) -or
-            $selections.EntraMode -notin @('Create','Existing')) { throw 'Invalid mode or SKU' }
-        if ($selections.EntraMode -eq 'Existing') { $null = ConvertTo-PortalGuid $selections.EntraClientId }
-        if ($selections.EntraMode -eq 'Create' -and [string]::IsNullOrWhiteSpace($selections.EntraDisplayName)) { throw 'Missing registration name' }
-        return $configuration
-    } catch {
-        throw 'Prepare configuration is invalid or unreadable. Use -Fresh to make new selections and generate a valid preview configuration. File contents have not been executed.'
-    }
-}
-
 function Export-PortalPrepareConfiguration {
     param([string]$Path, [string]$TenantId, [hashtable]$Selections)
     $safeSelections = [ordered]@{}
@@ -622,45 +576,6 @@ function Connect-PortalPrerequisiteEntra {
     $properties.globalValidation['excludedPaths'] = @()
     $null = Invoke-PortalArm -Subscription $Plan.SubscriptionId -Path $path -Method PUT -Body @{ properties = $properties } -ETag $current.etag
     Write-PortalStatus OK 'Entra hosting configuration saved. This has not signed anyone in or completed browser setup.'
-}
-
-function Test-PortalPrerequisiteImageReference {
-    param([string]$ImageReference, [switch]$ForBuild)
-    $repositoryPattern = '[a-z0-9]+(?:[._-][a-z0-9]+)*(?:/[a-z0-9]+(?:[._-][a-z0-9]+)*)*'
-    $tagPattern = ':[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}'
-    $suffixPattern = if ($ForBuild) { $tagPattern } else { "(?:$tagPattern|@sha256:[a-f0-9]{64})" }
-    return $ImageReference -cmatch "\A$repositoryPattern$suffixPattern\z"
-}
-
-function Publish-PortalPrerequisiteImage {
-    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
-    param([object]$Plan, [string]$LoginServer, [string]$ImageReference, [string]$PipConfigPath)
-    if (-not (Test-PortalPrerequisiteImageReference $ImageReference -ForBuild) -or
-        $LoginServer -notmatch '^[a-z0-9][a-z0-9.-]*\.azurecr\.io$') { throw 'Use repository:tag for image build, for example deployment-portal:latest (not latest alone).' }
-    if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { throw 'Docker is unavailable here. Build/push from the connected workstation, then use Deploy-Portal.ps1.' }
-    if ($PipConfigPath -and (-not (Test-Path -LiteralPath $PipConfigPath -PathType Leaf) -or $PipConfigPath.Contains(','))) {
-        throw 'The optional approved pip config must be an existing file with no comma in its path.'
-    }
-    $image = "$LoginServer/$ImageReference"
-    if (-not $PSCmdlet.ShouldProcess($image, 'Build linux/amd64 organization image and push to the selected ACR using the operator identity')) {
-        return [pscustomobject]@{ Status = 'Cancelled'; Image = $image }
-    }
-    Write-PortalStatus INFO 'Signing the operator into the selected container registry.'
-    $null = & az acr login --subscription $Plan.SubscriptionId --name $Plan.Inputs.RegistryName --only-show-errors --output none 2>$null
-    if ($LASTEXITCODE -ne 0) { throw 'Operator registry login failed; check service reachability and push permissions under organization policy.' }
-    $arguments = @('build', '--platform', 'linux/amd64', '--tag', $image)
-    if ($PipConfigPath) { $arguments += @('--secret', "id=pip_config,src=$([IO.Path]::GetFullPath($PipConfigPath))") }
-    $arguments += (Split-Path $PSScriptRoot -Parent)
-    Write-PortalSection 'DOCKER BUILD | Native Docker output below'
-    & docker @arguments | Out-Host
-    if ($LASTEXITCODE -ne 0) { throw 'Image build failed; no push submitted.' }
-    Write-PortalSection 'DOCKER PUSH | Native Docker output below'
-    & docker push $image | Out-Host
-    if ($LASTEXITCODE -ne 0) { throw 'Image push failed. Check operator push roles and service reachability under organization policy.' }
-    Write-PortalSection 'IMAGE PUBLICATION | Result'
-    Write-PortalStatus OK "Image built and pushed: $image"
-    Write-PortalStatus INFO 'The App Service image has not been changed yet. Deployment requires its own confirmation.'
-    return [pscustomobject]@{ Status = 'ImagePublished'; Image = $image }
 }
 
 function Initialize-PortalHosting {

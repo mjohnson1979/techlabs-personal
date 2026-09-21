@@ -330,7 +330,10 @@ with `--no-cache-filter dependencies`.
 Open the site's **root URL**, not the callback URL, through the organization's chosen access path.
 Easy Auth redirects to company Entra sign-in. Sign in as the designated portal
 administrator. Setup opens automatically when there are no deployment
-subscriptions, starting on **GitHub**. Reopen it later from the account menu.
+subscriptions, starting on **Authentication**. Use Back and Next to move through
+GitHub, Subscriptions and Branding, or select a named step directly. Navigation
+retains drafts but does not save them; use the explicit Save actions before closing.
+Reopen Setup later from the account menu.
 
 Authentication shows the existing primary Entra connection. Adding another
 Entra/OIDC provider is optional and is not part of the default onboarding.
@@ -392,7 +395,19 @@ GitHub is optional; leave it disabled if not using this integration.
 **Catalog processing defaults to the portal container.** It validates reviewed use
 cases, refreshes retail pricing and collects configured Compute quota snapshots
 without GitHub Actions or runners. In **Setup > GitHub**, choose **Catalog processing**,
-enter capacity regions, save, and select **Sync catalog now** to queue a refresh.
+save, and select **Sync catalog now** to queue a refresh. Regions are discovered
+automatically for saved subscriptions; no manual region list is needed.
+
+Prices and supported capacity signals refresh automatically across saved
+subscriptions and their regions: daily in the container, or through the enabled
+runner schedule. **Capacity** displays the saved results automatically, including
+their age, unknowns and pricing source. There is no required manual scan.
+Changing a deployment selection checks its price and capacity automatically; the
+server rechecks before provisioning and blocks known unavailable capacity. Unknown
+capacity and incomplete pricing remain explicit warnings, not availability guarantees.
+Updated runner workflows publish regional retail results; negotiated prices remain
+in the app's live subscription-scoped checks. Results support filtering, sorting
+and CSV export. See the operations guide for runner setup and F1 scheduling limits.
 Deployment subscriptions and host managed-identity Reader access are required for
 quota collection. Progress and failures survive restarts; the last good catalog stays active.
 
@@ -461,13 +476,61 @@ See [repository input layout](docs/OPERATIONS.md#2-github) and
 Local tests do not establish live Entra or workload deployment
 readiness. Perform these checks in an organization-controlled non-production environment first.
 
+## Roadmap and retirements
+
+Azure lifecycle notices refresh automatically from the public Azure Updates feed:
+at startup and every 24 hours in the container, or daily at **06:47 UTC** through
+the optional runner workflow. No Azure credentials are needed for this feed.
+The screen shows the last successful refresh and failures/staleness; failed or
+incomplete fetches preserve the last successful data. Existing runner installations
+must review and merge the updated workflow/helper PR. F1 idle unloading can delay
+container schedules. See [lifecycle operations](docs/OPERATIONS.md#roadmap-and-retirements)
+for feed limits, matching and backup details.
+
+## Database and backups
+
+The portal records its operational data in **SQLite**, normally at
+`/home/data/deployment-portal.db` (`GALLERY_DB_PATH` can override it). This includes
+users and roles, deployment records and parameters, audit/activity events,
+submission metadata, saved Setup and catalog/processing state. Uploaded files,
+compiled catalog artifacts and Terraform state are stored separately.
+
+**Persistent storage and image updates do not replace backups.** The operating
+organization must schedule consistent backups of the database and associated
+files, protect them as sensitive data, monitor failures and test restoration.
+Without a valid backup, lost data can mean lost reporting history and workload
+cleanup tracking; deployed Azure resources remain billable. Restoring an older
+backup does not recover records written after that backup.
+
+The deployment script does not create backups. Omitting a backup prompt on routine
+updates does not remove this operational responsibility. See the
+[database inventory and backup/restore procedure](docs/OPERATIONS.md#database-and-backups)
+for scope, locations, retention and restore checks.
+
 ## Updates and operations
+
+For local site changes on an already-installed portal:
+
+```powershell
+./tools/Deploy-Portal.ps1 -DeployImage -WhatIf
+./tools/Deploy-Portal.ps1 -DeployImage
+```
+
+This reuses the saved target, builds and pushes a new Docker image, then stops,
+updates only the image reference and starts the existing app after confirmation.
+Setup, credentials and data paths are preserved. Requires Docker, Azure CLI and
+appropriate App Service/ACR permissions. See [site updates](docs/OPERATIONS.md#deploy-local-site-changes)
+for explicit targets, unattended execution, new-file allowlists and maintenance.
 
 Build and scan a new image, retain the previous digest, back up persistent data
 and protected configuration, and deploy through your organization change process.
 Do not delete the database or rerun first-run installation for routine upgrades.
 GitHub catalog sync does **not** update running application code. Rollback must
 account for database compatibility as well as the previous image.
+
+Images that enabled SQLite WAL require a stopped-app backup before upgrading to
+rollback journaling. Follow the [WAL upgrade procedure](docs/OPERATIONS.md#upgrade-from-sqlite-wal);
+do not perform a rolling replacement or remove database journal files.
 
 Keep one instance/worker, monitor persistent storage and failed cleanup jobs,
 rotate Entra credentials and GitHub authorization, and restrict access to logs,

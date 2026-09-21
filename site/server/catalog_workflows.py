@@ -10,22 +10,30 @@ def workflow_files(labels: list[str] | None = None) -> dict[str, bytes]:
     download = "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093"
     branch = "${{ vars.PORTAL_CATALOG_BRANCH || github.event.repository.default_branch }}"
     outputs = {}
-    for capacity in (False, True):
-        name = "portal-capacity" if capacity else "portal-catalog"
-        tools = {"name": "Check runner tools", "run": "python --version\naz version\ngit --version"}
-        trigger = {"workflow_dispatch": {}, "schedule": [{"cron": "37 6 * * *" if capacity else "17 5 * * *"}]}
-        if not capacity:
+    for kind in ("catalog", "capacity", "lifecycle"):
+        capacity = kind == "capacity"
+        lifecycle = kind == "lifecycle"
+        name = "portal-" + kind
+        tools = {"name": "Check runner tools", "run": "python --version\ngit --version" if lifecycle else "python --version\naz version\ngit --version"}
+        trigger = {"workflow_dispatch": {}, "schedule": [{"cron": "47 6 * * *" if lifecycle else "37 6 * * *" if capacity else "17 5 * * *"}]}
+        if kind == "catalog":
             trigger["push"] = {"paths": ["catalog/**", "modules/**", "tools/portal_catalog.py", "site/server/pricing.py", ".github/workflows/portal-catalog.yml"]}
         steps = [{"name": "Checkout approved catalog branch", "uses": checkout, "with": {"ref": branch, "persist-credentials": False}}, tools]
         job = {"runs-on": runner, "timeout-minutes": 20, "permissions": {"contents": "read"}, "steps": steps}
         if capacity:
             job.update({"if": "vars.PORTAL_CAPACITY_ENABLED == 'true'", "environment": "portal-capacity",
                         "permissions": {"contents": "read", "id-token": "write"},
-                        "env": {key: "${{ vars." + key + " }}" for key in ("AZURE_CLIENT_ID", "AZURE_TENANT_ID", "PORTAL_SUBSCRIPTION_IDS", "PORTAL_CAPACITY_REGIONS")}})
+                        "env": {key: "${{ vars." + key + " }}" for key in ("AZURE_CLIENT_ID", "AZURE_TENANT_ID", "PORTAL_SUBSCRIPTION_IDS")}})
             steps.extend([
+                {"name": "Install shared regional checks", "run": "python -m pip install -r site/requirements.txt"},
                 {"run": "python tools/portal_catalog.py capacity-check"},
                 {"uses": "azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5", "with": {"client-id": "${{ vars.AZURE_CLIENT_ID }}", "tenant-id": "${{ vars.AZURE_TENANT_ID }}", "allow-no-subscriptions": True}},
                 {"run": "python tools/portal_catalog.py capacity"},
+            ])
+        elif lifecycle:
+            steps.extend([
+                {"name": "Install public feed client", "run": "python -m pip install httpx==0.28.1"},
+                {"name": "Refresh Azure roadmap and retirements", "run": "python tools/portal_catalog.py lifecycle"},
             ])
         else:
             job["if"] = "github.event_name != 'push' || github.ref_name == (vars.PORTAL_CATALOG_BRANCH || github.event.repository.default_branch)"
@@ -39,7 +47,7 @@ def workflow_files(labels: list[str] | None = None) -> dict[str, bytes]:
             {"uses": download, "with": {"name": name, "path": "runs/portal-generated/"}},
             {"run": "python tools/portal_catalog.py publish"},
         ]}
-        workflow = {"name": "Refresh subscription capacity" if capacity else "Validate catalog and refresh retail prices", "on": trigger,
+        workflow = {"name": "Refresh Azure roadmap and retirements" if lifecycle else "Refresh subscription capacity" if capacity else "Validate catalog and refresh retail prices", "on": trigger,
                     "permissions": {"contents": "read"}, "concurrency": {"group": "portal-generated-${{ github.ref }}", "cancel-in-progress": False},
                     "jobs": {"refresh": job, "publish": publisher}}
         outputs[f".github/workflows/{name}.yml"] = (json.dumps(workflow, indent=2) + "\n").encode()

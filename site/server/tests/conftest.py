@@ -1,6 +1,7 @@
 """Keep test state isolated from organization installations and workstation data."""
 
 import sys
+import asyncio
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,7 @@ if str(SERVER_DIR) not in sys.path:
 
 import db
 import distribution
+import setup_cloud
 
 
 @pytest.fixture(autouse=True)
@@ -19,6 +21,8 @@ def isolated_runtime(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     monkeypatch.setenv("GALLERY_DB_PATH", str(tmp_path / "runtime.db"))
     monkeypatch.setattr(distribution, "CUSTOMER_MARKER", tmp_path / "not-packaged.json")
     monkeypatch.setattr(db, "_CONN", None)
+    monkeypatch.setattr(setup_cloud, "_READ_CACHE", {})
+    monkeypatch.setattr(setup_cloud, "_READ_LOCKS", tuple(asyncio.Lock() for _index in range(8)))
     yield
     if db._CONN is not None:
         db._CONN.close()

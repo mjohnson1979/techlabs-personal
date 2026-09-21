@@ -12,6 +12,10 @@ the location with ``GALLERY_DB_PATH`` (useful for local dev / tests).
 Access is synchronous sqlite3 guarded by a process-wide lock. The web app runs
 gunicorn with a single worker (sessions are in-memory), so a single writer is
 sufficient and avoids cross-process contention.
+
+Rollback journaling avoids WAL's shared-memory requirement on the persistent
+network share. Upgrading an existing WAL database requires a stopped application
+and a consistent backup; never remove its journal files manually.
 """
 
 from __future__ import annotations
@@ -128,11 +132,18 @@ def init_db() -> sqlite3.Connection:
         path.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(path), check_same_thread=False)
         conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL;")
-        conn.execute("PRAGMA foreign_keys=ON;")
-        conn.executescript(SCHEMA)
-        _migrate(conn)
-        conn.commit()
+        try:
+            mode = conn.execute("PRAGMA journal_mode=DELETE;").fetchone()[0]
+            if mode != "delete":
+                raise RuntimeError("The portal requires SQLite rollback journaling")
+            conn.execute("PRAGMA synchronous=EXTRA;")
+            conn.execute("PRAGMA foreign_keys=ON;")
+            conn.executescript(SCHEMA)
+            _migrate(conn)
+            conn.commit()
+        except Exception:
+            conn.close()
+            raise
         _CONN = conn
     return _CONN
 
@@ -506,7 +517,8 @@ def record_event(
 
 def telemetry_summary(days: int = 30) -> dict[str, Any]:
     """Aggregate counts for the admin dashboard."""
-    since = time.time() - days * 86400
+    now = time.time()
+    since = now - days * 86400
     with _LOCK:
         conn = _conn()
         by_type = {
@@ -561,10 +573,56 @@ def telemetry_summary(days: int = 30) -> dict[str, Any]:
             " ('requested','deploying','active')"
         ).fetchone()["n"]
         unique_users = conn.execute(
-            "SELECT COUNT(DISTINCT user_oid) n FROM events WHERE ts >= ?", (since,)
+            "SELECT COUNT(DISTINCT user_oid) n FROM events WHERE ts >= ? AND user_oid <> ''", (since,)
         ).fetchone()["n"]
+        period_status = {
+            row["status"]: row["n"] for row in conn.execute(
+                "SELECT status, COUNT(*) n FROM deployments WHERE created_at >= ? GROUP BY status", (since,)
+            ).fetchall()
+        }
+        operations = dict(conn.execute(
+            "SELECT COUNT(CASE WHEN status = 'failed' THEN 1 END) failed,"
+            " COUNT(CASE WHEN status IN ('requested','deploying','expiring','destroying') THEN 1 END) inProgress,"
+            " COUNT(CASE WHEN cleanup_policy <> 'none' AND status IN ('requested','deploying','active','expiring')"
+            " AND end_at <= ? THEN 1 END) overdue,"
+            " COUNT(CASE WHEN cleanup_policy <> 'none' AND status IN ('requested','deploying','active')"
+            " AND end_at > ? AND end_at <= ? THEN 1 END) expiringSoon,"
+            " COUNT(CASE WHEN cleanup_policy = 'none' AND status <> 'destroyed' THEN 1 END) externallyManaged"
+            " FROM deployments", (now, now, now + 86400),
+        ).fetchone())
+        submission_counts = {
+            row["status"]: row["n"] for row in conn.execute(
+                "SELECT status, COUNT(*) n FROM submissions GROUP BY status"
+            ).fetchall()
+        }
+        settings = {
+            row["name"]: json.loads(row["value_json"]) for row in conn.execute(
+                "SELECT name, value_json FROM setup_settings WHERE name IN"
+                " ('github','catalog_snapshot','catalog_removed','catalog_job','processing_effective','catalog_processing','regional_job','lifecycle_job')"
+            ).fetchall()
+        }
+    snapshot = settings.get("catalog_snapshot") or {}
+    repository = settings.get("github") or {}
+    removed = (settings.get("catalog_removed") or {}).get(str(snapshot.get("repository", "")).lower(), {})
     return {
         "days": days,
+        "generatedAt": now,
+        "since": since,
+        "periodStatusCounts": period_status,
+        "periodDeployments": sum(period_status.values()),
+        "operations": operations,
+        "submissionCounts": submission_counts,
+        "catalog": {
+            "repository": f"{repository.get('owner', '')}/{repository.get('repository', '')}" if repository.get("enabled") else "",
+            "branch": repository.get("branch", ""),
+            "syncedAt": snapshot.get("syncedAt"),
+            "itemCount": sum(item.get("path") not in removed for item in snapshot.get("items", [])),
+            "removedCount": len(removed),
+            "job": settings.get("catalog_job") or {},
+            "regionalJob": settings.get("regional_job") or {},
+            "lifecycleJob": settings.get("lifecycle_job") or {},
+            "processing": settings.get("processing_effective") or settings.get("catalog_processing") or {"mode": "container"},
+        },
         "byType": by_type,
         "topViews": top_views,
         "topDeploys": top_deploys,

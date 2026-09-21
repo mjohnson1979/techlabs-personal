@@ -5,9 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 STATIC_FILES = (
     "index.html", "catalog.json", "capacity.json", "updates.json", "registry.json",
@@ -52,6 +53,7 @@ def create_preview_server(root: Path, port: int = 8766) -> ThreadingHTTPServer:
         "/api/me": {
             **user, "signedIn": True, "role": "admin", "isAdmin": True,
             "brandName": "Deployment Portal (Preview)", "customerOperated": True,
+            "readOnlyPreview": True,
             "footerText": "Read-only preview. Cost estimates are indicative.",
             "deploymentCount": 0, "activeDeployments": 0, "maxLifetimeHours": 48,
             "terraformExecAvailable": False,
@@ -59,6 +61,11 @@ def create_preview_server(root: Path, port: int = 8766) -> ThreadingHTTPServer:
             "subscriptions": [],
         },
         "/api/deployments": {"deployments": []},
+        "/api/subscriptions": {"subscriptions": []},
+        "/api/lifecycle": {"services": {}, "generated": None, "stale": True,
+                   "job": {"status": "pending", "detail": "Read-only preview: no background feed collection."}},
+        "/api/regions/snapshot": {"rows": [], "source": "container", "intervalSeconds": 86400,
+                      "job": {"status": "waiting", "detail": "Waiting for published workloads and saved subscriptions."}, "errors": {}},
         "/api/admin/setup": {
             "branding": {"brandName": "Deployment Portal (Preview)", "footerText": "Read-only preview. Cost estimates are indicative."},
             "azureTenantId": "11111111-1111-4111-8111-111111111111",
@@ -69,6 +76,7 @@ def create_preview_server(root: Path, port: int = 8766) -> ThreadingHTTPServer:
             "githubCredentialStorage": {"secretStorage": "app_service"},
         },
         "/api/admin/submissions": {"submissions": []},
+        "/api/admin/catalog": {"supported": True, "repository": "", "version": "", "items": []},
         "/api/admin/users": {"users": [{**user, "role": "admin", "createdAt": None, "lastSeen": None}]},
         "/api/admin/telemetry": {
             "days": 30, "byType": {}, "topViews": [], "topDeploys": [],
@@ -104,6 +112,17 @@ def create_preview_server(root: Path, port: int = 8766) -> ThreadingHTTPServer:
                     content_type, content = entry
                     if path == "/api/install/status":
                         status = 401
+                    if path == "/api/admin/telemetry":
+                        try:
+                            days = max(1, min(365, int(parse_qs(urlsplit(self.path).query).get("days", ["30"])[0])))
+                        except ValueError:
+                            days = 30
+                        now = time.time()
+                        report = dict(api[path], days=days, generatedAt=now, since=now - days * 86400,
+                                      periodDeployments=0, periodStatusCounts={}, submissionCounts={},
+                                      operations={"failed": 0, "overdue": 0, "expiringSoon": 0, "inProgress": 0, "externallyManaged": 0},
+                                      catalog={"repository": "", "branch": "", "syncedAt": None, "itemCount": 0, "job": {}, "processing": {"mode": "container"}})
+                        content = json.dumps(report).encode("utf-8")
             self.send_response(status)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(content)))

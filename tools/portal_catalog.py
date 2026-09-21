@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID
 
-OUTPUT_PATTERN = r"(?:site/capacity\.json|catalog/[a-z0-9][a-z0-9-]{0,79}/(?:pricing\.json|compiled/(?:dev|prod)\.json))"
+OUTPUT_PATTERN = r"(?:site/(?:capacity|updates)\.json|catalog/[a-z0-9][a-z0-9-]{0,79}/(?:pricing\.json|compiled/(?:dev|prod)\.json))"
 MAX_FILE = 2 * 1024 * 1024
 
 
@@ -68,8 +68,8 @@ def write_bundle(root: Path, files: dict[str, dict | None]) -> None:
         if not re.fullmatch(OUTPUT_PATTERN, name):
             raise ValueError("Invalid generated path")
         data = (json.dumps(value, indent=2, allow_nan=False) + "\n").encode() if value is not None else None
-        if data is not None and len(data) > MAX_FILE:
-            raise ValueError("Generated file exceeds 2 MiB")
+        if data is not None and len(data) > (8 * MAX_FILE if name == "site/capacity.json" else MAX_FILE):
+            raise ValueError("Generated file exceeds its size limit")
         payload[name] = base64.b64encode(data).decode() if data is not None else None
     output = safe_path(root, "runs/portal-generated/manifest.json")
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -139,8 +139,8 @@ def capacity_inputs() -> tuple[str, list[str], list[str]]:
     regions = list(dict.fromkeys(os.environ.get("PORTAL_CAPACITY_REGIONS", "").split()))
     if not client.int or not UUID(tenant).int or not subscriptions or any(not UUID(value).int for value in subscriptions):
         raise ValueError("Set nonzero organization tenant, client and subscription IDs")
-    if not regions or len(subscriptions) > 20 or len(regions) > 20 or len(subscriptions) * len(regions) > 100:
-        raise ValueError("Choose 1-20 subscriptions and regions, with at most 100 combinations")
+    if len(subscriptions) > 200 or len(regions) > 200:
+        raise ValueError("Choose at most 200 subscriptions and regions")
     if any(not re.fullmatch(r"[a-z][a-z0-9]{2,30}", region) for region in regions):
         raise ValueError("Use canonical Azure region names")
     return tenant, subscriptions, regions
@@ -155,7 +155,15 @@ def capacity(root: Path) -> None:
         if str(details.get("tenantId", "")).lower() != tenant or details.get("state") != "Enabled" or str(details.get("subscriptionId", "")).lower() != subscription:
             raise ValueError("Capacity subscription is not enabled in the configured tenant")
         snapshots[subscription] = {}
-        for region in regions:
+        selected_regions = regions
+        if not selected_regions:
+            locations = json.loads(command(["az", "rest", "--method", "get", "--url", prefix + "/locations?api-version=2022-12-01"], root))
+            if locations.get("nextLink") or not isinstance(locations.get("value"), list):
+                raise ValueError("Incomplete subscription locations response")
+            selected_regions = list(dict.fromkeys(entry["name"] for entry in locations["value"]
+                if re.fullmatch(r"[a-z][a-z0-9]{2,30}", str(entry.get("name", "")))
+                and (entry.get("metadata") or {}).get("regionType") != "Logical"))
+        for region in selected_regions:
             result = json.loads(command(["az", "rest", "--method", "get", "--url", prefix + f"/providers/Microsoft.Compute/locations/{region}/usages?api-version=2024-03-01"], root))
             if result.get("nextLink") or not isinstance(result.get("value"), list):
                 raise ValueError("Incomplete quota response; retain the previous snapshot")
@@ -167,8 +175,44 @@ def capacity(root: Path) -> None:
                 rows.append({"name": entry["name"].get("localizedValue") or entry["name"]["value"],
                              "limit": limit, "current": current, "available": max(0, limit - current)})
             snapshots[subscription][region] = rows
+    regional = asyncio.run(regional_capacity(root, tenant, subscriptions))
     write_bundle(root, {"site/capacity.json": {"schemaVersion": 1, "generated": stamp(), "tenantId": tenant,
-                                             "subscriptions": snapshots, "physicalCapacity": "unknown"}})
+                                             "subscriptions": snapshots, "physicalCapacity": "unknown", "regional": regional}})
+
+
+async def regional_capacity(root: Path, tenant: str, subscriptions: list[str]) -> dict:
+    items = []
+    for path in sorted(root.glob("catalog/*/metadata.json")):
+        safe_path(root, path.relative_to(root).as_posix())
+        item = read_json(path)
+        items.append({**item, "path": path.parent.name})
+    if not items:
+        return {"schemaVersion": 1, "source": "runner", "generatedAt": datetime.now(timezone.utc).timestamp(), "rows": [], "errors": {}}
+    server = str(root / "site/server")
+    if server not in sys.path:
+        sys.path.insert(0, server)
+    import catalog_processing
+    import setup_cloud
+
+    original = setup_cloud.arm_request
+    previous_tenant = os.environ.get("GALLERY_ENTRA_TENANT_ID")
+    os.environ["GALLERY_ENTRA_TENANT_ID"] = tenant
+
+    async def read(path: str) -> dict:
+        if not any(path.startswith(f"/subscriptions/{identifier}/") or path.startswith(f"/subscriptions/{identifier}?") for identifier in subscriptions):
+            raise ValueError("Unexpected runner subscription scope")
+        return json.loads(await asyncio.to_thread(command, ["az", "rest", "--method", "get", "--url", "https://management.azure.com" + path], root))
+
+    setup_cloud.arm_request = read
+    try:
+        selected = [{"subscriptionId": identifier, "tenantId": tenant, "displayName": identifier, "pricingMode": "retail"} for identifier in subscriptions]
+        return await catalog_processing.collect_regional_snapshot(items, selected, source="runner")
+    finally:
+        setup_cloud.arm_request = original
+        if previous_tenant is None:
+            os.environ.pop("GALLERY_ENTRA_TENANT_ID", None)
+        else:
+            os.environ["GALLERY_ENTRA_TENANT_ID"] = previous_tenant
 
 
 def publish(root: Path) -> None:
@@ -192,7 +236,7 @@ def publish(root: Path) -> None:
         data = base64.b64decode(encoded, validate=True) if encoded is not None else None
         if data is not None:
             total += len(data)
-            if len(data) > MAX_FILE or total > 16 * 1024 * 1024 or not isinstance(json.loads(data), dict):
+            if len(data) > (8 * MAX_FILE if name == "site/capacity.json" else MAX_FILE) or total > 16 * 1024 * 1024 or not isinstance(json.loads(data), dict):
                 raise ValueError("Invalid generated output")
         decoded[path] = data
     changed = []
@@ -212,14 +256,30 @@ def publish(root: Path) -> None:
     print("Generated inputs published." if changed else "Generated inputs unchanged.")
 
 
+async def lifecycle_updates(root: Path) -> None:
+    server = str(root / "site/server")
+    if server not in sys.path:
+        sys.path.insert(0, server)
+    import lifecycle
+    import httpx
+
+    try:
+        snapshot = await asyncio.wait_for(lifecycle.fetch_snapshot(), timeout=300)
+    except httpx.HTTPError:
+        raise ValueError("Public lifecycle feed unavailable; previous output is unchanged") from None
+    write_bundle(root, {"site/updates.json": snapshot})
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("build", "capacity", "capacity-check", "publish"))
+    parser.add_argument("action", choices=("build", "capacity", "capacity-check", "lifecycle", "publish"))
     args = parser.parse_args()
     root = Path.cwd().resolve()
     try:
         if args.action == "build":
             asyncio.run(build(root))
+        elif args.action == "lifecycle":
+            asyncio.run(lifecycle_updates(root))
         elif args.action == "capacity":
             capacity(root)
         elif args.action == "capacity-check":

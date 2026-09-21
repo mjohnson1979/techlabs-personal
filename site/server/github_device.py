@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
+from azure.core.exceptions import AzureError
 
 _SCOPES = "repo read:org workflow"
 _DEVICE_START_ERRORS = {
@@ -36,17 +37,46 @@ _DEVICE_START_ERRORS = {
 class DeviceFlow:
     owner: str
     client_id: str
-    device_code: str
+    device_code: str = field(repr=False)
     expires_at: float
     interval: int
     next_poll: float
-    token: str = ""
+    token: str = field(default="", repr=False)
     token_expires_at: float = 0
+    refresh_token: str = field(default="", repr=False)
+    refresh_expires_at: float = 0
     storage: dict = field(default_factory=dict)
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
 
 _flows: dict[str, DeviceFlow] = {}
+_renewal_lock = asyncio.Lock()
+_pending_renewal: dict | None = None
+_renewal_failed_source = ""
+_renewal_retry_after = 0.0
+
+
+def _credentials() -> dict:
+    value = os.environ.get("GALLERY_GITHUB_TOKEN", "").strip()
+    if not value or value.startswith("@Microsoft.KeyVault("):
+        return {}
+    if value.startswith("{"):
+        try:
+            document = json.loads(value)
+        except ValueError:
+            return {}
+        if not isinstance(document, dict) or document.get("version") != 1:
+            return {}
+        return document
+    return {"accessToken": value, "expiresAt": os.environ.get("GALLERY_GITHUB_TOKEN_EXPIRES_AT", "0") or "0"}
+
+
+def _deadline(value: Any) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return -1
+    return number if math.isfinite(number) and number >= 0 and not isinstance(value, bool) else -1
 
 
 def client_id() -> str:
@@ -57,16 +87,95 @@ def client_id() -> str:
 
 
 def access_token() -> str:
-    value = os.environ.get("GALLERY_GITHUB_TOKEN", "").strip()
-    if not value or value.startswith("@Microsoft.KeyVault("):
+    source = os.environ.get("GALLERY_GITHUB_TOKEN", "").strip()
+    if (_pending_renewal and _pending_renewal["source"] == source) or (source and source == _renewal_failed_source):
         return ""
-    try:
-        expiry = float(os.environ.get("GALLERY_GITHUB_TOKEN_EXPIRES_AT", "0") or "0")
-    except ValueError:
+    credentials = _credentials()
+    value = credentials.get("accessToken")
+    if not isinstance(value, str) or not value or len(value) > 4096:
         return ""
-    if not math.isfinite(expiry) or (expiry and expiry <= time.time() + 60):
+    expiry = _deadline(credentials.get("expiresAt"))
+    if expiry < 0 or (expiry and expiry <= time.time() + 60):
         return ""
     return value
+
+
+def renewal_available() -> bool:
+    import db
+
+    credentials = _credentials()
+    refresh = credentials.get("refreshToken")
+    return (isinstance(refresh, str) and 0 < len(refresh) <= 4096
+            and _deadline(credentials.get("refreshExpiresAt")) > time.time() + 60
+            and credentials.get("clientId") == client_id()
+            and type(credentials.get("accountId")) is int
+            and credentials["accountId"] == db.get_setup_setting("github_connection", {}).get("id"))
+
+
+class GitHubRenewalError(ValueError):
+    def __init__(self) -> None:
+        super().__init__("GitHub credential renewal could not finish. Check the protected credential store or reconnect GitHub in Setup > GitHub.")
+
+
+async def ensure_access_token() -> str:
+    import db
+    import setup_auth
+    import setup_github
+
+    global _pending_renewal, _renewal_failed_source, _renewal_retry_after
+    current = access_token()
+    expires_at = _deadline(_credentials().get("expiresAt"))
+    if (current and (not expires_at or expires_at > time.time() + 600)) or not renewal_available():
+        return current
+    async with _renewal_lock:
+        current = access_token()
+        credentials = _credentials()
+        expires_at = _deadline(credentials.get("expiresAt"))
+        if (current and (not expires_at or expires_at > time.time() + 600)) or not renewal_available():
+            return current
+        source = os.environ.get("GALLERY_GITHUB_TOKEN", "").strip()
+        if source == _renewal_failed_source and time.time() < _renewal_retry_after:
+            raise GitHubRenewalError()
+        configuration = db.get_setup_setting("github", {})
+        storage = db.get_setup_setting("github_credential", {"secretStorage": "app_service"})
+        try:
+            if not _pending_renewal or _pending_renewal["source"] != source:
+                result = await oauth_request("/login/oauth/access_token", {
+                    "client_id": credentials["clientId"], "grant_type": "refresh_token", "refresh_token": credentials["refreshToken"],
+                })
+                token, refresh = result.get("access_token"), result.get("refresh_token")
+                duration, refresh_duration = result.get("expires_in"), result.get("refresh_token_expires_in")
+                if (result.get("error") or not isinstance(result.get("token_type"), str) or result["token_type"].lower() != "bearer"
+                        or not isinstance(token, str) or not 0 < len(token) <= 4096
+                        or not isinstance(refresh, str) or not 0 < len(refresh) <= 4096
+                        or type(duration) is not int or not 60 < duration <= 366 * 86400
+                        or type(refresh_duration) is not int or not 60 < refresh_duration <= 366 * 86400):
+                    raise GitHubRenewalError()
+                _pending_renewal = {"source": source, "token": token, "expiresAt": time.time() + duration,
+                                    "renewal": {"token": refresh, "expiresAt": time.time() + refresh_duration,
+                                                "clientId": credentials["clientId"]}}
+            pending = _pending_renewal
+            account = await setup_github.github_account(token=pending["token"])
+            if account.get("id") != credentials["accountId"]:
+                raise GitHubRenewalError()
+            await setup_github.verify_reconnection(account, pending["token"])
+            if (os.environ.get("GALLERY_GITHUB_TOKEN", "").strip() != source
+                    or client_id() != credentials["clientId"]
+                    or configuration != db.get_setup_setting("github", {})
+                    or storage != db.get_setup_setting("github_credential", {"secretStorage": "app_service"})
+                    or pending["expiresAt"] <= time.time() + 60):
+                raise GitHubRenewalError()
+            await setup_auth.store_github_device_token(pending["token"], pending["expiresAt"], account, storage, pending["renewal"])
+            _pending_renewal = None
+            _renewal_failed_source = ""
+            _renewal_retry_after = 0
+            db.record_event(type="github_credential_renewed")
+            return access_token()
+        except (ValueError, httpx.HTTPError, OSError, TimeoutError, AzureError):
+            _renewal_failed_source = source
+            _renewal_retry_after = time.time() + 60
+            db.record_event(type="github_credential_renewal_failed", meta={"stage": "storage_or_verification" if _pending_renewal else "exchange"})
+            raise GitHubRenewalError() from None
 
 
 async def oauth_request(path: str, data: dict[str, str]) -> dict[str, Any]:
@@ -165,15 +274,28 @@ async def poll(owner: str, identifier: str) -> dict:
             return {"status": "error", "message": message}
         token = result.get("access_token")
         scopes = set(str(result.get("scope", "")).replace(",", " ").split())
-        if not isinstance(token, str) or not token or len(token) > 4096 or result.get("token_type", "").lower() != "bearer" or not {"repo", "read:org"}.issubset(scopes):
+        github_app = isinstance(token, str) and token.startswith("ghu_") and not scopes
+        if (not isinstance(token, str) or not token or len(token) > 4096
+            or not isinstance(result.get("token_type"), str) or result["token_type"].lower() != "bearer"
+            or (not github_app and not {"repo", "read:org"}.issubset(scopes))):
             _flows.pop(identifier, None)
             raise ValueError("GitHub did not grant the required repository and organization permissions")
         if result.get("expires_in") is not None:
-            seconds = int(result["expires_in"])
-            if seconds <= 60:
+            seconds = result["expires_in"]
+            if type(seconds) is not int or not 60 < seconds <= 366 * 86400:
                 _flows.pop(identifier, None)
                 raise ValueError("GitHub token expires too soon; connect again")
             flow.token_expires_at = time.time() + seconds
+        if "refresh_token" in result:
+            refresh = result["refresh_token"]
+            duration = result.get("refresh_token_expires_in")
+            if (not isinstance(refresh, str) or not refresh or len(refresh) > 4096
+                    or type(duration) is not int or not 60 < duration <= 366 * 86400
+                    or not flow.token_expires_at):
+                _flows.pop(identifier, None)
+                raise ValueError("GitHub returned invalid renewal credentials; connect again")
+            flow.refresh_token = refresh
+            flow.refresh_expires_at = time.time() + duration
         flow.token = token
         flow.device_code = ""
         return {"status": "authorized"}

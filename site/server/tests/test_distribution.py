@@ -121,7 +121,7 @@ def test_workflow_installer_is_idempotent_and_preserves_conflicts(tmp_path):
     installer = _tool_module("portal_workflows.py")
     installer.install(tmp_path)
     installer.install(tmp_path)
-    assert len(list((tmp_path / ".github/workflows").glob("*.yml"))) == 2
+    assert {path.name for path in (tmp_path / ".github/workflows").glob("*.yml")} == {"portal-catalog.yml", "portal-capacity.yml", "portal-lifecycle.yml"}
     target = tmp_path / "tools/portal_catalog.py"
     target.write_text("organization changes")
     with pytest.raises(ValueError, match="differs"):
@@ -202,7 +202,8 @@ def test_workflow_publication_is_allowlisted_and_noop_safe(tmp_path, monkeypatch
     assert len(calls) == 2
 
 
-def test_capacity_collector_uses_only_scoped_reads(tmp_path, monkeypatch):
+@pytest.mark.parametrize("discover", [False, True])
+def test_capacity_collector_uses_only_scoped_reads(tmp_path, monkeypatch, discover):
     import base64
     builder = _tool_module("portal_catalog.py")
     tenant = "11111111-1111-4111-8111-111111111111"
@@ -210,7 +211,7 @@ def test_capacity_collector_uses_only_scoped_reads(tmp_path, monkeypatch):
     monkeypatch.setenv("AZURE_TENANT_ID", tenant)
     monkeypatch.setenv("AZURE_CLIENT_ID", "33333333-3333-4333-8333-333333333333")
     monkeypatch.setenv("PORTAL_SUBSCRIPTION_IDS", subscription)
-    monkeypatch.setenv("PORTAL_CAPACITY_REGIONS", "eastus westus")
+    monkeypatch.setenv("PORTAL_CAPACITY_REGIONS", "" if discover else "eastus westus")
     calls = []
     def command(arguments, root):
         if arguments[0] == "git":
@@ -218,12 +219,14 @@ def test_capacity_collector_uses_only_scoped_reads(tmp_path, monkeypatch):
         calls.append(arguments)
         assert arguments[:5] == ["az", "rest", "--method", "get", "--url"]
         assert arguments[5].startswith(f"https://management.azure.com/subscriptions/{subscription}")
+        if "/locations?" in arguments[5]:
+            return json.dumps({"value": [{"name": "eastus"}, {"name": "westus"}, {"name": "global", "metadata": {"regionType": "Logical"}}]})
         if "/usages?" not in arguments[5]:
             return json.dumps({"tenantId": tenant, "subscriptionId": subscription, "state": "Enabled"})
         return json.dumps({"value": [{"name": {"value": "cores"}, "limit": 10, "currentValue": 2}]})
     monkeypatch.setattr(builder, "command", command)
     builder.capacity(tmp_path)
-    assert len(calls) == 3
+    assert len(calls) == (4 if discover else 3)
     files = json.loads((tmp_path / "runs/portal-generated/manifest.json").read_bytes())["files"]
     snapshot = json.loads(base64.b64decode(files["site/capacity.json"]))
     assert snapshot["subscriptions"][subscription]["westus"][0]["available"] == 8
@@ -231,6 +234,56 @@ def test_capacity_collector_uses_only_scoped_reads(tmp_path, monkeypatch):
     monkeypatch.setenv("PORTAL_CAPACITY_REGIONS", "eastus;injection")
     with pytest.raises(ValueError):
         builder.capacity_inputs()
+
+
+def test_runner_lifecycle_uses_shared_collector_and_preserves_output_on_failure(tmp_path, monkeypatch):
+    import asyncio
+    import lifecycle
+    builder = _tool_module("portal_catalog.py")
+    called = []
+    snapshot = {"schemaVersion": 1, "source": lifecycle.SOURCE_URL, "generated": "2026-09-01T00:00:00+00:00", "services": {}}
+    async def fetch():
+        return snapshot
+    monkeypatch.setattr(lifecycle, "fetch_snapshot", fetch)
+    monkeypatch.setattr(builder, "write_bundle", lambda root, files: called.append(files))
+    asyncio.run(builder.lifecycle_updates(tmp_path))
+    assert called == [{"site/updates.json": snapshot}]
+    async def fail():
+        raise ValueError("Incomplete pagination")
+    monkeypatch.setattr(lifecycle, "fetch_snapshot", fail)
+    with pytest.raises(ValueError):
+        asyncio.run(builder.lifecycle_updates(tmp_path))
+    assert len(called) == 1
+
+
+def test_runner_regional_collection_uses_shared_checks_without_negotiated_prices(tmp_path, monkeypatch):
+    import asyncio
+    import catalog_processing
+    import setup_cloud
+    builder = _tool_module("portal_catalog.py")
+    metadata = tmp_path / "catalog/example/metadata.json"
+    metadata.parent.mkdir(parents=True)
+    metadata.write_text('{"displayName":"Example","parameters":[]}', encoding="utf-8")
+    tenant = "11111111-1111-4111-8111-111111111111"
+    subscription = "22222222-2222-4222-8222-222222222222"
+    original = setup_cloud.arm_request
+    async def collect(items, subscriptions, *, source):
+        assert source == "runner" and items[0]["path"] == "example"
+        assert subscriptions[0]["pricingMode"] == "retail"
+        response = await setup_cloud.arm_request(f"/subscriptions/{subscription}/locations?api-version=2022-12-01")
+        assert response == {"value": []}
+        with pytest.raises(ValueError, match="scope"):
+            await setup_cloud.arm_request("/subscriptions/33333333-3333-4333-8333-333333333333/locations?api-version=2022-12-01")
+        return {"schemaVersion": 1, "source": "runner", "rows": [], "errors": {}}
+    def command(arguments, root):
+        assert arguments[:5] == ["az", "rest", "--method", "get", "--url"]
+        assert arguments[5].startswith(f"https://management.azure.com/subscriptions/{subscription}/")
+        return '{"value":[]}'
+    monkeypatch.setattr(builder, "command", command)
+    monkeypatch.setattr(catalog_processing, "collect_regional_snapshot", collect)
+    result = asyncio.run(builder.regional_capacity(tmp_path, tenant, [subscription]))
+    assert result["source"] == "runner"
+    assert setup_cloud.arm_request is original
 
 
 @pytest.mark.skipif(os.environ.get("PORTAL_TEST_BICEP") != "1", reason="Explicit local compiler contract check")

@@ -201,6 +201,7 @@
     container.innerHTML = "";
     values.forEach((v) => {
       const cb = el("input", { type: "checkbox", value: v });
+      cb.checked = bucket.has(v);
       cb.addEventListener("change", () => {
         cb.checked ? bucket.add(v) : bucket.delete(v);
         render();
@@ -656,6 +657,8 @@
     // picker so capacity reflects the chosen model/SKU.
     const advValues = {};
     const region = deployRegionField(it, function () { return advValues; });
+    const selectionStatus = el("p", { class: "deploy-note", role: "status", text: "Price and capacity are checked automatically for the selected subscription and region." });
+    let selectionCapacity = null;
 
     const endInput = el("input", {
       type: "datetime-local",
@@ -753,6 +756,12 @@
         btn.disabled = true;
         externalBtn.disabled = true;
         engineHint.textContent = "Select a region returned by Azure for this subscription.";
+        engineHint.style.display = "";
+        return;
+      }
+      if (me.customerOperated && selectionCapacity === "unavailable") {
+        btn.disabled = true;
+        engineHint.textContent = "Capacity check reports this selection unavailable. Choose another region or resolve its restriction.";
         engineHint.style.display = "";
         return;
       }
@@ -904,7 +913,7 @@
       if (Object.keys(parameterValues).length) payload.parameterValues = parameterValues;
       btn.disabled = true;
       externalBtn.disabled = true;
-      status.textContent = "Requesting deployment…";
+      status.textContent = me?.customerOperated ? "Checking current price and capacity before provisioning..." : "Requesting deployment…";
       window.TechlabsApi.createDeployment(payload)
         .then((dep) => {
           status.classList.add("ok");
@@ -1362,6 +1371,37 @@
     let estimateTimer = null;
     let estimateSeq = 0;
     function scheduleEstimate() {
+      if (me?.customerOperated) {
+        const seq = ++estimateSeq;
+        clearTimeout(estimateTimer);
+        selectionCapacity = null;
+        syncEngine();
+        if (region.select.disabled || !region.select.value || !subscriptionSelect.value) {
+          selectionStatus.textContent = "Select a subscription and region for automatic price and capacity checks.";
+          return;
+        }
+        selectionStatus.textContent = "Checking selected price and capacity...";
+        estimateCtl?.pending?.();
+        estimateTimer = setTimeout(async () => {
+          try {
+            const response = await fetch("/api/regions/check", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ useCase: it.path, subscriptionId: subscriptionSelect.value, location: region.select.value, parameterValues: { ...advValues } }) });
+            const checked = await response.json();
+            if (seq !== estimateSeq) return;
+            if (!response.ok) throw new Error(typeof checked.detail === "string" ? checked.detail : "Selection checks unavailable.");
+            if (checked.price) estimateCtl?.apply?.(checked.price, { forSelection: true });
+            else estimateCtl?.apply?.({ ...estimateCtl.baseCost, complete: false, fallbackReason: checked.priceDetail });
+            selectionCapacity = checked.capacity?.status || "unknown";
+            selectionStatus.textContent = `Capacity: ${selectionCapacity}. ${checked.priceDetail || ""} ${(checked.capacity?.checks || []).map(check => `${check.service}: ${check.detail}`).join(" ")} ${checked.capacity?.detail || ""}`;
+            syncEngine();
+          } catch (error) {
+            if (seq !== estimateSeq) return;
+            selectionStatus.textContent = "Selection check unavailable: " + error.message + " The server will check again before deployment.";
+            estimateCtl?.apply?.({ ...estimateCtl.baseCost, complete: false, fallbackReason: "Live selection check unavailable; authored estimate may be stale." });
+          }
+        }, 350);
+        return;
+      }
       if (!estimateCtl || !estimateCtl.apply || !window.TechlabsApi) return;
       const seq = ++estimateSeq;
       clearTimeout(estimateTimer);
@@ -1409,25 +1449,9 @@
       ]),
     ]);
     if (me?.customerOperated) {
-      const quotaStatus = el("p", { class: "deploy-note", role: "status" });
-      const quotaButton = el("button", { type: "button", class: "deploy-btn-secondary", text: "Check subscription quota", disabled: !customerSubscriptions.length });
-      quotaButton.addEventListener("click", async () => {
-        if (!region.select.value || region.select.disabled) {
-          quotaStatus.textContent = "Select a region before checking quota.";
-          return;
-        }
-        quotaButton.disabled = true;
-        quotaStatus.textContent = "Checking quota...";
-        try {
-          const response = await fetch(`/api/subscriptions/${encodeURIComponent(subscriptionSelect.value)}/capacity?location=${encodeURIComponent(region.select.value)}`, { credentials: "same-origin" });
-          const result = await response.json();
-          if (!response.ok) throw new Error(result.detail || "Quota lookup failed.");
-          const headroom = (result.quotas || []).map(row => `${row.name}: ${row.available === null ? "unknown" : row.available} available`).join("; ");
-          quotaStatus.textContent = `${result.detail} ${headroom}`;
-        } catch (error) { quotaStatus.textContent = error.message; }
-        finally { quotaButton.disabled = false; }
-      });
-      regionBox.append(quotaButton, quotaStatus);
+      const compare = el("button", { type: "button", class: "deploy-btn-secondary", text: "View scheduled region results" });
+      compare.addEventListener("click", () => { closeModal(); openRegionalComparison(it, subscriptionSelect.value); });
+      regionBox.append(compare, selectionStatus);
     }
 
     function syncExternalTarget() {
@@ -1695,8 +1719,13 @@
     const comps = (it.cost && it.cost.components) || [];
     const keys = [];
     const seen = {};
-    comps.forEach((c) => {
-      const key = icons ? icons.keyForService(c.serviceName) : null;
+    const products = comps.map(component => component.serviceName).concat((it.services || []).filter(service => typeof service === "string"));
+    products.forEach((product) => {
+      if (typeof product !== "string") return;
+      const normalized = product.toLowerCase().trim();
+      const aliases = state.updates?.serviceAliases || {};
+      const matched = Object.keys(aliases).find(key => aliases[key].some(alias => normalized.includes(alias)));
+      const key = icons ? icons.keyForService(product) : matched || normalized.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 100);
       if (!key || key === "default" || seen[key]) return;
       seen[key] = 1;
       keys.push(key);
@@ -1757,6 +1786,9 @@
           : "No upcoming retirements affect this use case's services right now.",
       })
     );
+    if (state.updates?.stale || state.updates?.job?.status === "failed") {
+      wrap.appendChild(el("p", { class: "error-text small", text: "Lifecycle data is stale or its refresh failed. These notices may not include the latest changes." }));
+    }
 
     if (n) {
       const list = el("ul", { class: "lifecycle-list" });
@@ -1842,51 +1874,148 @@
 
   // Full-screen "Region capacity" view: a service x region status grid built
   // from the static capacity.json snapshot. Reuses the shared panel overlay.
+  function openRegionalComparison(initialWorkload, initialSubscription) {
+    window.TechlabsPanel.open((body, create) => {
+      const scope = create("div", { class: "regional-comparison" });
+      body.appendChild(scope);
+      const workload = create("select", { class: "deploy-input", "aria-label": "Workload to compare" },
+        state.items.map(item => create("option", { value: item.path, text: item.displayName || item.name })));
+      if (initialWorkload) workload.value = initialWorkload.path;
+      const subscription = create("select", { class: "deploy-input", "aria-label": "Comparison subscriptions" });
+      const search = create("input", { type: "search", class: "deploy-input", placeholder: "Filter region or subscription", "aria-label": "Filter comparison results" });
+      const sort = create("select", { class: "deploy-input", "aria-label": "Sort regional results" }, [
+        create("option", { value: "region", text: "Region name" }), create("option", { value: "price", text: "Lowest complete price" }),
+        create("option", { value: "status", text: "Capacity status" }),
+      ]);
+      const download = create("button", { type: "button", class: "admin-tool", text: "\u2193", title: "Export regional results as CSV", "aria-label": "Export regional results as CSV", disabled: true });
+      const status = create("p", { role: "status", class: "setup-status", text: "Loading saved subscriptions..." });
+      const count = create("p", { class: "muted small" });
+      const table = create("div", { class: "regional-results" });
+      const labels = { headroom: "Reported headroom", offered: "Service offered", unavailable: "Unavailable", unknown: "Unknown", pending: "Pending", running: "Checking", error: "Check failed", cancelled: "Cancelled" };
+      let subscriptions = [], results = [], controller = null, refreshTimer = null, requestVersion = 0;
+      const field = (title, input) => create("label", { class: "setup-field" }, [create("span", { text: title }), input]);
+      scope.append(create("h2", { text: "Regional price and capacity" }),
+        create("div", { class: "setup-grid" }, [field("Workload", workload), field("Subscriptions", subscription)]),
+        create("div", { class: "setup-actions" }, [download]), status,
+        create("p", { class: "muted small", text: "Automatic daily refresh / workload defaults. Your selected price and capacity are checked again before deployment. Reported headroom and service offering do not guarantee physical allocation." }),
+        create("div", { class: "deploy-toolbar" }, [search, sort]), count, table);
+      async function request(url, data, signal) {
+        const response = await fetch(url, { method: data ? "POST" : "GET", credentials: "same-origin", signal,
+          headers: data ? { "Content-Type": "application/json" } : {}, body: data ? JSON.stringify(data) : undefined });
+        if (response.redirected || response.status === 401) throw new Error("Sign in again to continue regional checks.");
+        const result = await response.json();
+        if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : "Region check unavailable.");
+        return result;
+      }
+      function rows() {
+        const query = search.value.toLowerCase().trim();
+        const selected = results.filter(row => [row.location, row.regionName, row.subscription.displayName].join(" ").toLowerCase().includes(query));
+        return selected.sort((left, right) => {
+          if (sort.value === "price") {
+            if (!!left.price?.complete !== !!right.price?.complete) return left.price?.complete ? -1 : 1;
+            const leftPrice = left.price?.complete ? left.price.totalMonthly : Infinity;
+            const rightPrice = right.price?.complete ? right.price.totalMonthly : Infinity;
+            const currency = String(left.price?.currency || "").localeCompare(String(right.price?.currency || ""));
+            if (currency) return currency;
+            if (leftPrice !== rightPrice) return leftPrice - rightPrice;
+          }
+          if (sort.value === "status") {
+            const order = String(left.capacity?.status || left.state).localeCompare(String(right.capacity?.status || right.state));
+            if (order) return order;
+          }
+          return left.location.localeCompare(right.location) || left.subscription.displayName.localeCompare(right.subscription.displayName);
+        });
+      }
+      function draw() {
+        const matching = rows();
+        count.textContent = `${matching.length} matching / ${results.length} regions${matching.length > 250 ? "; showing first 250, export includes all matches" : ""}`;
+        download.disabled = !results.length;
+        table.replaceChildren(create("table", { class: "deploy-table", "aria-label": "Regional price and capacity results" }, [
+          create("thead", {}, create("tr", {}, ["Subscription / region", "Monthly estimate", "Price source", "Capacity signal", "Details"].map(text => create("th", { scope: "col", text })))),
+          create("tbody", {}, matching.slice(0, 250).map(row => {
+            const price = row.price;
+            const total = price?.complete && Number.isFinite(price.totalMonthly) ? `${price.currency} ${price.totalMonthly.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : price ? "Incomplete estimate" : row.state === "done" ? "Unavailable" : labels[row.state];
+            const capacity = row.capacity || {};
+            const detail = create("details", {}, [create("summary", { text: "View results" }),
+              create("p", { text: row.error || row.priceDetail || "" }),
+              row.checkedAt ? create("p", { class: "muted small", text: "Checked: " + new Date(row.checkedAt * 1000).toLocaleString() }) : null,
+              row.stale ? create("strong", { class: "error-text", text: "Stale result: the scheduled refresh is overdue." }) : null,
+              row.lastSuccessful?.checkedAt ? create("p", { class: "muted small", text: "Previous result retained from " + new Date(row.lastSuccessful.checkedAt * 1000).toLocaleString() }) : null,
+              create("p", { text: capacity.detail || "" }),
+              ...(capacity.checks || []).map(check => create("p", { text: `${check.service}: ${labels[check.status] || check.status}. ${check.detail}` })),
+              ...(capacity.quotas || []).map(quota => create("div", { class: "small", text: `${quota.name}: ${quota.available == null ? "unknown" : quota.available} free (${quota.current} used / ${quota.limit} limit)` })),
+            ]);
+            return create("tr", { "data-region": row.location }, [
+              create("td", {}, [create("strong", { text: row.regionName || row.location }), create("div", { class: "muted small", text: row.location }), create("div", { text: row.subscription.displayName }), create("div", { class: "muted small", text: row.subscription.subscriptionId })]),
+              create("td", { text: total }),
+              create("td", {}, [create("span", { text: price?.pricingSource || "-" }), create("div", { class: "muted small", text: price?.fallbackReason || "" })]),
+              create("td", {}, create("span", { class: "regional-signal signal-" + (row.stale ? "unknown" : capacity.status || row.state), text: row.stale ? "Stale / unverified" : labels[capacity.status || row.state] || "Unknown" })),
+              create("td", {}, detail),
+            ]);
+          })),
+        ]));
+      }
+      function invalidate() {
+        results = [];
+        draw();
+        load();
+      }
+      workload.addEventListener("change", invalidate);
+      subscription.addEventListener("change", invalidate);
+      search.addEventListener("input", draw);
+      sort.addEventListener("change", draw);
+      download.addEventListener("click", () => {
+        const data = [["Subscription", "Subscription ID", "Region", "Currency", "Monthly estimate", "Pricing source", "Pricing detail", "Capacity status", "Capacity detail", "Checked at"],
+          ...rows().map(row => [row.subscription.displayName, row.subscription.subscriptionId, row.location, row.price?.currency,
+            row.price?.complete ? row.price.totalMonthly : "", row.price?.pricingSource, row.priceDetail, row.capacity?.status || row.state,
+            row.error || (row.capacity?.checks || []).map(check => `${check.service}: ${check.detail}`).join("; "), row.checkedAt ? new Date(row.checkedAt * 1000).toISOString() : ""])];
+        const csv = data.map(row => row.map(value => { let text = String(value ?? ""); if (/^[\s]*[=+@-]|^[\t\r\n]/.test(text)) text = "'" + text; return '"' + text.replace(/"/g, '""') + '"'; }).join(",")).join("\r\n");
+        const url = URL.createObjectURL(new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" }));
+        create("a", { href: url, download: "regional-comparison.csv" }).click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      });
+      async function load() {
+        clearTimeout(refreshTimer);
+        controller?.abort();
+        if (!scope.isConnected || !subscriptions.length || !workload.value) return;
+        const version = ++requestVersion;
+        controller = new AbortController();
+        status.textContent = "Loading scheduled price and capacity results...";
+        try {
+          const query = new URLSearchParams({ useCase: workload.value, subscriptionId: subscription.value === "all" ? "" : subscription.value });
+          const response = await request("/api/regions/snapshot?" + query, null, controller.signal);
+          if (version !== requestVersion || !scope.isConnected) return;
+          results = (response.rows || []).map(row => ({ ...row, state: "done", subscription: subscriptions.find(item => item.subscriptionId === row.subscriptionId) || { subscriptionId: row.subscriptionId, displayName: row.subscriptionId } }));
+          const job = response.job || {};
+          status.textContent = `${response.source === "runner" ? "Runner schedule" : "Container schedule"}: ${job.status || "pending"}. ${results.length} regional results. ${job.detail || ""} ${Object.values(response.errors || {}).join(" ")}`;
+          draw();
+        } catch (error) {
+          if (version !== requestVersion || error.name === "AbortError") return;
+          status.textContent = "Scheduled results unavailable: " + error.message;
+        } finally {
+          if (version === requestVersion && scope.isConnected && !document.getElementById("panel").hidden) refreshTimer = setTimeout(load, 15000);
+        }
+      }
+      const observer = new MutationObserver(() => {
+        if (!scope.isConnected || document.getElementById("panel").hidden) { clearTimeout(refreshTimer); controller?.abort(); observer.disconnect(); }
+      });
+      observer.observe(document.getElementById("panel"), { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden"] });
+      request("/api/subscriptions").then(response => {
+        if (!scope.isConnected) return;
+        subscriptions = response.subscriptions || [];
+        subscription.replaceChildren(create("option", { value: "all", text: "All saved subscriptions" }), ...subscriptions.map(item => create("option", { value: item.subscriptionId, text: item.displayName })));
+        if (initialSubscription) subscription.value = initialSubscription;
+        status.textContent = !subscriptions.length ? "Add a subscription in Setup first." : !workload.value ? "Publish a workload before comparing regional prices and capacity." : "Waiting for scheduled results...";
+        load();
+      }).catch(error => { status.textContent = error.message; });
+    });
+  }
+
   function openCapacityPanel() {
     if (!window.TechlabsPanel) return;
     closeModal();
     if (state.me?.customerOperated) {
-      window.TechlabsPanel.open((bodyEl, e) => {
-        bodyEl.append(e("h2", { text: "Subscription quota snapshots" }));
-        const status = e("p", { role: "status", text: "Loading quota snapshots..." });
-        bodyEl.append(status);
-        Promise.all([
-          fetch("capacity.json", { credentials: "same-origin" }).then(response => { if (!response.ok) throw new Error("Snapshot unavailable."); return response.json(); }),
-          fetch("/api/subscriptions", { credentials: "same-origin" }).then(response => { if (!response.ok) throw new Error("Subscriptions unavailable."); return response.json(); }),
-        ]).then(([snapshot, configured]) => {
-          if (!bodyEl.isConnected) return;
-          const entries = Object.entries(snapshot.subscriptions || {});
-          if (!entries.length) { status.textContent = "No quota snapshot is available for the configured subscriptions."; return; }
-          const generated = new Date(snapshot.generated);
-          status.textContent = `Compute quota headroom only. Physical capacity and other service quotas are unknown. Snapshot: ${generated.toLocaleString()}.`;
-          const subscription = e("select", { class: "deploy-input", "aria-label": "Snapshot subscription" });
-          for (const [identifier] of entries) {
-            const name = (configured.subscriptions || []).find(item => item.subscriptionId === identifier)?.displayName || identifier;
-            subscription.append(e("option", { value: identifier, text: name }));
-          }
-          const region = e("select", { class: "deploy-input", "aria-label": "Snapshot region" });
-          const table = e("div", { class: "setup-table" });
-          const controls = e("div", { class: "setup-grid" }, [
-            e("label", { class: "setup-field" }, [e("span", { text: "Subscription" }), subscription]),
-            e("label", { class: "setup-field" }, [e("span", { text: "Region" }), region]),
-          ]);
-          function draw() {
-            const rows = snapshot.subscriptions[subscription.value]?.[region.value] || [];
-            table.replaceChildren(e("table", { "aria-label": "Compute quota snapshot" }, [
-              e("thead", {}, e("tr", {}, ["Quota", "Used", "Limit", "Available"].map(text => e("th", { scope: "col", text })))),
-              e("tbody", {}, rows.map(row => e("tr", {}, [row.name, row.current, row.limit, row.available].map(value => e("td", { text: String(value) }))))),
-            ]));
-          }
-          function selectSubscription() {
-            region.replaceChildren(...Object.keys(snapshot.subscriptions[subscription.value]).map(name => e("option", { value: name, text: name })));
-            draw();
-          }
-          subscription.addEventListener("change", selectSubscription);
-          region.addEventListener("change", draw);
-          bodyEl.append(controls, table);
-          selectSubscription();
-        }).catch(error => { if (bodyEl.isConnected) status.textContent = error.message; });
-      });
+      openRegionalComparison();
       return;
     }
     window.TechlabsPanel.open((bodyEl, e) => {
@@ -2040,14 +2169,22 @@
     var icons = window.AzureIcons;
     window.TechlabsPanel.open(function (bodyEl, e) {
       bodyEl.appendChild(e("h2", { text: "Azure roadmap & retirements" }));
-
-      var up = state.updates;
-      if (!up || !up.services) {
-        bodyEl.appendChild(
-          e("p", { text: "Roadmap data is not available yet. It is refreshed daily by tools/Build-Updates.ps1." })
-        );
-        return;
-      }
+      const status = e("p", { class: "setup-status", role: "status", text: "Loading lifecycle refresh status..." });
+      const notices = e("div", { class: "roadmap-notices" });
+      bodyEl.append(status, notices);
+      function render(up) {
+        notices.replaceChildren();
+        const bodyEl = notices;
+        const job = up?.job || {};
+        const last = up?.generated ? new Date(up.generated).toLocaleString() : "Never";
+        const next = job.nextAttemptAt || job.nextRunAt;
+        status.textContent = `Last successful refresh: ${last}. ${job.source === "runner" ? "Runner" : "Container"} refresh: ${job.status || "pending"}. ${job.detail || ""}` +
+          (next ? ` Next ${job.nextAttemptAt ? "retry" : "refresh"}: ${new Date(next * 1000).toLocaleString()}.` : "");
+        if (up?.stale && up.generated) bodyEl.appendChild(e("p", { class: "error-text", text: "Saved lifecycle data is older than 24 hours. Review source notices; absence from this feed is not proof that no retirement applies." }));
+        if (!up?.generated || !up.services) {
+          bodyEl.appendChild(e("p", { class: "muted", text: "No successful lifecycle refresh yet. The configured schedule will populate this feed automatically." }));
+          return;
+        }
 
       // Flatten the services map into a sortable list with per-bucket counts.
       var services = Object.keys(up.services).map(function (key) {
@@ -2063,7 +2200,7 @@
         });
         return {
           key: key,
-          label: (icons && icons.labelForKey ? icons.labelForKey(key) : key),
+          label: svc.label || (icons && icons.labelForKey ? icons.labelForKey(key) : key),
           buckets: buckets,
           counts: counts,
           total: total,
@@ -2086,10 +2223,11 @@
           class: "cap-generated",
           text:
             services.length + " services with lifecycle changes \u00B7 " + totalRetire +
-            " upcoming retirements. Sourced from Azure Updates, last refreshed " +
+            " retirement notices. Public Azure Updates feed, last refreshed " +
             (up.generated ? new Date(up.generated).toLocaleString() : "recently") + ".",
         })
       );
+      bodyEl.appendChild(e("p", { class: "muted small", text: "Up to 50 notices per service and category. Preview and GA notices cover the past 12 months; retirement dates may be unannounced. Open the source notice for applicability and exact dates." }));
 
       // Controls: free-text search + group toggle chips.
       var search = e("input", {
@@ -2171,7 +2309,7 @@
           listWrap.appendChild(
             e("p", {
               class: "roadmap-empty",
-              text: anyGroup ? "No services match your search." : "Select at least one category above.",
+              text: anyGroup ? "No lifecycle notices match this feed and filter." : "Select at least one category above.",
             })
           );
         }
@@ -2179,6 +2317,20 @@
 
       search.addEventListener("input", draw);
       draw();
+      }
+      render(state.updates);
+      if (state.me?.customerOperated) {
+        fetch("/api/lifecycle", { credentials: "same-origin", cache: "no-store" }).then(async response => {
+          if (!response.ok || response.redirected) throw new Error("Lifecycle status unavailable; verify your portal session and try reopening this view.");
+          return response.json();
+        }).then(up => {
+          if (!notices.isConnected) return;
+          state.updates = up;
+          render(up);
+        }).catch(error => {
+          if (notices.isConnected) status.textContent = error.message + " Any previously loaded notices remain visible.";
+        });
+      }
     });
   }
 
@@ -2248,18 +2400,23 @@
           return;
         }
         submit.disabled = true;
-        submit.textContent = "Uploading\u2026";
+        submit.textContent = "Uploading and validating...";
         Api.uploadUseCase(file, name.value.trim())
           .then((res) => {
             const sub = (res && res.submission) || {};
-            status.classList.add("ok");
+            const validationFailed = res?.validationFailed === true;
+            const stagedOnly = res?.stagedOnly === true || sub.status !== "branched";
+            status.classList.add(validationFailed || stagedOnly ? "err" : "ok");
             status.innerHTML = "";
             status.appendChild(document.createTextNode(
-              (res && res.detail) || "Uploaded. A maintainer will review it shortly."));
+              (res && res.detail) || (stagedOnly
+                ? "Saved in the portal only. GitHub review branch creation was not confirmed. Ask a portal administrator to check Admin > Submissions."
+                : "Uploaded and a review branch was created. A maintainer can open the pull request.")));
             if (sub.slug) {
-              status.appendChild(e("div", { class: "submit-hint", text: "Catalog entry: " + sub.slug }));
+              status.appendChild(e("div", { class: "submit-hint", text: "Submission: " + sub.slug }));
             }
-            submit.textContent = "Uploaded \u2713";
+            submit.disabled = !validationFailed;
+            submit.textContent = validationFailed ? "Upload corrected template" : stagedOnly ? "Saved in portal" : "Uploaded \u2713";
           })
           .catch((err) => {
             submit.disabled = false;
@@ -2288,11 +2445,82 @@
     });
   }
 
-  function init(catalog) {
+  let catalogInitialized = false;
+  let catalogSync = null;
+  let lastCatalogCheck = 0;
+  let catalogReadVersion = 0;
+
+  function applyCatalog(catalog) {
+    if (!Array.isArray(catalog.items)) throw new Error("Invalid catalog response");
     state.items = catalog.items || [];
     buildFilter("filter-category", uniqueScalar("category"), state.category);
     buildFilter("filter-industry", uniqueValues("industries"), state.industry);
     buildFilter("filter-compliance", uniqueValues("compliance"), state.compliance);
+    render();
+  }
+
+  function showCatalogStatus(message) {
+    const status = $("#catalog-sync-status");
+    if (!status) return;
+    status.hidden = !message;
+    status.textContent = message;
+  }
+
+  async function catalogRequest(path, method = "GET") {
+    const response = await fetch(path, { method, credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(15000) });
+    if (!response.ok) throw new Error("Catalog request failed");
+    return response.json();
+  }
+
+  async function reloadPublishedCatalog() {
+    const version = ++catalogReadVersion;
+    await catalogReady;
+    const catalog = await catalogRequest("catalog.json");
+    if (version !== catalogReadVersion) return;
+    if (catalogInitialized) applyCatalog(catalog);
+    else init(catalog);
+  }
+
+  function synchronizeCatalog() {
+    if (!state.me?.customerOperated || state.me.readOnlyPreview) return Promise.resolve();
+    if (catalogSync) return catalogSync;
+    catalogSync = (async () => {
+      await catalogReady;
+      showCatalogStatus("Checking for use-case updates...");
+      const deadline = Date.now() + 21 * 60 * 1000;
+      let job = await catalogRequest("/api/catalog/sync", "POST");
+      while (["throttled", "queued", "running"].includes(job.status)) {
+        if (Date.now() >= deadline) throw new Error("Catalog check timed out");
+        showCatalogStatus(job.status === "throttled" ? "Checking for use-case updates..." : "Syncing use cases...");
+        const delay = job.status === "throttled" ? Math.min(10, Math.max(1, Number(job.retryAfter) || 2)) : 2;
+        await new Promise(resolve => setTimeout(resolve, delay * 1000));
+        job = await catalogRequest("/api/catalog/sync", job.status === "throttled" ? "POST" : "GET");
+      }
+      if (job.status === "not_configured" || job.status === "disabled") {
+        showCatalogStatus(job.status === "not_configured" ? "Repository not connected." : "");
+        return;
+      }
+      if (job.status === "failed" && job.code === "github_reconnect_required") {
+        const recovery = state.me?.isAdmin
+          ? "Reconnect GitHub in Setup > GitHub, then refresh the portal."
+          : "Ask a portal administrator to reconnect GitHub.";
+        showCatalogStatus("GitHub authorization is unavailable. " + recovery);
+        return;
+      }
+      if (job.status !== "succeeded") throw new Error("Catalog sync failed");
+      await reloadPublishedCatalog();
+      showCatalogStatus("Use cases are up to date.");
+    })().catch(() => {
+      showCatalogStatus("Could not sync use cases. Showing the last available catalog.");
+    }).finally(() => {
+      catalogSync = null;
+      lastCatalogCheck = Date.now();
+    });
+    return catalogSync;
+  }
+
+  function init(catalog) {
+    applyCatalog(catalog);
 
     document.querySelectorAll(".filter-group[data-filter-key]").forEach((d) => {
       persistDetails(d, "techlabs.filter." + d.getAttribute("data-filter-key"));
@@ -2313,7 +2541,7 @@
     });
 
     wireModal();
-    render();
+    catalogInitialized = true;
   }
 
   function wireCapacityNav() {
@@ -2348,6 +2576,7 @@
           if (link) link.hidden = false;
         }
         document.dispatchEvent(new CustomEvent("techlabs:me", { detail: me }));
+        synchronizeCatalog();
       })
       .catch(() => {
         state.me = null;
@@ -2361,7 +2590,12 @@
   }
   document.addEventListener("techlabs:setup-saved", () => {
     loadIdentity();
-    fetch("catalog.json").then(response => response.json()).then(catalog => { state.items = catalog.items || []; render(); }).catch(() => {});
+  });
+  document.addEventListener("techlabs:catalog-changed", () => {
+    reloadPublishedCatalog().catch(() => showCatalogStatus("Catalog visibility changed. Refresh the page to reload the use-case list."));
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && Date.now() - lastCatalogCheck >= 30000) synchronizeCatalog();
   });
   wireCapacityNav();
   wireSubmitNav();
@@ -2401,7 +2635,7 @@
       /* no registry — advanced options use template defaults */
     });
 
-  fetch("catalog.json")
+  const catalogReady = fetch("catalog.json", { cache: "no-store" })
     .then((r) => {
       if (!r.ok) throw new Error("Failed to load catalog.json");
       return r.json();

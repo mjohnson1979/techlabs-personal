@@ -42,7 +42,7 @@ App Service configuration. The runbook also provides the manual equivalent.
 | Runtime state | One worker, one instance, persistent `/home/data` writable by UID/GID 10001. The stock Linux x64 image includes Python 3.12, checksum-pinned Bicep 0.38.33 and Terraform 1.9.8. Review their licenses and updates. |
 | Catalog processing | Portal container is the default: no GitHub Actions or runners required. Bicep/Terraform static validation requires a Linux kernel with Landlock and seccomp enabled; failure to enforce isolation blocks validation. |
 | Optional runners | GitHub Actions must be enabled and the selected repository must have eligible GitHub-hosted runners or an approved online Linux x64 self-hosted runner. Actions enabled alone is not proof of runner access. See Catalog processing below. |
-| Pricing and capacity | Container price refresh needs access to the public retail-price API. Quota refresh requires configured deployment subscriptions, capacity regions and the host managed identity's Reader/equivalent quota-read access. No Azure roles are granted by processing. |
+| Pricing and capacity | The app discovers regions for saved subscriptions. Retail pricing needs the public retail-price API; quota and service availability need the host managed identity's Reader/equivalent access. Negotiated pricing also needs agreement-specific billing access. No Azure roles are granted by processing. |
 | Portal ownership | Initial administrator's user object ID in the hosting tenant, configured through GALLERY_ADMIN_OIDS. Tenant membership, app ownership and Azure roles do not automatically grant portal roles. |
 | Optional integrations | Organization GitHub OAuth App with device flow; existing Key Vault with applicable read/write and network access; supported billing agreement/permissions for negotiated pricing. |
 
@@ -259,10 +259,11 @@ when the image is replaced.
    Verify sign-in as the assigned initial administrator; a consent administrator's
    successful login alone does not prove the assigned user's access works.
 7. After the designated administrator signs in, **Setup** opens automatically
-   when no deployment subscriptions are configured, starting at **GitHub**.
-   Configure the company OAuth application and repository, then **Subscriptions**.
-   **Authentication** shows the existing primary connection and optional additional
-   providers; creating a second provider is not required. Other tenant users
+   when no deployment subscriptions are configured. Review **Authentication**,
+   then use **Next: GitHub** for the optional company OAuth application and
+   repository, followed by **Subscriptions** and **Branding**. Authentication
+   shows the existing primary connection; creating a second provider is not
+   required. Other tenant users
    remain guests and cannot open or modify administrator setup.
 
 Never use a publisher registration or the Azure CLI client ID for this application.
@@ -963,10 +964,26 @@ Startup rejects missing or inconsistent organization configuration.
 
 ## Hosted initial setup
 
-The **Setup** entry in the administrator account menu opens Authentication,
-GitHub, and Subscriptions. It opens automatically when an administrator signs in
+The **Setup** entry in the administrator account menu opens a four-step sequence:
+Authentication, GitHub, Subscriptions and Branding. It opens automatically when an administrator signs in
 and there are no deployment subscriptions. Every setup endpoint requires an
 authenticated administrator; writes require a same-origin browser request.
+
+Back, Next and the named step tabs retain unsaved field values while the panel
+stays open. Navigation does not save, create a repository or finish installation.
+Use each step's explicit save actions before closing; closing discards remaining
+drafts. The footer states the next action, and step labels describe saved state,
+not whether the step was visited. Navigation pauses during saves and GitHub device
+authorization; finish or cancel the operation before moving on. Optional catalog
+processing and advanced credentials remain collapsed until needed.
+
+The GitHub section is numbered separately: **1. Save OAuth application**,
+**2. Authorize GitHub account**, **3. Save repository connection**, then
+**4. Catalog processing (optional)**. Dependent groups remain visible but grayed
+out and disabled until the previous prerequisite succeeds. Failed requests do
+not unlock later groups. Editing a prerequisite locks its dependent groups again
+until successfully saved or verified. Existing saved configuration is recognized;
+account access is rechecked when the GitHub section opens.
 
 This panel follows the default preconfigured Entra sign-in, or the optional
 protected browser installation. It shows the primary Entra connection; additional
@@ -1092,14 +1109,15 @@ repository permissions. Do not restrict submissions to administrators.
 
 #### Choose the supported GitHub application
 
-Use a **GitHub OAuth App with Device Flow** for this release. A **GitHub App** is a
-different integration: it uses installation/repository permissions and different
-token handling. Although GitHub recommends GitHub Apps for many new integrations,
-this portal does not implement installation-token issuance/renewal, private-key
-authentication or GitHub App permission checks. Do not enter a GitHub App's App ID,
-installation ID, private key or client ID in the OAuth field and expect it to work.
-If GitHub App installation is mandatory in your organization, that requires a
-separate implementation; creating the app alone does not enable support here.
+The default remains an organization-owned **GitHub OAuth App with Device Flow**.
+The credential layer also accepts GitHub App device-flow **user** tokens and
+renews them when GitHub supplies a refresh token. This is not installation-token
+authentication: it still depends on the authorizing user's access and the app's
+repository grants. Installation-token issuance, private-key authentication and
+automatic installation/permission configuration are not implemented. App IDs,
+installation IDs and private keys are not client IDs. Features requiring OAuth
+scopes (such as the workflow-file scope check) may remain unavailable with GitHub
+App user tokens; this does not bypass the repository's access rules.
 GitHub.com (including organization-managed accounts subject to policy) is the
 configured API host; GitHub Enterprise Server custom hosts are not supported.
 
@@ -1129,7 +1147,7 @@ configured API host; GitHub Enterprise Server custom hosts are not supported.
 | Authorization callback URL | The portal HTTPS root URL, such as `https://portal.example.com/`, or an approved organization-owned HTTPS placeholder if the portal URL is confidential. It is a required registration value but **unused by this device flow**. It does not add a callback handler to the portal. |
 | Callback wildcard matching | Disabled; unnecessary for this integration |
 | Enable Device Flow | Enabled; required |
-| Expire user access tokens | Follow company policy. GitHub currently enables expiration by default; expiring tokens last eight hours. This portal does not automatically refresh them, so an administrator must reconnect after expiration. Do not disable expiry simply to work around this limitation without security approval. |
+| Expire user access tokens | Follow company policy. When GitHub supplies a refresh token, the portal renews access automatically before use near expiry or after idle time. Expiry is still enforced; disabling it is not necessary. Tokens without refresh support require reconnection if they expire or are revoked. |
 
 Do not use Entra's `/.auth/login/aad/callback` for the GitHub callback. GitHub device
 authorization finishes at `https://github.com/login/device`, not through the
@@ -1167,10 +1185,11 @@ authorization controls the portal's repository integration.
    The existing repository's default branch is selected; protect the catalog branch.
 5. In **Catalog processing**, keep **Portal container**, or use **Check runner
    access** and select a verified runner option. Unavailable/unverified choices
-   are disabled. Enter canonical capacity regions such as `centralus, eastus`
-   and select **Save processing settings**. No quota request runs in this save
+   are disabled. All Azure regions are discovered automatically for each saved
+   subscription; no region list is required. Select **Save processing settings**. No quota request runs in this save
    request; processing is queued separately. New source copies contain no workflows.
-6. Select **Sync catalog now** after reviewed files are on the configured branch.
+6. Open or refresh the portal after reviewed files are merged into the configured
+   branch. The use-case list updates automatically when synchronization completes.
    It queues work and displays queued/running/succeeded/failed status. Container
    mode validates inputs and refreshes prices and configured quota snapshots;
    runner mode imports workflow-generated outputs. F5 reloads the saved catalog.
@@ -1181,6 +1200,33 @@ Host token storage can restart the app; reopen Setup afterward. Never paste
 access tokens, client secrets or browser cookies into the portal, logs or tickets.
 The device code and OAuth token remain server-side; the browser gets only the
 verification code, status and discovered account/repository metadata.
+
+Existing connections established by older images did not retain refresh tokens.
+After upgrading, reconnect once in **Setup > GitHub** to enable automatic renewal
+when GitHub provides renewal credentials. An image update cannot recover a refresh
+token that was previously discarded. The browser shows **Automatic renewal enabled**
+for a connection saved with renewal credentials.
+
+If catalog sync reports that GitHub authorization is unavailable, a portal
+administrator must use **Setup > GitHub > Connect/Reconnect GitHub** and complete
+device authorization again. Keep the existing repository and branch; there is no
+need to recreate the repository, copy source, re-upload workloads or merge again.
+After reconnection, refresh the portal. Missing or expired credentials and GitHub
+HTTP 401 responses are reported as reconnection required; permission and rate-limit
+failures remain separate errors. Regular users are directed to an administrator.
+
+Same-account renewal can keep the repository enabled. Before replacing the stored
+credential, the portal verifies the saved numeric GitHub account ID, OAuth
+application, repository write access and configured branch. It preserves the
+repository settings and queues a catalog sync only after credential storage
+succeeds. To switch GitHub accounts, explicitly disable the repository first.
+
+Older portal images reject device sign-in while a repository is enabled. On those
+images, uncheck **Enable GitHub** and select **Save GitHub as disabled**, then check
+**Enable GitHub** again and connect. Choose **Connect an existing repository**,
+reselect the same repository, save, and refresh. Disabling does not delete the
+repository or its files, but it clears the saved repository selection; record the
+configured branch before disabling, especially when it differs from the default.
 
 #### Repository writes and workflow permissions
 
@@ -1281,19 +1327,36 @@ Official references:
    configured Key Vault destination is respected. A new vault destination needs
    a dedicated secret name, and all vault prerequisites above apply. Device sign-in
    updates only its own tagged Key Vault secret, never an unrelated secret. The
-   token is also used in process memory after successful persistence. No plaintext
-   token is stored in the application database or returned to the browser.
+   access/refresh pair is saved as one opaque protected credential value, including
+   its expiry and account/client binding. It is also used in process memory after
+   successful persistence. No token is stored in the application database or
+   returned to the browser; SQLite contains only non-secret connection metadata.
 - Persisting the connection requires host app-settings write access and can restart
    the host. Reopen Setup if that interrupts polling; no callback URL or manual
    token copy is required. Failures keep pending authorization in memory only for
    the device-code lifetime so it can retry without exchanging the same code again.
-- A token expiry supplied by GitHub is respected by intake and sync. This version
-   does not retain refresh tokens or automatically refresh OAuth access tokens;
-   reconnect after expiry/revocation. Long-lived tokens can also be revoked by the
-   user or organization. Disabling a repository stops its sync/publishing but does
+- Access-token expiry is respected by intake and sync. With a usable refresh token,
+   the portal renews before GitHub operations when access expires within ten minutes,
+   or on the next operation after idle time. The existing catalog scheduler also
+   uses this path; it requires no new runner or user sign-in. Renewal is serialized
+   and verifies the same account, current repository write access and branch before
+   saving the rotated pair in the selected protected store. Storage can restart
+   App Service just as connection setup does. F1 can pause the scheduler while idle;
+   renewal resumes on use, provided the refresh credential is still valid.
+- GitHub App user tokens typically last eight hours and refresh tokens six months.
+   Successful renewal rotates both. Revocation, changed permissions, expired refresh
+   tokens, or lost rotation responses can still require administrator reconnection.
+   If verification or persistence fails after a successful exchange, the process
+   keeps the new pair in memory and retries verification/storage after a cooldown,
+   without exchanging the consumed refresh token again. A process loss before the
+   pair is durably saved may require reconnecting; no permanent credential guarantee
+   is implied. Never remove expiry metadata to bypass GitHub's token lifetime.
+- Long-lived tokens can also be revoked by the user or organization. Disabling a
+   repository stops its sync/publishing but does
    not revoke or erase the stored credential. Revoke consent in GitHub when access
-   is no longer needed. Disable the active repository connection before reconnecting
-   another account, preventing credential replacement during active catalog sync.
+   is no longer needed. Same-account renewal verifies existing repository access
+   and waits for active catalog sync before replacing the credential. Disable the
+   active repository connection before connecting another account.
 - Preconfigured host tokens remain supported for existing installations, but the
    normal onboarding screen uses device sign-in. GitHub being disabled requires
    no credential. Secrets for Entra/OIDC authentication are separate and unchanged.
@@ -1310,9 +1373,9 @@ Official references:
    header includes `workflow`. Normal source copies omit workflow files and work
    with repository permissions. Existing `repo`/`read:org` authorizations support
    container processing and catalog sync; updating the image does not upgrade scopes.
-   If permission is missing, disable the repository connection and save, reconnect
-   through the organization OAuth device flow with `workflow` permission, then select
-   the same existing repository. Do not paste an access token into the portal.
+   If permission is missing, reconnect the same account through the organization
+   OAuth device flow with `workflow` permission. The repository selection stays
+   unchanged after verification. Do not paste an access token into the portal.
 - If a failed or interrupted setup created a repository containing only `LICENSE`, keep
    it. Do not create a differently named repository. Reload Setup, choose **Copy
    portal source to an empty or LICENSE-only repository**, select the same repository,
@@ -1337,10 +1400,39 @@ Official references:
    logs for the request time. Do not create another repository as recovery. Current
    clients show the HTTP status and recovery guidance instead of a JSON parser error;
    older images can show "Unexpected end of JSON input".
-- Uploaded use cases create review branches in this configured repository.
+- Uploaded use cases create review branches only while the configured GitHub
+   connection has usable authorization. Otherwise the upload is retained in
+   **Admin > Submissions**, not queued for later GitHub delivery. The response
+   says it was saved in the portal only. A failed branch request is reported as
+   unconfirmed because a lost response may still have created the remote branch.
+   Before retrying, inspect GitHub and renew the connection in **Setup > GitHub**
+   if needed. Reconnection and catalog sync do not automatically resend pending
+   uploads. An administrator can download the saved ZIP and submit its workload
+   folder through the organization's normal Git review process; no re-upload is
+   needed for that recovery. Re-uploading creates another submission and may add
+   a name suffix. The UI's submission name is not proof of publication.
+   Before any GitHub write, the portal validates the proposed source with the
+   sandboxed checks for the uploaded format(s), as used by catalog processing.
+   Bicep-only and Terraform-only submissions do not require a counterpart,
+   an AI service, GitHub Copilot, or GitHub Actions. It combines
+   the upload with dependencies from a pinned target-branch tree, without pricing
+   or quota calls. Missing dependencies, invalid source, unavailable isolation,
+   validation timeout, or target-branch drift keep the ZIP staged and create no
+   review branch. The upload response and Admin submission detail show the failure;
+   correct the ZIP or repository dependencies before uploading again. This check
+   requires the container validation tools even when scheduled processing uses runners.
+   It is not a required GitHub status check: maintainers must revalidate later PR
+   edits and direct repository changes before merge.
    Merge reviewed changes into the configured catalog branch. Protect that branch:
    it supplies executable infrastructure inputs to the managed-identity executor.
-- Automatic sync checks every five minutes; **Sync catalog now** queues a refresh.
+- Opening or refreshing the portal requests a background repository check for any
+   signed-in user. Returning to the tab also checks when the last page check was
+   at least 30 seconds ago. The visible sync status updates, and completed checks
+   reload the cards and filter options without losing the search or selections.
+   Concurrent requests share work; a ten-second cooldown after completed work
+   limits repeated checks, with the browser retrying automatically. Requests
+   during processing coalesce into one follow-up commit check. The five-minute
+   background check remains as a fallback; **Sync catalog now** forces processing.
    A sync pins all reads to one commit. On failure the previous catalog stays active.
    No webhook endpoint, Azure CI credential or automatic app-code deployment is
    installed. Organization exports include an optional workflow generator, not active workflows; app
@@ -1385,11 +1477,76 @@ syntax, refreshes public retail prices and reads configured Compute quota usage
 with its managed identity. Negotiated pricing remains the existing on-demand
 subscription pricing path; negotiated rates are not published to GitHub.
 
-Configure deployment subscriptions under **Setup > Subscriptions** and canonical
-**Capacity regions** under **Setup > GitHub > Catalog processing**. If either is
-empty, no quota snapshot is collected and job status says what is missing. Initial
-subscription setup still does not perform quota checks. Capacity means quota
-headroom, not guaranteed physical allocation or all-service quotas.
+Configure deployment subscriptions under **Setup > Subscriptions**. The container
+discovers all physical regions returned by Azure for each saved subscription;
+previously saved manual region lists no longer restrict that discovery. With no
+saved subscriptions, quota collection is skipped. Initial subscription setup still
+does not perform quota checks. Inaccessible regional quota reads produce empty,
+unknown results, never unlimited capacity. Capacity means quota headroom, not
+guaranteed physical allocation or all-service quotas.
+
+**Automatic regional refresh:** the container checks for due work at startup and
+every five minutes, refreshing prices and supported capacity signals across all
+physical regions of every saved subscription. Completed rows are saved to SQLite
+as each batch finishes. A completed refresh is due again after 24 hours; changes
+to workload cost/quota/default parameters or subscription pricing preferences
+trigger a new refresh. Interrupted work resumes using still-current rows instead
+of requiring a manual scan. No quota requests run in the initial subscription-save
+request. Authentication and published workloads are required, but a container
+schedule does not require GitHub connectivity or runners for already-published data.
+
+Open **Capacity** to view these scheduled results for a workload and one or all
+saved subscriptions. The screen loads results automatically and refreshes its
+view every 15 seconds, without launching a scan. Each result has a check timestamp;
+results older than 24 hours are marked stale. Failed checks remain unknown, with
+prior successful results retained when available. Scheduler errors and missing
+subscription/region access are shown rather than labeled healthy.
+
+Results show monthly estimates and the actual retail/negotiated pricing source,
+explicit negotiated-price fallback, regional Compute quota counters, and supported
+workload-specific checks. Metadata `quota.requirements` drives service checks:
+resource-provider locations indicate service offering; declared OpenAI model,
+version and SKU use reported TPM capacity and model lifecycle. Missing metadata,
+unsupported services, denied reads and partial data remain Unknown. Model/SKU
+overrides must include an exact version for reliable checks. VM family/SKU-specific
+allocation and App Service deployment preflight are not certified by these GET-only
+checks. Offered/headroom is not a guarantee that a workload can deploy.
+
+Pricing is evaluated in each region from the workload's component cost model.
+Without one, pricing is Unavailable rather than zero. Negotiated prices require
+exact regional meter IDs and supported billing access; fallback to retail is
+visible per row. Price and capacity failures are independent, so a pricing failure
+does not discard successful capacity results. Nothing is automatically deployed,
+reserved or granted permissions by the comparison.
+
+The container schedule runs three regional checks at a time, sharing a six-check
+limit with interactive selection checks. A pass has a 20-minute budget; completed
+batches survive timeouts and restarts. Azure metadata and retail meters have a
+five-minute in-process cache. Search, sort and CSV export cover all matching
+scheduled results; the table displays up to 250 rows at once. Regional snapshots
+and refresh job state are part of the SQLite backup scope.
+
+**At deployment time, in both processing modes:** selecting a subscription, region
+or parameter automatically refreshes its price and capacity display. There is no
+separate quota-check button. The server performs the same check again before
+creating a deployment record or starting provisioning, bypassing cached price and
+capacity reads. A known unavailable capacity signal blocks the request. Incomplete
+pricing, unsupported checks or unknown capacity remain advisory and visible; they
+are not interpreted as guaranteed availability. The selected check summary and
+timestamp are retained with the deployment. This does not reserve capacity, and
+Azure may still reject allocation or policy validation later.
+
+**Runner mode:** the scheduled capacity workflow runs the same regional-check
+implementation and publishes its results with the reviewed capacity artifact.
+The portal imports those results; it does not duplicate a scheduled scan while
+the selected runners are available. Runner results contain public retail prices
+only, never negotiated billing data. For subscriptions configured for negotiated
+prices the screen labels that retail limitation; live selection and deployment
+checks still use the saved pricing preference. Unavailable/unverified runners
+activate the container schedule automatically. Existing repositories must review
+and merge the updated workflow/helper PR, enable the capacity schedule and grant
+the runner identity read access to the intended subscriptions; none of these
+permissions or repository changes are applied automatically.
 
 The compiler subprocess receives no portal/cloud credentials, cannot make network
 connections, and cannot read the portal database, application source or other
@@ -1409,10 +1566,22 @@ it does not initialize providers, execute provisioners, or certify provider sche
 ARM wrappers receive structural checks. Deployment permissions, resource policy,
 provider semantics and allocation feasibility remain deployment-time checks.
 
+If Operations reports **BCP091**, Bicep could not read a referenced file. Check the
+reported template and commit all required local modules to the configured branch
+at their referenced relative paths, including transitive dependencies. A workload
+folder alone is incomplete when it references a repository-level `modules/`
+folder. Review and merge the complete source, then refresh the portal. Compiler
+error codes and the input path are shown; raw compiler output and parameter
+values are withheld. Validation failures keep the last good catalog active.
+
 Processing writes only local versioned runtime artifacts and database snapshots;
 it does not commit generated files to GitHub. Job state is persisted in SQLite.
 Interrupted jobs are retried after restart; failures retain the last good catalog
-and capacity together. New commits are checked every five minutes; unchanged
+and capacity together. Page loads and tab returns request a commit check without
+waiting for the five-minute background interval. Validation and processing must
+finish before new use cases become available; failures remain visible and do not
+publish partially processed inputs. A page check does not force a rebuild of an
+unchanged commit. New commits are also checked every five minutes; unchanged
 catalogs/prices/quotas refresh at least daily while the app is running. Manual
 refresh forces a new processing pass. One worker/instance remains required.
 **F1 remains supported**, but idle unload/restarts delay processing and schedules;
@@ -1459,7 +1628,8 @@ or credential is copied.
 | Workflow | Triggers | Output |
 | --- | --- | --- |
 | Validate catalog and refresh retail prices | Reviewed branch pushes, daily at 05:17 UTC, manual | Compiled ARM wrappers, Terraform syntax checks and public-retail pricing |
-| Refresh subscription capacity | Daily at 06:37 UTC, manual; disabled until explicitly enabled | Subscription/region Compute quota snapshot |
+| Refresh subscription capacity | Daily at 06:37 UTC; disabled until explicitly enabled | Subscription/region quota and workload regional retail-price/capacity snapshots |
+| Refresh Azure roadmap and retirements | Daily at 06:47 UTC | Public Azure Updates lifecycle snapshot; no Azure credentials or capacity opt-in required |
 
 **Existing installation:** update the portal image once to receive this feature,
 then choose verified processing runners and **Setup > GitHub > Create workflow PR** for the already-connected repo.
@@ -1469,8 +1639,8 @@ permissions. Repeating the action reopens the same pending PR. Inspect a partial
 `portal/workflows-*` branch if PR creation fails; the portal never deletes it.
 
 Older OAuth authorizations may lack `workflow`. They can still sync catalogs.
-For workflow PR permission errors, reconnect with the updated scopes (disable the
-repository connection before reconnecting, then select the same repository), or
+For workflow PR permission errors, reconnect the same account with the updated
+scopes while keeping the selected repository, or
 use your own GitHub credentials to install the files locally from a current export:
 
 ```powershell
@@ -1516,11 +1686,13 @@ To enable runner-based scheduled capacity, an organization administrator configu
 2. A GitHub environment named `portal-capacity`, restricted to the reviewed
    workflow branch, with required reviewers as dictated by company policy. Add
    environment variables `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`,
-   `PORTAL_SUBSCRIPTION_IDS` (space-separated GUIDs) and
-   `PORTAL_CAPACITY_REGIONS` (space-separated canonical names such as `eastus`).
+   `PORTAL_SUBSCRIPTION_IDS` (space-separated GUIDs).
    These are identifiers, not passwords; no client secret is required.
 3. Repository variable `PORTAL_CAPACITY_ENABLED=true`, after reviewing the above
-   access. Maximum 20 subscriptions, 20 regions and 100 subscription/region pairs.
+   access. The collector discovers all physical regions for those subscriptions
+   (up to 200 subscriptions); the old 100-combination limit does not apply. Existing
+   manually invoked helpers may still pass an explicit region list, but generated
+   workflows use automatic discovery. Job timeouts and response-size limits remain.
    Run **Refresh subscription capacity** manually and verify success first.
 
 GitHub federation is separate from portal sign-in and is not provisioned by Setup.
@@ -1671,9 +1843,51 @@ to avoid breaking existing clients. They are not displayed as product branding.
 and JSON companion files. A Terraform-only bundle may put `main.tf` and its
 companions at the root; upload normalizes these into `terraform/`. A single
 wrapper directory is accepted. Exclude secrets in variable files, Terraform
-state, saved plans and `.terraform` provider caches. Upload does not run Terraform
-or Bicep: the files remain staged or on a review branch until approved. The flat
+state, saved plans and `.terraform` provider caches. Before creating a review
+branch, the portal compiles supplied Bicep and syntax-checks supplied Terraform
+in its isolated compiler sandbox; it never deploys resources during upload.
+The files remain staged or on a review branch until approved. The flat
 Terraform-directory sync limitation and runtime CLI prerequisite still apply.
+
+**Supporting documents can accompany the infrastructure.** Word (`.docx`), Excel
+(`.xlsx`), PowerPoint (`.pptx`), PDF, CSV and TSV files are accepted at the workload
+root or in subfolders such as `docs/`. They are preserved byte-for-byte in staging,
+the administrator's ZIP download, and the GitHub review branch. Catalog sync does
+not import them into deployment artifacts, and compilers do not receive them.
+The portal does not render, convert or execute these documents.
+
+**PowerShell helpers (`.ps1`) are review-only attachments too.** Include them at
+the workload root or in folders such as `scripts/` or `runbooks/`. They are kept
+unchanged in the review branch and ZIP download as ordinary files, excluded from
+compiler inputs and deployment artifacts, and never run by the portal. They are
+not supported as automatic pre/post-deployment hooks or as runtime files for
+Terraform provisioners. An administrator must review them before an operator
+chooses to run them separately. Do not include credentials in scripts.
+
+The ZIP remains limited to 5 MiB compressed, 25 MiB expanded, 300 files, and
+5 MiB per file. Infrastructure compiler inputs retain their separate limits of
+2 MiB per file and 16 MiB total, excluding review-only attachments. Office attachments
+must be non-encrypted modern packages, with at most 2,000 internal entries and
+25 MiB internally expanded content; legacy `.doc`, `.xls`, `.ppt`, macro-enabled
+formats, binary executables and other script extensions are not supported.
+CSV/TSV and `.ps1` files must be UTF-8 or BOM-marked UTF-16.
+Basic format checks are not malware scanning: administrators must review and scan
+attachments before opening them, including PDF active content and spreadsheet
+formulas or external links. No attachment is automatically trusted or published.
+
+**The default is native-format processing with no AI dependency.** No conversion,
+AI configuration, or GitHub AI access is needed. A missing counterpart is neither
+generated nor required. Once an administrator reviews and merges the workload,
+catalog sync advertises only the available deployment engine(s); the deployment
+API rejects an engine that the workload does not provide. Bicep-only workloads
+compile to ARM deployment inputs, not Terraform. Terraform-only workloads retain
+their Terraform source and do not receive a placeholder Bicep template.
+
+If both formats are included, both must pass their static checks. Missing local
+modules or invalid source in a supplied format are still errors: include those
+dependencies in the upload at its referenced paths or in the configured repository.
+Static checks do not prove deployment feasibility or equivalence between formats.
+There is no automatic merge, publication, or deployment of a submission.
 
 Author and review your infrastructure code in an organization-owned repository. The
 runtime deployment contract is:
@@ -1693,8 +1907,9 @@ runtime deployment contract is:
   snake_case variable names. Optional environment files are `dev.tfvars` and
   `prod.tfvars`. Do not supply a backend block; the executor creates it.
 - For connected repositories, the organization workflows above produce retail pricing
-   and Compute quota snapshots for runtime sync. Other region/SKU/lifecycle feeds
-   are not supplied; their snapshots remain empty unless separately implemented.
+   and Compute quota snapshots for runtime sync. The lifecycle feed is refreshed
+   separately as described below. Other region/SKU registry feeds are not supplied;
+   their snapshots remain empty unless separately implemented.
 
 Redeploy your organization-built app artifact with those inputs. These are organization
 additions, not templates supplied by this distribution. Uploads in the UI are
@@ -1705,6 +1920,52 @@ are explicitly configured. Do not provide a publisher-owned repository or token.
 Only publish trusted code. Terraform providers, provisioners, and uploaded
 deployment artifacts are executable infrastructure code with the host identity's
 permissions; this is not a sandbox for untrusted workloads.
+
+## Roadmap and retirements
+
+**Roadmap & retirements** is populated automatically from Microsoft's public
+[Azure Updates feed](https://azure.microsoft.com/updates). It is a global service
+lifecycle feed, not a scan of resources deployed in your subscriptions. It requires
+outbound HTTPS to `www.microsoft.com`, but no Azure role, subscription credential,
+GitHub token or manual refresh in container mode. The collector requests only
+notice IDs, titles, products, statuses and availability dates from the public
+Microsoft Release Communications API; it sends no portal or subscription data.
+
+- **Container:** starts after normal application startup, including on an empty
+   catalog. Refresh is due 24 hours after the last successful fetch. The worker
+   checks every five minutes; a failed fetch is retried after ten minutes. Restarting
+   does not reset a successful feed's age. F1 idle unloading can delay all in-app
+   schedules, so the view shows stale data instead of implying continuous service.
+- **Runners:** the opt-in `portal-lifecycle.yml` workflow runs daily at 06:47 UTC,
+   using the same collector. It needs no Azure login or quota-workflow enablement.
+   Review and merge the updated workflow/helper PR in existing repositories, and
+   ensure GitHub Actions scheduling is enabled. GitHub schedules run from the
+   default branch; checkout and publication still target the configured reviewed
+   branch. GitHub may delay scheduled jobs. The app imports the validated feed on
+   catalog sync; unavailable or unverified runners fall back to container refresh.
+
+The collector fetches complete bounded pagination (up to 200 pages, 20,000 records
+and 16 MiB of metadata), never silently publishing a partial feed. Retirement
+notices with known past months are excluded; notices with unannounced dates remain.
+Preview and GA notices with known dates cover the past 12 months. Each service
+category shows up to 50 notices, deduplicated by ID/title. The source links carry
+the exact notice ID and always point to Azure Updates. Open the source notice to
+confirm applicable versions, exact retirement dates and migration instructions.
+
+The roadmap view loads current status when opened: last successful refresh,
+container/runner source, next planned run or retry, and failure/staleness messages.
+**Admin > Operations** also shows the roadmap refresh status. Workload notices
+match service names in cost components and the workload service list; this is a
+service-level association, not proof that a particular resource version is affected.
+Unrecognized services still appear under their feed product names on the full
+roadmap. No matching notices must not be interpreted as a guarantee of no retirements.
+
+Successful snapshots and job status are retained in SQLite under `lifecycle_snapshot`
+and `lifecycle_job`, and belong in database backups. A timeout, malformed response,
+unsafe pagination link, empty upstream feed or invalid runner artifact leaves the
+last successful snapshot intact. The screen marks it stale after 24 hours. Before
+the first success it reports that no successful refresh exists, not that there
+are zero retirements. Local previews do not run the background collector.
 
 ## Data and network boundaries
 
@@ -1728,6 +1989,7 @@ Necessary service traffic still exists:
 | Organization OIDC provider, when configured | Organization login and claims through App Service Authentication |
 | Azure Consumption Price Sheet API, when negotiated pricing is selected | Read organization subscription rates; retail fallback if unavailable |
 | Azure Retail Prices API | Cost queries using region and service selections |
+| Microsoft Release Communications public Azure feed | Anonymous lifecycle metadata refresh; no subscription or identity data sent |
 | Organization-configured GitHub repository, only if enabled | Uploaded code and review metadata |
 | Package/provider registries | Organization-initiated dependency and provider installation |
 
@@ -1735,6 +1997,171 @@ Azure and Entra are Microsoft-operated services; Microsoft may process data as
 their service provider under the organization's own agreements. This is distinct
 from the platform publisher collecting application telemetry. Organization hosting
 alone does not mean that no personal data is processed by any service provider.
+
+## Database and backups
+
+The portal uses a **SQLite database as its system of record**, not just a temporary
+log. It records configuration, user access, activity and deployment lifecycle data
+used by the admin reports and cleanup scheduler. The standard container stores it
+at `/home/data/deployment-portal.db`. `GALLERY_DB_PATH` overrides that location;
+verify the actual path before backing up or restoring an installation. Keep one
+worker and one app instance, with persistent storage writable by UID/GID 10001.
+
+### What SQLite stores
+
+| Table | Information retained |
+| --- | --- |
+| `users` | Entra user object IDs, names, sign-in names (UPNs), admin/guest roles and first/last-seen timestamps |
+| `deployments` | Requesting user, workload, environment, engine, subscription/resource group, parameter values, catalog version, status, error details, expiry and cleanup policy |
+| `events` | Timestamped activity and audit events, such as setup changes, submissions and deployment outcomes, with associated user/resource metadata; optional UI usage events are disabled in organization mode |
+| `submissions` | Submitter, upload metadata and file list, staged-file path, review status, original GitHub review branch and comparison URL |
+| `setup_settings` | Branding, subscriptions, repository/account settings, authentication and credential-storage metadata, catalog/pricing/quota and lifecycle snapshots, repository-scoped catalog removals, refresh jobs and optional installer state |
+
+GitHub access tokens and Entra client-secret values are stored separately in
+protected App Service settings or Key Vault, not as integration credentials in
+SQLite. However, the database contains personal information, resource identifiers
+and submitted deployment parameter values. Treat it and its backups as sensitive.
+Compiled catalog artifacts, uploaded code and Terraform working/state files are
+also stored separately; backing up the database alone does not preserve them.
+
+### Backup responsibility
+
+**Persistent storage is not a backup.** It retains data across ordinary restarts
+and image updates, but does not protect against deletion, corruption or storage
+loss. The persistence fix does not replace backups. Logging continues without a
+backup, but lost records cannot be recovered unless another valid copy exists.
+Restoring an older backup restores only the history present at that backup point.
+
+The organization operating the portal must schedule and monitor backups, choose
+retention and a frequency that meets its acceptable data-loss window (RPO), and
+test restoration against its recovery-time objective (RTO). Back up before changes
+that affect persistent data as well as on the regular schedule. Record backup
+timestamps and restore-test results; alert on failed or overdue backups. Keep
+encrypted, access-restricted copies outside the app's writable data directory and
+in a separate failure domain under organization policy. Neither a GitHub source
+copy, a Docker image nor an admin CSV export is a complete portal-state backup.
+
+`Deploy-Portal.ps1` does **not** create, schedule or verify backups. Routine
+`-DeployImage` updates omit the backup prompt for convenience, not because backups
+are unnecessary. `-BackupConfirmed` is only an operator acknowledgement for
+explicit `-MaintenanceReady` updates; it does not perform a backup.
+
+### Backup and restore scope
+
+1. Identify `GALLERY_DB_PATH` and `GALLERY_TF_WORK`, including any overrides.
+   Preserve the SQLite database, its adjacent `submissions/` and `catalog-versions/`
+   directories, and Terraform working/state data (normally `/home/data/tf-runs`).
+   The complete `/home/data` directory covers these standard container paths;
+   overridden paths outside it require separate coverage. Preserve protected host
+   configuration and credential recovery procedures, including Key Vault when used,
+   along with the compatible image digest. Keep secrets out of logs and Git.
+2. Use a validated SQLite-consistent backup procedure coordinated with adjacent
+   file changes, or stop the app and all other database/file writers before copying
+   the complete data set. Do not copy the live database file alone. For stopped
+   backups, retain any `-wal`, `-shm` and `-journal` companions together with the
+   database; do not manually delete them. For older WAL-based installations, follow
+   [the stopped-app WAL procedure](#upgrade-from-sqlite-wal), not a live SCM database read.
+3. Test restoration on an isolated copy without live Azure deployment permissions.
+   Check database integrity, setup/roles, reporting history, staged uploads, catalog
+   versions and Terraform state, plus ownership and permissions for UID/GID 10001.
+   A backup job reporting success alone is not proof of recoverability.
+4. Before a production restore, stop all writers, retain the current data for
+   investigation, and restore a consistent set with compatible application code
+   and configuration. Reconcile deployment records with actual Azure resources
+   before restarting the cleanup scheduler: a restored backup can contain stale
+   statuses or already-expired leases. Restoring SQLite does not roll back Azure
+   resources, GitHub commits or external credentials.
+
+Losing or resetting the database loses admin reporting history and can lose the
+portal's tracking of existing workloads and their cleanup deadlines. Those Azure
+resources remain deployed and may continue incurring charges. Do not reset the
+database as a substitute for restoring a backup or investigating missing records.
+
+## Administrator operations and reporting
+
+**Admin > Operations** separates current operational counts from activity in the
+selected 7-, 30- or 90-day period. Failed deployments may still hold resources;
+overdue cleanup and next-24-hour expiry counts exclude externally managed resource
+groups. Summary counts cover all database records, not just the loaded tables.
+Catalog health shows the selected repository, last successful sync and current
+processing result. These are portal records, not live Azure resource inventory
+or a billing report. Review failures and cleanup obligations against Azure.
+
+Deployment and submission worklists support search, status filters, refresh and
+CSV export. Deployment worklists load the latest 500 records; submissions load
+the latest 200. Their counts and exports cover only the loaded, filtered rows,
+and the UI marks a reached limit. Operations exports carry the report timestamp
+and activity cutoff. Daily request buckets use UTC; boundary days are partial.
+Exported identity and resource metadata must follow company data-handling policy.
+
+**Admin > Use cases** lists the synced catalog with **Published**, **Removed** and
+**All use cases** filters. The action selector offers **Remove from portal** and
+**Remove from repository** (or **Restore to portal** for a hidden entry). Only
+administrators can use these actions; confirmation and audit records are required.
+
+**Remove from portal** hides
+the use case and blocks new portal deployment requests, including requests from
+an older open browser. It does not delete GitHub source, staged submissions,
+versioned artifacts, existing deployment records or Azure resources. Existing
+deployments and their cleanup schedules continue unchanged.
+
+Removals are saved in SQLite separately from the synced source snapshot, scoped
+to the source repository and use-case path. They survive page refresh, restart
+and subsequent repository syncs. Reusing the same path in that repository remains
+removed until an administrator selects **Restore to portal** from the Removed
+filter. Restoring clears the removal; the use case appears only if it exists in
+the latest successful catalog snapshot. A changed catalog version is rejected
+with a refresh-and-retry message. Keep these records in the normal database backup.
+This is site visibility management, not source deletion or an exemption from
+source validation; remove or repair invalid source through repository review.
+
+**Remove from repository** deletes exactly `catalog/<use-case>/` and every file
+below it by committing directly to the configured catalog branch. The confirmation
+names the repository, branch and folder and states that this is an immediate source
+deletion, not a review-branch request. Only an administrator can confirm it. On
+verified success, the use case is also removed from the saved portal catalog and
+a sync is queued. **View verified commit** opens the resulting GitHub commit.
+This action does not delete the branch itself or create/merge a pull request.
+
+Shared `modules/`, sibling use cases, site files, staged submissions, existing
+deployments and Azure resources are not deleted. Portal restore cannot restore
+deleted source; use a reviewed Git revert to recover it. Removing files does not
+erase Git history. Verified source deletion clears this entry's portal-removal
+record; restoring reviewed source at the same path can publish it again on sync.
+
+The backend verifies write access and pins the request to the displayed snapshot,
+source commit, repository and branch. It enumerates only the selected folder,
+with limits of 500 files, 150 directories and eight nested levels. Symlinks are
+deleted as files, never followed; submodules and unverifiable trees require manual
+review. GitHub's `createCommitOnBranch` mutation uses `expectedHeadOid`, atomically
+rejecting a changed branch instead of overwriting concurrent work. GitHub branch
+protection and repository rules remain enforced. If a pull request is required,
+perform the deletion through the normal GitHub review process; the portal does
+not weaken rules or force-update branches.
+
+The resulting commit, parent, branch head and retained sibling hashes are checked
+before local catalog changes are reported as successful. Missing source is reconciled
+only after verifying the confirmed branch. Requests are limited to one per minute
+with a 90-second timeout. A lost response may occur after GitHub committed the
+deletion: inspect the configured branch and sync before retrying. No deletion is
+automatically retried. Failures report a safe operation stage and HTTP status where
+available without exposing tokens or raw remote responses. Old portal tabs lacking
+the direct-deletion acknowledgement are rejected; refresh after upgrading.
+
+Older images created deletion review branches instead. Those branches are not
+automatically deleted or merged by this version. Review them separately before
+making a new direct-deletion request.
+
+**Delete submission** removes the staged files and, when present, its original
+GitHub review branch. The confirmation names the branch. The backend checks the
+recorded original repository, submission-specific branch name and write access,
+and refuses default, protected or currently selected publication branches. A
+GitHub failure leaves the submission and local files available for retry; a
+verified already-absent branch is treated as deleted. Deleting a review branch
+may close its open pull request; it does not undo merged code or deployments.
+The database retains a Deleted record and audit event. Submissions recorded as
+merged must be managed through the repository. Review-branch status is not a
+live pull-request status; a later merge in GitHub is not automatically reconciled.
 
 ## Acceptance checklist
 
@@ -1752,6 +2179,9 @@ publishing executable workloads for employees:
 - [ ] Retail or negotiated pricing reports its actual source and any fallback; no quota checks run during initial setup.
 - [ ] A disposable reviewed workload deploys and cleans up with the host managed identity, including failed-cleanup recovery.
 - [ ] A restart retains setup, users, catalog versions and deployment records on persistent storage.
+- [ ] An administrator can remove and restore a use case without deleting source or active deployments; ordinary users cannot change visibility, and removed use cases stay unavailable after sync.
+- [ ] Direct repository removal commits only the confirmed folder deletion, enforces branch rules and expected-head checks, preserves unrelated files/deployments, and reports uncertain outcomes without falsely claiming success.
+- [ ] Scheduled database and adjacent-file backups meet the agreed RPO/retention policy; an isolated restore has recovered history, setup and workload state, and backup failures are monitored.
 - [ ] Credential rotation, log/data retention, backups, restore testing and an operational owner are in place.
 
 Local automated tests and UI previews do not establish live Entra or workload
@@ -1777,6 +2207,131 @@ image push is not a substitute for these checks.
 6. Monitor failed deployments/cleanup, persistent storage usage and access to
    logs, SCM and backups. Keep one worker and one instance. App source changes
    require rebuilding/redeploying; catalog sync does not deploy application code.
+
+### Deploy local site changes
+
+For an already-installed portal, use the same script with `-DeployImage` from the
+organization's local source checkout. This is an image-only update, not Prepare
+or first-run installation:
+
+```powershell
+./tools/Deploy-Portal.ps1 -DeployImage -WhatIf
+./tools/Deploy-Portal.ps1 -DeployImage
+```
+
+The second command asks for confirmation before publication and before changing
+the app. Routine updates do not ask for a backup acknowledgement or display a
+WAL migration warning. It builds the checkout containing
+the script (not another current working directory), pushes a new `linux/amd64`
+image, verifies its published digest, stops the app, changes only
+`linuxFxVersion`, verifies configuration readback, and starts the app. Expect
+brief downtime. It preserves App Service settings, credentials, identity,
+authentication, network settings, database/upload paths, and browser Setup.
+It does not create Azure resources, grant roles, reconfigure Entra or call GitHub.
+It does not run tests, scan images or certify database compatibility for you.
+
+Target selection reuses the non-secret `.portal/prepare.json` from Prepare when
+available. `-ConfigPath` selects a different saved configuration. A fresh clone
+does not include that ignored local file; supply all four explicit target inputs
+or use the prompts. Explicit inputs never merge with a saved target:
+
+```powershell
+./tools/Deploy-Portal.ps1 -DeployImage `
+   -SubscriptionId '<hosting-subscription-guid>' `
+   -ResourceGroupName '<existing-resource-group>' `
+   -AppName '<existing-app-service>' `
+   -RegistryName '<existing-registry>' -WhatIf
+```
+
+Requirements: PowerShell 7, Azure CLI signed into the hosting subscription, Docker
+with Linux container support, App Service/plan/configuration read access,
+App Service configuration/stop/start access, and ACR metadata/push access under
+organization policy. No new Graph access is required for this update path;
+existing Entra policy remains the operator's responsibility. Existing managed
+identity image pulls, port 8000 and persistent storage must already be configured.
+The registry and image repository must match the current deployment. F1 is retained.
+
+- `-WhatIf` performs read-only discovery; no Docker build, registry login/push,
+   app stop/start or configuration write is performed.
+- By default each build gets a timestamp plus random-suffix release tag. Optional
+   `-Image 'deployment-portal:release-20260917-1'` selects a new tag in the same
+   repository. A tag found by preflight is refused. Use unique tags for concurrent
+   releases; tag discovery is not a distributed publication lock. Deployment uses
+   the Docker-reported digest verified against ACR, not a mutable tag lookup.
+- `-PipConfigPath 'C:\approved\pip.ini'` passes an approved private-feed config
+   as a BuildKit secret. The script does not display or store its contents.
+- After a reviewed preview, unattended updates additionally require
+   `-NonInteractive -Confirm:$false`. Routine updates do not require
+   `-BackupConfirmed`; that switch is used only with `-MaintenanceReady`.
+   Deployment approval is not proof that tests or security review were completed.
+- Failed builds/pushes/digest verification do not change the app. After a stop or
+   configuration failure the app may remain stopped; inspect the returned error
+   and previous image before retrying. No automatic rollback or data reset occurs.
+   `ImageUpdated` confirms configuration readback and start submission, not a
+   successfully running image or employee sign-in. Verify those separately.
+
+**Database migrations, including the WAL-era upgrade below:** stop the app and all
+other database users, verify termination, and back up the complete stopped data
+first. Then use `-DeployImage -MaintenanceReady -BackupConfirmed`. The script
+checks the app's stopped state, but cannot certify all database users are gone;
+it does not inspect the live database, take a backup, or detect migration needs.
+Do not treat an ordinary image restart as the stopped-backup procedure.
+Without `-BackupConfirmed`, interactive maintenance asks for backup acknowledgement;
+unattended maintenance refuses to proceed. This requirement applies only when
+`-MaintenanceReady` is selected, not to every later site update. Routine backup
+and retention policies still apply independently of deployment prompts.
+
+Edits to existing allowlisted site files are included in the image. When adding
+new runtime files/assets, add their exact paths to both `.dockerignore` and
+`SOURCE_FILES` in `tools/portal_source.py`, then review the exported image contents.
+Do not replace these allowlists with a blanket directory copy: local databases,
+credentials, internal catalogs and development artifacts must stay excluded.
+Dependencies belong in `site/requirements.txt`. The source bundle embedded by the
+image follows the same allowlist; catalog sync does not deploy these site changes.
+
+### Upgrade from SQLite WAL
+
+The portal now uses SQLite rollback journaling (`journal_mode=DELETE`) with
+`synchronous=EXTRA`, which includes full synchronization and synchronizes the
+directory after removing the rollback journal. Earlier images enabled WAL on
+the App Service `/home` network share. [SQLite WAL requires shared memory and is
+not supported across network filesystems](https://sqlite.org/wal.html).
+App Service can briefly overlap retiring and replacement containers after
+settings changes, including GitHub token storage; one configured instance is
+not a guarantee that only one process is accessing the share during a restart.
+
+This upgrade requires a maintenance window, not a rolling image replacement:
+
+1. Stop the app and verify that all its application containers have terminated.
+   Stop any other app, slot, job or database tool using the same database. Do not
+   open a live WAL database from SCM, even read-only; WAL reads use a shared index.
+2. Back up the complete stopped data directory and protected configuration to
+   organization-controlled storage. Preserve the database and any `-wal`, `-shm`
+   and `-journal` companions together, plus uploads and Terraform state. A WAL
+   may contain committed changes absent from the main database. Do not delete,
+   rename or truncate journal files as a repair. Test recovery from the backup
+   on an isolated copy before proceeding.
+3. Deploy the fixed image against the same database path and start one instance
+   with one worker. SQLite performs the WAL-to-rollback conversion at startup,
+   retaining readable committed WAL transactions. Startup fails rather than
+   continuing if SQLite cannot acquire the conversion lock or accept rollback
+   mode. Resolve remaining database users before retrying; do not reset data.
+4. In the authenticated portal, verify the repository, processing settings,
+   subscriptions, users and staged uploads. Restart once more and confirm that
+   those values remain. Validate backup restoration on the actual hosting storage;
+   rollback journaling still depends on correct filesystem locking and sync.
+   Local tests cannot certify those properties for a particular network mount.
+5. Do not roll back to a WAL-enabling image against a running database. Any rollback
+   requires another stopped-app backup and a database-compatible recovery plan.
+
+Conversion cannot reconstruct settings already lost before the upgrade. If the
+source repository exists but Setup has no repository selection, use **Connect an
+existing repository** and save the existing owner, name and publication branch.
+Do not create the repository again or recopy its source. Verify the selection
+after a page reload and restart. Previously staged submissions are not sent
+automatically by reconnecting: retain them, download their bundles in Admin, and
+have a maintainer import them through the normal review/merge process. Only then
+sync the reviewed publication branch. Recovery does not auto-publish or deploy.
 
 `GALLERY_ADMIN_OIDS` is an initial bootstrap eligibility list, not a live role
 synchronization mechanism. Manage existing portal roles through authorized admin

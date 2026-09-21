@@ -46,6 +46,32 @@ def _patch_rows(monkeypatch, rows, counter):
     monkeypatch.setattr(pricing, "_fetch_rows", fake)
 
 
+def test_retail_cache_expires_and_deployment_can_bypass_it(monkeypatch):
+    import httpx
+    calls = []
+    monkeypatch.setattr(pricing, "_price_cache", {})
+    monkeypatch.setattr(pricing, "_price_cached_at", {})
+    async def run():
+        def response(request):
+            calls.append(request.url)
+            return httpx.Response(200, json={"Items": [{"retailPrice": len(calls)}], "NextPageLink": None})
+        async with httpx.AsyncClient(transport=httpx.MockTransport(response)) as client:
+            first = await pricing._fetch_rows(client, "eastus", "USD", "Compute", None)
+            second = await pricing._fetch_rows(client, "eastus", "USD", "Compute", None)
+            assert first == second and len(calls) == 1
+            for key in pricing._price_cached_at:
+                pricing._price_cached_at[key] -= 301
+            await pricing._fetch_rows(client, "eastus", "USD", "Compute", None)
+            assert len(calls) == 2
+            token = pricing.FRESH_READ.set(True)
+            try:
+                await pricing._fetch_rows(client, "eastus", "USD", "Compute", None)
+                assert len(calls) == 3
+            finally:
+                pricing.FRESH_READ.reset(token)
+    asyncio.run(run())
+
+
 def test_same_region_no_override_reuses_price(monkeypatch):
     calls: list[int] = []
     _patch_rows(monkeypatch, [], calls)

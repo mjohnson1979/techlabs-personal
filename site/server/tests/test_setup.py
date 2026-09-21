@@ -403,10 +403,147 @@ def test_capacity_snapshot_is_validated_and_filtered(configured):
         setup_github.validate_capacity(document)
 
 
+def test_scheduled_snapshot_endpoint_requires_user_and_filters_removed_subscriptions(configured, monkeypatch):
+    import api
+    import catalog_processing
+    from identity import require_user
+    item = {"path": "example"}
+    subscription = {"subscriptionId": SUBSCRIPTION}
+    db.set_setup_setting("subscriptions", [subscription])
+    monkeypatch.setattr(api, "_catalog_items", lambda: {"example": item})
+    key = catalog_processing.regional_input_key(item, subscription)
+    row = {"subscriptionId": SUBSCRIPTION, "useCase": "example", "location": "eastus", "inputKey": key, "checkedAt": 1.0}
+    db.set_setup_setting("regional_snapshot", {"rows": [row, {**row, "subscriptionId": "33333333-3333-4333-8333-333333333333"}]})
+    application = FastAPI()
+    application.include_router(api.build_api_router())
+    client = TestClient(application)
+    assert client.get("/api/regions/snapshot").status_code == 401
+    application.dependency_overrides[require_user] = lambda: CurrentUser("user", "", "", TENANT)
+    response = client.get("/api/regions/snapshot?useCase=example")
+    assert len(response.json()["rows"]) == 1
+    assert response.json()["rows"][0]["stale"] is True
+    assert client.get("/api/regions/snapshot?subscriptionId=33333333-3333-4333-8333-333333333333").status_code == 403
+
+
+def test_capacity_snapshot_accepts_all_region_scope(configured):
+    import setup_github
+    regions = {f"region{index}": [] for index in range(80)}
+    subscriptions = {f"{index:08d}-1111-4111-8111-111111111111": regions for index in range(25)}
+    result = setup_github.validate_capacity({"schemaVersion": 1, "tenantId": TENANT,
+        "generated": "2026-01-01T00:00:00+00:00", "physicalCapacity": "unknown", "subscriptions": subscriptions})
+    assert len(result["subscriptions"]) == 25
+    assert len(next(iter(result["subscriptions"].values()))) == 80
+
+
+@pytest.mark.parametrize("price_failure", [False, True])
+def test_regional_comparison_prices_saved_subscription_and_keeps_quota_results(configured, monkeypatch, price_failure):
+    import api
+    import setup_cloud
+    from identity import require_user
+    db.set_setup_setting("subscriptions", [{"subscriptionId": SUBSCRIPTION, "tenantId": TENANT, "displayName": "Team", "pricingMode": "negotiated"}])
+    item = {"path": "example", "cost": {"region": "eastus", "components": [{"unitPrice": 99, "monthly": 99}]}}
+    monkeypatch.setattr(api, "_catalog_items", lambda: {"example": item})
+    async def locations(identifier):
+        assert identifier == SUBSCRIPTION
+        return [{"name": "eastus"}, {"name": "westus"}]
+    async def estimate(cost, region, parameters, subscription):
+        assert subscription["pricingMode"] == "negotiated"
+        assert region == "westus"
+        assert "unitPrice" not in cost["components"][0]
+        if price_failure:
+            raise ValueError("private upstream message")
+        return {"complete": True, "totalMonthly": 20, "pricingSource": "retail", "fallbackReason": "Negotiated meters unavailable", "currency": "USD"}
+    async def capacity(identifier, region, workload, parameters):
+        return {"status": "unknown", "quotas": [{"name": "cores", "available": 3}], "checks": [], "physicalCapacity": "unknown"}
+    monkeypatch.setattr(setup_cloud, "subscription_locations", locations)
+    monkeypatch.setattr(api.pricing, "estimate_for_subscription", estimate)
+    monkeypatch.setattr(setup_cloud, "workload_capacity", capacity)
+    application = FastAPI()
+    application.include_router(api.build_api_router())
+    client = TestClient(application)
+    payload = {"useCase": "example", "subscriptionId": SUBSCRIPTION, "location": "westus"}
+    assert client.post("/api/regions/check", json=payload).status_code == 401
+    application.dependency_overrides[require_user] = lambda: CurrentUser("user", "user@example.test", "User", TENANT)
+    headers = {"Origin": "http://testserver"}
+    assert client.post("/api/regions/check", json=payload, headers={"Origin": "https://other.test"}).status_code == 403
+    assert client.post("/api/regions/check", json={**payload, "subscriptionId": "33333333-3333-4333-8333-333333333333"}, headers=headers).status_code == 403
+    assert client.post("/api/regions/check", json={**payload, "location": "otherregion"}, headers=headers).status_code == 400
+    response = client.post("/api/regions/check", json=payload, headers=headers)
+    assert response.status_code == 200
+    assert response.json()["capacity"]["quotas"][0]["available"] == 3
+    assert (response.json()["price"] is None) == price_failure
+    assert "private upstream message" not in response.text
+    assert item["cost"]["components"][0]["unitPrice"] == 99
+
+
+@pytest.mark.parametrize("lifecycle", ["GenerallyAvailable", "Deprecating", ""])
+def test_model_capacity_matches_exact_sku_and_lifecycle(monkeypatch, lifecycle):
+    import setup_cloud
+    async def read(path):
+        if "/usages?" in path:
+            return {"value": [{"name": {"value": "cores"}, "limit": 10, "currentValue": 2}]}
+        if "/modelCapacities?" in path:
+            assert "modelVersion=2026" in path
+            return {"value": [{"location": "eastus", "properties": {"skuName": "Standard", "availableCapacity": 0}},
+                              {"location": "eastus", "properties": {"skuName": "GlobalStandard", "availableCapacity": 100}}]}
+        return {"value": [{"model": {"name": "example-model", "version": "2026", "lifecycleStatus": lifecycle, "skus": [{"name": "Standard"}, {"name": "GlobalStandard"}]}}]}
+    monkeypatch.setattr(setup_cloud, "arm_request", read)
+    result = asyncio.run(setup_cloud.workload_capacity(SUBSCRIPTION, "eastus", {"quota": {"requirements": [
+        {"service": "Model", "kind": "model-tpm", "model": "example-model", "modelVersion": "2026", "sku": "Standard"}]}}, {}))
+    assert result["checks"][0]["status"] == ("unknown" if not lifecycle else "unavailable")
+    assert result["physicalCapacity"] == "unknown"
+
+
+def test_capacity_cache_is_subscription_scoped_and_does_not_share_mutable_results(monkeypatch):
+    import setup_cloud
+    calls = []
+    async def read(path):
+        calls.append(path)
+        return {"value": []}
+    monkeypatch.setattr(setup_cloud, "arm_request", read)
+    async def run():
+        first = await setup_cloud.cached_read(f"/subscriptions/{SUBSCRIPTION}/locations?api-version=2022-12-01")
+        first["value"].append("not cached")
+        second = await setup_cloud.cached_read(f"/subscriptions/{SUBSCRIPTION}/locations?api-version=2022-12-01")
+        assert second == {"value": []}
+        await setup_cloud.cached_read("/subscriptions/33333333-3333-4333-8333-333333333333/locations?api-version=2022-12-01")
+        assert len(calls) == 2
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("requirements", [[None], "invalid", [{"kind": "model-tpm", "model": "example", "modelVersion": 1}]])
+def test_malformed_capacity_metadata_is_unknown(monkeypatch, requirements):
+    import setup_cloud
+    async def read(path):
+        assert "/usages?" in path
+        return {"value": []}
+    monkeypatch.setattr(setup_cloud, "arm_request", read)
+    result = asyncio.run(setup_cloud.workload_capacity(SUBSCRIPTION, "eastus", {"quota": {"requirements": requirements}}, {}))
+    assert result["status"] == "unknown"
+
+
+def test_service_offering_does_not_claim_available_capacity(monkeypatch):
+    import setup_cloud
+    async def read(path):
+        if "/usages?" in path:
+            return {"value": []}
+        return {"resourceTypes": [{"resourceType": "serverfarms", "locations": ["East US"]}]}
+    monkeypatch.setattr(setup_cloud, "arm_request", read)
+    workload = {"quota": {"requirements": [{"service": "App Service", "provider": "Microsoft.Web/serverfarms"}]}}
+    async def run():
+        offered = await setup_cloud.workload_capacity(SUBSCRIPTION, "eastus", workload, {})
+        missing = await setup_cloud.workload_capacity(SUBSCRIPTION, "westus", workload, {})
+        assert offered["status"] == "offered"
+        assert "not verified" in offered["checks"][0]["detail"]
+        assert missing["status"] == "unavailable"
+    asyncio.run(run())
+
+
 def test_workflow_pr_only_changes_review_branch_and_is_idempotent(configured, monkeypatch):
     import base64
     import setup_github
-    names = (".github/workflows/portal-catalog.yml", ".github/workflows/portal-capacity.yml", "tools/portal_workflows.py", "tools/portal_catalog.py", "site/server/pricing.py", "site/server/catalog_workflows.py")
+    names = (".github/workflows/portal-catalog.yml", ".github/workflows/portal-capacity.yml", ".github/workflows/portal-lifecycle.yml", "tools/portal_workflows.py", "tools/portal_catalog.py", "site/server/pricing.py", "site/server/catalog_workflows.py",
+             "site/server/catalog_processing.py", "site/server/setup_cloud.py", "site/server/lifecycle.py", "site/requirements.txt")
     monkeypatch.setattr(setup_github, "source_seed", lambda: {name: base64.b64encode(b"reviewed").decode() for name in names})
     db.set_setup_setting("catalog_processing", {"mode": "github-hosted"})
     async def probe(*args, **kwargs):
@@ -508,11 +645,19 @@ def test_workflow_endpoint_requires_admin_origin_and_confirmation(configured, mo
 def test_capacity_is_not_leaked_via_catalog_json(configured, monkeypatch):
     import json
     import app
+    import identity
+    from fastapi import HTTPException
     from starlette.requests import Request
     monkeypatch.setattr(app, "is_customer_distribution", lambda: True)
     monkeypatch.setattr(app.setup_github, "catalog_snapshot", lambda: {"items": [], "version": "a" * 40, "capacity": {"private": True}})
+    monkeypatch.setattr(identity, "_resolve_identity", lambda request: None)
+    with pytest.raises(HTTPException) as error:
+        asyncio.run(app.serve_gallery(Request({"type": "http", "headers": []}), "catalog.json"))
+    assert error.value.status_code == 401
+    monkeypatch.setattr(identity, "_resolve_identity", lambda request: identity.CurrentUser("guest", "", "", "", "guest"))
     response = asyncio.run(app.serve_gallery(Request({"type": "http", "headers": []}), "catalog.json"))
     assert "capacity" not in json.loads(response.body)
+    assert response.headers["cache-control"] == "no-store"
 
 
 def test_auth_provider_preserves_bootstrap(configured):
@@ -881,6 +1026,77 @@ def test_github_source_copy_route_requires_admin_origin_and_confirmation(source_
         assert setup_github.catalog_snapshot() == {}
 
 
+def test_setup_wizard_preserves_drafts_and_guards_navigation():
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js is required for the Setup UI regression")
+    script = r"""
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const source = fs.readFileSync('site/assets/setup.js', 'utf8');
+const code = source.slice(source.indexOf('  async function open()'), source.indexOf('  function branding('));
+let focused;
+class Element {
+    constructor(tag, props = {}, children = []) {
+        this.tag = tag; this.attrs = {...props}; this.children = []; this.listeners = {};
+        this.dataset = {}; this.isConnected = true; this.hidden = !!props.hidden;
+        this.disabled = false; this.textContent = props.text || ''; this.value = props.value || '';
+        this.append(...(Array.isArray(children) ? children : [children]));
+    }
+    append(...items) { items.filter(Boolean).forEach(item => this.appendChild(item)); }
+    appendChild(item) { item.parent = this; this.children.push(item); return item; }
+    remove() { this.parent.children = this.parent.children.filter(item => item !== this); }
+    setAttribute(name, value) { this.attrs[name] = value; }
+    addEventListener(name, handler) { this.listeners[name] = handler; }
+    focus() { focused = this; }
+    click() { if (!this.disabled) this.listeners.click?.(); }
+    descendants() { return this.children.flatMap(child => [child, ...child.descendants()]); }
+    querySelectorAll(selector) { return this.descendants().filter(child => selector === 'button' && child.tag === 'button'); }
+    querySelector() { return this.descendants().find(child => child.attrs['aria-busy'] === 'true' || child.attrs['data-setup-busy'] === 'true'); }
+}
+const root = new Element('div');
+const builds = [0,0,0,0];
+let requests = 0, closed = 0, observer;
+const build = index => body => { builds[index]++; body.appendChild(new Element('input', {value:'initial'})); };
+const context = {
+    el:(...args)=>new Element(...args),
+    panel:{open:render=>render(root), close:()=>closed++},
+    request:async()=>{requests++;return {primaryAuthentication:{clientId:'configured'},subscriptions:[]};},
+    authentication:build(0), github:build(1), subscriptions:build(2), branding:build(3),
+    MutationObserver:class {constructor(callback){observer=callback;} observe(){}},
+};
+vm.createContext(context); vm.runInContext(code,context);
+(async()=>{
+    await context.open();
+    const tabs=root.querySelectorAll('button').filter(button=>button.attrs.role==='tab');
+    const panels=root.descendants().filter(element=>element.attrs.role==='tabpanel');
+    const navigation=root.descendants().find(element=>element.attrs.class==='setup-navigation-buttons');
+    const [back,next]=navigation.children;
+    assert.equal(back.disabled,true); assert.equal(next.textContent,'Next: GitHub');
+    next.click();
+    const draft=panels[1].descendants().find(element=>element.tag==='input');
+    draft.value='unsaved repository';
+    next.click(); back.click();
+    assert.equal(panels[1].descendants().find(element=>element.tag==='input'),draft);
+    assert.equal(draft.value,'unsaved repository'); assert.deepEqual(builds,[1,1,1,0]);
+    assert.equal(panels.filter(element=>!element.hidden).length,1);
+    panels[1].children[0].setAttribute('aria-busy','true'); observer();
+    assert.equal(back.disabled,true); assert.equal(next.disabled,true);
+    assert.equal(tabs.every(tab=>tab.disabled),true); next.click();
+    assert.equal(panels[1].hidden,false);
+    panels[1].children[0].setAttribute('aria-busy','false'); observer();
+    assert.equal(next.disabled,false);
+    tabs[1].listeners.keydown({key:'End',preventDefault(){}});
+    assert.equal(tabs[3].attrs['aria-selected'],'true'); assert.equal(focused,tabs[3]);
+    assert.equal(next.textContent,'Close setup'); next.click();
+    assert.equal(closed,1); assert.equal(requests,1);
+})().catch(error=>{console.error(error);process.exitCode=1;});
+"""
+    result = subprocess.run([node, "-e", script], cwd=SERVER_DIR.parent.parent, capture_output=True, text=True, timeout=15)
+    assert result.returncode == 0, result.stderr
+
+
 def test_setup_github_copy_action_requires_explicit_selection_and_confirmation():
         node = shutil.which("node")
         if not node:
@@ -896,12 +1112,18 @@ const buttons = new Map();
 const requests = [];
 const confirmations = [];
 let approved = true;
-function element(tag, props = {}) {
-    return Object.assign({children:[], isConnected:true, listeners:{}, value:'',
+let failPath = '';
+let deviceStatus = 'connected';
+const elements = [];
+function element(tag, props = {}, children = []) {
+    const node = Object.assign({tag, children, isConnected:true, listeners:{}, value:'', dataset:{},
+        classList:{add(){}}, setAttribute(name,value){this[name]=value;},
         append(...items){this.children.push(...items);}, appendChild(item){this.children.push(item);},
         replaceChildren(...items){this.children=items;},
         addEventListener(event, handler){this.listeners[event]=handler;}
     }, props);
+    elements.push(node);
+    return node;
 }
 function field(label, value = '') {
     const control = element('input', {value});
@@ -912,9 +1134,13 @@ const context = {el:element, field,
     choice(label, values, selected){const entry=field(label, selected); entry.control.options=values.map(([value,text])=>({value,text})); Object.defineProperty(entry.control,'selectedOptions',{get(){return this.options.filter(option=>option.value===this.value);}}); return entry;},
     button(label, action){const node=element('button',{textContent:label,action}); buttons.set(label,node); return node;},
     confirm(message){confirmations.push(message); return approved;},
-    setTimeout, clearTimeout,
+    setTimeout:()=>1, clearTimeout(){}, AbortSignal,
     request:async(path, method='GET', data)=>{
         requests.push({path,method,data});
+        if(path===failPath) throw new Error('Simulated request failure');
+        if(path==='/github/oauth-client') return {clientId:data.clientId,configured:true};
+        if(path==='/github/device/start') return {flowId:'test-flow',userCode:'TEST-CODE',interval:5};
+        if(path==='/github/device/poll') return {status:deviceStatus,message:'Authorization failed'};
         if(path==='/github/discover') return {account:{login:'organization'},owners:[{login:'organization'}],repositories:[{fullName:'organization/portal',owner:'organization',name:'portal',defaultBranch:'main',private:true}]};
         if(path==='/github/runners/probe') return {repository:'organization/portal',checkedAt:Date.now()/1000,'github-hosted':{available:false,state:'unverified'},'self-hosted':{available:false,state:'unavailable',candidates:[]}};
         assert.equal(path,'/github');
@@ -925,7 +1151,8 @@ vm.createContext(context);
 vm.runInContext(code, context);
 (async()=>{
     const status=element('p');
-    context.github(element('div'), {github:{enabled:true,owner:'organization',repository:'portal'},githubConnected:true,githubDeviceConfigured:true}, status);
+    const body=element('div');
+    context.github(body, {github:{enabled:true,owner:'organization',repository:'portal'},githubConnected:true,githubDeviceConfigured:true}, status);
     await new Promise(resolve=>setImmediate(resolve));
     const mode=controls.get('Repository action');
     assert.equal(controls.get('Catalog processing').value,'container');
@@ -937,6 +1164,7 @@ vm.runInContext(code, context);
     assert.match(status.textContent,/No source files were copied/);
     mode.value='copy'; mode.listeners.change();
     assert.equal(save.textContent,'Copy portal source');
+    assert.match(body.dataset.nextAction,/Next:.*Copy portal source/);
     approved=false;
     const before=requests.length;
     await save.action();
@@ -948,9 +1176,66 @@ vm.runInContext(code, context);
     assert.match(confirmations.at(-1),/organization\/portal on branch main.*Existing code will not be overwritten/);
     assert.match(status.textContent,/Portal source verified in organization\/portal/);
     mode.value='create'; controls.get('GitHub account').value='organization'; controls.get('New repository name').value='new-portal';
+    mode.listeners.change();
+    assert.equal(save.textContent,'Create repository + copy source');
+    assert.match(body.dataset.nextAction,/Next:.*Creation requires your confirmation/);
     await save.action();
     assert.equal(requests.at(-1).data.seed,true); assert.equal(requests.at(-1).data.create,true);
     assert.equal(mode.value,'connect'); assert.equal(controls.get('Repository').value,'organization/new-portal');
+
+    elements.length=0; controls.clear(); buttons.clear();
+    context.github(element('div'), {github:{enabled:true},githubConnected:false,githubDeviceConfigured:false}, element('p'));
+    const groups=elements.filter(node=>node.tag==='fieldset');
+    assert.equal(groups.length,4);
+    const locked=()=>groups.map(group=>group.disabled);
+    assert.deepEqual(locked(),[false,true,true,true]);
+    assert.equal(groups[1].children[2].inert,true);
+    const oauth=buttons.get('Save OAuth application');
+    controls.get('GitHub OAuth App client ID').value='organization-owned-client';
+    failPath='/github/oauth-client';
+    await assert.rejects(oauth.action(),/Simulated request failure/);
+    assert.deepEqual(locked(),[false,true,true,true]);
+    failPath=''; await oauth.action();
+    assert.deepEqual(locked(),[false,false,true,true]);
+    const connect=buttons.get('Connect GitHub');
+    failPath='/github/device/start';
+    await assert.rejects(connect.action(),/Simulated request failure/);
+    assert.deepEqual(locked(),[false,false,true,true]);
+    failPath=''; await connect.action();
+    assert.deepEqual(locked(),[true,false,true,true]);
+    deviceStatus='error'; await connect.action();
+    assert.deepEqual(locked(),[false,false,true,true]);
+    deviceStatus='connected'; await connect.action();
+    failPath='/github/discover'; await connect.action();
+    assert.deepEqual(locked(),[false,false,true,true]);
+    failPath=''; await connect.action(); await connect.action();
+    assert.deepEqual(locked(),[false,false,false,true]);
+    controls.get('Repository').value='organization/portal';
+    const repositorySave=buttons.get('Save GitHub configuration');
+    failPath='/github'; await assert.rejects(repositorySave.action(),/Simulated request failure/);
+    assert.deepEqual(locked(),[false,false,false,true]);
+    failPath=''; await repositorySave.action();
+    assert.deepEqual(locked(),[false,false,false,false]);
+    controls.get('Repository action').value='copy'; controls.get('Repository action').listeners.change();
+    assert.deepEqual(locked(),[false,false,false,true]);
+    controls.get('GitHub OAuth App client ID').listeners.input();
+    assert.deepEqual(locked(),[false,true,true,true]);
+
+    elements.length=0; controls.clear(); buttons.clear();
+    const renewalBody=element('div');
+    const renewalSettings={github:{enabled:true,owner:'organization',repository:'portal',branch:'release/v1.0',seeded:true},githubConnected:false,githubDeviceConfigured:true};
+    context.github(renewalBody, renewalSettings, element('p'));
+    assert.match(renewalBody.dataset.nextAction,/reconnect the same GitHub account/);
+    const renewalStart=requests.length;
+    const renewal=buttons.get('Connect GitHub');
+    await renewal.action();
+    assert.match(confirmations.at(-1),/previously connected GitHub account.*repository and branch will stay unchanged/);
+    await renewal.action();
+    assert.equal(controls.get('Repository').value,'organization/portal');
+    assert.equal(renewalSettings.github.enabled,true);
+    assert.equal(renewalSettings.github.branch,'release/v1.0');
+    assert.equal(elements.filter(node=>node.tag==='fieldset')[3].disabled,false);
+    assert.equal(requests.slice(renewalStart).some(request=>request.path==='/github'),false);
 })().catch(error=>{console.error(error);process.exitCode=1;});
 """
         result = subprocess.run([node, "-e", script], cwd=SERVER_DIR.parent.parent, capture_output=True, text=True, timeout=15)
@@ -1194,6 +1479,70 @@ def test_sync_failure_preserves_catalog(configured, monkeypatch):
     assert setup_github.catalog_snapshot() == previous
 
 
+@pytest.mark.parametrize("capacity_status", ["unavailable", "headroom", "unknown"])
+@pytest.mark.parametrize("mode", ["container", "github-hosted"])
+@pytest.mark.parametrize("engine", ["bicep", "terraform"])
+def test_deployment_always_checks_before_provisioning(configured, monkeypatch, capacity_status, mode, engine):
+    import api
+    from identity import require_user
+    monkeypatch.setenv("GALLERY_DISTRIBUTION", "organization")
+    db.set_setup_setting("catalog_processing", {"mode": mode})
+    db.set_setup_setting("subscriptions", [{"subscriptionId": SUBSCRIPTION, "pricingMode": "retail"}])
+    monkeypatch.setattr(api, "_catalog_items", lambda: {"example": {"path": "example", "parameters": [], "engines": [engine]}})
+    monkeypatch.setattr(api, "_terraform_exec_available", lambda: True)
+    scheduled = []
+    def schedule(coroutine):
+        scheduled.append(True)
+        coroutine.close()
+    async def regions(identifier):
+        return [{"name": "eastus"}]
+    async def check(item, subscription, location, parameters, *, fresh=False):
+        assert fresh is True and location == "eastus"
+        assert db.list_deployments() == [] and not scheduled
+        return {"checkedAt": 123.0, "capacity": {"status": capacity_status},
+                "price": {"complete": True, "currency": "USD", "totalMonthly": 12, "pricingSource": "retail"}, "priceDetail": ""}
+    monkeypatch.setattr(api.az, "schedule", schedule)
+    monkeypatch.setattr(api.setup_cloud, "subscription_locations", regions)
+    monkeypatch.setattr(api.catalog_processing, "check_region", check)
+    application = FastAPI()
+    application.include_router(api.build_api_router())
+    application.dependency_overrides[require_user] = lambda: CurrentUser("user", "", "User", TENANT)
+    response = TestClient(application).post("/api/deployments", json={"useCase": "example", "subscriptionId": SUBSCRIPTION, "location": "eastus", "engine": engine})
+    if capacity_status == "unavailable":
+        assert response.status_code == 409
+        assert not scheduled and db.list_deployments() == []
+    else:
+        assert response.status_code == 200
+        assert scheduled == [True]
+        assert response.json()["deployment"]["preflight"]["capacityStatus"] == capacity_status
+        assert db.list_deployments()[0]["params"]["preflight"]["price"]["totalMonthly"] == 12
+        assert db.list_deployments()[0]["engine"] == engine
+
+
+@pytest.mark.parametrize("available, requested, detail", [
+    ("terraform", "bicep", "this use case has no Bicep template"),
+    ("bicep", "terraform", "this use case has no Terraform module"),
+])
+def test_single_format_deployment_rejects_unavailable_engine_before_cloud_calls(configured, monkeypatch, available, requested, detail):
+    import api
+    from identity import require_user
+    monkeypatch.setenv("GALLERY_DISTRIBUTION", "organization")
+    db.set_setup_setting("subscriptions", [{"subscriptionId": SUBSCRIPTION, "pricingMode": "retail"}])
+    monkeypatch.setattr(api, "_catalog_items", lambda: {"example": {"path": "example", "parameters": [], "engines": [available]}})
+    def unexpected(*args, **kwargs):
+        pytest.fail("Unavailable engines must be rejected before cloud calls or scheduling")
+    monkeypatch.setattr(api.az, "schedule", unexpected)
+    monkeypatch.setattr(api.setup_cloud, "subscription_locations", unexpected)
+    monkeypatch.setattr(api.catalog_processing, "check_region", unexpected)
+    application = FastAPI()
+    application.include_router(api.build_api_router())
+    application.dependency_overrides[require_user] = lambda: CurrentUser("user", "", "User", TENANT)
+    response = TestClient(application).post("/api/deployments", json={"useCase": "example", "subscriptionId": SUBSCRIPTION, "location": "eastus", "engine": requested})
+    assert response.status_code == 400
+    assert response.json()["detail"] == detail
+    assert db.list_deployments() == []
+
+
 def test_multiple_subscription_selection_reaches_deployment_record(configured, monkeypatch):
     import api
     from identity import require_user
@@ -1203,11 +1552,19 @@ def test_multiple_subscription_selection_reaches_deployment_record(configured, m
     db.set_setup_setting("subscriptions", setup_config.validate_subscriptions(items))
     monkeypatch.setattr(api, "_catalog_items", lambda: {"organization": {"path": "organization", "parameters": [], "engines": ["bicep"]}})
     monkeypatch.setattr(api.az, "schedule", lambda coroutine: coroutine.close())
+    async def regions(identifier):
+        return [{"name": "eastus"}]
+    async def check(item, subscription, location, parameters, *, fresh=False):
+        assert fresh and subscription["subscriptionId"] == second
+        assert db.list_deployments() == []
+        return {"checkedAt": 123.0, "capacity": {"status": "unknown"}, "price": None, "priceDetail": "No cost model"}
+    monkeypatch.setattr(api.setup_cloud, "subscription_locations", regions)
+    monkeypatch.setattr(api.catalog_processing, "check_region", check)
     application = FastAPI()
     application.include_router(api.build_api_router())
     application.dependency_overrides[require_user] = lambda: CurrentUser("user", "", "User", TENANT)
     client = TestClient(application)
-    result = client.post("/api/deployments", json={"useCase": "organization", "subscriptionId": second, "lifetimeHours": 1})
+    result = client.post("/api/deployments", json={"useCase": "organization", "subscriptionId": second, "lifetimeHours": 1, "location": "eastus"})
     assert result.status_code == 200
     identifier = result.json()["deployment"]["id"]
     assert db.get_deployment(identifier)["subscription_id"] == second

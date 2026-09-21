@@ -21,6 +21,7 @@ def install(target: Path, labels: list[str] | None = None) -> None:
     for name in ("portal_workflows.py", "portal_catalog.py"):
         files[f"tools/{name}"] = Path(__file__).with_name(name).read_bytes()
     files["site/server/catalog_workflows.py"] = (Path(__file__).resolve().parent.parent / "site/server/catalog_workflows.py").read_bytes()
+    files["site/server/lifecycle.py"] = (Path(__file__).resolve().parent.parent / "site/server/lifecycle.py").read_bytes()
     for relative, content in files.items():
         path = target / relative
         if any(parent.is_symlink() for parent in (path, *path.parents)):

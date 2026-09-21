@@ -14,8 +14,8 @@
     return Object.keys(obj || {}).reduce((a, k) => a + obj[k], 0);
   }
 
-  function statCard(label, value) {
-    return el("div", { class: "stat-card" }, [
+  function statCard(label, value, tone) {
+    return el("div", { class: "stat-card" + (tone ? " " + tone : "") }, [
       el("div", { class: "stat-value", text: String(value) }),
       el("div", { class: "stat-label", text: label }),
     ]);
@@ -28,12 +28,12 @@
       rows.appendChild(el("p", { class: "muted", text: "No data yet." }));
     }
     items.forEach((it) => {
-      const bar = el("span", { class: "bar-fill" });
-      bar.style.width = Math.round((it[valueKey] / max) * 100) + "%";
+      const bar = el("meter", { class: "admin-meter", min: 0, max: max, value: it[valueKey],
+        "aria-label": String(it[labelKey]) + ": " + it[valueKey] });
       rows.appendChild(
         el("div", { class: "bar-row" }, [
           el("span", { class: "bar-label", text: String(it[labelKey]) }),
-          el("span", { class: "bar-track" }, bar),
+          bar,
           el("span", { class: "bar-value", text: String(it[valueKey]) }),
         ])
       );
@@ -52,6 +52,36 @@
   // Statuses that can be torn down now (may hold resources). A failed deploy can
   // leave partially-created resources; an in-flight 'destroying' is excluded.
   const CLEANABLE = ["requested", "deploying", "active", "expiring", "failed"];
+
+  function toolButton(symbol, label, onClick) {
+    const button = el("button", { type: "button", class: "admin-tool", text: symbol, title: label, "aria-label": label });
+    button.addEventListener("click", onClick);
+    return button;
+  }
+
+  function exportCsv(filename, rows) {
+    const content = rows.map((row) => row.map((value) => {
+      let text = String(value == null ? "" : value);
+      if (/^[\s]*[=+@-]|^[\t\r\n]/.test(text)) text = "'" + text;
+      return '"' + text.replace(/"/g, '""') + '"';
+    }).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob(["\ufeff", content], { type: "text/csv;charset=utf-8" }));
+    const link = el("a", { href: url, download: filename });
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function attentionMatch(dep, filter) {
+    const end = dep.endAt ? new Date(dep.endAt).getTime() : NaN;
+    if (filter === "open") return dep.status !== "destroyed";
+    if (filter === "overdue") return !dep.externallyManaged && ["requested", "deploying", "active", "expiring"].includes(dep.status) && end <= Date.now();
+    if (filter === "expiringSoon") return !dep.externallyManaged && ["requested", "deploying", "active"].includes(dep.status) && end > Date.now() && end <= Date.now() + 86400000;
+    return filter === "all" || dep.status === filter;
+  }
+
+  function searchControl(label) {
+    return el("input", { type: "search", class: "deploy-input admin-search", placeholder: label, "aria-label": label });
+  }
 
   function fmtDate(iso) {
     if (!iso) return "—";
@@ -77,7 +107,8 @@
   }
 
   function statusBadge(status) {
-    return el("span", { class: "badge badge-" + status, text: status });
+    const labels = { pending: "Staged locally", branched: "Review branch created", discarded: "Deleted", merged: "Merged" };
+    return el("span", { class: "badge badge-" + status, text: labels[status] || status });
   }
 
   function deployRow(dep, onChange) {
@@ -85,12 +116,11 @@
       el("strong", { text: dep.userName || dep.userUpn }),
       el("div", { class: "muted small", text: dep.userUpn }),
     ]);
-    const ended = dep.status === "destroyed" || dep.status === "failed";
-    const running = fmtDuration(dep.createdAt, ended ? dep.destroyedAt || dep.endAt : null);
+    const running = dep.status === "failed" ? "Unknown" : fmtDuration(dep.createdAt, dep.destroyedAt);
 
     const cells = [
       el("td", {}, el("strong", { text: dep.useCase })),
-      el("td", {}, el("span", { class: "chip", text: dep.environment })),
+      el("td", {}, [el("span", { class: "chip", text: dep.environment }), el("div", { class: "muted small", text: dep.engine || "bicep" })]),
       owner,
       el("td", {}, [
         statusBadge(dep.status),
@@ -98,10 +128,10 @@
           ? el("div", { class: "muted small", text: dep.detail, title: dep.detail })
           : null,
       ]),
-      el("td", { text: fmtDate(dep.createdAt) }),
-      el("td", { text: running }),
-      el("td", { text: fmtDate(dep.endAt) }),
-      el("td", {}, el("code", { text: dep.resourceGroup })),
+      el("td", {}, [el("div", { text: fmtDate(dep.createdAt) }), el("div", { class: "muted small", text: "Elapsed: " + running })]),
+      el("td", {}, [el("div", { text: dep.externallyManaged ? "External cleanup" : fmtDate(dep.endAt) }),
+        attentionMatch(dep, "overdue") ? el("strong", { class: "error-text small", text: "Cleanup overdue" }) : null]),
+      el("td", {}, [el("code", { text: dep.resourceGroup }), el("div", { class: "muted small", text: dep.subscriptionId })]),
     ];
 
     const actions = el("td", { class: "row-actions" });
@@ -134,8 +164,8 @@
     return el("tr", {}, cells);
   }
 
-  function renderDeployments(mount) {
-    const state = { activeOnly: true };
+  function renderDeployments(mount, initialFilter) {
+    const state = { filter: initialFilter || "open", query: "" };
 
     function load() {
       mount.innerHTML = "";
@@ -149,32 +179,50 @@
 
           mount.appendChild(
             el("div", { class: "stat-grid" }, [
-              statCard("Active deployments", live.length),
-              statCard("Failed - check resources", failed.length),
-              statCard("Total tracked", deps.length),
+              statCard("Active or in progress (loaded)", live.length),
+              statCard("Failed - check resources (loaded)", failed.length),
+              statCard("Records loaded", deps.length),
             ])
           );
 
-          const checkbox = el("input", { type: "checkbox" });
-          checkbox.checked = state.activeOnly;
-          checkbox.addEventListener("change", () => {
-            state.activeOnly = checkbox.checked;
+          const filter = el("select", { class: "deploy-input", "aria-label": "Deployment status" }, [
+            ["open", "Not destroyed"], ["failed", "Failed"], ["overdue", "Cleanup overdue"], ["expiringSoon", "Ends within 24 hours"],
+            ["active", "Active"], ["deploying", "Deploying"], ["destroying", "Cleaning up"], ["destroyed", "Destroyed"], ["all", "All statuses"],
+          ].map(([value, label]) => el("option", { value: value, text: label })));
+          filter.value = state.filter;
+          filter.addEventListener("change", () => {
+            state.filter = filter.value;
             renderTable();
           });
-          const toggle = el("label", { class: "toggle" }, [checkbox, el("span", { text: "Hide destroyed" })]);
-          const refreshBtn = el("button", { type: "button", class: "deploy-btn", text: "Refresh" });
-          refreshBtn.addEventListener("click", load);
-          mount.appendChild(el("div", { class: "deploy-toolbar" }, [toggle, refreshBtn]));
+          const search = searchControl("Search workload, owner, subscription or resource group");
+          search.value = state.query;
+          search.addEventListener("input", () => { state.query = search.value; renderTable(); });
+          const count = el("p", { class: "muted small", "aria-live": "polite" });
+          function filteredRows() {
+            const query = state.query.trim().toLowerCase();
+            return deps.filter((dep) => attentionMatch(dep, state.filter) &&
+              [dep.useCase, dep.userUpn, dep.userName, dep.subscriptionId, dep.resourceGroup].join(" ").toLowerCase().includes(query));
+          }
+          mount.appendChild(el("div", { class: "deploy-toolbar" }, [search, filter,
+            toolButton("\u21bb", "Refresh deployments", load),
+            toolButton("\u2193", "Export filtered deployments as CSV", () => exportCsv("deployments.csv", [
+              ["ID", "Workload", "Environment", "Engine", "Owner", "Status", "Created", "Ends", "Subscription", "Resource group", "Cleanup policy", "Detail"],
+              ...filteredRows().map((dep) => [dep.id, dep.useCase, dep.environment, dep.engine, dep.userUpn, dep.status,
+                dep.createdAt, dep.endAt, dep.subscriptionId, dep.resourceGroup, dep.cleanupPolicy, dep.detail]),
+            ])),
+          ]));
+          mount.appendChild(count);
 
           const tableWrap = el("div", { class: "deploy-table-wrap" });
           mount.appendChild(tableWrap);
 
           function renderTable() {
-            const rows = state.activeOnly ? deps.filter((d) => d.status !== "destroyed") : deps;
+            const rows = filteredRows();
+            count.textContent = rows.length + " matching / " + deps.length + " loaded" + (deps.length >= 500 ? " (latest 500; older records not included)" : "");
             tableWrap.innerHTML = "";
             if (!rows.length) {
               tableWrap.appendChild(
-                el("p", { class: "muted", text: state.activeOnly ? "No deployments holding resources." : "No deployments tracked yet." })
+                el("p", { class: "muted", text: "No deployments match these filters." })
               );
               return;
             }
@@ -183,11 +231,10 @@
               el("th", { text: "Env" }),
               el("th", { text: "Owner" }),
               el("th", { text: "Status" }),
-              el("th", { text: "Created" }),
-              el("th", { text: "Running for" }),
-              el("th", { text: "Ends" }),
-              el("th", { text: "Resource group" }),
-              el("th", { text: "" }),
+              el("th", { text: "Created / elapsed" }),
+              el("th", { text: "Cleanup due" }),
+              el("th", { text: "Resource group / subscription" }),
+              el("th", { text: "Actions" }),
             ]);
             tableWrap.appendChild(
               el("table", { class: "deploy-table" }, [
@@ -219,11 +266,11 @@
 
     const actions = el("td", { class: "row-actions" });
     // Primary path: a review branch exists -> one-click "Open pull request".
-    if (sub.compareUrl) {
+    if (sub.compareUrl && sub.status === "branched") {
       actions.appendChild(
         el("a", {
           href: sub.compareUrl, target: "_blank", rel: "noopener",
-          class: "link-btn", text: "Open pull request",
+          class: "link-btn", text: "Review changes",
         })
       );
     }
@@ -234,17 +281,19 @@
           text: "Download", download: "",
         })
       );
-      const btn = el("button", { type: "button", class: "danger-btn", text: "Discard" });
+      const btn = el("button", { type: "button", class: "danger-btn", text: "Delete submission" });
+      btn.disabled = sub.status === "merged";
       btn.addEventListener("click", () => {
-        if (!window.confirm("Discard the submission \"" + (sub.displayName || sub.slug) + "\"? This deletes the staged files.")) return;
+        const remote = sub.branch ? " This also deletes the GitHub review branch " + sub.branch + " in its original repository. Open pull requests may be closed. Published or merged code is not removed." : " No GitHub branch is recorded.";
+        if (!window.confirm("Delete the submission \"" + (sub.displayName || sub.slug) + "\" and its staged files?" + remote)) return;
         btn.disabled = true;
-        btn.textContent = "Discarding\u2026";
+        btn.textContent = "Deleting\u2026";
         Api.discardSubmission(sub.id)
           .then(() => onChange())
           .catch((err) => {
             btn.disabled = false;
-            btn.textContent = "Discard";
-            window.alert(err && err.message ? err.message : "Discard failed.");
+            btn.textContent = "Delete submission";
+            window.alert(err && err.message ? err.message : "Deletion failed; refresh to verify the submission state.");
           });
       });
       actions.appendChild(btn);
@@ -261,14 +310,16 @@
     return el("tr", {}, [
       useCaseCell,
       owner,
-      el("td", {}, statusBadge(sub.status)),
+      el("td", {}, [statusBadge(sub.status), el("div", { class: "muted small", text: sub.detail || "" })]),
       el("td", { text: fmtDate(sub.createdAt) }),
       files,
       actions,
     ]);
   }
 
-  function renderSubmissions(mount) {
+  function renderSubmissions(mount, initialFilter) {
+    const state = { filter: initialFilter || "open", query: "" };
+    mount.classList.add("admin-submissions");
     mount.innerHTML = "";
     mount.appendChild(el("p", { class: "muted", text: "Loading submissions\u2026" }));
 
@@ -277,41 +328,52 @@
         .then((subs) => {
           mount.innerHTML = "";
           subs = subs || [];
-          const pending = subs.filter((s) => s.status === "pending");
-
-          mount.appendChild(
-            el("div", { class: "stat-grid" }, [
-              statCard("Pending review", pending.length),
-              statCard("Total submitted", subs.length),
-            ])
-          );
-          mount.appendChild(
-            el("p", {
-              class: "muted small",
-              text: "Uploaded templates are validated and committed to a review branch. Click \u201COpen pull request\u201D to review and merge; Download grabs the bundle; Discard removes the staged files.",
-            })
-          );
-
-          if (!subs.length) {
-            mount.appendChild(el("p", { class: "muted", text: "No submissions yet." }));
-            return;
+          const search = searchControl("Search submission, submitter or branch");
+          search.value = state.query;
+          const filter = el("select", { class: "deploy-input", "aria-label": "Submission status" }, [
+            ["open", "Awaiting action"], ["pending", "Staged locally"], ["branched", "Review branch created"],
+            ["discarded", "Deleted"], ["merged", "Merged"], ["all", "All statuses"],
+          ].map(([value, label]) => el("option", { value: value, text: label })));
+          filter.value = state.filter;
+          const count = el("p", { class: "muted small", "aria-live": "polite" });
+          const table = el("div", { class: "deploy-table-wrap" });
+          function rows() {
+            return subs.filter((sub) => (state.filter === "all" || (state.filter === "open" ? ["pending", "branched"].includes(sub.status) : sub.status === state.filter)) &&
+              [sub.slug, sub.displayName, sub.userName, sub.userUpn, sub.branch].join(" ").toLowerCase().includes(state.query.trim().toLowerCase()));
           }
-          const head = el("tr", {}, [
-            el("th", { text: "Use case" }),
-            el("th", { text: "Submitted by" }),
-            el("th", { text: "Status" }),
-            el("th", { text: "When" }),
-            el("th", { text: "Files" }),
-            el("th", { text: "" }),
-          ]);
-          mount.appendChild(
-            el("div", { class: "deploy-table-wrap" }, [
-              el("table", { class: "deploy-table" }, [
-                el("thead", {}, head),
-                el("tbody", {}, subs.map((s) => subRow(s, load))),
-              ]),
-            ])
-          );
+          search.addEventListener("input", () => { state.query = search.value; renderTable(); });
+          filter.addEventListener("change", () => { state.filter = filter.value; renderTable(); });
+          mount.appendChild(el("div", { class: "deploy-toolbar" }, [search, filter,
+            toolButton("\u21bb", "Refresh submissions", load),
+            toolButton("\u2193", "Export filtered submissions as CSV", () => exportCsv("submissions.csv", [
+              ["ID", "Submission", "Submitter", "Status", "Submitted", "Files", "Branch", "Review URL", "Detail"],
+              ...rows().map((sub) => [sub.id, sub.slug, sub.userUpn, sub.status, sub.createdAt, (sub.files || []).length, sub.branch, sub.compareUrl, sub.detail]),
+            ])),
+          ]));
+          mount.appendChild(count);
+          mount.appendChild(table);
+          function renderTable() {
+            const matching = rows();
+            count.textContent = matching.length + " matching / " + subs.length + " loaded" + (subs.length >= 200 ? " (latest 200; older records not included)" : "");
+            table.replaceChildren();
+            if (!matching.length) {
+              table.appendChild(el("p", { class: "muted", text: "No submissions match these filters." }));
+              return;
+            }
+            const head = el("tr", {}, [
+              el("th", { text: "Use case" }),
+              el("th", { text: "Submitted by" }),
+              el("th", { text: "Status / detail" }),
+              el("th", { text: "When" }),
+              el("th", { text: "Files" }),
+              el("th", { text: "Actions" }),
+            ]);
+            table.appendChild(el("table", { class: "deploy-table" }, [
+              el("thead", {}, head),
+              el("tbody", {}, matching.map((sub) => subRow(sub, load))),
+            ]));
+          }
+          renderTable();
         })
         .catch((err) => {
           mount.innerHTML = "";
@@ -324,41 +386,227 @@
     load();
   }
 
-  function renderTelemetry(mount) {
-    mount.innerHTML = "";
-    mount.appendChild(el("p", { class: "muted", text: "Loading telemetry…" }));
-    Api.adminTelemetry(30)
-      .then((t) => {
-        mount.innerHTML = "";
-        const totalDeploys = sumValues(t.statusCounts);
-        const totalEvents = sumValues(t.byType);
+  function renderCatalog(mount) {
+    mount.classList.add("admin-catalog");
+    const search = searchControl("Search use cases");
+    const filter = el("select", { class: "deploy-input", "aria-label": "Use-case visibility" }, [
+      ["published", "Published"], ["removed", "Removed"], ["all", "All use cases"],
+    ].map(([value, label]) => el("option", { value, text: label })));
+    filter.value = "published";
+    const status = el("p", { class: "muted small", role: "status" });
+    const count = el("p", { class: "muted small", "aria-live": "polite" });
+    const table = el("div", { class: "deploy-table-wrap" });
+    const refresh = toolButton("\u21bb", "Refresh use cases", () => load());
+    let catalog = { items: [] };
+    let busy = false;
+    mount.append(el("div", { class: "deploy-toolbar" }, [search, filter, refresh]), status, count, table);
 
-        mount.appendChild(
-          el("div", { class: "stat-grid" }, [
-            statCard("Active deployments", t.activeDeployments),
-            statCard("Unique users (30d)", t.uniqueUsers),
-            statCard("Total deployments", totalDeploys),
-            statCard("Tracked events (30d)", totalEvents),
-          ])
-        );
+    function renderTable() {
+      refresh.disabled = busy;
+      search.disabled = filter.disabled = busy;
+      table.replaceChildren();
+      const query = search.value.trim().toLowerCase();
+      const rows = catalog.items.filter(item => (filter.value === "all" || item.removed === (filter.value === "removed")) &&
+        [item.path, item.displayName, item.category].join(" ").toLowerCase().includes(query));
+      count.textContent = rows.length + " matching / " + catalog.items.length + " loaded";
+      if (!rows.length) {
+        table.appendChild(el("p", { class: "muted", text: "No use cases match these filters." }));
+        return;
+      }
+      const head = el("tr", {}, ["Use case", "Category", "Site status", "Removed", "Action"].map(text => el("th", { text })));
+      table.appendChild(el("table", { class: "deploy-table" }, [el("thead", {}, head), el("tbody", {}, rows.map(item => {
+        const portalLabel = item.removed ? "Restore to portal" : "Remove from portal";
+        const repositoryOption = el("option", { value: "repository", text: "Remove from repository" });
+        repositoryOption.disabled = !catalog.repositoryRemovalAvailable || !catalog.sourceCommit || !catalog.branch;
+        const choice = el("select", { class: "deploy-input", "aria-label": "Removal action for " + item.displayName }, [
+          el("option", { value: "portal", text: portalLabel }), repositoryOption,
+        ]);
+        choice.value = "portal";
+        const action = toolButton(item.removed ? "\u21b6" : "\u2212", portalLabel + ": " + item.displayName, () => change(item, choice.value));
+        action.disabled = busy;
+        choice.disabled = busy;
+        choice.addEventListener("change", () => {
+          const label = (choice.value === "repository" ? "Remove from repository" : portalLabel) + ": " + item.displayName;
+          action.title = label;
+          action.setAttribute("aria-label", label);
+          action.textContent = choice.value === "portal" && item.removed ? "\u21b6" : "\u2212";
+          action.classList.toggle("danger-btn", choice.value === "repository" || !item.removed);
+        });
+        if (!item.removed) action.classList.add("danger-btn");
+        return el("tr", {}, [
+          el("td", {}, [el("strong", { text: item.displayName }), el("div", { class: "muted small", text: item.path })]),
+          el("td", { text: item.category || "\u2014" }),
+          el("td", { text: item.removed ? item.inSnapshot ? "Removed" : "Removed / absent from latest sync" : "Published" }),
+          el("td", { text: item.removedAt ? fmtDate(item.removedAt * 1000) : "\u2014" }),
+          el("td", {}, el("div", { class: "admin-catalog-actions" }, [choice, action])),
+        ]);
+      }))]));
+    }
 
-        mount.appendChild(
-          el("div", { class: "chart-grid" }, [
-            barChart("Top deployed use cases", t.topDeploys, "use_case", "n"),
-            barChart("Most viewed use cases", t.topViews, "use_case", "n"),
-            barChart("Top deployers", t.topUsers, "user_upn", "n"),
-            barChart("Deployment status", dictToItems(t.statusCounts), "k", "n"),
-            barChart("Deployments per day", t.perDay, "d", "n"),
-            barChart("Events by type", dictToItems(t.byType), "k", "n"),
-          ])
-        );
-      })
-      .catch((err) => {
-        mount.innerHTML = "";
-        mount.appendChild(
-          el("p", { class: "error-text", text: err && err.message ? err.message : "Could not load telemetry." })
-        );
+    async function load(message = "") {
+      if (busy) return;
+      busy = true;
+      status.className = "muted small";
+      status.textContent = "Loading use cases...";
+      renderTable();
+      try {
+        const result = await Api.adminCatalog();
+        if (!mount.isConnected) return;
+        catalog = { ...result, items: result.items || [] };
+        status.textContent = result.supported === false ? "Catalog management is unavailable in this distribution." : message;
+      } catch (error) {
+        status.className = "error-text";
+        status.textContent = error.message || "Could not load use cases.";
+      } finally { busy = false; renderTable(); }
+    }
+
+    async function change(item, destination) {
+      if (busy) return;
+      const repositoryRemoval = destination === "repository";
+      if (repositoryRemoval && !catalog.repositoryRemovalAvailable) return;
+      const message = repositoryRemoval
+        ? `Delete catalog/${item.path}/ and ALL files inside it directly from ${catalog.repository} / ${catalog.branch} now? This commits the deletion to that branch, not a review branch, and removes "${item.displayName}" from the portal. Shared modules, other use cases, existing deployments and Azure resources are NOT deleted. Restore to portal cannot undo this; recovery requires restoring source from Git history. GitHub branch protection will not be bypassed.`
+        : item.removed
+          ? `Restore "${item.displayName}" to the portal? It will be available for new deployments if present in the latest synced catalog. Repository files and existing deployments are unchanged.`
+          : `Remove "${item.displayName}" from the portal? It will be hidden and blocked for new deployments, including after sync. Repository files, existing deployments and Azure resources will NOT be deleted. You can restore it from the Removed filter.`;
+      if (!confirm(message)) return;
+      busy = true;
+      status.className = "muted small";
+      status.textContent = repositoryRemoval ? "Deleting use-case folder from repository..." : item.removed ? "Restoring use case..." : "Removing use case...";
+      renderTable();
+      try {
+        if (repositoryRemoval) {
+          const result = await Api.requestCatalogRepositoryRemoval(item.path, catalog.repository, catalog.version, catalog.branch, catalog.sourceCommit);
+          const url = new URL(result.url);
+          if (result.status !== "deleted" || result.path !== item.path || result.branch !== catalog.branch || !/^[a-f0-9]{40}$/.test(result.commit) ||
+              url.origin !== "https://github.com" || url.username || url.password || url.hash || url.search ||
+              url.pathname !== `/${catalog.repository}/commit/${result.commit}`) throw new Error("Repository deletion could not be verified. It may have committed; inspect the configured branch and refresh before retrying.");
+          catalog.items = catalog.items.filter(row => row.path !== item.path);
+          document.dispatchEvent(new CustomEvent("techlabs:catalog-changed"));
+          status.replaceChildren(document.createTextNode(`catalog/${item.path}/ is absent from ${catalog.repository} / ${catalog.branch}. Removed from the portal. Existing deployments are unchanged. `),
+            el("a", { href: url.href, target: "_blank", rel: "noopener noreferrer", text: "View verified commit" }));
+          busy = false;
+          renderTable();
+          return;
+        }
+        await Api.setCatalogRemoved(item.path, catalog.repository, catalog.version, !item.removed);
+        document.dispatchEvent(new CustomEvent("techlabs:catalog-changed"));
+      } catch (error) {
+        status.className = "error-text";
+        status.textContent = error.message || "The use-case change could not be confirmed. Refresh the list before retrying.";
+        busy = false;
+        renderTable();
+        return;
+      }
+      busy = false;
+      await load(item.removed ? "Removal cleared. The latest synced source controls availability." : "Removed from the portal. Repository files and existing deployments are unchanged.");
+    }
+    search.addEventListener("input", renderTable);
+    filter.addEventListener("change", renderTable);
+    load();
+  }
+
+  function renderTelemetry(mount, navigate) {
+    const period = el("select", { class: "deploy-input", "aria-label": "Reporting period" },
+      [7, 30, 90].map((days) => el("option", { value: days, text: "Last " + days + " days" })));
+    period.value = "30";
+    const updated = el("span", { class: "muted small", "aria-live": "polite" });
+    const content = el("div");
+    let current = null;
+    let version = 0;
+    const download = toolButton("\u2193", "Export operations report as CSV", () => {
+      if (!current) return;
+      const rows = [["Scope", "Metric", "Count"],
+        ["Generated at", new Date(current.generatedAt * 1000).toISOString(), ""],
+        ["Activity since", new Date(current.since * 1000).toISOString(), ""],
+        ["Last " + current.days + " days", "Deployment requests", current.periodDeployments],
+        ["Last " + current.days + " days", "Unique users", current.uniqueUsers]];
+      Object.entries(current.operations || {}).forEach(([key, value]) => rows.push(["Current", key, value]));
+      Object.entries(current.statusCounts || {}).forEach(([key, value]) => rows.push(["All-time deployment status", key, value]));
+      Object.entries(current.submissionCounts || {}).forEach(([key, value]) => rows.push(["Current submissions", key, value]));
+      (current.topDeploys || []).forEach((item) => rows.push(["Top workloads in period", item.use_case, item.n]));
+      (current.perDay || []).forEach((item) => rows.push(["Daily requests UTC", item.d, item.n]));
+      exportCsv("operations-" + current.days + "d.csv", rows);
+    });
+    const refresh = toolButton("\u21bb", "Refresh operations", load);
+    mount.replaceChildren(el("div", { class: "deploy-toolbar" }, [period, updated, refresh, download]), content);
+    period.addEventListener("change", load);
+    function load() {
+      const request = ++version;
+      current = null;
+      download.disabled = true;
+      updated.textContent = "Loading report...";
+      content.replaceChildren();
+      Api.adminTelemetry(Number(period.value)).then((report) => {
+        if (request !== version || !mount.contains(content)) return;
+        current = report;
+        download.disabled = false;
+        updated.textContent = "Updated " + fmtDate(report.generatedAt * 1000);
+        const operations = report.operations || {};
+        const counts = report.submissionCounts || {};
+        const queue = el("div", { class: "admin-attention" });
+        [
+          [operations.failed || 0, "Failed deployments", "dep", "failed", "danger"],
+          [operations.overdue || 0, "Cleanup overdue", "dep", "overdue", "danger"],
+          [operations.expiringSoon || 0, "Ends within 24 hours", "dep", "expiringSoon", "warning"],
+          [counts.pending || 0, "Staged locally", "sub", "pending", "warning"],
+          [counts.branched || 0, "Review branches", "sub", "branched", ""],
+        ].forEach(([count, label, tab, filter, tone]) => {
+          const action = el("button", { type: "button", class: "admin-attention-item " + (count ? tone : ""), "aria-label": label + ": " + count },
+            [el("strong", { text: count }), el("span", { text: label }), el("span", { text: "\u2192", "aria-hidden": "true" })]);
+          action.addEventListener("click", () => navigate(tab, filter));
+          queue.appendChild(action);
+        });
+        content.appendChild(el("section", { class: "admin-section" }, [el("h3", { text: "Current operations" }), queue,
+          el("p", { class: "muted small", text: (operations.inProgress || 0) + " operations in progress · " + (operations.externallyManaged || 0) + " deployments with external cleanup · " + sumValues(report.statusCounts) + " total tracked" }),
+        ]));
+        const catalog = report.catalog || {};
+        const job = catalog.job || {};
+        const processing = catalog.processing || {};
+        const catalogRows = [
+          ["Repository", catalog.repository ? catalog.repository + " / " + catalog.branch : "Not connected"],
+          ["Last successful sync", catalog.syncedAt ? fmtDate(catalog.syncedAt * 1000) : "Never"],
+          ["Published workloads", String(catalog.itemCount || 0)],
+          ["Removed from site", String(catalog.removedCount || 0)],
+          ["Processing", processing.mode || "container"],
+          ["Job", job.status || "Not started"],
+          ["Regional price / capacity refresh", catalog.regionalJob?.status || "Waiting for schedule"],
+          ["Next regional refresh", catalog.regionalJob?.nextRunAt ? fmtDate(catalog.regionalJob.nextRunAt * 1000) : "Automatic / runner schedule"],
+          ["Roadmap refresh", catalog.lifecycleJob?.status || "Waiting for schedule"],
+        ];
+        content.appendChild(el("section", { class: "admin-section" }, [el("h3", { text: "Catalog health" }),
+          el("dl", { class: "admin-facts" }, catalogRows.flatMap(([label, value]) => [el("dt", { text: label }), el("dd", { text: value })])),
+          job.detail ? el("p", { class: job.status === "failed" ? "error-text" : "muted small", text: job.detail }) : null,
+          catalog.lifecycleJob?.detail ? el("p", { class: catalog.lifecycleJob.status === "failed" ? "error-text" : "muted small", text: catalog.lifecycleJob.detail }) : null,
+          processing.fallback ? el("p", { class: "muted small", text: "Container fallback: " + processing.fallback }) : null,
+        ]));
+        const days = Number(report.days || period.value);
+        const perDay = [];
+        const dailyCounts = new Map((report.perDay || []).map((item) => [item.d, item.n]));
+        const beginning = new Date((report.since || Date.now() / 1000 - days * 86400) * 1000);
+        beginning.setUTCHours(0, 0, 0, 0);
+        const end = (report.generatedAt || Date.now() / 1000) * 1000;
+        for (let stamp = beginning.getTime(); stamp <= end; stamp += 86400000) {
+          const date = new Date(stamp).toISOString().slice(0, 10);
+          perDay.push({ d: date, n: dailyCounts.get(date) || 0 });
+        }
+        content.appendChild(el("section", { class: "admin-section" }, [
+          el("h3", { text: "Activity / last " + days + " days" }),
+          el("p", { class: "muted small", text: "Since " + fmtDate((report.since || beginning.getTime() / 1000) * 1000) + "; daily buckets use UTC, first and last days are partial." }),
+          el("div", { class: "stat-grid" }, [statCard("Deployment requests", report.periodDeployments || 0),
+            statCard("Unique users", report.uniqueUsers || 0), statCard("Recorded events", sumValues(report.byType))]),
+          el("div", { class: "chart-grid" }, [barChart("Requests by day (UTC)", perDay, "d", "n"),
+            barChart("Most requested workloads", report.topDeploys || [], "use_case", "n"),
+            barChart("Current status of requests in this period", dictToItems(report.periodStatusCounts), "k", "n"),
+            barChart("Deployment requests by owner", report.topUsers || [], "user_upn", "n")]),
+        ]));
+      }).catch((error) => {
+        if (request !== version || !mount.contains(content)) return;
+        updated.textContent = "Report unavailable";
+        content.replaceChildren(el("p", { class: "error-text", role: "alert", text: error.message || "Could not load operations." }));
       });
+    }
+    load();
   }
 
   function renderUsers(mount) {
@@ -465,35 +713,46 @@
 
   function render(body) {
     body.innerHTML = "";
-    body.appendChild(el("h2", { text: "Admin" }));
+    const wrapper = el("div", { class: "admin-view" });
+    body.appendChild(wrapper);
+    body = wrapper;
+    body.appendChild(el("h2", { text: "Administration" }));
 
     const tabs = el("div", { class: "tabs" });
-    const telBtn = el("button", { type: "button", class: "tab is-active", text: "Telemetry" });
+    const telBtn = el("button", { type: "button", class: "tab is-active", text: "Operations" });
     const depBtn = el("button", { type: "button", class: "tab", text: "Deployments" });
     const subBtn = el("button", { type: "button", class: "tab", text: "Submissions" });
+    const catBtn = el("button", { type: "button", class: "tab", text: "Use cases" });
     const usrBtn = el("button", { type: "button", class: "tab", text: "Users" });
     tabs.appendChild(telBtn);
     tabs.appendChild(depBtn);
     tabs.appendChild(subBtn);
+    tabs.appendChild(catBtn);
     tabs.appendChild(usrBtn);
     body.appendChild(tabs);
 
-    const mount = el("div", { class: "tab-mount" });
+    let mount = el("div", { class: "tab-mount" });
     body.appendChild(mount);
 
-    function show(which) {
+    function show(which, filter) {
+      const next = el("div", { class: "tab-mount" });
+      mount.replaceWith(next);
+      mount = next;
       telBtn.classList.toggle("is-active", which === "tel");
       depBtn.classList.toggle("is-active", which === "dep");
       subBtn.classList.toggle("is-active", which === "sub");
+      catBtn.classList.toggle("is-active", which === "cat");
       usrBtn.classList.toggle("is-active", which === "usr");
-      if (which === "tel") renderTelemetry(mount);
-      else if (which === "dep") renderDeployments(mount);
-      else if (which === "sub") renderSubmissions(mount);
+      if (which === "tel") renderTelemetry(mount, show);
+      else if (which === "dep") renderDeployments(mount, filter);
+      else if (which === "sub") renderSubmissions(mount, filter);
+      else if (which === "cat") renderCatalog(mount);
       else renderUsers(mount);
     }
     telBtn.addEventListener("click", () => show("tel"));
     depBtn.addEventListener("click", () => show("dep"));
     subBtn.addEventListener("click", () => show("sub"));
+    catBtn.addEventListener("click", () => show("cat"));
     usrBtn.addEventListener("click", () => show("usr"));
     show("tel");
   }

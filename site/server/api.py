@@ -16,14 +16,17 @@ import secrets
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
+import httpx
+from azure.core.exceptions import AzureError
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
-from fastapi.responses import Response
-from pydantic import BaseModel, Field
+from fastapi.responses import JSONResponse, Response
+from pydantic import BaseModel, ConfigDict, Field
 
 import azure_deploy as az
 import db
+import catalog_processing
 from distribution import branding, is_customer_distribution
 from entra_auth import (
     COOKIE_NAME,
@@ -32,6 +35,7 @@ from entra_auth import (
 )
 import github_intake
 import pricing
+import setup_cloud
 import setup_config
 import submissions
 from identity import (
@@ -54,6 +58,7 @@ DEFAULT_MAX_LIFETIME_HOURS = int(
 MIN_LIFETIME_MINUTES = 15
 _VALID_EVENT_TYPES = {"view", "search", "modal_open"}
 _ALLOWED_ENVS = {"dev", "prod"}
+_REGIONAL_CHECKS = catalog_processing.REGIONAL_CONCURRENCY
 
 # --------------------------------------------------------------------------- #
 # Catalog lookup (validates deploy requests against real use cases)
@@ -65,7 +70,7 @@ def _catalog_items() -> dict[str, dict[str, Any]]:
     """Return {path: item} from catalog.json, reloaded when the file changes."""
     if is_customer_distribution():
         import setup_github
-        snapshot = setup_github.catalog_snapshot()
+        snapshot = setup_github.visible_catalog_snapshot()
         if snapshot:
             return {item["path"]: item for item in snapshot["items"]}
     try:
@@ -284,6 +289,7 @@ def _deployment_view(d: dict[str, Any]) -> dict[str, Any]:
         "engine": d.get("engine", "bicep"),
         "cleanupPolicy": cleanup_policy,
         "externallyManaged": cleanup_policy == "none",
+        "preflight": (d.get("params") or {}).get("preflight"),
     }
 
 
@@ -348,6 +354,24 @@ class RoleIn(BaseModel):
     role: str  # 'admin' | 'guest'
 
 
+class CatalogVisibilityIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    repository: str = Field(min_length=3, max_length=150)
+    version: str = Field(pattern=r"^[a-f0-9]{40}$")
+    removed: bool = Field(strict=True)
+    confirm: bool = Field(default=False, strict=True)
+
+
+class CatalogRepositoryRemovalIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    action: Literal["delete_from_repository"]
+    repository: str = Field(min_length=3, max_length=150)
+    version: str = Field(pattern=r"^[a-f0-9]{40}$")
+    branch: str = Field(min_length=1, max_length=100)
+    sourceCommit: str = Field(pattern=r"^[a-f0-9]{40}$")
+    confirm: bool = Field(default=False, strict=True)
+
+
 def _terraform_exec_available() -> bool:
     """Whether the server can run Terraform in-app (binary resolvable). The
     manual CLI snippet is always offered; only the one-click deploy depends on
@@ -388,6 +412,25 @@ def build_api_router() -> APIRouter:
             "terraformExecAvailable": _terraform_exec_available(),
         }
 
+    @router.get("/catalog/sync")
+    async def catalog_sync_status(user: CurrentUser = Depends(require_user)) -> JSONResponse:
+        import setup_github
+        status = setup_github.catalog_refresh_status() if is_customer_distribution() else {"status": "disabled"}
+        return JSONResponse(status, headers={"Cache-Control": "no-store"})
+
+    @router.post("/catalog/sync")
+    async def request_catalog_sync(request: Request, user: CurrentUser = Depends(require_user)) -> JSONResponse:
+        import setup_github
+        if not (request.headers.get("origin") or request.headers.get("referer")):
+            raise HTTPException(status_code=403, detail="browser origin required")
+        verify_same_origin(request)
+        status = setup_github.catalog_refresh_status() if is_customer_distribution() else {"status": "disabled"}
+        if status["status"] not in ("disabled", "not_configured"):
+            job = setup_github.queue_catalog_refresh(force=False)
+            status = {"status": job["status"], "retryAfter": job.get("retryAfter", 2)}
+        return JSONResponse(status, status_code=202 if status["status"] in ("queued", "running") else 200,
+                            headers={"Cache-Control": "no-store"})
+
     # -------------------------------------------------------------- events ---
     @router.post("/events", status_code=204)
     async def post_event(
@@ -412,6 +455,50 @@ def build_api_router() -> APIRouter:
         )
 
     # -------------------------------------------------------- estimate ---
+    @router.get("/lifecycle")
+    async def lifecycle_status(response: Response, user: CurrentUser = Depends(require_user)) -> dict:
+        import lifecycle
+        response.headers["Cache-Control"] = "no-store"
+        return lifecycle.snapshot()
+
+    @router.get("/regions/snapshot")
+    async def regional_snapshot(useCase: str = "", subscriptionId: str = "", user: CurrentUser = Depends(require_user)) -> dict:
+        subscriptions = setup_config.subscriptions()
+        if subscriptionId:
+            try:
+                subscriptions = [setup_config.subscription_for(subscriptionId)]
+            except ValueError:
+                raise HTTPException(status_code=403, detail="Select a configured organization subscription") from None
+        items = list(_catalog_items().values())
+        if useCase:
+            items = [item for item in items if item.get("path") == useCase]
+        return catalog_processing.regional_results(items, subscriptions)
+
+    @router.post("/regions/check")
+    async def regional_check(body: EstimateIn, request: Request, user: CurrentUser = Depends(require_user)) -> dict[str, Any]:
+        verify_same_origin(request)
+        try:
+            subscription = setup_config.subscription_for(body.subscriptionId)
+        except ValueError:
+            raise HTTPException(status_code=403, detail="Select a configured organization subscription") from None
+        region = (body.location or "").strip().lower()
+        if not re.fullmatch(r"[a-z][a-z0-9]{2,30}", region):
+            raise HTTPException(status_code=400, detail="Select an Azure region")
+        item = _catalog_items().get(body.useCase)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Unknown workload")
+        if _REGIONAL_CHECKS.locked():
+            raise HTTPException(status_code=429, detail="Regional checks are busy; retry shortly.", headers={"Retry-After": "5"})
+        parameters = {str(key)[:64]: str(value)[:128] for key, value in list((body.parameterValues or {}).items())[:50]}
+        async with _REGIONAL_CHECKS:
+            try:
+                locations = await setup_cloud.subscription_locations(subscription["subscriptionId"])
+            except (ValueError, httpx.HTTPError, AzureError):
+                raise HTTPException(status_code=502, detail="Subscription regions unavailable; verify managed identity access.") from None
+            if region not in {entry["name"] for entry in locations}:
+                raise HTTPException(status_code=400, detail="Region is not listed for the selected subscription")
+            return await catalog_processing.check_region(item, subscription, region, parameters)
+
     @router.post("/estimate")
     async def estimate_cost(body: EstimateIn, request: Request) -> dict[str, Any]:
         # Unauthenticated, so require a browser Origin/Referer (verify_same_origin
@@ -481,9 +568,10 @@ def build_api_router() -> APIRouter:
         engine = body.engine.lower().strip() or "bicep"
         if engine not in ("bicep", "terraform"):
             raise HTTPException(status_code=400, detail="engine must be bicep or terraform")
-        if engine == "terraform" and "terraform" not in (item.get("engines") or ["bicep"]):
+        if engine not in (item.get("engines") or ["bicep"]):
             raise HTTPException(
-                status_code=400, detail="this use case has no Terraform module"
+                status_code=400,
+                detail="this use case has no Terraform module" if engine == "terraform" else "this use case has no Bicep template",
             )
         if engine == "terraform" and not _terraform_exec_available():
             raise HTTPException(
@@ -574,6 +662,31 @@ def build_api_router() -> APIRouter:
 
         parameter_values = _validate_parameter_values(body.parameterValues, item)
 
+        preflight = None
+        if selected_subscription:
+            if not location:
+                raise HTTPException(status_code=400, detail="Select a region before deployment")
+            if _REGIONAL_CHECKS.locked():
+                raise HTTPException(status_code=429, detail="Deployment checks are busy; retry shortly.", headers={"Retry-After": "5"})
+            async with _REGIONAL_CHECKS:
+                try:
+                    regions = await setup_cloud.subscription_locations(subscription_id)
+                except (ValueError, httpx.HTTPError, AzureError, TimeoutError):
+                    raise HTTPException(status_code=502, detail="Cannot verify subscription regions before deployment. No resources were created.") from None
+                if location not in {entry["name"] for entry in regions}:
+                    raise HTTPException(status_code=400, detail="Region is not listed for this saved subscription")
+                checked = await catalog_processing.check_region(item, selected_subscription, location, parameter_values, fresh=True)
+            if checked["capacity"].get("status") == "unavailable":
+                db.record_event(type="deployment_preflight_blocked", user_oid=user.oid, use_case=body.useCase,
+                                meta={"subscriptionId": subscription_id, "location": location})
+                raise HTTPException(status_code=409, detail="Capacity check reports this selection unavailable. Choose another region or resolve its quota/model restriction. No resources were created.")
+            preflight = {"checkedAt": checked["checkedAt"], "location": location, "subscriptionId": subscription_id,
+                         "capacityStatus": checked["capacity"].get("status", "unknown"),
+                         "capacityDetail": checked["capacity"].get("detail", ""), "priceDetail": checked["priceDetail"],
+                         "price": {key: (checked.get("price") or {}).get(key) for key in ("totalMonthly", "currency", "complete", "pricingSource", "fallbackReason")}}
+
+        if is_customer_distribution() and body.useCase not in _catalog_items():
+            raise HTTPException(status_code=409, detail="This use case is no longer available. Refresh the catalog. No deployment was created.")
         dep_id = secrets.token_hex(8)
         short_id = dep_id[:6]
         rg = existing_resource_group or _resource_group_name(body.useCase, env, short_id)
@@ -598,6 +711,7 @@ def build_api_router() -> APIRouter:
                 "parameterValues": parameter_values,
                 "externalSubscription": body.externalSubscription,
                 "existingResourceGroup": bool(existing_resource_group),
+                "preflight": preflight,
             },
         )
         db.record_event(
@@ -715,6 +829,87 @@ def build_api_router() -> APIRouter:
         return {"deployment": _deployment_view(dep), "detail": "teardown started"}
 
     # --------------------------------------------------------------- admin ---
+    @router.get("/admin/catalog")
+    async def admin_catalog(_: CurrentUser = Depends(require_admin)) -> JSONResponse:
+        import setup_github
+        result = setup_github.catalog_management() if is_customer_distribution() else {"items": []}
+        return JSONResponse({**result, "supported": is_customer_distribution()}, headers={"Cache-Control": "no-store"})
+
+    @router.put("/admin/catalog/{use_case}")
+    async def set_catalog_visibility(
+        use_case: str, body: CatalogVisibilityIn, request: Request, admin: CurrentUser = Depends(require_admin),
+    ) -> JSONResponse:
+        import setup_github
+        if not (request.headers.get("origin") or request.headers.get("referer")):
+            raise HTTPException(status_code=403, detail="browser origin required")
+        verify_same_origin(request)
+        if not is_customer_distribution():
+            raise HTTPException(status_code=409, detail="Catalog removal requires an organization-operated portal")
+        if not body.confirm:
+            raise HTTPException(status_code=400, detail="Confirm the catalog visibility change")
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", use_case):
+            raise HTTPException(status_code=400, detail="Invalid use case")
+        snapshot = setup_github.catalog_snapshot()
+        repository = str(snapshot.get("repository", "")).lower()
+        if not repository or body.repository.lower() != repository or body.version != snapshot.get("version"):
+            raise HTTPException(status_code=409, detail="The catalog changed. Refresh the use-case list before trying again.")
+        items = {item["path"]: item for item in snapshot.get("items", [])}
+        all_removed = db.get_setup_setting("catalog_removed", {})
+        removed = all_removed.get(repository, {})
+        if use_case not in items and use_case not in removed:
+            raise HTTPException(status_code=404, detail="Unknown use case")
+        changed = body.removed != (use_case in removed)
+        if changed:
+            if body.removed:
+                removed[use_case] = {"displayName": items[use_case].get("displayName", use_case), "removedAt": time.time()}
+            else:
+                removed.pop(use_case, None)
+            if removed:
+                all_removed[repository] = removed
+            else:
+                all_removed.pop(repository, None)
+            db.set_setup_setting("catalog_removed", all_removed)
+            db.record_event(type="catalog_use_case_removed" if body.removed else "catalog_use_case_restored",
+                            user_oid=admin.oid, user_upn=admin.upn, use_case=use_case,
+                            meta={"repository": repository, "version": body.version})
+        return JSONResponse({"path": use_case, "removed": body.removed, "changed": changed}, headers={"Cache-Control": "no-store"})
+
+    @router.post("/admin/catalog/{use_case}/repository-removal")
+    async def request_repository_removal(
+        use_case: str, body: CatalogRepositoryRemovalIn, request: Request, admin: CurrentUser = Depends(require_admin),
+    ) -> JSONResponse:
+        import setup_github
+        if not (request.headers.get("origin") or request.headers.get("referer")):
+            raise HTTPException(status_code=403, detail="browser origin required")
+        verify_same_origin(request)
+        if not is_customer_distribution():
+            raise HTTPException(status_code=409, detail="Repository removal requires an organization-operated portal")
+        if not body.confirm:
+            raise HTTPException(status_code=400, detail="Confirm deletion of the use-case folder from the configured repository branch")
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", use_case):
+            raise HTTPException(status_code=400, detail="Invalid use case")
+        now = time.time()
+        if setup_github._SYNC_LOCK.locked() or now - db.get_setup_setting("catalog_repository_removal_requested_at", 0) < 60:
+            raise HTTPException(status_code=429, detail="Catalog processing or a removal request is busy. Retry in one minute.", headers={"Retry-After": "60"})
+        db.set_setup_setting("catalog_repository_removal_requested_at", now)
+        try:
+            result = await asyncio.wait_for(setup_github.delete_catalog_repository_folder(
+                use_case, body.repository, body.version, body.branch, body.sourceCommit), timeout=90)
+        except setup_github.GitHubConnectionError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from None
+        except setup_github.CatalogRepositoryConflict as error:
+            raise HTTPException(status_code=409, detail=str(error)) from None
+        except setup_github.CatalogRepositoryFailure as error:
+            db.record_event(type="catalog_repository_deletion_failed", user_oid=admin.oid, use_case=use_case,
+                            meta={"stage": error.stage, "httpStatus": error.http_status})
+            raise HTTPException(status_code=502, detail=str(error)) from None
+        except (httpx.HTTPError, ValueError, KeyError, TypeError, AttributeError, OSError, TimeoutError):
+            raise HTTPException(status_code=502, detail="Repository deletion could not be confirmed. It may already have committed; inspect the configured branch and sync before retrying. No Azure resources or existing deployments were deleted.") from None
+        db.record_event(type="catalog_repository_use_case_deleted", user_oid=admin.oid, user_upn=admin.upn, use_case=use_case,
+                        meta={"repository": body.repository, "branch": result["branch"], "commit": result["commit"],
+                              "changed": result["changed"], "deletedFiles": result["deletedFiles"]})
+        return JSONResponse(result, headers={"Cache-Control": "no-store"})
+
     @router.get("/admin/telemetry")
     async def admin_telemetry(
         days: int = 30,
@@ -815,7 +1010,13 @@ def build_api_router() -> APIRouter:
         # Create branch + commit the bundle so a maintainer can open the PR.
         # Best-effort: if the push fails (or no token is configured) the
         # submission stays staged for manual download from the admin panel.
-        detail = "Uploaded; queued for a maintainer to review."
+        detail = (
+            "Uploaded and saved in the portal only. GitHub is not connected or its authorization is unavailable. "
+            "Ask a portal administrator to check Setup > GitHub. No review branch was created. "
+            "The ZIP is available in Admin > Submissions; it will not be sent automatically."
+        )
+        db.update_submission(staged["id"], detail=detail)
+        validation_failed = False
         if github_intake.configured():
             try:
                 branch = f"usecase-intake/{staged['slug']}-{staged['id'][:6]}"
@@ -845,18 +1046,32 @@ def build_api_router() -> APIRouter:
                     meta={"branch": pushed["branch"]},
                 )
                 detail = "Uploaded and a review branch was created. A maintainer will open the pull request."
+            except github_intake.SubmissionValidationError as exc:
+                validation_failed = True
+                detail = "Uploaded and staged, but validation failed: " + str(exc) + " No review branch was created."
+                db.update_submission(staged["id"], detail=detail)
+                db.record_event(type="use_case_validation_failed", user_oid=user.oid, user_upn=user.upn,
+                                use_case=staged["slug"], meta={"stage": "before_review_branch"})
             except Exception as exc:  # push is best-effort; keep the staged copy
+                detail = (
+                    "Uploaded and saved in the portal, but GitHub review branch creation could not be confirmed. "
+                    "Ask a portal administrator to check Setup > GitHub and the repository before retrying. "
+                    "The ZIP is available in Admin > Submissions; it will not be sent automatically."
+                )
                 db.update_submission(
                     staged["id"],
-                    detail=f"Staged; branch creation failed ({type(exc).__name__}). "
-                    "A maintainer can download the bundle instead.",
+                    detail=detail,
                 )
+                db.record_event(type="use_case_branch_failed", user_oid=user.oid, user_upn=user.upn,
+                                use_case=staged["slug"], meta={"errorType": type(exc).__name__})
 
         sub = db.get_submission(staged["id"])
         assert sub is not None
         return {
             "submission": _submission_view(sub),
             "detail": detail,
+            "validationFailed": validation_failed,
+            "stagedOnly": sub["status"] != "branched",
         }
 
     @router.get("/admin/submissions")
@@ -895,13 +1110,26 @@ def build_api_router() -> APIRouter:
         sub = db.get_submission(submission_id)
         if sub is None:
             raise HTTPException(status_code=404, detail="not found")
-        submissions.discard(sub)
-        db.update_submission(submission_id, status="discarded", detail="discarded by admin")
+        if sub["status"] == "discarded":
+            return
+        if sub["status"] == "merged":
+            raise HTTPException(status_code=409, detail="A merged submission must be managed through its repository.")
+        try:
+            await github_intake.delete_submission_branch(sub)
+        except github_intake.BranchDeletionError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from None
+        try:
+            submissions.discard(sub)
+        except submissions.SubmissionError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from None
+        detail = "Deleted by admin; review branch removed or already absent." if sub.get("branch") else "Deleted by admin; staged files removed."
+        db.update_submission(submission_id, status="discarded", compare_url="", detail=detail)
         db.record_event(
             type="use_case_submission_discarded",
             user_oid=admin.oid,
             user_upn=admin.upn,
             use_case=sub["slug"],
+            meta={"submissionId": submission_id, "branch": sub.get("branch", "")},
         )
 
     return router

@@ -19,6 +19,7 @@ from azure.core.exceptions import AzureError
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 import db
+import lifecycle
 import github_device
 import setup_config
 import catalog_processing
@@ -47,10 +48,15 @@ class GitHubSettings(BaseModel):
         return value
 
 
-async def github_request(path: str, method: str = "GET", body: dict | None = None, *, token: str | None = None, params: dict | None = None, require_workflow: bool = False) -> dict | list:
-    token = token if token is not None else github_device.access_token()
+class GitHubConnectionError(ValueError):
+    def __init__(self) -> None:
+        super().__init__("GitHub authorization is unavailable or expired. Reconnect GitHub in Setup > GitHub, keep the existing repository, then refresh the portal.")
+
+
+async def github_request(path: str, method: str = "GET", body: dict | None = None, *, token: str | None = None, params: dict | None = None, require_workflow: bool = False, response_limit: int = 8 * 1024 * 1024) -> dict | list:
+    token = token if token is not None else await github_device.ensure_access_token()
     if not token or token.startswith("@Microsoft.KeyVault("):
-        raise ValueError("Connect GitHub before configuring the repository; the connection may have expired")
+        raise GitHubConnectionError()
     if not path.startswith("/") or ".." in path or "?" in path:
         raise ValueError("Invalid GitHub API path")
     async with httpx.AsyncClient(base_url="https://api.github.com", timeout=30, follow_redirects=False) as client:
@@ -58,10 +64,12 @@ async def github_request(path: str, method: str = "GET", body: dict | None = Non
             "Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
         }) as response:
+            if response.status_code == 401:
+                raise GitHubConnectionError()
             content = bytearray()
             async for chunk in response.aiter_bytes():
                 content.extend(chunk)
-                if len(content) > 8 * 1024 * 1024:
+                if len(content) > response_limit:
                     raise ValueError("GitHub response exceeds the synchronization limit")
             if response.is_error:
                 httpx.Response(response.status_code, request=response.request, headers=response.headers, content=bytes(content)).raise_for_status()
@@ -81,6 +89,31 @@ async def github_account(token: str | None = None) -> dict:
     if not isinstance(account, dict) or not isinstance(account.get("id"), int) or not re.fullmatch(_ACCOUNT_PATTERN, str(account.get("login", ""))):
         raise ValueError("Could not verify the GitHub account")
     return {"id": account["id"], "login": account["login"]}
+
+
+async def verify_reconnection(account: dict, token: str) -> bool:
+    configuration = db.get_setup_setting("github", {})
+    if not configuration.get("enabled"):
+        return False
+    previous = db.get_setup_setting("github_connection", {})
+    if type(previous.get("id")) is not int or previous["id"] != account.get("id"):
+        raise ValueError("Sign in with the previously connected GitHub account to keep this repository enabled. To change accounts, disable the repository connection first. No credentials were replaced.")
+    selected = GitHubSettings(owner=configuration["owner"], repository=configuration["repository"], branch=configuration["branch"])
+    repo = f"{selected.owner}/{selected.repository}"
+    try:
+        remote = await github_request(f"/repos/{repo}", token=token)
+        permissions = remote.get("permissions") if isinstance(remote, dict) else None
+        if (not isinstance(remote, dict) or str(remote.get("full_name", "")).lower() != repo.lower()
+            or remote.get("archived") or remote.get("disabled") or not isinstance(permissions, dict) or permissions.get("push") is not True):
+            raise ValueError("The new GitHub sign-in must retain write access to the saved repository. Check organization access and SSO. No credentials were replaced.")
+        ref = await github_request(f"/repos/{repo}/git/ref/heads/{quote(selected.branch, safe='/')}", token=token)
+        target = ref.get("object") if isinstance(ref, dict) else None
+        if (not isinstance(ref, dict) or ref.get("ref") != f"refs/heads/{selected.branch}"
+            or not isinstance(target, dict) or not re.fullmatch(r"[a-f0-9]{40}", str(target.get("sha", "")))):
+            raise ValueError("The saved repository branch could not be verified. No credentials were replaced.")
+    except httpx.HTTPStatusError as error:
+        raise ValueError(f"The new GitHub sign-in could not access the saved repository or branch (HTTP {error.response.status_code}). Check organization access and SSO. No credentials were replaced.") from None
+    return True
 
 
 async def discover_repositories() -> dict:
@@ -310,6 +343,201 @@ def catalog_snapshot() -> dict:
     return db.get_setup_setting("catalog_snapshot", {})
 
 
+def visible_catalog_snapshot() -> dict:
+    snapshot = catalog_snapshot()
+    if not snapshot:
+        return snapshot
+    repository = str(snapshot.get("repository", "")).lower()
+    removed = db.get_setup_setting("catalog_removed", {}).get(repository, {})
+    return {**snapshot, "items": [item for item in snapshot.get("items", []) if item.get("path") not in removed]}
+
+
+def catalog_management() -> dict:
+    snapshot = catalog_snapshot()
+    repository = str(snapshot.get("repository", "")).lower()
+    removed = db.get_setup_setting("catalog_removed", {}).get(repository, {})
+    items = {item["path"]: item for item in snapshot.get("items", [])}
+    rows = []
+    for slug in sorted(items.keys() | removed.keys()):
+        item = items.get(slug, {})
+        removal = removed.get(slug, {})
+        rows.append({"path": slug, "displayName": item.get("displayName", removal.get("displayName", slug)),
+                     "category": item.get("category", ""), "removed": slug in removed,
+                     "inSnapshot": slug in items, "removedAt": removal.get("removedAt")})
+    configuration = db.get_setup_setting("github", {})
+    configured_repo = f"{configuration.get('owner', '')}/{configuration.get('repository', '')}".lower()
+    can_request = configuration.get("enabled") is True and configured_repo == repository
+    return {"repository": repository, "version": snapshot.get("version", ""), "items": rows,
+            "branch": configuration.get("branch", "") if can_request else "",
+            "sourceCommit": snapshot.get("sourceCommit", ""), "repositoryRemovalAvailable": can_request}
+
+
+class CatalogRepositoryConflict(ValueError):
+    """The confirmed repository source changed or could not be verified."""
+
+
+def _removal_tree_entries(document: dict) -> list[dict]:
+    if not isinstance(document, dict) or document.get("truncated") or not isinstance(document.get("tree"), list):
+        raise CatalogRepositoryConflict("The repository tree could not be fully verified. Inspect the configured branch before retrying.")
+    result = []
+    names = set()
+    for entry in document["tree"]:
+        if not isinstance(entry, dict):
+            raise CatalogRepositoryConflict("Invalid repository tree.")
+        name = entry.get("path")
+        if (not isinstance(name, str) or not name or name in (".", "..") or "/" in name or "\\" in name
+                or name in names or any(ord(character) < 32 for character in name)
+                or (entry.get("mode"), entry.get("type")) not in {
+                    ("040000", "tree"), ("100644", "blob"), ("100755", "blob"), ("120000", "blob"), ("160000", "commit")}
+                or not re.fullmatch(r"[a-f0-9]{40}", str(entry.get("sha", "")))):
+            raise CatalogRepositoryConflict("Unsupported repository tree entry. Inspect the configured branch before retrying.")
+        names.add(name)
+        result.append({key: entry[key] for key in ("path", "mode", "type", "sha")})
+    return sorted(result, key=lambda entry: entry["path"])
+
+
+class CatalogRepositoryFailure(ValueError):
+    def __init__(self, stage: str, *, status: int | None = None, rejected: bool = False) -> None:
+        operation = {"access": "checking repository access", "source": "reading catalog source",
+                     "delete": "committing the folder deletion", "verify": "verifying the deletion"}.get(stage, "processing the deletion")
+        if rejected:
+            detail = "GitHub rejected the deletion. Check repository write permission and branch protection/rules; required pull requests will not be bypassed. Sync and confirm the latest source before retrying."
+        else:
+            detail = f"Repository deletion could not be confirmed while {operation}"
+            detail += f" (HTTP {status}). " if status is not None else ". "
+            detail += "Check GitHub access and connectivity. "
+        if stage in ("delete", "verify"):
+            detail += " The deletion may already have committed; inspect the configured branch and sync before retrying."
+        self.stage = stage
+        self.http_status = status
+        super().__init__(detail)
+
+
+async def delete_catalog_repository_folder(use_case: str, repository: str, version: str, branch: str, source_commit: str) -> dict:
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", use_case) or not re.fullmatch(r"[a-f0-9]{40}", source_commit):
+        raise ValueError("Invalid use case or source commit")
+    async with _SYNC_LOCK:
+        configuration = db.get_setup_setting("github", {})
+        if not configuration.get("enabled"):
+            raise CatalogRepositoryConflict("Connect the repository before deleting source.")
+        selected = GitHubSettings(owner=configuration["owner"], repository=configuration["repository"], branch=configuration["branch"])
+        repo = f"{selected.owner}/{selected.repository}"
+        snapshot = catalog_snapshot()
+        removed = db.get_setup_setting("catalog_removed", {}).get(repo.lower(), {})
+        if (repository.lower() != repo.lower() or snapshot.get("repository", "").lower() != repo.lower()
+                or version != snapshot.get("version") or source_commit != snapshot.get("sourceCommit") or branch != selected.branch
+                or (use_case not in {item.get("path") for item in snapshot.get("items", [])} and use_case not in removed)):
+            raise CatalogRepositoryConflict("The catalog or repository selection changed. Refresh and confirm again.")
+        token = await github_device.ensure_access_token()
+        if not token:
+            raise GitHubConnectionError()
+        stage = "access"
+        async def request(path: str, method: str = "GET", body: dict | None = None) -> dict:
+            try:
+                result = await github_request(path, method, body, token=token)
+            except httpx.HTTPStatusError as error:
+                raise CatalogRepositoryFailure(stage, status=error.response.status_code) from None
+            except httpx.HTTPError:
+                raise CatalogRepositoryFailure(stage) from None
+            if not isinstance(result, dict):
+                raise CatalogRepositoryFailure(stage)
+            return result
+
+        root_path = f"/repos/{repo}"
+        remote = await request(root_path)
+        permissions = remote.get("permissions")
+        if (str(remote.get("full_name", "")).lower() != repo.lower() or remote.get("archived") or remote.get("disabled")
+                or not isinstance(permissions, dict) or permissions.get("push") is not True):
+            raise CatalogRepositoryConflict("Repository write access could not be verified. No files were deleted.")
+        stage = "source"
+        base_path = f"{root_path}/git/ref/heads/{quote(branch, safe='/')}"
+        async def verify_head(expected: str) -> None:
+            ref = await request(base_path)
+            if ref.get("ref") != f"refs/heads/{branch}" or (ref.get("object") or {}).get("sha") != expected:
+                if stage == "verify":
+                    raise CatalogRepositoryFailure(stage)
+                raise CatalogRepositoryConflict("The repository branch changed. Sync and confirm the latest source before retrying.")
+        async def tree_for(commit_sha: str) -> tuple[dict, list[dict], list[dict]]:
+            commit = await request(f"{root_path}/git/commits/{commit_sha}")
+            tree_sha = (commit.get("tree") or {}).get("sha", "")
+            if not re.fullmatch(r"[a-f0-9]{40}", str(tree_sha)):
+                raise CatalogRepositoryFailure(stage)
+            root_entries = _removal_tree_entries(await request(f"{root_path}/git/trees/{tree_sha}"))
+            catalog = next((entry for entry in root_entries if entry["path"] == "catalog"), None)
+            if catalog and catalog["type"] != "tree":
+                raise CatalogRepositoryConflict("The catalog path is not a directory.")
+            catalog_entries = _removal_tree_entries(await request(f"{root_path}/git/trees/{catalog['sha']}")) if catalog else []
+            return commit, root_entries, catalog_entries
+
+        await verify_head(source_commit)
+        _, root_entries, catalog_entries = await tree_for(source_commit)
+        target = next((entry for entry in catalog_entries if entry["path"] == use_case), None)
+        if target and target["type"] != "tree":
+            raise CatalogRepositoryConflict("The use-case path is not a directory. No files were deleted.")
+        folder = f"catalog/{use_case}/"
+        deletions = []
+        directories = 0
+        async def collect(tree_sha: str, prefix: str, depth: int = 0) -> None:
+            nonlocal directories
+            directories += 1
+            if depth > 8 or directories > 150:
+                raise CatalogRepositoryConflict("The use-case folder exceeds the deletion limits. No files were deleted.")
+            for entry in _removal_tree_entries(await request(f"{root_path}/git/trees/{tree_sha}")):
+                path = prefix + entry["path"]
+                if entry["type"] == "tree":
+                    await collect(entry["sha"], path + "/", depth + 1)
+                elif entry["type"] == "blob":
+                    if len(path) > 1024 or len(deletions) >= 500:
+                        raise CatalogRepositoryConflict("The use-case folder exceeds the deletion limits. No files were deleted.")
+                    deletions.append({"path": path})
+                else:
+                    raise CatalogRepositoryConflict("Use-case folders containing submodules require manual repository review. No files were deleted.")
+        candidate = source_commit
+        if target:
+            await collect(target["sha"], folder)
+            if not deletions:
+                raise CatalogRepositoryConflict("No files could be verified in the use-case folder. No deletion was sent.")
+            await verify_head(source_commit)
+            stage = "delete"
+            result = await request("/graphql", "POST", {
+                "query": "mutation DeleteCatalogFolder($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { oid } } }",
+                "variables": {"input": {"branch": {"repositoryNameWithOwner": repo, "branchName": branch},
+                    "expectedHeadOid": source_commit, "message": {"headline": f"Remove {folder} by portal administrator"},
+                    "fileChanges": {"deletions": deletions}}},
+            })
+            if result.get("errors"):
+                raise CatalogRepositoryFailure(stage, rejected=True)
+            payload = (result.get("data") or {}).get("createCommitOnBranch") or {}
+            candidate = payload.get("commit") or {}
+            candidate = candidate.get("oid", "")
+            if not re.fullmatch(r"[a-f0-9]{40}", str(candidate)) or candidate == source_commit:
+                raise CatalogRepositoryFailure(stage)
+            stage = "verify"
+            try:
+                proposed, observed_root, observed_catalog = await tree_for(candidate)
+            except (CatalogRepositoryConflict, KeyError, TypeError, AttributeError):
+                raise CatalogRepositoryFailure(stage) from None
+            if ([parent.get("sha") for parent in proposed.get("parents", [])] != [source_commit]
+                    or [entry for entry in observed_root if entry["path"] != "catalog"] != [entry for entry in root_entries if entry["path"] != "catalog"]
+                    or observed_catalog != [entry for entry in catalog_entries if entry["path"] != use_case]):
+                raise CatalogRepositoryFailure(stage)
+        stage = "verify"
+        await verify_head(candidate)
+        db.set_setup_setting("catalog_snapshot", {**snapshot, "items": [item for item in snapshot.get("items", []) if item.get("path") != use_case]})
+        all_removed = db.get_setup_setting("catalog_removed", {})
+        removals = all_removed.get(repo.lower(), {})
+        removals.pop(use_case, None)
+        if removals:
+            all_removed[repo.lower()] = removals
+        else:
+            all_removed.pop(repo.lower(), None)
+        db.set_setup_setting("catalog_removed", all_removed)
+        queue_catalog_refresh()
+        return {"status": "deleted", "changed": target is not None, "path": use_case, "folder": folder,
+                "branch": branch, "commit": candidate, "deletedFiles": len(deletions),
+                "url": f"https://github.com/{repo.lower()}/commit/{candidate}"}
+
+
 async def create_workflow_pr(confirm: bool) -> dict:
     if not confirm:
         raise ValueError("Explicit confirmation is required for a workflow pull request")
@@ -323,7 +551,8 @@ async def create_workflow_pr(confirm: bool) -> dict:
         if not catalog_processing.runner_available(processing, await processing_probe(force=True)):
             raise ValueError("Runner access is unavailable or unverified. Use container processing.")
         seed = source_seed()
-        names = ("tools/portal_workflows.py", "tools/portal_catalog.py", "site/server/pricing.py", "site/server/catalog_workflows.py")
+        names = ("tools/portal_workflows.py", "tools/portal_catalog.py", "site/server/pricing.py", "site/server/catalog_workflows.py",
+             "site/server/catalog_processing.py", "site/server/setup_cloud.py", "site/server/lifecycle.py", "site/requirements.txt")
         files = {name: seed[name] for name in names}
         files.update({name: base64.b64encode(content).decode() for name, content in catalog_workflows.workflow_files(
             processing["runnerLabels"] if processing["mode"] == "self-hosted" else None).items()})
@@ -370,7 +599,8 @@ def capacity_snapshot() -> dict:
     if not snapshot:
         return {"regions": [], "services": {}}
     allowed = {item["subscriptionId"] for item in setup_config.subscriptions()}
-    return {**snapshot, "subscriptions": {identifier: regions for identifier, regions in snapshot["subscriptions"].items() if identifier in allowed}}
+    return {**{key: value for key, value in snapshot.items() if key != "regional"},
+            "subscriptions": {identifier: regions for identifier, regions in snapshot["subscriptions"].items() if identifier in allowed}}
 
 
 def validate_capacity(snapshot: dict) -> dict:
@@ -384,12 +614,12 @@ def validate_capacity(snapshot: dict) -> dict:
     if generated.tzinfo is None or generated.timestamp() > time.time() + 300:
         raise ValueError("Invalid capacity timestamp")
     subscriptions = snapshot.get("subscriptions")
-    if not isinstance(subscriptions, dict) or len(subscriptions) > 20:
+    if not isinstance(subscriptions, dict) or len(subscriptions) > 200:
         raise ValueError("Invalid capacity subscriptions")
     pairs = 0
     clean = {}
     for identifier, regions in subscriptions.items():
-        if setup_config.canonical_guid(identifier) != identifier or not isinstance(regions, dict) or len(regions) > 20:
+        if setup_config.canonical_guid(identifier) != identifier or not isinstance(regions, dict) or len(regions) > 200:
             raise ValueError("Invalid capacity scope")
         pairs += len(regions)
         clean[identifier] = {}
@@ -405,10 +635,13 @@ def validate_capacity(snapshot: dict) -> dict:
                 if row["available"] != max(0, row["limit"] - row["current"]):
                     raise ValueError("Invalid quota headroom")
                 clean[identifier][region].append({key: row[key] for key in ("name", "limit", "current", "available")})
-    if pairs > 100:
+    if pairs > 40000:
         raise ValueError("Capacity scope exceeds the limit")
-    return {"schemaVersion": 1, "tenantId": snapshot["tenantId"], "generated": generated.astimezone(timezone.utc).isoformat(),
-            "physicalCapacity": "unknown", "subscriptions": clean, "regions": [], "services": {}}
+    result = {"schemaVersion": 1, "tenantId": snapshot["tenantId"], "generated": generated.astimezone(timezone.utc).isoformat(),
+              "physicalCapacity": "unknown", "subscriptions": clean, "regions": [], "services": {}}
+    if "regional" in snapshot:
+        result["regional"] = catalog_processing.validate_runner_snapshot(snapshot["regional"])
+    return result
 
 
 def generated_cost(document: dict, metadata: bytes, authored: dict) -> dict | None:
@@ -470,19 +703,95 @@ async def processing_probe(force: bool = False) -> dict:
     return result
 
 
-def queue_catalog_refresh() -> dict:
+def catalog_refresh_status() -> dict:
+    if not db.get_setup_setting("github", {}).get("enabled"):
+        return {"status": "not_configured"}
+    job = db.get_setup_setting("catalog_job", {})
+    status = {"status": job.get("status", "idle"), "completedAt": job.get("completedAt")}
+    if status["status"] == "failed" and job.get("code") == "github_reconnect_required":
+        status["code"] = "github_reconnect_required"
+    return status
+
+
+def queue_catalog_refresh(force: bool = True) -> dict:
     if not db.get_setup_setting("github", {}).get("enabled"):
         raise ValueError("Connect a repository first")
     job = db.get_setup_setting("catalog_job", {})
-    if job.get("status") not in ("queued", "running"):
-        job = {"status": "queued", "requestedAt": time.time(), "detail": "Catalog validation, pricing and quota refresh queued."}
-        db.set_setup_setting("catalog_job", job)
+    if job.get("status") in ("queued", "running"):
+        if not force and job["status"] == "running":
+            _SYNC_WAKE.set()
+        if force and job["status"] == "queued" and not job.get("force", True):
+            job = {**job, "force": True}
+            db.set_setup_setting("catalog_job", job)
+        return job
+    remaining = 10 - (time.time() - job.get("completedAt", 0))
+    if not force and remaining > 0:
+        return {"status": "throttled", "retryAfter": math.ceil(remaining)}
+    job = {"status": "queued", "requestedAt": time.time(), "force": force,
+           "detail": "Catalog validation, pricing and quota refresh queued."}
+    db.set_setup_setting("catalog_job", job)
     _SYNC_WAKE.set()
     return job
 
 
+def _catalog_stage(stage: str) -> None:
+    job = db.get_setup_setting("catalog_job", {})
+    if job.get("status") == "running":
+        db.set_setup_setting("catalog_job", {**job, "stage": stage})
+
+
+def _catalog_failure(error: Exception) -> dict:
+    job = db.get_setup_setting("catalog_job", {})
+    stages = {
+        "repository": "reading the configured repository",
+        "validation_pricing": "validating source and refreshing public prices",
+        "capacity": "reading subscription regions and quota data",
+        "capacity_validation": "validating the capacity snapshot",
+        "artifacts": "preparing catalog artifacts and prices",
+        "publication": "saving the catalog snapshot",
+    }
+    stage = job.get("stage", "unknown")
+    if stage not in stages:
+        stage = "unknown"
+    category = "invalid_response"
+    hint = "Check the input format and response completeness."
+    status = None
+    if isinstance(error, GitHubConnectionError):
+        category = "github_reconnect_required"
+        hint = str(GitHubConnectionError())
+    elif isinstance(error, httpx.HTTPStatusError):
+        category = "http_error"
+        status = error.response.status_code
+        hint = f"The upstream service returned HTTP {status}. Check access, rate limits and service availability."
+    elif isinstance(error, (TimeoutError, httpx.TimeoutException)):
+        category = "timeout"
+        hint = "The operation exceeded its time limit."
+    elif isinstance(error, httpx.RequestError):
+        category = "connection_error"
+        hint = "The upstream service could not be reached."
+    elif isinstance(error, AzureError):
+        category = "azure_access_error"
+        hint = "Verify managed-identity authentication and access for this operation."
+    elif isinstance(error, OSError):
+        category = "storage_error"
+        hint = "Verify writable storage, available space and file access."
+    elif isinstance(error, ValueError) and str(error) in {
+        "Retail prices are incomplete; the previous catalog remains active",
+        "Subscription tenant could not be verified", "Subscription is not enabled",
+        "Incomplete quota response; previous capacity remains active", "Invalid quota counters",
+        "Price scope does not match metadata", "Price components do not match metadata",
+        "Do not publish literal secure parameter values",
+        "Parameter file must reference this workload's main.bicep",
+    }:
+        hint = str(error).rstrip(".") + "."
+    detail = f"Processing failed while {stages.get(stage, 'processing the catalog')}. {hint} The last good catalog is still active."
+    return {"status": "failed", "startedAt": job.get("startedAt"), "completedAt": time.time(),
+            "stage": stage, "code": category, "httpStatus": status, "detail": detail}
+
+
 async def sync_catalog(force: bool = False) -> dict:
     async with _SYNC_LOCK:
+        _catalog_stage("repository")
         settings = db.get_setup_setting("github", {})
         if not settings.get("enabled"):
             raise ValueError("GitHub is disabled")
@@ -517,31 +826,43 @@ async def sync_catalog(force: bool = False) -> dict:
             site_tree = await github_request(f"/repos/{repo}/git/trees/{site_entry['sha']}")
             if site_tree.get("truncated"):
                 raise ValueError("Site tree is truncated")
-            candidates.extend({**entry, "path": "site/capacity.json"} for entry in site_tree.get("tree", []) if entry.get("path") == "capacity.json" and entry.get("type") == "blob")
+            candidates.extend({**entry, "path": "site/" + entry["path"]} for entry in site_tree.get("tree", [])
+                              if entry.get("path") in (("capacity.json", "updates.json") if mode != "container" else ("capacity.json",)) and entry.get("type") == "blob")
         blobs: dict[str, bytes] = {}
         total = 0
+        capacity_size = 0
         for entry in candidates:
             name = entry["path"]
             generated_input = re.fullmatch(r"catalog/[a-z0-9][a-z0-9-]{0,79}/(?:metadata\.json|pricing\.json|compiled/(?:dev|prod)\.json|terraform/[A-Za-z0-9_.-]+\.(?:tf|tfvars|json))", name)
             local_source = mode == "container" and re.fullmatch(r"(?:catalog|modules)/(?:[A-Za-z0-9_-]+/){1,8}[A-Za-z0-9_.-]+\.(?:bicep|bicepparam|json|txt|yaml|yml)", name)
-            if name != "site/capacity.json" and not generated_input and not local_source:
+            if name not in ("site/capacity.json", "site/updates.json") and not generated_input and not local_source:
                 continue
-            if entry.get("mode") != "100644" or entry.get("size", 0) > 2 * 1024 * 1024:
+            file_limit = (16 if name == "site/capacity.json" else 2) * 1024 * 1024
+            if entry.get("mode") != "100644" or entry.get("size", 0) > file_limit:
                 raise ValueError("Unsupported catalog file mode or size")
-            blob = await github_request(f"/repos/{repo}/git/blobs/{entry['sha']}")
+            if name == "site/capacity.json" and entry.get("size", 0) > 4 * 1024 * 1024:
+                blob = await github_request(f"/repos/{repo}/git/blobs/{entry['sha']}", response_limit=24 * 1024 * 1024)
+            else:
+                blob = await github_request(f"/repos/{repo}/git/blobs/{entry['sha']}")
             content = base64.b64decode(blob["content"], validate=False)
             total += len(content)
-            if total > 16 * 1024 * 1024:
+            if name == "site/capacity.json":
+                capacity_size = len(content)
+            if total - capacity_size > 16 * 1024 * 1024:
                 raise ValueError("Catalog exceeds 16 MiB")
-            if len(content) > 2 * 1024 * 1024:
+            if len(content) > file_limit:
                 raise ValueError("Catalog file exceeds 2 MiB")
             blobs[name] = content
         if mode == "container":
+            _catalog_stage("validation_pricing")
             blobs = await catalog_processing.process_blobs(blobs)
+            _catalog_stage("capacity")
             snapshot = await catalog_processing.refresh_capacity(processing["capacityRegions"])
             blobs.pop("site/capacity.json", None)
             if snapshot is not None:
                 blobs["site/capacity.json"] = json.dumps(snapshot).encode()
+        elif "site/updates.json" in blobs:
+            lifecycle.import_runner(blobs.pop("site/updates.json"))
         artifact_hash = hashlib.sha256()
         artifact_hash.update(f"{repo}:{version}:{mode}".encode())
         for name, content in sorted(blobs.items()):
@@ -552,9 +873,11 @@ async def sync_catalog(force: bool = False) -> dict:
         root = snapshot_root(artifact_version)
         capacity = None
         if "site/capacity.json" in blobs:
+            _catalog_stage("capacity_validation")
             document = json.loads(blobs["site/capacity.json"])
             if document != {"regions": [], "services": {}}:
                 capacity = validate_capacity(document)
+        _catalog_stage("artifacts")
         items = []
         for name, content in blobs.items():
             if not re.fullmatch(r"catalog/[^/]+/metadata\.json", name):
@@ -592,8 +915,11 @@ async def sync_catalog(force: bool = False) -> dict:
             items.append(item)
         result = {"version": artifact_version, "sourceCommit": source_version, "items": items, "syncedAt": time.time(), "repository": repo, "capacity": capacity,
                   "processingKey": processing_key, "processingMode": mode,
-                  "capacityDetail": "Compute quota snapshot refreshed; physical capacity is unknown." if capacity else "No quota snapshot: configure capacity regions and deployment subscriptions in Setup."}
+                  "capacityDetail": "Compute quotas checked across subscription regions; empty results mean unavailable or not reported, not unlimited capacity." if capacity else "No quota snapshot: configure deployment subscriptions in Setup."}
+        _catalog_stage("publication")
         db.set_setup_setting("catalog_snapshot", result)
+        if mode != "container" and capacity and capacity.get("regional"):
+            db.set_setup_setting("regional_snapshot", capacity["regional"])
         db.set_setup_setting("github_sync_error", None)
         return result
 
@@ -632,21 +958,30 @@ async def run_catalog_sync(stop: asyncio.Event) -> None:
     if db.get_setup_setting("catalog_job", {}).get("status") == "running":
         db.set_setup_setting("catalog_job", {"status": "queued", "requestedAt": time.time(), "detail": "Resuming processing after a container restart."})
     while not stop.is_set():
+        _SYNC_WAKE.clear()
         if db.get_setup_setting("github", {}).get("enabled"):
-            manual = db.get_setup_setting("catalog_job", {}).get("status") == "queued"
+            job = db.get_setup_setting("catalog_job", {})
+            manual = job.get("status") == "queued" and job.get("force", True)
             db.set_setup_setting("catalog_job", {"status": "running", "startedAt": time.time(), "detail": "Checking runners, validating catalog inputs and refreshing snapshots."})
             try:
                 result = await asyncio.wait_for(sync_catalog(force=manual), timeout=1200)
                 db.set_setup_setting("catalog_job", {"status": "succeeded", "completedAt": time.time(), "detail": "Catalog processing completed.",
                     "mode": result.get("processingMode"), "sourceCommit": result.get("sourceCommit", result["version"]), "count": len(result["items"]), "capacityDetail": result.get("capacityDetail", "")})
-            except (ValueError, KeyError, TypeError, httpx.HTTPError, AzureError, OSError, TimeoutError):
-                message = "Processing failed; the last good catalog is still active. Check repository access, validation tool/sandbox prerequisites, local Bicep modules, pricing and managed-identity quota read access."
+                if _SYNC_WAKE.is_set():
+                    db.set_setup_setting("catalog_job", {"status": "queued", "force": False, "requestedAt": time.time(),
+                                                        "detail": "Checking for changes merged during processing."})
+            except catalog_processing.CatalogValidationError as error:
+                message = error.safe_detail + " The last good catalog is still active."
                 db.set_setup_setting("github_sync_error", message)
-                db.set_setup_setting("catalog_job", {"status": "failed", "completedAt": time.time(), "detail": message})
+                db.set_setup_setting("catalog_job", {"status": "failed", "completedAt": time.time(),
+                                                    "code": "catalog_validation_failed", "detail": message})
+            except (ValueError, KeyError, TypeError, httpx.HTTPError, AzureError, OSError, TimeoutError) as error:
+                failure = _catalog_failure(error)
+                db.set_setup_setting("github_sync_error", failure["detail"])
+                db.set_setup_setting("catalog_job", failure)
             except asyncio.CancelledError:
                 db.set_setup_setting("catalog_job", {"status": "queued", "requestedAt": time.time(), "detail": "Processing interrupted; it will retry after restart."})
                 raise
-        _SYNC_WAKE.clear()
         waiters = [asyncio.create_task(stop.wait()), asyncio.create_task(_SYNC_WAKE.wait())]
         try:
             await asyncio.wait(waiters, timeout=300, return_when=asyncio.FIRST_COMPLETED)

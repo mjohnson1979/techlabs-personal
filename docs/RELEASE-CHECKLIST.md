@@ -71,7 +71,9 @@ are separate actions and are not performed by the builder.
   public ingress, disabled Easy Auth, extra audiences, wrong tenant, absent admins,
   missing storage or wrong host identity; startup must not write Azure settings.
 - [ ] Verify an ordinary tenant member visiting first remains a guest and cannot
-  access Setup. The designated administrator signs in and starts with GitHub;
+  access Setup. The designated administrator reviews Authentication, then continues
+  to GitHub, Subscriptions and Branding; Back/Next retain drafts without writes.
+  Verify step navigation is blocked during saves and pending device authorization;
   missing auth never falls back to anonymous or code installation.
 - [ ] Confirm the single setup secret's persisted expiry does not renew on restart
   and previously used secrets cannot reactivate installation after rotation.
@@ -86,6 +88,10 @@ are separate actions and are not performed by the builder.
   restart and secrets never appear in validation errors, logs or database records.
 - [ ] Test App Service and Key Vault writes interrupted by host restart, failed
   activation recovery and permanently disabled installer after completion.
+- [ ] For WAL-era upgrades, complete the stopped-app backup and migration procedure
+  in Operations. Confirm rollback journaling, recover committed WAL records on an
+  isolated backup, and verify repository/settings/uploads survive token-triggered
+  and manual restarts on the actual host. Do not use SCM to open a live WAL database.
 - [ ] Verify additive Entra/OIDC configuration on a disposable organization App Service;
   retain working bootstrap auth and confirm issuer/audience/subject claims.
 - [ ] Confirm Entra credential storage, expiry/rotation and recovery after app restart.
@@ -99,6 +105,9 @@ are separate actions and are not performed by the builder.
   checks, workflow scope, idempotent review links, no automatic merge or setup reset.
 - [ ] Validate Bicep wrapper compilation, metadata-bound public retail refresh and
   atomic snapshot sync. Confirm invalid feeds retain the last good catalog.
+- [ ] Verify lifecycle refresh at startup/daily, runner workflow import and container
+  fallback. Confirm failed or partial public-feed reads retain the last good data,
+  status/stale notices render correctly and workload matching works without icons.
 - [ ] Verify container validation, pricing and quota refresh with runners unavailable
   and runner probes denied. Test restart recovery, admin/origin checks, rate limits,
   and immutable deployment artifacts. Verify unavailable choices are disabled.

@@ -109,6 +109,12 @@ def build_setup_router() -> APIRouter:
 
     @router.get("/admin/setup")
     async def status(user: CurrentUser = Depends(require_admin)) -> dict:
+        renewal_error = ""
+        if github_device.renewal_available():
+            try:
+                await github_device.ensure_access_token()
+            except github_device.GitHubRenewalError as error:
+                renewal_error = str(error)
         return {
             "branding": distribution.branding(),
             "azureTenantId": os.environ.get("GALLERY_ENTRA_TENANT_ID", ""),
@@ -126,6 +132,7 @@ def build_setup_router() -> APIRouter:
             "githubOAuthClientId": github_device.client_id(),
             "githubConnected": bool(github_device.access_token()),
             "githubConnection": db.get_setup_setting("github_connection", {}),
+            "githubRenewalError": renewal_error,
             "catalogVersion": setup_github.catalog_snapshot().get("version"),
             "syncError": db.get_setup_setting("github_sync_error"),
             "processing": catalog_processing.settings(),
@@ -186,8 +193,6 @@ def build_setup_router() -> APIRouter:
     async def github_start(body: setup_auth.GitHubCredential, request: Request, user: CurrentUser = Depends(require_admin)) -> dict:
         setup_origin(request)
         async with _SETUP_LOCK:
-            if db.get_setup_setting("github", {}).get("enabled"):
-                raise HTTPException(status_code=409, detail="Disable the current GitHub repository connection before signing in again")
             try:
                 if not body.confirm:
                     raise ValueError("Confirm GitHub authorization and server-side token storage")
@@ -218,14 +223,23 @@ def build_setup_router() -> APIRouter:
             async with _SETUP_LOCK:
                 flow = github_device.get_flow(user.oid, body.flowId)
                 async with flow.lock:
-                    if db.get_setup_setting("github", {}).get("enabled"):
-                        raise ValueError("Disable the current repository connection before saving a new GitHub sign-in")
+                    if flow.client_id != github_device.client_id():
+                        raise ValueError("The GitHub OAuth application changed during sign-in. Cancel and connect again. No credentials were replaced.")
                     account = await setup_github.github_account(token=flow.token)
+                    reconnecting = await setup_github.verify_reconnection(account, flow.token)
                     async with setup_github._SYNC_LOCK:
-                        await setup_auth.store_github_device_token(flow.token, flow.token_expires_at, account, flow.storage)
+                        async with github_device._renewal_lock:
+                            if flow.refresh_token:
+                                renewal = {"token": flow.refresh_token, "expiresAt": flow.refresh_expires_at, "clientId": flow.client_id}
+                                await setup_auth.store_github_device_token(flow.token, flow.token_expires_at, account, flow.storage, renewal)
+                            else:
+                                await setup_auth.store_github_device_token(flow.token, flow.token_expires_at, account, flow.storage)
+                        if reconnecting:
+                            setup_github.queue_catalog_refresh()
                     github_device._flows.pop(body.flowId, None)
                     db.record_event(type="setup_github_device_connected", user_oid=user.oid)
-                    return {"status": "connected", "account": account, "expiresAt": flow.token_expires_at or None}
+                    return {"status": "connected", "account": account, "expiresAt": flow.token_expires_at or None,
+                            "autoRenew": bool(flow.refresh_token), "refreshExpiresAt": flow.refresh_expires_at or None}
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from None
         except httpx.HTTPError:

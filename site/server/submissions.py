@@ -20,6 +20,7 @@ import secrets
 import shutil
 import time
 import zipfile
+import zlib
 from pathlib import Path
 from typing import Any
 
@@ -33,9 +34,9 @@ MAX_TOTAL_UNCOMPRESSED = 25 * 1024 * 1024   # 25 MB once expanded
 MAX_MEMBERS = 300                           # number of files in the archive
 MAX_SINGLE_FILE = 5 * 1024 * 1024           # 5 MB per extracted file
 
-# Only these extensions are accepted; anything else in the zip is rejected so we
-# never stage scripts/binaries. Images are allowed for architecture diagrams.
-ALLOWED_EXT = {".bicep", ".bicepparam", ".tf", ".tfvars", ".json", ".md", ".txt", ".png", ".jpg", ".jpeg"}
+DOCUMENT_EXT = {".docx", ".xlsx", ".pptx", ".pdf", ".csv", ".tsv"}
+REVIEW_ONLY_EXT = DOCUMENT_EXT | {".ps1"}
+ALLOWED_EXT = {".bicep", ".bicepparam", ".tf", ".tfvars", ".json", ".md", ".txt", ".png", ".jpg", ".jpeg"} | REVIEW_ONLY_EXT
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CATALOG_DIR = REPO_ROOT / "catalog"
@@ -86,6 +87,45 @@ def _strip_common_prefix(paths: list[str]) -> dict[str, str]:
         prefix = next(iter(tops)) + "/"
         return {p: p[len(prefix):] for p in paths}
     return {p: p for p in paths}
+
+
+def _validate_attachment(name: str, content: bytes) -> None:
+    extension = Path(name).suffix.lower()
+    if extension == ".pdf" and not content.startswith(b"%PDF-"):
+        raise SubmissionError(f"Invalid PDF document: {name}")
+    if extension in (".csv", ".tsv", ".ps1"):
+        kind = "PowerShell attachments" if extension == ".ps1" else "tabular documents"
+        try:
+            text = content.decode("utf-16" if content.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8-sig")
+        except UnicodeError:
+            raise SubmissionError(f"Use UTF-8 or BOM-marked UTF-16 for {kind}: {name}") from None
+        if "\x00" in text:
+            raise SubmissionError(f"Binary content is not allowed in {kind}: {name}")
+    office_parts = {".docx": "word/document.xml", ".xlsx": "xl/workbook.xml", ".pptx": "ppt/presentation.xml"}
+    if extension not in office_parts:
+        return
+    if not content.startswith(b"PK\x03\x04"):
+        raise SubmissionError(f"Invalid Office document: {name}")
+    try:
+        with zipfile.ZipFile(io.BytesIO(content)) as document:
+            entries = document.infolist()
+            names = {entry.filename for entry in entries}
+            required = {"[Content_Types].xml", "_rels/.rels", office_parts[extension]}
+            if not required.issubset(names) or len(names) != len(entries):
+                raise SubmissionError(f"Invalid Office document: {name}")
+            if len(entries) > 2000 or sum(entry.file_size for entry in entries) > MAX_TOTAL_UNCOMPRESSED:
+                raise SubmissionError(f"Office document exceeds internal archive limits: {name}")
+            if any(entry.flag_bits & 1 for entry in entries):
+                raise SubmissionError(f"Encrypted Office documents are not supported: {name}")
+            if document.getinfo("[Content_Types].xml").file_size > 256 * 1024:
+                raise SubmissionError(f"Office content types exceed the validation limit: {name}")
+            content_types = document.read("[Content_Types].xml").lower()
+            if b"macroenabled" in content_types or b"vbaproject" in content_types or any(
+                entry.lower().endswith(("vbaproject.bin", "vbadata.xml")) for entry in names
+            ):
+                raise SubmissionError(f"Macro-enabled Office documents are not supported: {name}")
+    except (zipfile.BadZipFile, RuntimeError, NotImplementedError, OSError, zlib.error):
+        raise SubmissionError(f"Invalid or encrypted Office document: {name}") from None
 
 
 def _draft_metadata(slug: str, display_name: str, user_name: str, user_upn: str) -> dict[str, Any]:
@@ -193,7 +233,10 @@ def stage_submission(
                 f"File type not allowed: {target} (allowed: "
                 + ", ".join(sorted(ALLOWED_EXT)) + ")"
             )
-        files[target] = zf.read(safe[original])
+        content = zf.read(safe[original])
+        if ext in REVIEW_ONLY_EXT:
+            _validate_attachment(target, content)
+        files[target] = content
 
     if "main.tf" in files and "terraform/main.tf" not in files:
         for name in list(files):
@@ -317,7 +360,12 @@ def bundle_zip(submission: dict[str, Any]) -> bytes:
 
 
 def discard(submission: dict[str, Any]) -> None:
-    """Remove a staged submission's files from disk (best effort)."""
+    """Remove staged files, treating an already-absent directory as deleted."""
     path = submission.get("path")
     if path:
-        shutil.rmtree(path, ignore_errors=True)
+        try:
+            shutil.rmtree(path)
+        except FileNotFoundError:
+            pass
+        except OSError:
+            raise SubmissionError("Staged files could not be removed. The review branch may already be deleted; resolve file access and retry.") from None
