@@ -1,18 +1,82 @@
 # Deployment Portal
 
-Organization-operated Azure deployment platform. This branch contains the platform,
-an empty catalog, and development tests/tools. Organizations provide all workload IaC.
+Deployment Portal is a self-hosted web application for publishing, deploying and
+managing reviewed Azure infrastructure use cases. Teams use a shared catalog to
+choose a workload, select a subscription and region, customize deployment options,
+review estimated costs and capacity signals, and track the deployment through cleanup.
+
+The portal runs in your Azure tenant, uses Microsoft Entra ID for employee sign-in,
+and performs Azure operations through a managed identity. You control the workload
+repository, subscriptions, permissions, branding and operational data. The catalog
+starts empty: bring your own Bicep, Terraform, or both. No AI service or automatic
+conversion between infrastructure languages is required.
 
 **Engineering preview; not approved for external publication or production use.**
 
+## What the portal does
+
+- **Workload catalog:** browse reviewed use cases with descriptions, deployment
+	environments, available infrastructure engines and cost assumptions.
+- **Open contribution with review:** every authenticated portal user, including
+	users with the portal `guest` role, can submit a workload ZIP. Submissions are
+	staged and, when GitHub is connected, validated before a review branch is created.
+	Uploading never automatically merges, publishes or deploys a workload.
+- **Deployment options:** choose a saved subscription, region, environment and
+	engine, set a resource group and cleanup time, and edit supported parameters.
+	Saving options refreshes selection checks; deployment is a separate action.
+- **Cost and capacity checks:** view regional retail estimates or supported
+	negotiated rates, service availability and quota signals. Parameter-driven
+	pricing requires explicit workload cost mappings; unmapped changes are flagged.
+	Estimates are not invoices, and quota headroom is not an allocation guarantee.
+- **Deployment lifecycle:** track status, logs and history, and request cleanup.
+	The scheduler processes expiry-based cleanup while the app is running.
+- **Administration:** manage setup, users and roles, inspect activity and submissions,
+	and manage catalog visibility. Hiding a use case does not delete Azure resources;
+	deleting its repository folder is a separate, explicitly confirmed operation.
+- **Service lifecycle notices:** browse automatically refreshed Azure roadmap and
+	retirement information alongside the workload catalog.
+
+## Typical workflow
+
+1. An administrator configures sign-in, repository access and allowed deployment
+	 subscriptions. Initial setup does not run quota checks or grant workload permissions.
+2. A contributor uploads infrastructure source and supporting files. Documents
+	 and PowerShell helpers are review-only attachments, never deployment hooks.
+3. A maintainer reviews and merges the source in GitHub. Opening or refreshing the
+	 portal checks for repository changes; background sync also refreshes the catalog.
+	 Failed processing retains the last good catalog and reports the failure.
+4. A user selects a published workload and deployment options, reviews the estimates
+	 and warnings, and explicitly starts deployment. The backend rechecks the selection
+	 before provisioning with the host identity's permissions.
+5. Users monitor deployment results and cleanup. Operators manage permissions,
+	 backups, failed jobs, credentials and platform updates.
+
+## How it is built
+
+The browser interface uses vanilla JavaScript and a Python FastAPI control plane.
+The Linux container runs on Azure App Service behind App Service Authentication,
+with one worker and one instance. SQLite stores operational records; persistent
+storage holds submissions, compiled catalog versions and Terraform state.
+
+The container includes Bicep and Terraform tooling for catalog processing. Static
+validation runs in a restricted Linux process; it does not make workload deployment
+an untrusted-code sandbox. Only reviewed infrastructure should execute with the
+managed identity's Azure permissions. GitHub integration supplies the reviewed
+source; optional verified runners can perform catalog processing and scheduled
+refreshes. No GitHub Actions workflow is required for the default container mode.
+
+F1 hosting is supported without a forced upgrade. Without Always On, idle unload
+can delay in-process catalog refresh and cleanup jobs. Production readiness,
+operational ownership and backup/restore testing remain separate responsibilities.
+
 ## Setup overview
 
-**Approved organization source -> private company repository -> organization container
-registry -> organization Azure App Service -> assigned-employee Entra sign-in -> administrator
+**Reviewed platform source -> private repository -> container registry -> Azure App
+Service -> assigned-employee Entra sign-in -> administrator
 browser setup.**
 
-The default setup uses an organization-owned Entra app registration configured before
-the site opens. No publisher identity, setup code or source-code edits are needed.
+The default setup uses your own Entra app registration configured before
+the site opens. No shared application identity, setup code or source-code edits are needed.
 The interactive wizard provisions hosting, identity and host permissions using
 the organization's operator account. Networking is entirely organization-owned: VPN,
 private endpoints, DNS and VNet integration are optional and are neither created
@@ -21,10 +85,13 @@ Public HTTPS does not mean anonymous access; company Entra authentication and
 explicit employee/group assignment are required.
 
 This README covers the supported sign-in-first container path. The
-[organization operations guide](docs/OPERATIONS.md) also covers optional identity
+[operations guide](docs/OPERATIONS.md) also covers optional identity
 providers, credential storage and alternative installation modes. That guide
-becomes the root README in the exported organization repository.
+becomes the root README in the history-free source export.
 
+- [What the portal does](#what-the-portal-does)
+- [Typical workflow](#typical-workflow)
+- [How it is built](#how-it-is-built)
 - **[Step-by-step Azure deployment](docs/OPERATIONS.md#step-by-step-azure-deployment)**
 - [Interactive deployment script](#interactive-deployment-script)
 - [Deployment checklist (start here)](#deployment-checklist-start-here)
@@ -70,7 +137,7 @@ There are **no network inputs or connectivity approvals**.
 Selecting an app in another group asks to use its original group; the initially
 proposed new group is then not created. Existing plans/registries/identities stay
 in their original groups. New services are created in the final hosting group.
-An existing app is never moved to a different plan. Preparation now checks Entra
+An existing app is never moved to a different plan. Preparation checks Entra
 and Always On readiness before apply. F1/D1 plans offer an optional paid upgrade
 with shared-app impact review; there is no silent resize or automatic capacity guarantee.
 
@@ -105,7 +172,7 @@ flow rather than mixing targets with the saved file. Blocked previews and Entra
 **Later** do not save or replace it. Keep configuration files out of source control;
 the default `.portal/` directory is ignored and excluded from distribution exports.
 
-The preview now returns `ReadyForApply`, `HostingReadiness` and `EntraReadiness`:
+The preview returns `ReadyForApply`, `HostingReadiness` and `EntraReadiness`:
 - **Blocked**: no preparation writes are allowed; resolve the reported issue.
 - **Warning**: F1/D1 is retained without Always On; this does not block preparation
 	or deployment, require upgrade approval, or bypass Entra checks.
@@ -225,7 +292,7 @@ consent. If the sign-in endpoint is not available until deployment, complete thi
 step immediately afterward, before employee use. Verify with the assigned initial
 administrator's browser sign-in; an administrator-only successful login is not enough.
 
-Both Prepare and Deploy now print **Administrator consent page**, a direct link
+Both Prepare and Deploy print **Administrator consent page**, a direct link
 for the selected tenant and application, followed by **Portal sign-in**. The link
 explicitly returns to the selected host's `/.auth/login/aad/callback`, even when
 the registration is shared with another host; no hostname is hardcoded. The exact
@@ -355,8 +422,10 @@ GitHub repositories, permissions, or the MIT license/copyright notice.
 
 ### GitHub
 
-**Administrator task.** Use the supported organization-owned **OAuth App with Device
-Flow**, not a GitHub App installation. Follow the
+**Administrator task.** Use your own GitHub application's **device authorization
+flow**, not a GitHub App installation token. OAuth Apps are supported; expiring
+GitHub App user tokens obtained through device authorization are also supported.
+Follow the
 [field-by-field OAuth registration guide](docs/OPERATIONS.md#register-the-organization-oauth-app)
 and [repository-write permissions](docs/OPERATIONS.md#repository-writes-and-workflow-permissions)
 for callback values, organization approval/SSO, token expiry, workflow-file access
@@ -371,14 +440,15 @@ does not automatically publish or merge code. See
 [administrator, guest and contributor responsibilities](docs/OPERATIONS.md#administrator-and-guest-responsibilities).
 This is a portal role, not permission to invite external Entra guests.
 
-1. If repository integration is needed, register a **organization-owned GitHub OAuth
+1. If repository integration is needed, register an **organization-owned GitHub OAuth
 	App**, enable device flow, and satisfy your organization's app-approval/SSO
-	requirements. This is not a GitHub App installation or a publisher-owned app.
+	requirements. Use an application you control, not a shared client ID.
 2. In **Setup > GitHub > GitHub OAuth application**, enter its public client ID
 	and select **Save OAuth application**. No host-setting edit is needed.
 3. Enable GitHub, choose the token storage destination, and select **Connect GitHub**.
 	Complete authorization at `https://github.com/login/device` using the code
-	displayed by the site. Review the `repo`, `read:org` and `workflow` scopes. Do not paste
+	displayed by the site. Review the requested repository and organization access;
+	installing optional workflow files requires separate workflow permissions. Do not paste
 	access tokens into the site; they are retained server-side in the selected store.
 4. Select an accessible writable repository, or explicitly confirm creating a
 	private repository and seeding the organization source. **Connect an existing
@@ -388,7 +458,13 @@ This is a portal role, not permission to invite external Entra guests.
 	and refuses to overwrite existing code. After copying, select **Sync catalog now**.
 
 Host-setting changes during token storage can restart the app; reopen Setup to
-resume. Disabling GitHub stops sync but does not revoke its token or delete the
+resume. When GitHub issues refresh credentials, the portal renews expiring tokens
+automatically and stores the rotated credentials server-side in the protected
+store. Connections saved before refresh support need one same-account reconnect.
+Revocation, policy changes or expired refresh credentials can still require
+reconnection; automatic renewal is not a permanent-access guarantee.
+
+Disabling GitHub stops sync but does not revoke its token or delete the
 last synchronized catalog. Revoke access in GitHub when it is no longer needed.
 GitHub is optional; leave it disabled if not using this integration.
 
@@ -453,14 +529,40 @@ cannot currently be removed because tracked deployments may still require cleanu
 ### Publish workloads
 
 The initial catalog is intentionally empty. Publish reviewed organization-authored
-runtime inputs through the configured repository and sync them. Bicep must be
-compiled in the organization toolchain; the site does not compile it on sync. The
-stock image has no Terraform CLI; install and maintain one in a reviewed organization
-image before enabling Terraform execution. Uploaded workloads are executable code
-with the host identity's permissions, not an untrusted-code sandbox.
+infrastructure through the configured repository. Accept Bicep-only, Terraform-only
+or combined ZIPs; no missing counterpart is generated. The standard container
+includes Bicep and Terraform: catalog processing compiles Bicep and checks Terraform
+syntax without initializing providers. Supply all referenced local modules. A
+reviewed runner can provide generated inputs instead. These checks do not prove
+deployment feasibility or authorize execution.
+
+Supporting documents and PowerShell helpers remain review-only attachments. A
+submission without usable GitHub authorization stays in the portal; reconnecting
+does not automatically resend it. Check the submission status and review branch
+before merging. After a reviewed merge, page refresh checks for the new catalog
+source without requiring a manual sync. Failed processing preserves the last good
+version. Deployment remains a separate user action using the host identity.
 
 See [repository input layout](docs/OPERATIONS.md#2-github) and
 [workload publishing](docs/OPERATIONS.md#publish-your-own-workloads) for formats and limits.
+
+### Advanced options and cost estimates
+
+Bicep advanced options come from validated compiled parameter declarations.
+Editable string, integer and boolean parameters retain supported defaults,
+allowed values and numeric bounds; secure parameters are never exposed in this
+form. Terraform-only workloads use an authored parameter list in their metadata.
+Opening or saving the form does not deploy resources.
+
+Saving options refreshes price and capacity checks. Cost components must explicitly
+map parameters to quantities or SKUs; the portal does not infer billing from an
+infrastructure parameter name. For replica-based usage, `quantityParam` and
+`quantityPerUnit` map the selected count to monthly billable units. Changed options
+without a mapping are labeled **Not adjusted for**, not assumed free. An autoscaling
+maximum is a limit, not a forecast of actual usage. See the
+[cost-model guidance](docs/OPERATIONS.md#publish-your-own-workloads) before authoring
+or correcting workload metadata. Such changes require review and catalog sync,
+not just a portal image update.
 
 ## 6. Verify before enabling workloads
 
@@ -560,8 +662,10 @@ billable and lose automatic cleanup until manually resolved. See the
 | Organization network policy blocks access | Ask the organization network owner to verify their DNS/routing/firewall configuration. Existing restrictions are never changed by deployment. |
 | Restart loses setup or database is unwritable | Verify persistent `/home/data` and UID 10001 permissions; stop and fix storage rather than create another installation. |
 | GitHub authorization or save fails | Check organization OAuth client ID, enabled device flow, organization policy/SSO, requested scopes and host/Key Vault write permissions. Reopen Setup after a host restart. |
+| Upload is saved in the portal but has no GitHub branch | Check the submission detail and GitHub connection. Reconnecting does not resend existing pending uploads automatically; recover the ZIP from Admin > Submissions for reviewed import. |
 | Subscription lookup fails | Check the host managed identity's Reader access, subscription state and same-tenant ownership. Browser-user access is not sufficient. |
 | Negotiated pricing falls back to retail | Check supported billing agreement, billing permissions and exact meter/currency/unit matching; fallback is explicit expected behavior. |
+| Saving advanced options does not change the price | Check the workload's cost-parameter mappings and **Not adjusted for** warnings. Review and merge corrected metadata, then refresh the catalog; deployment parameter extraction alone cannot model cost. |
 | Local preview rejects saves with 405 | Expected: it is read-only and uses a synthetic identity. Use the authenticated Azure host for real sign-in and cloud operations. |
 
 Do not paste credentials, tokens, auth cookies or unredacted configuration/log
