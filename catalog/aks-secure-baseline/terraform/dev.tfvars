@@ -1,0 +1,10 @@
+environment            = "dev"
+name_prefix            = "aksdev"
+kubernetes_version     = "1.30"
+system_node_vm_size    = "Standard_D2s_v5"
+system_node_count      = 1
+enable_auto_scaling    = false
+max_node_count         = 2
+enable_private_cluster = false
+zone_redundant         = false
+retention_in_days      = 30

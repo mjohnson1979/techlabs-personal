@@ -1,0 +1,10 @@
+environment              = "prod"
+name_prefix              = "swaprod"
+app_service_sku          = "P1v3"
+app_service_capacity     = 3
+zone_redundant           = true
+sql_sku_name             = "GP_Gen5_2"
+sql_admin_object_id      = "00000000-0000-0000-0000-000000000000"
+sql_admin_login          = "sql-admins"
+app_gateway_max_capacity = 5
+retention_in_days        = 90

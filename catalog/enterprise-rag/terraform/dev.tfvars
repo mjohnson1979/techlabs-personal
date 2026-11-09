@@ -1,0 +1,16 @@
+environment             = "dev"
+name_prefix             = "ragdev"
+chat_model              = "gpt-5-mini"
+chat_model_version      = "2025-08-07"
+chat_model_sku          = "GlobalStandard"
+chat_capacity           = 10
+embedding_model         = "text-embedding-3-large"
+embedding_model_version = "1"
+search_sku              = "basic"
+search_replicas         = 1
+app_service_sku         = "P0v3"
+zone_redundant          = false
+apim_sku                = "Developer"
+apim_publisher_email    = "platform@contoso.com"
+apim_publisher_name     = "Contoso Platform"
+retention_in_days       = 30

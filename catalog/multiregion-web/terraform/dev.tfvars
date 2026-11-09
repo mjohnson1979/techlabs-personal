@@ -1,0 +1,10 @@
+environment                = "dev"
+name_prefix                = "mrwdev"
+primary_location           = "eastus"
+secondary_location         = "westus3"
+app_service_sku            = "P0v3"
+app_service_capacity       = 1
+zone_redundant             = false
+front_door_sku             = "Standard_AzureFrontDoor"
+cosmos_multi_region_writes = false
+retention_in_days          = 30

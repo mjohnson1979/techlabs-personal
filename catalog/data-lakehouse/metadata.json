@@ -1,0 +1,105 @@
+{
+  "name": "data-lakehouse",
+  "displayName": "Medallion Data Lakehouse",
+  "category": "Data & Analytics",
+  "description": "ADLS Gen2 bronze/silver/gold zones, Data Factory with a managed VNet, a secure Databricks workspace, and Key Vault.",
+  "what": "An ADLS Gen2 account (hierarchical namespace, shared-key access disabled) with bronze, silver, and gold containers; an Azure Data Factory with a managed virtual network and AutoResolve integration runtime for private ingestion and orchestration; a premium Databricks workspace with secure cluster connectivity (no public IP) for transformation; and a Key Vault for secrets. Data Factory holds a managed identity with Blob Data Contributor on the lake.",
+  "why": "Analytics platforms standardize on the medallion pattern to progressively refine data from raw to curated. This template lays down the storage zones, a private orchestration plane, and a governed compute engine so data teams start from a secure, well-structured foundation instead of ad-hoc storage and notebooks.",
+  "potentialUseCases": [
+    "Enterprise data platform feeding BI and ML",
+    "Batch + incremental ingestion from operational systems into a lake",
+    "Regulatory reporting datasets curated through gold tables",
+    "Feature engineering and model training on Databricks"
+  ],
+  "industries": [
+    "Banking",
+    "Capital Markets",
+    "Insurance",
+    "Health Payor",
+    "Health Pharma",
+    "Retailers",
+    "Consumer Goods",
+    "Power & Utilities",
+    "Oil & Gas",
+    "Telecommunications",
+    "At scale SW, data & platforms",
+    "Public Finance"
+  ],
+  "compliance": [
+    "Baseline",
+    "SOC 2",
+    "GDPR",
+    "HIPAA",
+    "HITRUST",
+    "PCI-DSS"
+  ],
+  "wellArchitected": {
+    "reliability": [
+      "ZRS lake storage in prod",
+      "Managed integration runtime auto-resolves region and scale"
+    ],
+    "security": [
+      "Shared-key access disabled; Data Factory uses managed identity",
+      "ADF managed VNet keeps ingestion off the public data plane",
+      "Databricks secure cluster connectivity (no public IP) in prod",
+      "Secrets centralized in Key Vault"
+    ],
+    "costOptimization": [
+      "Standard Databricks tier and single-LRS lake in dev",
+      "Serverless / job clusters scale Databricks compute to workload"
+    ],
+    "operationalExcellence": [
+      "Data Factory diagnostics streamed to Log Analytics",
+      "Zoned containers make lineage and lifecycle policies explicit"
+    ],
+    "performanceEfficiency": [
+      "Hierarchical namespace optimizes analytics file operations",
+      "Databricks Photon / job clusters tune compute to the stage"
+    ]
+  },
+  "cost": {
+    "currency": "USD",
+    "region": "eastus",
+    "profile": "Prod profile: ZRS lake, premium Databricks, managed-VNet Data Factory.",
+    "components": [
+      {
+        "name": "Data lake storage (ZRS, hot)",
+        "billing": "usage",
+        "serviceName": "Storage",
+        "skuNameContains": "ZRS",
+        "meterNameContains": "Data Stored",
+        "unitOfMeasure": "1 GB/Month",
+        "quantityPerMonth": 5000,
+        "notes": "Assumes ~5 TB across bronze/silver/gold."
+      },
+      {
+        "name": "Databricks (premium) DBUs",
+        "billing": "usage",
+        "serviceName": "Azure Databricks",
+        "skuNameContains": "Premium",
+        "meterNameContains": "All-purpose Compute DBU",
+        "unitOfMeasure": "1 DBU",
+        "quantityPerMonth": 2000,
+        "notes": "Assumes ~2000 DBUs/month; VM compute billed separately."
+      },
+      {
+        "name": "Data Factory pipeline activity runs",
+        "billing": "usage",
+        "serviceName": "Azure Data Factory v2",
+        "meterNameContains": "Cloud Activity Runs",
+        "unitOfMeasure": "1000",
+        "quantityPerMonth": 50,
+        "notes": "Assumes ~50K orchestration activity runs/month."
+      },
+      {
+        "name": "Data Factory managed VNet IR (data flow)",
+        "billing": "usage",
+        "serviceName": "Azure Data Factory v2",
+        "meterNameContains": "vCore",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 200,
+        "notes": "Assumes ~200 vCore-hours of managed-VNet data movement."
+      }
+    ]
+  }
+}

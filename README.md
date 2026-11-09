@@ -7,8 +7,15 @@ review estimated costs and capacity signals, and track the deployment through cl
 
 The portal runs in your Azure tenant, uses Microsoft Entra ID for employee sign-in,
 and performs Azure operations through a managed identity. You control the workload
-repository, subscriptions, permissions, branding and operational data. The catalog
-starts empty: bring your own Bicep, Terraform, or both. No AI service or automatic
+repository, subscriptions, permissions, branding and operational data. This personal copy includes 24 TechLabs workloads in [catalog](catalog/) and their
+shared Bicep dependencies in [modules](modules/), copied from
+`mcaps-microsoft/TechLabs` commit `58de004`. The AI and core landing zones use
+top-level `landing-zone-ai` and `landing-zone-core` folders so the portal can
+discover them. Configure this repository and the `customer/self-hosted-platform`
+branch as the reviewed workload source to process the catalog. The
+[SQL private-endpoint workload](catalog/sql-private-endpoint/README.md#deploy-with-bicep)
+needs a valid administrator password supplied securely before deployment; its
+empty secure default is only an import placeholder. No AI service or automatic
 conversion between infrastructure languages is required.
 
 **Engineering preview; not approved for external publication or production use.**
@@ -720,8 +727,17 @@ See [contributing](CONTRIBUTING.md) and the [release review checklist](docs/RELE
 
 ## Distribution boundary
 
-Bundled workloads, shared infrastructure modules, internal snapshots, old branded
-assets and internal deployment workflows have been removed from this branch.
+The copied Purview module includes upstream `max` and `waf-aligned` end-to-end
+test fixtures that reference an absent `diagnostic.dependencies.bicep` utility.
+Those two fixtures do not compile standalone; they are not portal workload entry
+points. The workload templates and their dev/prod parameter files compile without
+that utility. No Azure deployment validation is implied by compilation.
+
+This personal branch restores the TechLabs workload catalog and shared
+infrastructure modules for use as its reviewed workload source. The upstream
+self-hosted platform distribution remains catalog-free; the export builder does
+not include this personal catalog. Internal snapshots, old branded assets and
+internal deployment workflows remain excluded.
 Tests, editor instructions, release notes and build tooling are development-only;
 the export builder includes only the organization allowlist and empty data snapshots.
 Local environments, credentials, databases, logs and preview artifacts are not

@@ -1,0 +1,10 @@
+environment            = "prod"
+name_prefix            = "aksprod"
+kubernetes_version     = "1.30"
+system_node_vm_size    = "Standard_D4s_v5"
+system_node_count      = 3
+enable_auto_scaling    = true
+max_node_count         = 6
+enable_private_cluster = true
+zone_redundant         = true
+retention_in_days      = 90

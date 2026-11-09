@@ -1,0 +1,12 @@
+using '../main.bicep'
+
+param location = 'eastus2'
+param environment = 'dev'
+param prefix = 'techlabs'
+param vmSize = 'Standard_D2s_v5'
+param adminUsername = 'sqladmin'
+param storageSkuName = 'Standard_LRS'
+param vnetAddressPrefix = '10.20.0.0/16'
+param vmSubnetPrefix = '10.20.1.0/24'
+param privateEndpointSubnetPrefix = '10.20.2.0/24'
+param bastionSubnetPrefix = '10.20.3.0/26'

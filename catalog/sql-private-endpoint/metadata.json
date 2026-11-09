@@ -1,0 +1,132 @@
+{
+  "name": "sql-private-endpoint",
+  "displayName": "SQL Server VM with Private Blob Storage",
+  "category": "Databases",
+  "description": "SQL Server 2022 Developer on a private Windows VM with Azure Bastion administration and Blob Storage reachable only through a private endpoint.",
+  "what": "A private SQL Server lab environment built on a Windows VM. The VM has no public IP, administrators connect through Azure Bastion, and a StorageV2 account exposes Blob only through Private Link. Private DNS resolves the Blob endpoint inside the VNet, and the VM managed identity receives Storage Blob Data Contributor access.",
+  "why": "SQL Server workloads often need private object storage for backups, imports, exports, and data exchange. This use case demonstrates private network connectivity and identity-based authorization without exposing either the VM or Blob endpoint to the public internet.",
+  "potentialUseCases": [
+    "SQL Server backup and restore testing with private Azure Blob Storage",
+    "Migration labs for SQL Server workloads that require private object storage",
+    "Private Link and DNS validation from an infrastructure VM",
+    "Non-production testing of SQL Server 2022 managed identity access to Blob"
+  ],
+  "industries": ["Cross-industry"],
+  "compliance": ["Baseline"],
+  "wellArchitected": {
+    "reliability": [
+      "Premium managed OS disk provides durable VM storage",
+      "Production profile uses zone-redundant Blob storage",
+      "Private DNS integration provides stable Blob endpoint resolution"
+    ],
+    "security": [
+      "The SQL Server VM has no public IP and is administered through Azure Bastion",
+      "Blob public network access and shared-key authorization are disabled",
+      "The VM uses a managed identity and scoped Blob data-plane RBAC",
+      "Trusted Launch enables Secure Boot and vTPM"
+    ],
+    "costOptimization": [
+      "SQL Server Developer edition has no SQL license charge and is restricted to non-production use",
+      "Development uses a smaller D2s v5 VM and locally redundant storage",
+      "VM shutdown schedules can reduce compute cost when the lab is idle"
+    ],
+    "operationalExcellence": [
+      "Bicep and Terraform implementations provide repeatable deployments",
+      "SQL IaaS Agent registration enables Azure SQL VM management features",
+      "Dev and prod profiles make sizing and storage redundancy explicit"
+    ],
+    "performanceEfficiency": [
+      "Dsv5 VM sizes can be changed as SQL workload demand grows",
+      "Private Link keeps Blob traffic on the Microsoft backbone",
+      "Dedicated workload, private endpoint, and Bastion subnets isolate network roles"
+    ]
+  },
+  "quota": {
+    "summary": "Requires regional Dsv5-family VM quota and availability for the selected SQL Server marketplace image and Azure Bastion.",
+    "requirements": [
+      {
+        "service": "Azure Virtual Machines",
+        "provider": "Microsoft.Compute/virtualMachines",
+        "kind": "compute",
+        "sku": "Standard_D2s_v5 (dev) / Standard_D4s_v5 (prod)",
+        "detail": "The subscription needs sufficient Standard Dsv5 Family vCPU quota in the selected region.",
+        "checkUrl": "https://aka.ms/antquotahelp"
+      }
+    ]
+  },
+  "architecture": {
+    "summary": "Administrators reach a private SQL Server VM through Azure Bastion. The VM resolves and accesses Blob Storage through a private endpoint using its managed identity.",
+    "nodes": [
+      { "id": "admin", "label": "Administrator", "sublabel": "Azure portal", "icon": "client", "col": 0 },
+      { "id": "bastion", "label": "Azure Bastion", "sublabel": "Private VM administration", "icon": "bastion", "col": 1 },
+      { "id": "sqlvm", "label": "SQL Server VM", "sublabel": "SQL 2022 Developer, no public IP", "icon": "vm", "col": 2 },
+      { "id": "blobpe", "label": "Blob Private Endpoint", "sublabel": "Private Link + private DNS", "icon": "privateendpoint", "col": 3 },
+      { "id": "storage", "label": "Blob Storage", "sublabel": "Public access disabled", "icon": "storage", "col": 4 }
+    ],
+    "edges": [
+      { "from": "admin", "to": "bastion", "label": "HTTPS" },
+      { "from": "bastion", "to": "sqlvm", "label": "RDP" },
+      { "from": "sqlvm", "to": "blobpe", "label": "HTTPS + managed identity" },
+      { "from": "blobpe", "to": "storage", "label": "Private Link" }
+    ]
+  },
+  "cost": {
+    "currency": "USD",
+    "region": "eastus2",
+    "profile": "prod",
+    "components": [
+      {
+        "name": "SQL Server VM (D4s v5, Windows)",
+        "billing": "fixed",
+        "serviceName": "Virtual Machines",
+        "productNameContains": "Dsv5 Series Windows",
+        "meterNameContains": "D4s v5",
+        "meterNameExact": "D4s v5",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 730,
+        "skuParam": "vmSize",
+        "hoursPerInstance": 730,
+        "notes": "One always-on Windows VM. SQL Server Developer edition is license-free for non-production use only. OS disk charges are excluded."
+      },
+      {
+        "name": "Azure Bastion (Standard)",
+        "billing": "fixed",
+        "serviceName": "Azure Bastion",
+        "skuNameContains": "Standard",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 730,
+        "notes": "One continuously provisioned Standard Bastion host."
+      },
+      {
+        "name": "Azure Private Endpoint",
+        "billing": "fixed",
+        "serviceName": "Virtual Network",
+        "productNameContains": "Private Link",
+        "meterNameContains": "Private Endpoint",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 730,
+        "notes": "One Blob private endpoint. Data processing is usage-based and excluded."
+      },
+      {
+        "name": "Blob storage capacity",
+        "billing": "usage",
+        "serviceName": "Storage",
+        "productNameContains": "Block Blob",
+        "meterNameContains": "Data Stored",
+        "unitOfMeasure": "1 GB/Month",
+        "quantityPerMonth": 100,
+        "notes": "Example assumes 100 GB of Blob data. Transactions and retrieval charges are excluded."
+      },
+      {
+        "name": "Public IP (Standard, static)",
+        "billing": "fixed",
+        "serviceName": "Virtual Network",
+        "skuNameContains": "Standard",
+        "meterNameContains": "Static IP",
+        "unitOfMeasure": "1 Hour",
+        "quantityPerMonth": 730,
+        "notes": "One static public IP used only by Azure Bastion."
+      }
+    ]
+  }
+}
